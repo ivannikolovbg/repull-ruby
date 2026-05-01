@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "description": "The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.\n\n## Quick Start\n1. Get an API key at https://repull.dev/dashboard\n2. Connect a PMS: `POST /v1/connect/{provider}`\n3. List properties: `GET /v1/properties`\n4. Get reservations: `GET /v1/reservations`\n\n## Authentication\nAll requests require a Bearer token:\n```\nAuthorization: Bearer sk_test_YOUR_API_KEY\n```\n\nSandbox keys start with `sk_test_`, production with `sk_live_`.",
     "contact": {
-      "email": "ivan@vanio.ai",
+      "email": "hello@repull.dev",
       "url": "https://repull.dev"
     },
     "license": {
