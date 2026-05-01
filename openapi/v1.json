@@ -1,0 +1,2085 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Repull API",
+    "version": "1.0.0",
+    "description": "The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.\n\n## Quick Start\n1. Get an API key at https://repull.dev/dashboard\n2. Connect a PMS: `POST /v1/connect/{provider}`\n3. List properties: `GET /v1/properties`\n4. Get reservations: `GET /v1/reservations`\n\n## Authentication\nAll requests require a Bearer token:\n```\nAuthorization: Bearer sk_test_YOUR_API_KEY\n```\n\nSandbox keys start with `sk_test_`, production with `sk_live_`.",
+    "contact": {
+      "email": "ivan@vanio.ai",
+      "url": "https://repull.dev"
+    },
+    "license": {
+      "name": "Proprietary"
+    },
+    "x-logo": {
+      "url": "https://repull.dev/logo.svg"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.repull.dev",
+      "description": "Production"
+    },
+    {
+      "url": "http://repull.localhost:3000/api/repull",
+      "description": "Local development"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Properties",
+      "description": "List and manage vacation rental properties across all connected PMS platforms"
+    },
+    {
+      "name": "Reservations",
+      "description": "Query, create, update, and cancel reservations"
+    },
+    {
+      "name": "Availability",
+      "description": "Check and update property availability and pricing"
+    },
+    {
+      "name": "Guests",
+      "description": "Guest profiles and contact information"
+    },
+    {
+      "name": "Conversations",
+      "description": "Guest messaging across platforms"
+    },
+    {
+      "name": "Reviews",
+      "description": "Guest reviews and responses"
+    },
+    {
+      "name": "Connect",
+      "description": "Manage PMS/OTA connections. Supports 50+ platforms."
+    },
+    {
+      "name": "Webhooks",
+      "description": "Subscribe to real-time events (reservation changes, messages, etc.)"
+    },
+    {
+      "name": "Airbnb",
+      "description": "Direct Airbnb channel management \u2014 listings, pricing, availability, messaging, reviews"
+    },
+    {
+      "name": "Booking.com",
+      "description": "Direct Booking.com channel management \u2014 properties, rates, content, messaging"
+    },
+    {
+      "name": "VRBO",
+      "description": "VRBO channel management \u2014 listings and reservations"
+    },
+    {
+      "name": "Plumguide",
+      "description": "Plumguide channel management \u2014 availability, pricing, bookings"
+    },
+    {
+      "name": "AI",
+      "description": "AI-powered operations \u2014 guest responses, intent classification, listing generation, pricing suggestions"
+    },
+    {
+      "name": "Billing",
+      "description": "Plan info, usage, and checkout"
+    },
+    {
+      "name": "System",
+      "description": "Health checks and API status"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "API key \u2014 `sk_test_*` for sandbox, `sk_live_*` for production",
+        "bearerFormat": "API Key"
+      }
+    },
+    "schemas": {
+      "Property": {
+        "type": "object",
+        "description": "A vacation rental property from a connected PMS",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Internal Repull property ID"
+          },
+          "externalId": {
+            "type": "string",
+            "description": "ID in the source PMS"
+          },
+          "name": {
+            "type": "string",
+            "description": "Property name",
+            "example": "Oceanview Suite #3"
+          },
+          "address": {
+            "type": "string",
+            "description": "Full address"
+          },
+          "city": {
+            "type": "string",
+            "example": "Miami Beach"
+          },
+          "state": {
+            "type": "string",
+            "example": "FL"
+          },
+          "country": {
+            "type": "string",
+            "example": "US"
+          },
+          "latitude": {
+            "type": "number",
+            "example": 25.7617
+          },
+          "longitude": {
+            "type": "number",
+            "example": -80.1918
+          },
+          "bedrooms": {
+            "type": "integer",
+            "example": 2
+          },
+          "bathrooms": {
+            "type": "number",
+            "example": 1.5
+          },
+          "maxGuests": {
+            "type": "integer",
+            "example": 6
+          },
+          "thumbnail": {
+            "type": "string",
+            "format": "uri",
+            "description": "Primary photo URL"
+          },
+          "provider": {
+            "type": "string",
+            "description": "Source PMS",
+            "example": "hostaway"
+          }
+        }
+      },
+      "Reservation": {
+        "type": "object",
+        "description": "A booking/reservation from a connected PMS",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Internal Repull reservation ID"
+          },
+          "confirmationCode": {
+            "type": "string",
+            "description": "PMS confirmation code",
+            "example": "HA-123456"
+          },
+          "propertyId": {
+            "type": "integer",
+            "description": "Property ID"
+          },
+          "platform": {
+            "type": "string",
+            "description": "Booking source",
+            "example": "airbnb"
+          },
+          "status": {
+            "type": "string",
+            "example": "confirmed"
+          },
+          "checkIn": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-04-15"
+          },
+          "checkOut": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-04-20"
+          },
+          "guestFirstName": {
+            "type": "string",
+            "example": "John"
+          },
+          "guestLastName": {
+            "type": "string",
+            "example": "Smith"
+          },
+          "guestEmail": {
+            "type": "string",
+            "format": "email"
+          },
+          "guestPhone": {
+            "type": "string"
+          },
+          "guestCount": {
+            "type": "integer",
+            "example": 4
+          },
+          "totalPrice": {
+            "type": "number",
+            "example": 1250
+          },
+          "currency": {
+            "type": "string",
+            "example": "USD"
+          },
+          "provider": {
+            "type": "string",
+            "example": "guesty"
+          }
+        }
+      },
+      "Guest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "firstName": {
+            "type": "string",
+            "example": "Jane"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Doe"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "totalStays": {
+            "type": "integer"
+          },
+          "totalRevenue": {
+            "type": "number"
+          }
+        }
+      },
+      "CalendarDay": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-04-15"
+          },
+          "available": {
+            "type": "boolean"
+          },
+          "price": {
+            "type": "number",
+            "example": 250
+          },
+          "minNights": {
+            "type": "integer",
+            "example": 2
+          }
+        }
+      },
+      "Conversation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "reservationId": {
+            "type": "integer"
+          },
+          "guestName": {
+            "type": "string"
+          },
+          "lastMessage": {
+            "type": "string"
+          },
+          "lastMessageAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "unreadCount": {
+            "type": "integer"
+          }
+        }
+      },
+      "Message": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "conversationId": {
+            "type": "string"
+          },
+          "senderType": {
+            "type": "string"
+          },
+          "senderName": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "sentAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Connection": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "provider": {
+            "type": "string",
+            "example": "hostaway"
+          },
+          "status": {
+            "type": "string",
+            "example": "active"
+          },
+          "externalAccountId": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "host": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConnectHost"
+              }
+            ],
+            "description": "Host metadata for the linked account. Currently populated for Airbnb only; null for other providers."
+          }
+        }
+      },
+      "ConnectHost": {
+        "type": "object",
+        "description": "Public-facing metadata about the host whose account is linked. Lets clients render an account-level card (avatar + name) instead of just an opaque ID. Email is intentionally NOT exposed for Airbnb \u2014 the partner API doesn't return host email.",
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "nullable": true,
+            "example": "Lidia",
+            "description": "Short display name (Airbnb first name)."
+          },
+          "displayNameLong": {
+            "type": "string",
+            "nullable": true,
+            "example": "Lidia",
+            "description": "Preferred long-form name. Falls back to displayName when the host hasn't set a preferred form."
+          },
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "description": "Profile picture URL (small)."
+          },
+          "avatarUrlLarge": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "description": "Profile picture URL (large)."
+          },
+          "activationStatus": {
+            "type": "string",
+            "nullable": true,
+            "example": "active",
+            "description": "Per-provider activation/onboarding status."
+          }
+        }
+      },
+      "ConnectStatus": {
+        "type": "object",
+        "description": "Connection status response for a single provider. When `connected` is false, all other fields except `provider` and `host` may be omitted, and `host` is null.",
+        "properties": {
+          "connected": {
+            "type": "boolean",
+            "example": true
+          },
+          "provider": {
+            "type": "string",
+            "example": "airbnb"
+          },
+          "id": {
+            "type": "integer",
+            "description": "Repull-side connection ID. Stable across token refreshes.",
+            "example": 3
+          },
+          "status": {
+            "type": "string",
+            "example": "active"
+          },
+          "externalAccountId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Provider-side account ID (e.g. the Airbnb host ID).",
+            "example": "23998907"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "host": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConnectHost"
+              }
+            ],
+            "description": "Host metadata, populated for Airbnb when the host row exists. Null for other providers (per-provider enrichment is incremental)."
+          }
+        }
+      },
+      "WebhookSubscription": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "reservation.created",
+              "reservation.updated"
+            ]
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "secret": {
+            "type": "string",
+            "description": "HMAC-SHA256 signing secret"
+          }
+        }
+      },
+      "AIOperation": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "description": "AI operation to perform"
+          },
+          "input": {
+            "type": "object",
+            "description": "Operation-specific input data"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "example": "invalid_api_key"
+              },
+              "message": {
+                "type": "string",
+                "example": "The API key provided is invalid."
+              },
+              "docs_url": {
+                "type": "string",
+                "format": "uri",
+                "example": "https://repull.dev/docs/errors#invalid_api_key"
+              },
+              "example": {
+                "type": "string",
+                "description": "Example of correct usage"
+              }
+            }
+          }
+        }
+      },
+      "PaginatedResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {}
+          },
+          "pagination": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer"
+              },
+              "limit": {
+                "type": "integer"
+              },
+              "offset": {
+                "type": "integer"
+              },
+              "hasMore": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "limit": {
+        "name": "limit",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "default": 25,
+          "maximum": 100
+        },
+        "description": "Max items per page"
+      },
+      "offset": {
+        "name": "offset",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "default": 0
+        },
+        "description": "Pagination offset"
+      },
+      "provider": {
+        "name": "provider",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "description": "PMS provider slug (e.g., hostaway, guesty, ownerrez)"
+      }
+    }
+  },
+  "paths": {
+    "/v1/health": {
+      "get": {
+        "summary": "Health check",
+        "tags": [
+          "System"
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "API is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok"
+                    },
+                    "version": {
+                      "type": "string",
+                      "example": "1.0.0"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/properties": {
+      "get": {
+        "summary": "List properties",
+        "description": "Returns all properties across connected PMS platforms. Supports pagination and filtering by provider.",
+        "tags": [
+          "Properties"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/offset"
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by PMS provider"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Properties list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PaginatedResponse"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Property"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/properties/{id}": {
+      "get": {
+        "summary": "Get property details",
+        "tags": [
+          "Properties"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Property details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Property"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Property not found"
+          }
+        }
+      }
+    },
+    "/v1/reservations": {
+      "get": {
+        "summary": "List reservations",
+        "description": "Returns reservations across all connected PMS platforms. Filter by platform, status, date range.",
+        "tags": [
+          "Reservations"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/offset"
+          },
+          {
+            "name": "platform",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by booking platform"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "confirmed",
+                "pending",
+                "cancelled",
+                "completed"
+              ]
+            }
+          },
+          {
+            "name": "checkInFrom",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Check-in date range start"
+          },
+          {
+            "name": "checkInTo",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Check-in date range end"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reservations list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PaginatedResponse"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Reservation"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a reservation",
+        "tags": [
+          "Reservations"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "propertyId",
+                  "checkIn",
+                  "checkOut",
+                  "guestFirstName",
+                  "guestLastName"
+                ],
+                "properties": {
+                  "propertyId": {
+                    "type": "integer"
+                  },
+                  "checkIn": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "checkOut": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "guestFirstName": {
+                    "type": "string"
+                  },
+                  "guestLastName": {
+                    "type": "string"
+                  },
+                  "guestEmail": {
+                    "type": "string"
+                  },
+                  "guestPhone": {
+                    "type": "string"
+                  },
+                  "guestCount": {
+                    "type": "integer"
+                  },
+                  "totalPrice": {
+                    "type": "number"
+                  },
+                  "currency": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Reservation created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Reservation"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/reservations/{id}": {
+      "get": {
+        "summary": "Get reservation details",
+        "tags": [
+          "Reservations"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reservation details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Reservation"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update reservation",
+        "tags": [
+          "Reservations"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "checkIn": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "checkOut": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "status": {
+                    "type": "string"
+                  },
+                  "totalPrice": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Cancel reservation",
+        "tags": [
+          "Reservations"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cancelled"
+          }
+        }
+      }
+    },
+    "/v1/availability/{propertyId}": {
+      "get": {
+        "summary": "Get availability calendar",
+        "description": "Returns day-by-day availability, pricing, and minimum stay for a property.",
+        "tags": [
+          "Availability"
+        ],
+        "parameters": [
+          {
+            "name": "propertyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "startDate",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Calendar days",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CalendarDay"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update availability",
+        "description": "Update pricing, availability, and minimum stay for specific dates.",
+        "tags": [
+          "Availability"
+        ],
+        "parameters": [
+          {
+            "name": "propertyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "dates": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/CalendarDay"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated"
+          }
+        }
+      }
+    },
+    "/v1/guests": {
+      "get": {
+        "summary": "List guests",
+        "tags": [
+          "Guests"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/offset"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search by name, email, or phone"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Guests list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PaginatedResponse"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Guest"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/guests/{id}": {
+      "get": {
+        "summary": "Get guest profile",
+        "tags": [
+          "Guests"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Guest profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Guest"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/conversations": {
+      "get": {
+        "summary": "List conversations",
+        "tags": [
+          "Conversations"
+        ],
+        "responses": {
+          "200": {
+            "description": "Conversations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Conversation"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/conversations/{id}/messages": {
+      "get": {
+        "summary": "Get messages in conversation",
+        "tags": [
+          "Conversations"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Messages",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Message"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Send message",
+        "tags": [
+          "Conversations"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "message"
+                ],
+                "properties": {
+                  "message": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Message sent"
+          }
+        }
+      }
+    },
+    "/v1/connect": {
+      "get": {
+        "summary": "List PMS/OTA connections",
+        "description": "Returns all active connections to PMS and OTA platforms.",
+        "tags": [
+          "Connect"
+        ],
+        "responses": {
+          "200": {
+            "description": "Connections",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Connection"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/connect/{provider}": {
+      "get": {
+        "summary": "Get connection status",
+        "description": "Returns the current connection status for a provider, including host metadata (display name + avatar) for Airbnb so clients can render an account-level confirmation UI.",
+        "tags": [
+          "Connect"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/provider"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Connection status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectStatus"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Connect to PMS/OTA provider",
+        "description": "Establish a connection to a PMS or OTA platform. Credentials vary by provider \u2014 see docs for each provider.\n\nAirbnb-specific: pass `redirectUrl` (where to send the user after consent) and optionally `accessType` (`read_only` for calendar-only OAuth scopes, or `full_access` \u2014 the default \u2014 for full host scopes). The response returns a hosted `oauthUrl` to redirect the user to.",
+        "tags": [
+          "Connect"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/provider"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Provider-specific credentials (apiKey, clientId/clientSecret, etc.) or OAuth init params for Airbnb.",
+                "properties": {
+                  "redirectUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Airbnb only \u2014 where to redirect the user after the OAuth flow completes."
+                  },
+                  "accessType": {
+                    "type": "string",
+                    "enum": [
+                      "read_only",
+                      "full_access"
+                    ],
+                    "default": "full_access",
+                    "description": "Airbnb only \u2014 selects the OAuth scope set. 'read_only' grants calendar-only access; 'full_access' grants full host scopes (default)."
+                  },
+                  "apiKey": {
+                    "type": "string",
+                    "description": "PMS providers \u2014 API key."
+                  },
+                  "clientId": {
+                    "type": "string",
+                    "description": "Plumguide \u2014 client ID."
+                  },
+                  "clientSecret": {
+                    "type": "string",
+                    "description": "Plumguide \u2014 client secret."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Connected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Connection"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Disconnect provider",
+        "tags": [
+          "Connect"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/provider"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Disconnected"
+          }
+        }
+      }
+    },
+    "/v1/webhooks": {
+      "get": {
+        "summary": "List webhook subscriptions",
+        "tags": [
+          "Webhooks"
+        ],
+        "responses": {
+          "200": {
+            "description": "Webhooks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/WebhookSubscription"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create webhook subscription",
+        "description": "Subscribe to events. Supported events: reservation.created, reservation.updated, reservation.cancelled, message.received, listing.updated, calendar.updated, guest.created, payment.received",
+        "tags": [
+          "Webhooks"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "url",
+                  "events"
+                ],
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "events": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookSubscription"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/webhooks/test": {
+      "post": {
+        "summary": "Send test webhook",
+        "description": "Delivers a test payload to your webhook URL.",
+        "tags": [
+          "Webhooks"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "webhookId": {
+                    "type": "string"
+                  },
+                  "event": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Test delivered"
+          }
+        }
+      }
+    },
+    "/v1/channels/airbnb/listings": {
+      "get": {
+        "summary": "List Airbnb listings",
+        "tags": [
+          "Airbnb"
+        ],
+        "responses": {
+          "200": {
+            "description": "Listings"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create/push Airbnb listing",
+        "tags": [
+          "Airbnb"
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/v1/channels/airbnb/listings/{id}": {
+      "get": {
+        "summary": "Get Airbnb listing",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Listing details"
+          }
+        }
+      },
+      "post": {
+        "summary": "Listing action (push/publish/unlist/delete)",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Action completed"
+          }
+        }
+      }
+    },
+    "/v1/channels/airbnb/listings/{id}/pricing": {
+      "get": {
+        "summary": "Get Airbnb pricing",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pricing data"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update Airbnb pricing",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated"
+          }
+        }
+      }
+    },
+    "/v1/channels/airbnb/listings/{id}/availability": {
+      "get": {
+        "summary": "Get Airbnb availability",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Availability data"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update Airbnb availability",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated"
+          }
+        }
+      }
+    },
+    "/v1/channels/airbnb/listings/{id}/photos": {
+      "get": {
+        "summary": "List Airbnb photos",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Photos"
+          }
+        }
+      },
+      "post": {
+        "summary": "Upload photos to Airbnb",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Uploaded"
+          }
+        }
+      }
+    },
+    "/v1/channels/airbnb/messaging": {
+      "get": {
+        "summary": "List Airbnb message threads",
+        "tags": [
+          "Airbnb"
+        ],
+        "responses": {
+          "200": {
+            "description": "Message threads"
+          }
+        }
+      }
+    },
+    "/v1/channels/airbnb/messaging/{threadId}/messages": {
+      "get": {
+        "summary": "Get Airbnb messages",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Messages"
+          }
+        }
+      },
+      "post": {
+        "summary": "Send Airbnb message",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sent"
+          }
+        }
+      }
+    },
+    "/v1/channels/airbnb/reservations": {
+      "get": {
+        "summary": "List Airbnb reservations",
+        "tags": [
+          "Airbnb"
+        ],
+        "responses": {
+          "200": {
+            "description": "Reservations"
+          }
+        }
+      }
+    },
+    "/v1/channels/airbnb/reservations/{code}": {
+      "get": {
+        "summary": "Get Airbnb reservation",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reservation details"
+          }
+        }
+      },
+      "post": {
+        "summary": "Accept/decline/cancel Airbnb reservation",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Action completed"
+          }
+        }
+      }
+    },
+    "/v1/channels/airbnb/reviews": {
+      "get": {
+        "summary": "List Airbnb reviews",
+        "tags": [
+          "Airbnb"
+        ],
+        "responses": {
+          "200": {
+            "description": "Reviews"
+          }
+        }
+      },
+      "post": {
+        "summary": "Respond to Airbnb review",
+        "tags": [
+          "Airbnb"
+        ],
+        "responses": {
+          "200": {
+            "description": "Response posted"
+          }
+        }
+      }
+    },
+    "/v1/channels/airbnb/sync": {
+      "post": {
+        "summary": "Bulk sync to Airbnb",
+        "description": "Push all property data to Airbnb in one call.",
+        "tags": [
+          "Airbnb"
+        ],
+        "responses": {
+          "200": {
+            "description": "Sync started"
+          }
+        }
+      }
+    },
+    "/v1/channels/booking/properties": {
+      "get": {
+        "summary": "List Booking.com properties",
+        "tags": [
+          "Booking.com"
+        ],
+        "responses": {
+          "200": {
+            "description": "Properties"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create Booking.com property",
+        "tags": [
+          "Booking.com"
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/v1/channels/booking/availability": {
+      "put": {
+        "summary": "Update Booking.com rates/availability",
+        "tags": [
+          "Booking.com"
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated"
+          }
+        }
+      }
+    },
+    "/v1/channels/booking/content": {
+      "get": {
+        "summary": "Get Booking.com content",
+        "tags": [
+          "Booking.com"
+        ],
+        "responses": {
+          "200": {
+            "description": "Content"
+          }
+        }
+      },
+      "post": {
+        "summary": "Update Booking.com content",
+        "tags": [
+          "Booking.com"
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated"
+          }
+        }
+      }
+    },
+    "/v1/channels/booking/messaging": {
+      "get": {
+        "summary": "List Booking.com conversations",
+        "tags": [
+          "Booking.com"
+        ],
+        "responses": {
+          "200": {
+            "description": "Conversations"
+          }
+        }
+      },
+      "post": {
+        "summary": "Send Booking.com message",
+        "tags": [
+          "Booking.com"
+        ],
+        "responses": {
+          "200": {
+            "description": "Sent"
+          }
+        }
+      }
+    },
+    "/v1/channels/booking/sync": {
+      "post": {
+        "summary": "Bulk sync to Booking.com",
+        "tags": [
+          "Booking.com"
+        ],
+        "responses": {
+          "200": {
+            "description": "Sync started"
+          }
+        }
+      }
+    },
+    "/v1/channels/vrbo/listings": {
+      "get": {
+        "summary": "List VRBO listings",
+        "tags": [
+          "VRBO"
+        ],
+        "responses": {
+          "200": {
+            "description": "Listings"
+          }
+        }
+      }
+    },
+    "/v1/channels/vrbo/reservations": {
+      "get": {
+        "summary": "List VRBO reservations",
+        "tags": [
+          "VRBO"
+        ],
+        "responses": {
+          "200": {
+            "description": "Reservations"
+          }
+        }
+      }
+    },
+    "/v1/channels/plumguide/listings": {
+      "get": {
+        "summary": "List Plumguide listings",
+        "tags": [
+          "Plumguide"
+        ],
+        "responses": {
+          "200": {
+            "description": "Listings"
+          }
+        }
+      }
+    },
+    "/v1/channels/plumguide/availability": {
+      "get": {
+        "summary": "Get Plumguide availability",
+        "tags": [
+          "Plumguide"
+        ],
+        "responses": {
+          "200": {
+            "description": "Availability"
+          }
+        }
+      },
+      "put": {
+        "summary": "Push availability to Plumguide",
+        "tags": [
+          "Plumguide"
+        ],
+        "responses": {
+          "200": {
+            "description": "Pushed"
+          }
+        }
+      }
+    },
+    "/v1/channels/plumguide/pricing": {
+      "get": {
+        "summary": "Get Plumguide pricing",
+        "tags": [
+          "Plumguide"
+        ],
+        "responses": {
+          "200": {
+            "description": "Pricing"
+          }
+        }
+      },
+      "put": {
+        "summary": "Push pricing to Plumguide",
+        "tags": [
+          "Plumguide"
+        ],
+        "responses": {
+          "200": {
+            "description": "Pushed"
+          }
+        }
+      }
+    },
+    "/v1/ai": {
+      "post": {
+        "summary": "AI operation",
+        "description": "Perform an AI-powered operation.\n\nOperations:\n- `respond-to-guest` \u2014 Generate a contextual guest response\n- `classify-intent` \u2014 Classify the intent of a guest message\n- `generate-listing` \u2014 Generate optimized listing description\n- `review-response` \u2014 Generate a review response\n- `price-suggestion` \u2014 Get AI pricing suggestions",
+        "tags": [
+          "AI"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AIOperation"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "AI response (may be streaming)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "string"
+                    },
+                    "confidence": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/billing": {
+      "get": {
+        "summary": "Get plan and usage",
+        "tags": [
+          "Billing"
+        ],
+        "responses": {
+          "200": {
+            "description": "Plan info and current usage"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create checkout session",
+        "description": "Redirect user to Stripe checkout.",
+        "tags": [
+          "Billing"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "plan": {
+                    "type": "string",
+                    "enum": [
+                      "starter",
+                      "growth",
+                      "scale"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Checkout URL"
+          }
+        }
+      }
+    }
+  }
+}
