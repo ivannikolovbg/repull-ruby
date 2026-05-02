@@ -4,13 +4,13 @@ All URIs are relative to *https://api.repull.dev*
 
 | Method | HTTP request | Description |
 | ------ | ------------ | ----------- |
-| [**v1_availability_property_id_get**](AvailabilityApi.md#v1_availability_property_id_get) | **GET** /v1/availability/{propertyId} | Get availability calendar |
-| [**v1_availability_property_id_put**](AvailabilityApi.md#v1_availability_property_id_put) | **PUT** /v1/availability/{propertyId} | Update availability |
+| [**get_availability**](AvailabilityApi.md#get_availability) | **GET** /v1/availability/{propertyId} | Get availability calendar |
+| [**update_availability**](AvailabilityApi.md#update_availability) | **PUT** /v1/availability/{propertyId} | Update availability |
 
 
-## v1_availability_property_id_get
+## get_availability
 
-> <V1AvailabilityPropertyIdGet200Response> v1_availability_property_id_get(property_id, start_date, end_date)
+> <CalendarResponse> get_availability(property_id, start_date, end_date)
 
 Get availability calendar
 
@@ -34,28 +34,28 @@ end_date = Date.parse('2013-10-20') # Date |
 
 begin
   # Get availability calendar
-  result = api_instance.v1_availability_property_id_get(property_id, start_date, end_date)
+  result = api_instance.get_availability(property_id, start_date, end_date)
   p result
 rescue Repull::ApiError => e
-  puts "Error when calling AvailabilityApi->v1_availability_property_id_get: #{e}"
+  puts "Error when calling AvailabilityApi->get_availability: #{e}"
 end
 ```
 
-#### Using the v1_availability_property_id_get_with_http_info variant
+#### Using the get_availability_with_http_info variant
 
 This returns an Array which contains the response data, status code and headers.
 
-> <Array(<V1AvailabilityPropertyIdGet200Response>, Integer, Hash)> v1_availability_property_id_get_with_http_info(property_id, start_date, end_date)
+> <Array(<CalendarResponse>, Integer, Hash)> get_availability_with_http_info(property_id, start_date, end_date)
 
 ```ruby
 begin
   # Get availability calendar
-  data, status_code, headers = api_instance.v1_availability_property_id_get_with_http_info(property_id, start_date, end_date)
+  data, status_code, headers = api_instance.get_availability_with_http_info(property_id, start_date, end_date)
   p status_code # => 2xx
   p headers # => { ... }
-  p data # => <V1AvailabilityPropertyIdGet200Response>
+  p data # => <CalendarResponse>
 rescue Repull::ApiError => e
-  puts "Error when calling AvailabilityApi->v1_availability_property_id_get_with_http_info: #{e}"
+  puts "Error when calling AvailabilityApi->get_availability_with_http_info: #{e}"
 end
 ```
 
@@ -69,7 +69,7 @@ end
 
 ### Return type
 
-[**V1AvailabilityPropertyIdGet200Response**](V1AvailabilityPropertyIdGet200Response.md)
+[**CalendarResponse**](CalendarResponse.md)
 
 ### Authorization
 
@@ -81,9 +81,9 @@ end
 - **Accept**: application/json
 
 
-## v1_availability_property_id_put
+## update_availability
 
-> v1_availability_property_id_put(property_id, opts)
+> update_availability(property_id, opts)
 
 Update availability
 
@@ -103,32 +103,32 @@ end
 api_instance = Repull::AvailabilityApi.new
 property_id = 56 # Integer | 
 opts = {
-  v1_availability_property_id_put_request: Repull::V1AvailabilityPropertyIdPutRequest.new # V1AvailabilityPropertyIdPutRequest | 
+  update_availability_request: Repull::UpdateAvailabilityRequest.new # UpdateAvailabilityRequest | 
 }
 
 begin
   # Update availability
-  api_instance.v1_availability_property_id_put(property_id, opts)
+  api_instance.update_availability(property_id, opts)
 rescue Repull::ApiError => e
-  puts "Error when calling AvailabilityApi->v1_availability_property_id_put: #{e}"
+  puts "Error when calling AvailabilityApi->update_availability: #{e}"
 end
 ```
 
-#### Using the v1_availability_property_id_put_with_http_info variant
+#### Using the update_availability_with_http_info variant
 
 This returns an Array which contains the response data (`nil` in this case), status code and headers.
 
-> <Array(nil, Integer, Hash)> v1_availability_property_id_put_with_http_info(property_id, opts)
+> <Array(nil, Integer, Hash)> update_availability_with_http_info(property_id, opts)
 
 ```ruby
 begin
   # Update availability
-  data, status_code, headers = api_instance.v1_availability_property_id_put_with_http_info(property_id, opts)
+  data, status_code, headers = api_instance.update_availability_with_http_info(property_id, opts)
   p status_code # => 2xx
   p headers # => { ... }
   p data # => nil
 rescue Repull::ApiError => e
-  puts "Error when calling AvailabilityApi->v1_availability_property_id_put_with_http_info: #{e}"
+  puts "Error when calling AvailabilityApi->update_availability_with_http_info: #{e}"
 end
 ```
 
@@ -137,7 +137,7 @@ end
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **property_id** | **Integer** |  |  |
-| **v1_availability_property_id_put_request** | [**V1AvailabilityPropertyIdPutRequest**](V1AvailabilityPropertyIdPutRequest.md) |  | [optional] |
+| **update_availability_request** | [**UpdateAvailabilityRequest**](UpdateAvailabilityRequest.md) |  | [optional] |
 
 ### Return type
 

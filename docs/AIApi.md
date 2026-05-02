@@ -4,12 +4,12 @@ All URIs are relative to *https://api.repull.dev*
 
 | Method | HTTP request | Description |
 | ------ | ------------ | ----------- |
-| [**v1_ai_post**](AIApi.md#v1_ai_post) | **POST** /v1/ai | AI operation |
+| [**create_ai_operation**](AIApi.md#create_ai_operation) | **POST** /v1/ai | AI operation |
 
 
-## v1_ai_post
+## create_ai_operation
 
-> <V1AiPost200Response> v1_ai_post(opts)
+> <CreateAiOperation200Response> create_ai_operation(opts)
 
 AI operation
 
@@ -33,28 +33,28 @@ opts = {
 
 begin
   # AI operation
-  result = api_instance.v1_ai_post(opts)
+  result = api_instance.create_ai_operation(opts)
   p result
 rescue Repull::ApiError => e
-  puts "Error when calling AIApi->v1_ai_post: #{e}"
+  puts "Error when calling AIApi->create_ai_operation: #{e}"
 end
 ```
 
-#### Using the v1_ai_post_with_http_info variant
+#### Using the create_ai_operation_with_http_info variant
 
 This returns an Array which contains the response data, status code and headers.
 
-> <Array(<V1AiPost200Response>, Integer, Hash)> v1_ai_post_with_http_info(opts)
+> <Array(<CreateAiOperation200Response>, Integer, Hash)> create_ai_operation_with_http_info(opts)
 
 ```ruby
 begin
   # AI operation
-  data, status_code, headers = api_instance.v1_ai_post_with_http_info(opts)
+  data, status_code, headers = api_instance.create_ai_operation_with_http_info(opts)
   p status_code # => 2xx
   p headers # => { ... }
-  p data # => <V1AiPost200Response>
+  p data # => <CreateAiOperation200Response>
 rescue Repull::ApiError => e
-  puts "Error when calling AIApi->v1_ai_post_with_http_info: #{e}"
+  puts "Error when calling AIApi->create_ai_operation_with_http_info: #{e}"
 end
 ```
 
@@ -66,7 +66,7 @@ end
 
 ### Return type
 
-[**V1AiPost200Response**](V1AiPost200Response.md)
+[**CreateAiOperation200Response**](CreateAiOperation200Response.md)
 
 ### Authorization
 

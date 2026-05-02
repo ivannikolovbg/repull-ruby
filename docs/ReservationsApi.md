@@ -4,97 +4,16 @@ All URIs are relative to *https://api.repull.dev*
 
 | Method | HTTP request | Description |
 | ------ | ------------ | ----------- |
-| [**v1_reservations_get**](ReservationsApi.md#v1_reservations_get) | **GET** /v1/reservations | List reservations |
-| [**v1_reservations_id_delete**](ReservationsApi.md#v1_reservations_id_delete) | **DELETE** /v1/reservations/{id} | Cancel reservation |
-| [**v1_reservations_id_get**](ReservationsApi.md#v1_reservations_id_get) | **GET** /v1/reservations/{id} | Get reservation details |
-| [**v1_reservations_id_patch**](ReservationsApi.md#v1_reservations_id_patch) | **PATCH** /v1/reservations/{id} | Update reservation |
-| [**v1_reservations_post**](ReservationsApi.md#v1_reservations_post) | **POST** /v1/reservations | Create a reservation |
+| [**cancel_reservation**](ReservationsApi.md#cancel_reservation) | **DELETE** /v1/reservations/{id} | Cancel reservation |
+| [**create_reservation**](ReservationsApi.md#create_reservation) | **POST** /v1/reservations | Create a reservation |
+| [**get_reservation**](ReservationsApi.md#get_reservation) | **GET** /v1/reservations/{id} | Get reservation details |
+| [**list_reservations**](ReservationsApi.md#list_reservations) | **GET** /v1/reservations | List reservations |
+| [**update_reservation**](ReservationsApi.md#update_reservation) | **PATCH** /v1/reservations/{id} | Update reservation |
 
 
-## v1_reservations_get
+## cancel_reservation
 
-> <V1ReservationsGet200Response> v1_reservations_get(opts)
-
-List reservations
-
-Returns reservations across all connected PMS platforms. Filter by platform, status, date range.
-
-### Examples
-
-```ruby
-require 'time'
-require 'repull'
-# setup authorization
-Repull.configure do |config|
-  # Configure Bearer authorization (API Key): bearerAuth
-  config.access_token = 'YOUR_BEARER_TOKEN'
-end
-
-api_instance = Repull::ReservationsApi.new
-opts = {
-  limit: 56, # Integer | Max items per page
-  offset: 56, # Integer | Pagination offset
-  platform: 'platform_example', # String | Filter by booking platform
-  status: 'confirmed', # String | 
-  check_in_from: Date.parse('2013-10-20'), # Date | Check-in date range start
-  check_in_to: Date.parse('2013-10-20') # Date | Check-in date range end
-}
-
-begin
-  # List reservations
-  result = api_instance.v1_reservations_get(opts)
-  p result
-rescue Repull::ApiError => e
-  puts "Error when calling ReservationsApi->v1_reservations_get: #{e}"
-end
-```
-
-#### Using the v1_reservations_get_with_http_info variant
-
-This returns an Array which contains the response data, status code and headers.
-
-> <Array(<V1ReservationsGet200Response>, Integer, Hash)> v1_reservations_get_with_http_info(opts)
-
-```ruby
-begin
-  # List reservations
-  data, status_code, headers = api_instance.v1_reservations_get_with_http_info(opts)
-  p status_code # => 2xx
-  p headers # => { ... }
-  p data # => <V1ReservationsGet200Response>
-rescue Repull::ApiError => e
-  puts "Error when calling ReservationsApi->v1_reservations_get_with_http_info: #{e}"
-end
-```
-
-### Parameters
-
-| Name | Type | Description | Notes |
-| ---- | ---- | ----------- | ----- |
-| **limit** | **Integer** | Max items per page | [optional][default to 25] |
-| **offset** | **Integer** | Pagination offset | [optional][default to 0] |
-| **platform** | **String** | Filter by booking platform | [optional] |
-| **status** | **String** |  | [optional] |
-| **check_in_from** | **Date** | Check-in date range start | [optional] |
-| **check_in_to** | **Date** | Check-in date range end | [optional] |
-
-### Return type
-
-[**V1ReservationsGet200Response**](V1ReservationsGet200Response.md)
-
-### Authorization
-
-[bearerAuth](../README.md#bearerAuth)
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
-
-
-## v1_reservations_id_delete
-
-> v1_reservations_id_delete(id)
+> cancel_reservation(id)
 
 Cancel reservation
 
@@ -114,27 +33,27 @@ id = 56 # Integer |
 
 begin
   # Cancel reservation
-  api_instance.v1_reservations_id_delete(id)
+  api_instance.cancel_reservation(id)
 rescue Repull::ApiError => e
-  puts "Error when calling ReservationsApi->v1_reservations_id_delete: #{e}"
+  puts "Error when calling ReservationsApi->cancel_reservation: #{e}"
 end
 ```
 
-#### Using the v1_reservations_id_delete_with_http_info variant
+#### Using the cancel_reservation_with_http_info variant
 
 This returns an Array which contains the response data (`nil` in this case), status code and headers.
 
-> <Array(nil, Integer, Hash)> v1_reservations_id_delete_with_http_info(id)
+> <Array(nil, Integer, Hash)> cancel_reservation_with_http_info(id)
 
 ```ruby
 begin
   # Cancel reservation
-  data, status_code, headers = api_instance.v1_reservations_id_delete_with_http_info(id)
+  data, status_code, headers = api_instance.cancel_reservation_with_http_info(id)
   p status_code # => 2xx
   p headers # => { ... }
   p data # => nil
 rescue Repull::ApiError => e
-  puts "Error when calling ReservationsApi->v1_reservations_id_delete_with_http_info: #{e}"
+  puts "Error when calling ReservationsApi->cancel_reservation_with_http_info: #{e}"
 end
 ```
 
@@ -158,9 +77,76 @@ nil (empty response body)
 - **Accept**: Not defined
 
 
-## v1_reservations_id_get
+## create_reservation
 
-> <Reservation> v1_reservations_id_get(id)
+> <Reservation> create_reservation(create_reservation_request)
+
+Create a reservation
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ReservationsApi.new
+create_reservation_request = Repull::CreateReservationRequest.new({property_id: 37, check_in: Date.today, check_out: Date.today, guest_first_name: 'guest_first_name_example', guest_last_name: 'guest_last_name_example'}) # CreateReservationRequest | 
+
+begin
+  # Create a reservation
+  result = api_instance.create_reservation(create_reservation_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ReservationsApi->create_reservation: #{e}"
+end
+```
+
+#### Using the create_reservation_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<Reservation>, Integer, Hash)> create_reservation_with_http_info(create_reservation_request)
+
+```ruby
+begin
+  # Create a reservation
+  data, status_code, headers = api_instance.create_reservation_with_http_info(create_reservation_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <Reservation>
+rescue Repull::ApiError => e
+  puts "Error when calling ReservationsApi->create_reservation_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **create_reservation_request** | [**CreateReservationRequest**](CreateReservationRequest.md) |  |  |
+
+### Return type
+
+[**Reservation**](Reservation.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## get_reservation
+
+> <Reservation> get_reservation(id)
 
 Get reservation details
 
@@ -180,28 +166,28 @@ id = 56 # Integer |
 
 begin
   # Get reservation details
-  result = api_instance.v1_reservations_id_get(id)
+  result = api_instance.get_reservation(id)
   p result
 rescue Repull::ApiError => e
-  puts "Error when calling ReservationsApi->v1_reservations_id_get: #{e}"
+  puts "Error when calling ReservationsApi->get_reservation: #{e}"
 end
 ```
 
-#### Using the v1_reservations_id_get_with_http_info variant
+#### Using the get_reservation_with_http_info variant
 
 This returns an Array which contains the response data, status code and headers.
 
-> <Array(<Reservation>, Integer, Hash)> v1_reservations_id_get_with_http_info(id)
+> <Array(<Reservation>, Integer, Hash)> get_reservation_with_http_info(id)
 
 ```ruby
 begin
   # Get reservation details
-  data, status_code, headers = api_instance.v1_reservations_id_get_with_http_info(id)
+  data, status_code, headers = api_instance.get_reservation_with_http_info(id)
   p status_code # => 2xx
   p headers # => { ... }
   p data # => <Reservation>
 rescue Repull::ApiError => e
-  puts "Error when calling ReservationsApi->v1_reservations_id_get_with_http_info: #{e}"
+  puts "Error when calling ReservationsApi->get_reservation_with_http_info: #{e}"
 end
 ```
 
@@ -225,9 +211,98 @@ end
 - **Accept**: application/json
 
 
-## v1_reservations_id_patch
+## list_reservations
 
-> v1_reservations_id_patch(id, opts)
+> <ReservationListResponse> list_reservations(opts)
+
+List reservations
+
+Cursor-paginated list of reservations across all connected PMS platforms. Filter by platform, status, listing, or check-in date range.  **Pagination:** Walk pages with `?cursor=` — pass `pagination.next_cursor` from one response back as `?cursor=` on the next request. Stop when `pagination.has_more` is `false`. `limit` defaults to 50, max 100; requesting more returns 422 (no silent truncation).  **Deprecation:** The `?offset=` query param is supported for backward compatibility but is deprecated and will be removed after the `Sunset` header date. Responses to offset requests carry a `Deprecation: true` header. Migrate to `?cursor=`.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ReservationsApi.new
+opts = {
+  limit: 56, # Integer | Page size (max 100). Requests over the cap return 422.
+  cursor: 'cursor_example', # String | Opaque cursor returned in the previous response's `pagination.next_cursor`. Omit to fetch the first page.
+  offset: 56, # Integer | Deprecated — use `cursor` instead. Will be removed after the `Sunset` response header date.
+  platform: 'platform_example', # String | Filter by booking platform
+  status: 'confirmed', # String | 
+  listing_id: 56, # Integer | Filter to a single listing
+  check_in_after: Date.parse('2013-10-20'), # Date | Check-in date >= this value
+  check_in_before: Date.parse('2013-10-20'), # Date | Check-in date <= this value
+  check_in_from: Date.parse('2013-10-20'), # Date | Deprecated alias for `check_in_after`.
+  check_in_to: Date.parse('2013-10-20') # Date | Deprecated alias for `check_in_before`.
+}
+
+begin
+  # List reservations
+  result = api_instance.list_reservations(opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ReservationsApi->list_reservations: #{e}"
+end
+```
+
+#### Using the list_reservations_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<ReservationListResponse>, Integer, Hash)> list_reservations_with_http_info(opts)
+
+```ruby
+begin
+  # List reservations
+  data, status_code, headers = api_instance.list_reservations_with_http_info(opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <ReservationListResponse>
+rescue Repull::ApiError => e
+  puts "Error when calling ReservationsApi->list_reservations_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **limit** | **Integer** | Page size (max 100). Requests over the cap return 422. | [optional][default to 50] |
+| **cursor** | **String** | Opaque cursor returned in the previous response&#39;s &#x60;pagination.next_cursor&#x60;. Omit to fetch the first page. | [optional] |
+| **offset** | **Integer** | Deprecated — use &#x60;cursor&#x60; instead. Will be removed after the &#x60;Sunset&#x60; response header date. | [optional] |
+| **platform** | **String** | Filter by booking platform | [optional] |
+| **status** | **String** |  | [optional] |
+| **listing_id** | **Integer** | Filter to a single listing | [optional] |
+| **check_in_after** | **Date** | Check-in date &gt;&#x3D; this value | [optional] |
+| **check_in_before** | **Date** | Check-in date &lt;&#x3D; this value | [optional] |
+| **check_in_from** | **Date** | Deprecated alias for &#x60;check_in_after&#x60;. | [optional] |
+| **check_in_to** | **Date** | Deprecated alias for &#x60;check_in_before&#x60;. | [optional] |
+
+### Return type
+
+[**ReservationListResponse**](ReservationListResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## update_reservation
+
+> update_reservation(id, opts)
 
 Update reservation
 
@@ -245,32 +320,32 @@ end
 api_instance = Repull::ReservationsApi.new
 id = 56 # Integer | 
 opts = {
-  v1_reservations_id_patch_request: Repull::V1ReservationsIdPatchRequest.new # V1ReservationsIdPatchRequest | 
+  update_reservation_request: Repull::UpdateReservationRequest.new # UpdateReservationRequest | 
 }
 
 begin
   # Update reservation
-  api_instance.v1_reservations_id_patch(id, opts)
+  api_instance.update_reservation(id, opts)
 rescue Repull::ApiError => e
-  puts "Error when calling ReservationsApi->v1_reservations_id_patch: #{e}"
+  puts "Error when calling ReservationsApi->update_reservation: #{e}"
 end
 ```
 
-#### Using the v1_reservations_id_patch_with_http_info variant
+#### Using the update_reservation_with_http_info variant
 
 This returns an Array which contains the response data (`nil` in this case), status code and headers.
 
-> <Array(nil, Integer, Hash)> v1_reservations_id_patch_with_http_info(id, opts)
+> <Array(nil, Integer, Hash)> update_reservation_with_http_info(id, opts)
 
 ```ruby
 begin
   # Update reservation
-  data, status_code, headers = api_instance.v1_reservations_id_patch_with_http_info(id, opts)
+  data, status_code, headers = api_instance.update_reservation_with_http_info(id, opts)
   p status_code # => 2xx
   p headers # => { ... }
   p data # => nil
 rescue Repull::ApiError => e
-  puts "Error when calling ReservationsApi->v1_reservations_id_patch_with_http_info: #{e}"
+  puts "Error when calling ReservationsApi->update_reservation_with_http_info: #{e}"
 end
 ```
 
@@ -279,7 +354,7 @@ end
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **id** | **Integer** |  |  |
-| **v1_reservations_id_patch_request** | [**V1ReservationsIdPatchRequest**](V1ReservationsIdPatchRequest.md) |  | [optional] |
+| **update_reservation_request** | [**UpdateReservationRequest**](UpdateReservationRequest.md) |  | [optional] |
 
 ### Return type
 
@@ -293,71 +368,4 @@ nil (empty response body)
 
 - **Content-Type**: application/json
 - **Accept**: Not defined
-
-
-## v1_reservations_post
-
-> <Reservation> v1_reservations_post(v1_reservations_post_request)
-
-Create a reservation
-
-### Examples
-
-```ruby
-require 'time'
-require 'repull'
-# setup authorization
-Repull.configure do |config|
-  # Configure Bearer authorization (API Key): bearerAuth
-  config.access_token = 'YOUR_BEARER_TOKEN'
-end
-
-api_instance = Repull::ReservationsApi.new
-v1_reservations_post_request = Repull::V1ReservationsPostRequest.new({property_id: 37, check_in: Date.today, check_out: Date.today, guest_first_name: 'guest_first_name_example', guest_last_name: 'guest_last_name_example'}) # V1ReservationsPostRequest | 
-
-begin
-  # Create a reservation
-  result = api_instance.v1_reservations_post(v1_reservations_post_request)
-  p result
-rescue Repull::ApiError => e
-  puts "Error when calling ReservationsApi->v1_reservations_post: #{e}"
-end
-```
-
-#### Using the v1_reservations_post_with_http_info variant
-
-This returns an Array which contains the response data, status code and headers.
-
-> <Array(<Reservation>, Integer, Hash)> v1_reservations_post_with_http_info(v1_reservations_post_request)
-
-```ruby
-begin
-  # Create a reservation
-  data, status_code, headers = api_instance.v1_reservations_post_with_http_info(v1_reservations_post_request)
-  p status_code # => 2xx
-  p headers # => { ... }
-  p data # => <Reservation>
-rescue Repull::ApiError => e
-  puts "Error when calling ReservationsApi->v1_reservations_post_with_http_info: #{e}"
-end
-```
-
-### Parameters
-
-| Name | Type | Description | Notes |
-| ---- | ---- | ----------- | ----- |
-| **v1_reservations_post_request** | [**V1ReservationsPostRequest**](V1ReservationsPostRequest.md) |  |  |
-
-### Return type
-
-[**Reservation**](Reservation.md)
-
-### Authorization
-
-[bearerAuth](../README.md#bearerAuth)
-
-### HTTP request headers
-
-- **Content-Type**: application/json
-- **Accept**: application/json
 

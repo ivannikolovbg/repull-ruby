@@ -4,80 +4,18 @@ All URIs are relative to *https://api.repull.dev*
 
 | Method | HTTP request | Description |
 | ------ | ------------ | ----------- |
-| [**v1_conversations_get**](ConversationsApi.md#v1_conversations_get) | **GET** /v1/conversations | List conversations |
-| [**v1_conversations_id_messages_get**](ConversationsApi.md#v1_conversations_id_messages_get) | **GET** /v1/conversations/{id}/messages | Get messages in conversation |
-| [**v1_conversations_id_messages_post**](ConversationsApi.md#v1_conversations_id_messages_post) | **POST** /v1/conversations/{id}/messages | Send message |
+| [**get_conversation**](ConversationsApi.md#get_conversation) | **GET** /v1/conversations/{id} | Get conversation detail |
+| [**list_conversation_messages**](ConversationsApi.md#list_conversation_messages) | **GET** /v1/conversations/{id}/messages | List messages in a conversation |
+| [**list_conversations**](ConversationsApi.md#list_conversations) | **GET** /v1/conversations | List conversations |
 
 
-## v1_conversations_get
+## get_conversation
 
-> <V1ConversationsGet200Response> v1_conversations_get
+> <ConversationDetail> get_conversation(id)
 
-List conversations
+Get conversation detail
 
-### Examples
-
-```ruby
-require 'time'
-require 'repull'
-# setup authorization
-Repull.configure do |config|
-  # Configure Bearer authorization (API Key): bearerAuth
-  config.access_token = 'YOUR_BEARER_TOKEN'
-end
-
-api_instance = Repull::ConversationsApi.new
-
-begin
-  # List conversations
-  result = api_instance.v1_conversations_get
-  p result
-rescue Repull::ApiError => e
-  puts "Error when calling ConversationsApi->v1_conversations_get: #{e}"
-end
-```
-
-#### Using the v1_conversations_get_with_http_info variant
-
-This returns an Array which contains the response data, status code and headers.
-
-> <Array(<V1ConversationsGet200Response>, Integer, Hash)> v1_conversations_get_with_http_info
-
-```ruby
-begin
-  # List conversations
-  data, status_code, headers = api_instance.v1_conversations_get_with_http_info
-  p status_code # => 2xx
-  p headers # => { ... }
-  p data # => <V1ConversationsGet200Response>
-rescue Repull::ApiError => e
-  puts "Error when calling ConversationsApi->v1_conversations_get_with_http_info: #{e}"
-end
-```
-
-### Parameters
-
-This endpoint does not need any parameter.
-
-### Return type
-
-[**V1ConversationsGet200Response**](V1ConversationsGet200Response.md)
-
-### Authorization
-
-[bearerAuth](../README.md#bearerAuth)
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
-
-
-## v1_conversations_id_messages_get
-
-> <V1ConversationsIdMessagesGet200Response> v1_conversations_id_messages_get(id)
-
-Get messages in conversation
+Returns one thread (the same shape as the list-row `Conversation`) plus expanded `host` (from `airbnb_hosts` for the thread's `host_id`) and `guest` (resolved via the thread's `reservation_id`, with up to 50 contacts) blocks.
 
 ### Examples
 
@@ -91,32 +29,32 @@ Repull.configure do |config|
 end
 
 api_instance = Repull::ConversationsApi.new
-id = 'id_example' # String | 
+id = 56 # Integer | Internal Repull thread id.
 
 begin
-  # Get messages in conversation
-  result = api_instance.v1_conversations_id_messages_get(id)
+  # Get conversation detail
+  result = api_instance.get_conversation(id)
   p result
 rescue Repull::ApiError => e
-  puts "Error when calling ConversationsApi->v1_conversations_id_messages_get: #{e}"
+  puts "Error when calling ConversationsApi->get_conversation: #{e}"
 end
 ```
 
-#### Using the v1_conversations_id_messages_get_with_http_info variant
+#### Using the get_conversation_with_http_info variant
 
 This returns an Array which contains the response data, status code and headers.
 
-> <Array(<V1ConversationsIdMessagesGet200Response>, Integer, Hash)> v1_conversations_id_messages_get_with_http_info(id)
+> <Array(<ConversationDetail>, Integer, Hash)> get_conversation_with_http_info(id)
 
 ```ruby
 begin
-  # Get messages in conversation
-  data, status_code, headers = api_instance.v1_conversations_id_messages_get_with_http_info(id)
+  # Get conversation detail
+  data, status_code, headers = api_instance.get_conversation_with_http_info(id)
   p status_code # => 2xx
   p headers # => { ... }
-  p data # => <V1ConversationsIdMessagesGet200Response>
+  p data # => <ConversationDetail>
 rescue Repull::ApiError => e
-  puts "Error when calling ConversationsApi->v1_conversations_id_messages_get_with_http_info: #{e}"
+  puts "Error when calling ConversationsApi->get_conversation_with_http_info: #{e}"
 end
 ```
 
@@ -124,11 +62,11 @@ end
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **id** | **String** |  |  |
+| **id** | **Integer** | Internal Repull thread id. |  |
 
 ### Return type
 
-[**V1ConversationsIdMessagesGet200Response**](V1ConversationsIdMessagesGet200Response.md)
+[**ConversationDetail**](ConversationDetail.md)
 
 ### Authorization
 
@@ -140,11 +78,13 @@ end
 - **Accept**: application/json
 
 
-## v1_conversations_id_messages_post
+## list_conversation_messages
 
-> v1_conversations_id_messages_post(id, opts)
+> <MessageListResponse> list_conversation_messages(id, opts)
 
-Send message
+List messages in a conversation
+
+Cursor-paginated messages within one thread. Defaults to newest-first (`?order=desc`); pass `?order=asc` for chronological replay. Use `pagination.next_cursor` from one response as the `cursor` query param of the next request.
 
 ### Examples
 
@@ -158,34 +98,37 @@ Repull.configure do |config|
 end
 
 api_instance = Repull::ConversationsApi.new
-id = 'id_example' # String | 
+id = 56 # Integer | Internal Repull thread id.
 opts = {
-  v1_conversations_id_messages_post_request: Repull::V1ConversationsIdMessagesPostRequest.new({message: 'message_example'}) # V1ConversationsIdMessagesPostRequest | 
+  cursor: 'cursor_example', # String | Opaque cursor returned in the previous response's `pagination.next_cursor`.
+  limit: 56, # Integer | 
+  order: 'asc' # String | `desc` (default) returns newest first. `asc` returns chronological replay.
 }
 
 begin
-  # Send message
-  api_instance.v1_conversations_id_messages_post(id, opts)
+  # List messages in a conversation
+  result = api_instance.list_conversation_messages(id, opts)
+  p result
 rescue Repull::ApiError => e
-  puts "Error when calling ConversationsApi->v1_conversations_id_messages_post: #{e}"
+  puts "Error when calling ConversationsApi->list_conversation_messages: #{e}"
 end
 ```
 
-#### Using the v1_conversations_id_messages_post_with_http_info variant
+#### Using the list_conversation_messages_with_http_info variant
 
-This returns an Array which contains the response data (`nil` in this case), status code and headers.
+This returns an Array which contains the response data, status code and headers.
 
-> <Array(nil, Integer, Hash)> v1_conversations_id_messages_post_with_http_info(id, opts)
+> <Array(<MessageListResponse>, Integer, Hash)> list_conversation_messages_with_http_info(id, opts)
 
 ```ruby
 begin
-  # Send message
-  data, status_code, headers = api_instance.v1_conversations_id_messages_post_with_http_info(id, opts)
+  # List messages in a conversation
+  data, status_code, headers = api_instance.list_conversation_messages_with_http_info(id, opts)
   p status_code # => 2xx
   p headers # => { ... }
-  p data # => nil
+  p data # => <MessageListResponse>
 rescue Repull::ApiError => e
-  puts "Error when calling ConversationsApi->v1_conversations_id_messages_post_with_http_info: #{e}"
+  puts "Error when calling ConversationsApi->list_conversation_messages_with_http_info: #{e}"
 end
 ```
 
@@ -193,12 +136,14 @@ end
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **id** | **String** |  |  |
-| **v1_conversations_id_messages_post_request** | [**V1ConversationsIdMessagesPostRequest**](V1ConversationsIdMessagesPostRequest.md) |  | [optional] |
+| **id** | **Integer** | Internal Repull thread id. |  |
+| **cursor** | **String** | Opaque cursor returned in the previous response&#39;s &#x60;pagination.next_cursor&#x60;. | [optional] |
+| **limit** | **Integer** |  | [optional][default to 20] |
+| **order** | **String** | &#x60;desc&#x60; (default) returns newest first. &#x60;asc&#x60; returns chronological replay. | [optional][default to &#39;desc&#39;] |
 
 ### Return type
 
-nil (empty response body)
+[**MessageListResponse**](MessageListResponse.md)
 
 ### Authorization
 
@@ -206,6 +151,83 @@ nil (empty response body)
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
-- **Accept**: Not defined
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## list_conversations
+
+> <ConversationListResponse> list_conversations(opts)
+
+List conversations
+
+Cursor-paginated list of message threads owned by the workspace. Backed by main vanio's `/api/threads/list` which keyset-paginates against `(last_message_at, id)` for constant per-page cost. Use `pagination.next_cursor` from one response as the `cursor` query param of the next request.  Filters: `platform` (`airbnb`|`booking`|`vrbo`|`website`|`email`), `status` (`open`|`archived` — `archived` is a stable no-op until the bit lands on `message_threads`).
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ConversationsApi.new
+opts = {
+  cursor: 'cursor_example', # String | Opaque cursor returned in the previous response's `pagination.next_cursor`. Omit to fetch the first page.
+  limit: 56, # Integer | Max items per page. Hard cap is 100.
+  platform: 'airbnb', # String | Restrict to threads on a single channel.
+  status: 'open' # String | Filter by archive status. `archived` currently always returns an empty page — kept for forward-compat.
+}
+
+begin
+  # List conversations
+  result = api_instance.list_conversations(opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ConversationsApi->list_conversations: #{e}"
+end
+```
+
+#### Using the list_conversations_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<ConversationListResponse>, Integer, Hash)> list_conversations_with_http_info(opts)
+
+```ruby
+begin
+  # List conversations
+  data, status_code, headers = api_instance.list_conversations_with_http_info(opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <ConversationListResponse>
+rescue Repull::ApiError => e
+  puts "Error when calling ConversationsApi->list_conversations_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **cursor** | **String** | Opaque cursor returned in the previous response&#39;s &#x60;pagination.next_cursor&#x60;. Omit to fetch the first page. | [optional] |
+| **limit** | **Integer** | Max items per page. Hard cap is 100. | [optional][default to 20] |
+| **platform** | **String** | Restrict to threads on a single channel. | [optional] |
+| **status** | **String** | Filter by archive status. &#x60;archived&#x60; currently always returns an empty page — kept for forward-compat. | [optional] |
+
+### Return type
+
+[**ConversationListResponse**](ConversationListResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
 
