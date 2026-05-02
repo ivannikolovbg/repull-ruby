@@ -14,60 +14,60 @@ require 'date'
 require 'time'
 
 module Repull
-  # A booking/reservation from a connected PMS
+  # A booking/reservation from a connected PMS. Identical shape between list-row (`GET /v1/reservations`) and detail (`GET /v1/reservations/{id}`) — SDK consumers can use the same type for both.
   class Reservation < ApiModelBase
     # Internal Repull reservation ID
     attr_accessor :id
 
-    # PMS confirmation code
-    attr_accessor :confirmation_code
+    # Internal Repull listing ID this reservation is on.
+    attr_accessor :listing_id
 
-    # Property ID
-    attr_accessor :property_id
-
-    # Booking source
-    attr_accessor :platform
-
-    attr_accessor :status
+    # Internal Repull guest ID. Use `GET /v1/guests/{id}` for the full profile.
+    attr_accessor :guest_id
 
     attr_accessor :check_in
 
     attr_accessor :check_out
 
-    attr_accessor :guest_first_name
+    attr_accessor :status
 
-    attr_accessor :guest_last_name
+    # Booking source. Lowercase. May be null on legacy rows.
+    attr_accessor :platform
 
-    attr_accessor :guest_email
-
-    attr_accessor :guest_phone
-
-    attr_accessor :guest_count
-
+    # Decimal-as-string (precision 10, scale 2) to preserve precision across mixed-currency totals.
     attr_accessor :total_price
 
+    # ISO 4217 currency code.
     attr_accessor :currency
 
-    attr_accessor :provider
+    # Channel-side confirmation code (Airbnb HMxxx, Booking.com numeric, etc.).
+    attr_accessor :confirmation_code
+
+    # Raw guest details from the source channel (firstName, lastName, email, phone, count, etc.). Shape varies by platform — use the dedicated guest endpoint for a normalized profile.
+    attr_accessor :guest_details
+
+    # When the reservation row was created in Repull (not the booking-on-channel timestamp).
+    attr_accessor :created_at
+
+    # Pre-resolved display name (`firstName lastName`) extracted from `guestDetails`. Null when no first name is available.
+    attr_accessor :guest_name
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
         :'id' => :'id',
-        :'confirmation_code' => :'confirmationCode',
-        :'property_id' => :'propertyId',
-        :'platform' => :'platform',
-        :'status' => :'status',
+        :'listing_id' => :'listingId',
+        :'guest_id' => :'guestId',
         :'check_in' => :'checkIn',
         :'check_out' => :'checkOut',
-        :'guest_first_name' => :'guestFirstName',
-        :'guest_last_name' => :'guestLastName',
-        :'guest_email' => :'guestEmail',
-        :'guest_phone' => :'guestPhone',
-        :'guest_count' => :'guestCount',
+        :'status' => :'status',
+        :'platform' => :'platform',
         :'total_price' => :'totalPrice',
         :'currency' => :'currency',
-        :'provider' => :'provider'
+        :'confirmation_code' => :'confirmationCode',
+        :'guest_details' => :'guestDetails',
+        :'created_at' => :'createdAt',
+        :'guest_name' => :'guestName'
       }
     end
 
@@ -85,26 +85,26 @@ module Repull
     def self.openapi_types
       {
         :'id' => :'Integer',
-        :'confirmation_code' => :'String',
-        :'property_id' => :'Integer',
-        :'platform' => :'String',
-        :'status' => :'String',
+        :'listing_id' => :'Integer',
+        :'guest_id' => :'Integer',
         :'check_in' => :'Date',
         :'check_out' => :'Date',
-        :'guest_first_name' => :'String',
-        :'guest_last_name' => :'String',
-        :'guest_email' => :'String',
-        :'guest_phone' => :'String',
-        :'guest_count' => :'Integer',
-        :'total_price' => :'Float',
+        :'status' => :'String',
+        :'platform' => :'String',
+        :'total_price' => :'String',
         :'currency' => :'String',
-        :'provider' => :'String'
+        :'confirmation_code' => :'String',
+        :'guest_details' => :'Hash<String, Object>',
+        :'created_at' => :'Time',
+        :'guest_name' => :'String'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'platform',
+        :'guest_name'
       ])
     end
 
@@ -126,62 +126,78 @@ module Repull
 
       if attributes.key?(:'id')
         self.id = attributes[:'id']
+      else
+        self.id = nil
       end
 
-      if attributes.key?(:'confirmation_code')
-        self.confirmation_code = attributes[:'confirmation_code']
+      if attributes.key?(:'listing_id')
+        self.listing_id = attributes[:'listing_id']
+      else
+        self.listing_id = nil
       end
 
-      if attributes.key?(:'property_id')
-        self.property_id = attributes[:'property_id']
+      if attributes.key?(:'guest_id')
+        self.guest_id = attributes[:'guest_id']
+      else
+        self.guest_id = nil
+      end
+
+      if attributes.key?(:'check_in')
+        self.check_in = attributes[:'check_in']
+      else
+        self.check_in = nil
+      end
+
+      if attributes.key?(:'check_out')
+        self.check_out = attributes[:'check_out']
+      else
+        self.check_out = nil
+      end
+
+      if attributes.key?(:'status')
+        self.status = attributes[:'status']
+      else
+        self.status = nil
       end
 
       if attributes.key?(:'platform')
         self.platform = attributes[:'platform']
       end
 
-      if attributes.key?(:'status')
-        self.status = attributes[:'status']
-      end
-
-      if attributes.key?(:'check_in')
-        self.check_in = attributes[:'check_in']
-      end
-
-      if attributes.key?(:'check_out')
-        self.check_out = attributes[:'check_out']
-      end
-
-      if attributes.key?(:'guest_first_name')
-        self.guest_first_name = attributes[:'guest_first_name']
-      end
-
-      if attributes.key?(:'guest_last_name')
-        self.guest_last_name = attributes[:'guest_last_name']
-      end
-
-      if attributes.key?(:'guest_email')
-        self.guest_email = attributes[:'guest_email']
-      end
-
-      if attributes.key?(:'guest_phone')
-        self.guest_phone = attributes[:'guest_phone']
-      end
-
-      if attributes.key?(:'guest_count')
-        self.guest_count = attributes[:'guest_count']
-      end
-
       if attributes.key?(:'total_price')
         self.total_price = attributes[:'total_price']
+      else
+        self.total_price = nil
       end
 
       if attributes.key?(:'currency')
         self.currency = attributes[:'currency']
+      else
+        self.currency = nil
       end
 
-      if attributes.key?(:'provider')
-        self.provider = attributes[:'provider']
+      if attributes.key?(:'confirmation_code')
+        self.confirmation_code = attributes[:'confirmation_code']
+      else
+        self.confirmation_code = nil
+      end
+
+      if attributes.key?(:'guest_details')
+        if (value = attributes[:'guest_details']).is_a?(Hash)
+          self.guest_details = value
+        end
+      else
+        self.guest_details = nil
+      end
+
+      if attributes.key?(:'created_at')
+        self.created_at = attributes[:'created_at']
+      else
+        self.created_at = nil
+      end
+
+      if attributes.key?(:'guest_name')
+        self.guest_name = attributes[:'guest_name']
       end
     end
 
@@ -190,6 +206,50 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
+      if @id.nil?
+        invalid_properties.push('invalid value for "id", id cannot be nil.')
+      end
+
+      if @listing_id.nil?
+        invalid_properties.push('invalid value for "listing_id", listing_id cannot be nil.')
+      end
+
+      if @guest_id.nil?
+        invalid_properties.push('invalid value for "guest_id", guest_id cannot be nil.')
+      end
+
+      if @check_in.nil?
+        invalid_properties.push('invalid value for "check_in", check_in cannot be nil.')
+      end
+
+      if @check_out.nil?
+        invalid_properties.push('invalid value for "check_out", check_out cannot be nil.')
+      end
+
+      if @status.nil?
+        invalid_properties.push('invalid value for "status", status cannot be nil.')
+      end
+
+      if @total_price.nil?
+        invalid_properties.push('invalid value for "total_price", total_price cannot be nil.')
+      end
+
+      if @currency.nil?
+        invalid_properties.push('invalid value for "currency", currency cannot be nil.')
+      end
+
+      if @confirmation_code.nil?
+        invalid_properties.push('invalid value for "confirmation_code", confirmation_code cannot be nil.')
+      end
+
+      if @guest_details.nil?
+        invalid_properties.push('invalid value for "guest_details", guest_details cannot be nil.')
+      end
+
+      if @created_at.nil?
+        invalid_properties.push('invalid value for "created_at", created_at cannot be nil.')
+      end
+
       invalid_properties
     end
 
@@ -197,7 +257,128 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
+      return false if @id.nil?
+      return false if @listing_id.nil?
+      return false if @guest_id.nil?
+      return false if @check_in.nil?
+      return false if @check_out.nil?
+      return false if @status.nil?
+      return false if @total_price.nil?
+      return false if @currency.nil?
+      return false if @confirmation_code.nil?
+      return false if @guest_details.nil?
+      return false if @created_at.nil?
       true
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] id Value to be assigned
+    def id=(id)
+      if id.nil?
+        fail ArgumentError, 'id cannot be nil'
+      end
+
+      @id = id
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] listing_id Value to be assigned
+    def listing_id=(listing_id)
+      if listing_id.nil?
+        fail ArgumentError, 'listing_id cannot be nil'
+      end
+
+      @listing_id = listing_id
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] guest_id Value to be assigned
+    def guest_id=(guest_id)
+      if guest_id.nil?
+        fail ArgumentError, 'guest_id cannot be nil'
+      end
+
+      @guest_id = guest_id
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] check_in Value to be assigned
+    def check_in=(check_in)
+      if check_in.nil?
+        fail ArgumentError, 'check_in cannot be nil'
+      end
+
+      @check_in = check_in
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] check_out Value to be assigned
+    def check_out=(check_out)
+      if check_out.nil?
+        fail ArgumentError, 'check_out cannot be nil'
+      end
+
+      @check_out = check_out
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] status Value to be assigned
+    def status=(status)
+      if status.nil?
+        fail ArgumentError, 'status cannot be nil'
+      end
+
+      @status = status
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] total_price Value to be assigned
+    def total_price=(total_price)
+      if total_price.nil?
+        fail ArgumentError, 'total_price cannot be nil'
+      end
+
+      @total_price = total_price
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] currency Value to be assigned
+    def currency=(currency)
+      if currency.nil?
+        fail ArgumentError, 'currency cannot be nil'
+      end
+
+      @currency = currency
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] confirmation_code Value to be assigned
+    def confirmation_code=(confirmation_code)
+      if confirmation_code.nil?
+        fail ArgumentError, 'confirmation_code cannot be nil'
+      end
+
+      @confirmation_code = confirmation_code
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] guest_details Value to be assigned
+    def guest_details=(guest_details)
+      if guest_details.nil?
+        fail ArgumentError, 'guest_details cannot be nil'
+      end
+
+      @guest_details = guest_details
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] created_at Value to be assigned
+    def created_at=(created_at)
+      if created_at.nil?
+        fail ArgumentError, 'created_at cannot be nil'
+      end
+
+      @created_at = created_at
     end
 
     # Checks equality by comparing each attribute.
@@ -206,20 +387,18 @@ module Repull
       return true if self.equal?(o)
       self.class == o.class &&
           id == o.id &&
-          confirmation_code == o.confirmation_code &&
-          property_id == o.property_id &&
-          platform == o.platform &&
-          status == o.status &&
+          listing_id == o.listing_id &&
+          guest_id == o.guest_id &&
           check_in == o.check_in &&
           check_out == o.check_out &&
-          guest_first_name == o.guest_first_name &&
-          guest_last_name == o.guest_last_name &&
-          guest_email == o.guest_email &&
-          guest_phone == o.guest_phone &&
-          guest_count == o.guest_count &&
+          status == o.status &&
+          platform == o.platform &&
           total_price == o.total_price &&
           currency == o.currency &&
-          provider == o.provider
+          confirmation_code == o.confirmation_code &&
+          guest_details == o.guest_details &&
+          created_at == o.created_at &&
+          guest_name == o.guest_name
     end
 
     # @see the `==` method
@@ -231,7 +410,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, confirmation_code, property_id, platform, status, check_in, check_out, guest_first_name, guest_last_name, guest_email, guest_phone, guest_count, total_price, currency, provider].hash
+      [id, listing_id, guest_id, check_in, check_out, status, platform, total_price, currency, confirmation_code, guest_details, created_at, guest_name].hash
     end
 
     # Builds the object from hash

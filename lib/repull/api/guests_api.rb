@@ -23,6 +23,7 @@ module Repull
     # Returns the full guest profile — base list-row fields plus contacts, flags, notes, risk metadata, and reservation aggregates. Aggregates main vanio's `GuestService.getGuestProfile()` into the public Repull shape so SDK consumers don't have to learn the internal schema.
     # @param id [Integer] 
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
     # @return [GuestProfile]
     def get_guest(id, opts = {})
       data, _status_code, _headers = get_guest_with_http_info(id, opts)
@@ -33,6 +34,7 @@ module Repull
     # Returns the full guest profile — base list-row fields plus contacts, flags, notes, risk metadata, and reservation aggregates. Aggregates main vanio&#39;s &#x60;GuestService.getGuestProfile()&#x60; into the public Repull shape so SDK consumers don&#39;t have to learn the internal schema.
     # @param id [Integer] 
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
     # @return [Array<(GuestProfile, Integer, Hash)>] GuestProfile data, response status code and response headers
     def get_guest_with_http_info(id, opts = {})
       if @api_client.config.debugging
@@ -52,6 +54,7 @@ module Repull
       header_params = opts[:header_params] || {}
       # HTTP header 'Accept' (if needed)
       header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      header_params[:'X-Schema'] = opts[:'x_schema'] if !opts[:'x_schema'].nil?
 
       # form parameters
       form_params = opts[:form_params] || {}
@@ -85,6 +88,7 @@ module Repull
     # List guests
     # Cursor-paginated list of guests in the workspace. Walks `guests.id ASC` keyset for constant per-page cost regardless of how many guests the customer has. Use `pagination.next_cursor` from one response as the `cursor` query param of the next request.  Filters: `q` (substring on name/email/phone), `has_reservation` (`true`|`false`), `listing_id` (restrict to guests with at least one reservation on that listing).
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
     # @option opts [String] :cursor Opaque cursor returned in the previous response&#39;s &#x60;pagination.next_cursor&#x60;. Omit to fetch the first page.
     # @option opts [Integer] :limit Max items per page. Hard cap is 100. (default to 20)
     # @option opts [String] :q Case-insensitive substring search on name, email, or phone.
@@ -99,6 +103,7 @@ module Repull
     # List guests
     # Cursor-paginated list of guests in the workspace. Walks &#x60;guests.id ASC&#x60; keyset for constant per-page cost regardless of how many guests the customer has. Use &#x60;pagination.next_cursor&#x60; from one response as the &#x60;cursor&#x60; query param of the next request.  Filters: &#x60;q&#x60; (substring on name/email/phone), &#x60;has_reservation&#x60; (&#x60;true&#x60;|&#x60;false&#x60;), &#x60;listing_id&#x60; (restrict to guests with at least one reservation on that listing).
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
     # @option opts [String] :cursor Opaque cursor returned in the previous response&#39;s &#x60;pagination.next_cursor&#x60;. Omit to fetch the first page.
     # @option opts [Integer] :limit Max items per page. Hard cap is 100. (default to 20)
     # @option opts [String] :q Case-insensitive substring search on name, email, or phone.
@@ -132,6 +137,7 @@ module Repull
       header_params = opts[:header_params] || {}
       # HTTP header 'Accept' (if needed)
       header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      header_params[:'X-Schema'] = opts[:'x_schema'] if !opts[:'x_schema'].nil?
 
       # form parameters
       form_params = opts[:form_params] || {}

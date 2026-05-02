@@ -11,7 +11,7 @@ All URIs are relative to *https://api.repull.dev*
 
 ## get_conversation
 
-> <ConversationDetail> get_conversation(id)
+> <ConversationDetail> get_conversation(id, opts)
 
 Get conversation detail
 
@@ -30,10 +30,13 @@ end
 
 api_instance = Repull::ConversationsApi.new
 id = 56 # Integer | Internal Repull thread id.
+opts = {
+  x_schema: 'my-app-schema' # String | Apply a custom or built-in schema to transform the response. Built-in: `native` (default), `calry`, `calry-v1`. Custom: any schema name created via `POST /v1/schema/custom`. Unknown / inactive schema names fall back to `native`.
+}
 
 begin
   # Get conversation detail
-  result = api_instance.get_conversation(id)
+  result = api_instance.get_conversation(id, opts)
   p result
 rescue Repull::ApiError => e
   puts "Error when calling ConversationsApi->get_conversation: #{e}"
@@ -44,12 +47,12 @@ end
 
 This returns an Array which contains the response data, status code and headers.
 
-> <Array(<ConversationDetail>, Integer, Hash)> get_conversation_with_http_info(id)
+> <Array(<ConversationDetail>, Integer, Hash)> get_conversation_with_http_info(id, opts)
 
 ```ruby
 begin
   # Get conversation detail
-  data, status_code, headers = api_instance.get_conversation_with_http_info(id)
+  data, status_code, headers = api_instance.get_conversation_with_http_info(id, opts)
   p status_code # => 2xx
   p headers # => { ... }
   p data # => <ConversationDetail>
@@ -63,6 +66,7 @@ end
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **id** | **Integer** | Internal Repull thread id. |  |
+| **x_schema** | **String** | Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;. | [optional] |
 
 ### Return type
 
@@ -100,6 +104,7 @@ end
 api_instance = Repull::ConversationsApi.new
 id = 56 # Integer | Internal Repull thread id.
 opts = {
+  x_schema: 'my-app-schema', # String | Apply a custom or built-in schema to transform the response. Built-in: `native` (default), `calry`, `calry-v1`. Custom: any schema name created via `POST /v1/schema/custom`. Unknown / inactive schema names fall back to `native`.
   cursor: 'cursor_example', # String | Opaque cursor returned in the previous response's `pagination.next_cursor`.
   limit: 56, # Integer | 
   order: 'asc' # String | `desc` (default) returns newest first. `asc` returns chronological replay.
@@ -137,6 +142,7 @@ end
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **id** | **Integer** | Internal Repull thread id. |  |
+| **x_schema** | **String** | Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;. | [optional] |
 | **cursor** | **String** | Opaque cursor returned in the previous response&#39;s &#x60;pagination.next_cursor&#x60;. | [optional] |
 | **limit** | **Integer** |  | [optional][default to 20] |
 | **order** | **String** | &#x60;desc&#x60; (default) returns newest first. &#x60;asc&#x60; returns chronological replay. | [optional][default to &#39;desc&#39;] |
@@ -176,6 +182,7 @@ end
 
 api_instance = Repull::ConversationsApi.new
 opts = {
+  x_schema: 'my-app-schema', # String | Apply a custom or built-in schema to transform the response. Built-in: `native` (default), `calry`, `calry-v1`. Custom: any schema name created via `POST /v1/schema/custom`. Unknown / inactive schema names fall back to `native`.
   cursor: 'cursor_example', # String | Opaque cursor returned in the previous response's `pagination.next_cursor`. Omit to fetch the first page.
   limit: 56, # Integer | Max items per page. Hard cap is 100.
   platform: 'airbnb', # String | Restrict to threads on a single channel.
@@ -213,6 +220,7 @@ end
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
+| **x_schema** | **String** | Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;. | [optional] |
 | **cursor** | **String** | Opaque cursor returned in the previous response&#39;s &#x60;pagination.next_cursor&#x60;. Omit to fetch the first page. | [optional] |
 | **limit** | **Integer** | Max items per page. Hard cap is 100. | [optional][default to 20] |
 | **platform** | **String** | Restrict to threads on a single channel. | [optional] |

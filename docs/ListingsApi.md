@@ -244,6 +244,7 @@ end
 
 api_instance = Repull::ListingsApi.new
 opts = {
+  x_schema: 'my-app-schema', # String | Apply a custom or built-in schema to transform the response. Built-in: `native` (default), `calry`, `calry-v1`. Custom: any schema name created via `POST /v1/schema/custom`. Unknown / inactive schema names fall back to `native`.
   cursor: 'cursor_example', # String | Opaque cursor returned in the previous response's `pagination.next_cursor`. Omit to fetch the first page.
   limit: 56, # Integer | Max items per page. Hard cap is 100.
   q: 'q_example', # String | Case-insensitive substring search on name, street, or city.
@@ -282,6 +283,7 @@ end
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
+| **x_schema** | **String** | Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;. | [optional] |
 | **cursor** | **String** | Opaque cursor returned in the previous response&#39;s &#x60;pagination.next_cursor&#x60;. Omit to fetch the first page. | [optional] |
 | **limit** | **Integer** | Max items per page. Hard cap is 100. | [optional][default to 20] |
 | **q** | **String** | Case-insensitive substring search on name, street, or city. | [optional] |

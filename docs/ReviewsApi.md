@@ -10,7 +10,7 @@ All URIs are relative to *https://api.repull.dev*
 
 ## get_review
 
-> <ReviewGetResponse> get_review(id)
+> <ReviewGetResponse> get_review(id, opts)
 
 Get review
 
@@ -29,10 +29,13 @@ end
 
 api_instance = Repull::ReviewsApi.new
 id = 56 # Integer | Internal Repull review id.
+opts = {
+  x_schema: 'my-app-schema' # String | Apply a custom or built-in schema to transform the response. Built-in: `native` (default), `calry`, `calry-v1`. Custom: any schema name created via `POST /v1/schema/custom`. Unknown / inactive schema names fall back to `native`.
+}
 
 begin
   # Get review
-  result = api_instance.get_review(id)
+  result = api_instance.get_review(id, opts)
   p result
 rescue Repull::ApiError => e
   puts "Error when calling ReviewsApi->get_review: #{e}"
@@ -43,12 +46,12 @@ end
 
 This returns an Array which contains the response data, status code and headers.
 
-> <Array(<ReviewGetResponse>, Integer, Hash)> get_review_with_http_info(id)
+> <Array(<ReviewGetResponse>, Integer, Hash)> get_review_with_http_info(id, opts)
 
 ```ruby
 begin
   # Get review
-  data, status_code, headers = api_instance.get_review_with_http_info(id)
+  data, status_code, headers = api_instance.get_review_with_http_info(id, opts)
   p status_code # => 2xx
   p headers # => { ... }
   p data # => <ReviewGetResponse>
@@ -62,6 +65,7 @@ end
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **id** | **Integer** | Internal Repull review id. |  |
+| **x_schema** | **String** | Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;. | [optional] |
 
 ### Return type
 
@@ -98,6 +102,7 @@ end
 
 api_instance = Repull::ReviewsApi.new
 opts = {
+  x_schema: 'my-app-schema', # String | Apply a custom or built-in schema to transform the response. Built-in: `native` (default), `calry`, `calry-v1`. Custom: any schema name created via `POST /v1/schema/custom`. Unknown / inactive schema names fall back to `native`.
   cursor: 'cursor_example', # String | Opaque cursor returned in the previous response's `pagination.next_cursor`.
   limit: 56, # Integer | 
   platform: 'airbnb', # String | 
@@ -139,6 +144,7 @@ end
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
+| **x_schema** | **String** | Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;. | [optional] |
 | **cursor** | **String** | Opaque cursor returned in the previous response&#39;s &#x60;pagination.next_cursor&#x60;. | [optional] |
 | **limit** | **Integer** |  | [optional][default to 20] |
 | **platform** | **String** |  | [optional] |

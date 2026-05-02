@@ -223,6 +223,7 @@ module Repull
     # List listings
     # Cursor-paginated list of listings owned by the authenticated workspace. Use `pagination.next_cursor` from one response as the `cursor` query param of the next request to walk the full set. Filters: `q` (substring on name/street/city), `status`, `channel`.
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
     # @option opts [String] :cursor Opaque cursor returned in the previous response&#39;s &#x60;pagination.next_cursor&#x60;. Omit to fetch the first page.
     # @option opts [Integer] :limit Max items per page. Hard cap is 100. (default to 20)
     # @option opts [String] :q Case-insensitive substring search on name, street, or city.
@@ -237,6 +238,7 @@ module Repull
     # List listings
     # Cursor-paginated list of listings owned by the authenticated workspace. Use &#x60;pagination.next_cursor&#x60; from one response as the &#x60;cursor&#x60; query param of the next request to walk the full set. Filters: &#x60;q&#x60; (substring on name/street/city), &#x60;status&#x60;, &#x60;channel&#x60;.
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
     # @option opts [String] :cursor Opaque cursor returned in the previous response&#39;s &#x60;pagination.next_cursor&#x60;. Omit to fetch the first page.
     # @option opts [Integer] :limit Max items per page. Hard cap is 100. (default to 20)
     # @option opts [String] :q Case-insensitive substring search on name, street, or city.
@@ -274,6 +276,7 @@ module Repull
       header_params = opts[:header_params] || {}
       # HTTP header 'Accept' (if needed)
       header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      header_params[:'X-Schema'] = opts[:'x_schema'] if !opts[:'x_schema'].nil?
 
       # form parameters
       form_params = opts[:form_params] || {}

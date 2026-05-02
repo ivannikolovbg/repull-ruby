@@ -11,5 +11,5 @@ Generator version: 7.22.0
 =end
 
 module Repull
-  VERSION = '0.1.1'
+  VERSION = '0.1.2'
 end

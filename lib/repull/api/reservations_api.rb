@@ -145,8 +145,10 @@ module Repull
     end
 
     # Get reservation details
-    # @param id [Integer] 
+    # Returns the full record for a single reservation, scoped to the authenticated workspace. Response shape is identical to a single row in `GET /v1/reservations` so SDK consumers can use the same type for both. Returns **404** if the id does not exist OR belongs to a different workspace — the API never differentiates the two so caller can't enumerate other workspaces' ids.
+    # @param id [Integer] Internal Repull reservation ID.
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
     # @return [Reservation]
     def get_reservation(id, opts = {})
       data, _status_code, _headers = get_reservation_with_http_info(id, opts)
@@ -154,8 +156,10 @@ module Repull
     end
 
     # Get reservation details
-    # @param id [Integer] 
+    # Returns the full record for a single reservation, scoped to the authenticated workspace. Response shape is identical to a single row in &#x60;GET /v1/reservations&#x60; so SDK consumers can use the same type for both. Returns **404** if the id does not exist OR belongs to a different workspace — the API never differentiates the two so caller can&#39;t enumerate other workspaces&#39; ids.
+    # @param id [Integer] Internal Repull reservation ID.
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
     # @return [Array<(Reservation, Integer, Hash)>] Reservation data, response status code and response headers
     def get_reservation_with_http_info(id, opts = {})
       if @api_client.config.debugging
@@ -175,6 +179,7 @@ module Repull
       header_params = opts[:header_params] || {}
       # HTTP header 'Accept' (if needed)
       header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      header_params[:'X-Schema'] = opts[:'x_schema'] if !opts[:'x_schema'].nil?
 
       # form parameters
       form_params = opts[:form_params] || {}
@@ -208,6 +213,7 @@ module Repull
     # List reservations
     # Cursor-paginated list of reservations across all connected PMS platforms. Filter by platform, status, listing, or check-in date range.  **Pagination:** Walk pages with `?cursor=` — pass `pagination.next_cursor` from one response back as `?cursor=` on the next request. Stop when `pagination.has_more` is `false`. `limit` defaults to 50, max 100; requesting more returns 422 (no silent truncation).  **Deprecation:** The `?offset=` query param is supported for backward compatibility but is deprecated and will be removed after the `Sunset` header date. Responses to offset requests carry a `Deprecation: true` header. Migrate to `?cursor=`.
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
     # @option opts [Integer] :limit Page size (max 100). Requests over the cap return 422. (default to 50)
     # @option opts [String] :cursor Opaque cursor returned in the previous response&#39;s &#x60;pagination.next_cursor&#x60;. Omit to fetch the first page.
     # @option opts [Integer] :offset Deprecated — use &#x60;cursor&#x60; instead. Will be removed after the &#x60;Sunset&#x60; response header date.
@@ -227,6 +233,7 @@ module Repull
     # List reservations
     # Cursor-paginated list of reservations across all connected PMS platforms. Filter by platform, status, listing, or check-in date range.  **Pagination:** Walk pages with &#x60;?cursor&#x3D;&#x60; — pass &#x60;pagination.next_cursor&#x60; from one response back as &#x60;?cursor&#x3D;&#x60; on the next request. Stop when &#x60;pagination.has_more&#x60; is &#x60;false&#x60;. &#x60;limit&#x60; defaults to 50, max 100; requesting more returns 422 (no silent truncation).  **Deprecation:** The &#x60;?offset&#x3D;&#x60; query param is supported for backward compatibility but is deprecated and will be removed after the &#x60;Sunset&#x60; header date. Responses to offset requests carry a &#x60;Deprecation: true&#x60; header. Migrate to &#x60;?cursor&#x3D;&#x60;.
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
     # @option opts [Integer] :limit Page size (max 100). Requests over the cap return 422. (default to 50)
     # @option opts [String] :cursor Opaque cursor returned in the previous response&#39;s &#x60;pagination.next_cursor&#x60;. Omit to fetch the first page.
     # @option opts [Integer] :offset Deprecated — use &#x60;cursor&#x60; instead. Will be removed after the &#x60;Sunset&#x60; response header date.
@@ -278,6 +285,7 @@ module Repull
       header_params = opts[:header_params] || {}
       # HTTP header 'Accept' (if needed)
       header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      header_params[:'X-Schema'] = opts[:'x_schema'] if !opts[:'x_schema'].nil?
 
       # form parameters
       form_params = opts[:form_params] || {}

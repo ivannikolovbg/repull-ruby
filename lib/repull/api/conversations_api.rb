@@ -23,6 +23,7 @@ module Repull
     # Returns one thread (the same shape as the list-row `Conversation`) plus expanded `host` (from `airbnb_hosts` for the thread's `host_id`) and `guest` (resolved via the thread's `reservation_id`, with up to 50 contacts) blocks.
     # @param id [Integer] Internal Repull thread id.
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
     # @return [ConversationDetail]
     def get_conversation(id, opts = {})
       data, _status_code, _headers = get_conversation_with_http_info(id, opts)
@@ -33,6 +34,7 @@ module Repull
     # Returns one thread (the same shape as the list-row &#x60;Conversation&#x60;) plus expanded &#x60;host&#x60; (from &#x60;airbnb_hosts&#x60; for the thread&#39;s &#x60;host_id&#x60;) and &#x60;guest&#x60; (resolved via the thread&#39;s &#x60;reservation_id&#x60;, with up to 50 contacts) blocks.
     # @param id [Integer] Internal Repull thread id.
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
     # @return [Array<(ConversationDetail, Integer, Hash)>] ConversationDetail data, response status code and response headers
     def get_conversation_with_http_info(id, opts = {})
       if @api_client.config.debugging
@@ -52,6 +54,7 @@ module Repull
       header_params = opts[:header_params] || {}
       # HTTP header 'Accept' (if needed)
       header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      header_params[:'X-Schema'] = opts[:'x_schema'] if !opts[:'x_schema'].nil?
 
       # form parameters
       form_params = opts[:form_params] || {}
@@ -86,6 +89,7 @@ module Repull
     # Cursor-paginated messages within one thread. Defaults to newest-first (`?order=desc`); pass `?order=asc` for chronological replay. Use `pagination.next_cursor` from one response as the `cursor` query param of the next request.
     # @param id [Integer] Internal Repull thread id.
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
     # @option opts [String] :cursor Opaque cursor returned in the previous response&#39;s &#x60;pagination.next_cursor&#x60;.
     # @option opts [Integer] :limit  (default to 20)
     # @option opts [String] :order &#x60;desc&#x60; (default) returns newest first. &#x60;asc&#x60; returns chronological replay. (default to 'desc')
@@ -99,6 +103,7 @@ module Repull
     # Cursor-paginated messages within one thread. Defaults to newest-first (&#x60;?order&#x3D;desc&#x60;); pass &#x60;?order&#x3D;asc&#x60; for chronological replay. Use &#x60;pagination.next_cursor&#x60; from one response as the &#x60;cursor&#x60; query param of the next request.
     # @param id [Integer] Internal Repull thread id.
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
     # @option opts [String] :cursor Opaque cursor returned in the previous response&#39;s &#x60;pagination.next_cursor&#x60;.
     # @option opts [Integer] :limit  (default to 20)
     # @option opts [String] :order &#x60;desc&#x60; (default) returns newest first. &#x60;asc&#x60; returns chronological replay. (default to 'desc')
@@ -136,6 +141,7 @@ module Repull
       header_params = opts[:header_params] || {}
       # HTTP header 'Accept' (if needed)
       header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      header_params[:'X-Schema'] = opts[:'x_schema'] if !opts[:'x_schema'].nil?
 
       # form parameters
       form_params = opts[:form_params] || {}
@@ -169,6 +175,7 @@ module Repull
     # List conversations
     # Cursor-paginated list of message threads owned by the workspace. Backed by main vanio's `/api/threads/list` which keyset-paginates against `(last_message_at, id)` for constant per-page cost. Use `pagination.next_cursor` from one response as the `cursor` query param of the next request.  Filters: `platform` (`airbnb`|`booking`|`vrbo`|`website`|`email`), `status` (`open`|`archived` — `archived` is a stable no-op until the bit lands on `message_threads`).
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
     # @option opts [String] :cursor Opaque cursor returned in the previous response&#39;s &#x60;pagination.next_cursor&#x60;. Omit to fetch the first page.
     # @option opts [Integer] :limit Max items per page. Hard cap is 100. (default to 20)
     # @option opts [String] :platform Restrict to threads on a single channel.
@@ -182,6 +189,7 @@ module Repull
     # List conversations
     # Cursor-paginated list of message threads owned by the workspace. Backed by main vanio&#39;s &#x60;/api/threads/list&#x60; which keyset-paginates against &#x60;(last_message_at, id)&#x60; for constant per-page cost. Use &#x60;pagination.next_cursor&#x60; from one response as the &#x60;cursor&#x60; query param of the next request.  Filters: &#x60;platform&#x60; (&#x60;airbnb&#x60;|&#x60;booking&#x60;|&#x60;vrbo&#x60;|&#x60;website&#x60;|&#x60;email&#x60;), &#x60;status&#x60; (&#x60;open&#x60;|&#x60;archived&#x60; — &#x60;archived&#x60; is a stable no-op until the bit lands on &#x60;message_threads&#x60;).
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
     # @option opts [String] :cursor Opaque cursor returned in the previous response&#39;s &#x60;pagination.next_cursor&#x60;. Omit to fetch the first page.
     # @option opts [Integer] :limit Max items per page. Hard cap is 100. (default to 20)
     # @option opts [String] :platform Restrict to threads on a single channel.
@@ -221,6 +229,7 @@ module Repull
       header_params = opts[:header_params] || {}
       # HTTP header 'Accept' (if needed)
       header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      header_params[:'X-Schema'] = opts[:'x_schema'] if !opts[:'x_schema'].nil?
 
       # form parameters
       form_params = opts[:form_params] || {}

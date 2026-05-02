@@ -23,6 +23,7 @@ module Repull
     # Returns one review (matching the list-endpoint `Review` shape) wrapped in `{ data: Review }`. Scoped to the authenticated workspace via the listings join — reviews that don't belong to the workspace return 404 (we don't differentiate to avoid leaking other customers' ids).
     # @param id [Integer] Internal Repull review id.
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
     # @return [ReviewGetResponse]
     def get_review(id, opts = {})
       data, _status_code, _headers = get_review_with_http_info(id, opts)
@@ -33,6 +34,7 @@ module Repull
     # Returns one review (matching the list-endpoint &#x60;Review&#x60; shape) wrapped in &#x60;{ data: Review }&#x60;. Scoped to the authenticated workspace via the listings join — reviews that don&#39;t belong to the workspace return 404 (we don&#39;t differentiate to avoid leaking other customers&#39; ids).
     # @param id [Integer] Internal Repull review id.
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
     # @return [Array<(ReviewGetResponse, Integer, Hash)>] ReviewGetResponse data, response status code and response headers
     def get_review_with_http_info(id, opts = {})
       if @api_client.config.debugging
@@ -52,6 +54,7 @@ module Repull
       header_params = opts[:header_params] || {}
       # HTTP header 'Accept' (if needed)
       header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      header_params[:'X-Schema'] = opts[:'x_schema'] if !opts[:'x_schema'].nil?
 
       # form parameters
       form_params = opts[:form_params] || {}
@@ -85,6 +88,7 @@ module Repull
     # List reviews
     # Cursor-paginated guest + host review stream for the workspace. Backed by main vanio's unified `reviews` table (populated by per-channel backfill crons), so this surface returns the complete cross-channel history — separate from `/v1/channels/airbnb/reviews` which hits Airbnb live.  Filters: `platform` (`airbnb`|`booking`|`vrbo`), `listing_id` (internal Repull listing id), `rating_min` / `rating_max` (inclusive bounds, 0..5), `status` (`responded`|`unanswered`|`all`), `reviewer_role` (`guest` (default) | `host` | `all`).
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
     # @option opts [String] :cursor Opaque cursor returned in the previous response&#39;s &#x60;pagination.next_cursor&#x60;.
     # @option opts [Integer] :limit  (default to 20)
     # @option opts [String] :platform 
@@ -102,6 +106,7 @@ module Repull
     # List reviews
     # Cursor-paginated guest + host review stream for the workspace. Backed by main vanio&#39;s unified &#x60;reviews&#x60; table (populated by per-channel backfill crons), so this surface returns the complete cross-channel history — separate from &#x60;/v1/channels/airbnb/reviews&#x60; which hits Airbnb live.  Filters: &#x60;platform&#x60; (&#x60;airbnb&#x60;|&#x60;booking&#x60;|&#x60;vrbo&#x60;), &#x60;listing_id&#x60; (internal Repull listing id), &#x60;rating_min&#x60; / &#x60;rating_max&#x60; (inclusive bounds, 0..5), &#x60;status&#x60; (&#x60;responded&#x60;|&#x60;unanswered&#x60;|&#x60;all&#x60;), &#x60;reviewer_role&#x60; (&#x60;guest&#x60; (default) | &#x60;host&#x60; | &#x60;all&#x60;).
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
     # @option opts [String] :cursor Opaque cursor returned in the previous response&#39;s &#x60;pagination.next_cursor&#x60;.
     # @option opts [Integer] :limit  (default to 20)
     # @option opts [String] :platform 
@@ -169,6 +174,7 @@ module Repull
       header_params = opts[:header_params] || {}
       # HTTP header 'Accept' (if needed)
       header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      header_params[:'X-Schema'] = opts[:'x_schema'] if !opts[:'x_schema'].nil?
 
       # form parameters
       form_params = opts[:form_params] || {}
