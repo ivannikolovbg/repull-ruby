@@ -4,7 +4,7 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **property_id** | **Integer** |  |  |
+| **property_id** | **String** |  |  |
 | **check_in** | **Date** |  |  |
 | **check_out** | **Date** |  |  |
 | **guest_first_name** | **String** |  |  |

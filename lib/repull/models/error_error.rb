@@ -1,7 +1,7 @@
 =begin
 #Repull API
 
-#The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.  ## Quick Start 1. Get an API key at https://repull.dev/dashboard 2. Connect a PMS: `POST /v1/connect/{provider}` 3. List properties: `GET /v1/properties` 4. Get reservations: `GET /v1/reservations`  ## Authentication All requests require a Bearer token: ``` Authorization: Bearer sk_test_YOUR_API_KEY ```  Sandbox keys start with `sk_test_`, production with `sk_live_`.
+#The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.  ## Designed for AI agents Every error response on this API includes machine-parseable fields so an LLM (Claude in MCP, Cursor, Cline, GPT, etc.) can self-recover without escalating to a human: - `error.code` — stable string identifier (e.g. `invalid_params`, `rate_limit_exceeded`) - `error.message` — human-readable cause - `error.fix` — exact recovery steps (e.g. \"Pass `check_in_after` as ISO 8601: `?check_in_after=2026-01-15`\") - `error.docs_url` — link to the canonical write-up at `https://repull.dev/docs/errors/{code}` - `error.request_id` — id to correlate with server-side logs - `error.field` / `error.value_received` / `error.valid_values` / `error.did_you_mean` — when the error is parameter-specific - `error.retry_after` — seconds to wait before retrying (rate-limit + transient upstream)  `Access-Control-Expose-Headers` lists `x-request-id` and the `X-RateLimit-*` family so browsers can read them on cross-origin responses.  ## Quick Start 1. Get an API key at https://repull.dev/dashboard 2. Connect a PMS: `POST /v1/connect/{provider}` 3. List properties: `GET /v1/properties` 4. Get reservations: `GET /v1/reservations`  ## Authentication All requests require a Bearer token: ``` Authorization: Bearer sk_test_YOUR_API_KEY ```  Sandbox keys start with `sk_test_`, production with `sk_live_`.  ## Request Correlation (X-Request-ID) Every response carries an `X-Request-ID` header, e.g. `X-Request-ID: req_01HXY...`. Include this id in support tickets and bug reports — we can trace the full request lifecycle (auth, rate limit, handler, downstream calls, log row) from a single id.  You may set the header on the inbound request to forward your own trace id; we will echo it back instead of generating a new one. Accepted format: `^[\\\\w.-]{1,128}$`.  The id is also embedded in error envelopes as `request_id` so server-side log diffs work even when the response headers are stripped by an intermediate proxy.  ## Rate Limits The public API enforces a per-API-key sliding-window rate limit on top of the per-tier monthly + daily-AI quotas.  **Default policy:** 600 requests per 60 seconds, per API key. Sliding window — there is no fixed-minute boundary you can burst across.  Every response includes:  | Header | Meaning | |---|---| | `X-RateLimit-Limit` | Requests permitted in the current window. | | `X-RateLimit-Remaining` | Requests left in the current window after this call. | | `X-RateLimit-Reset` | Unix epoch (seconds) when the next slot opens. | | `X-RateLimit-Policy` | Machine-readable policy descriptor, e.g. `600;w=60`. | | `Retry-After` | Seconds to wait before retrying. **Only present on 429 responses.** |  **On 429 (rate_limit_exceeded):** the response body matches the standard error envelope with `code: \"rate_limit_exceeded\"`, plus `limit`, `window_seconds`, `retry_after`, and `request_id` fields. SDKs MUST honor `Retry-After` and use exponential backoff with jitter on subsequent retries — never a tight loop.  Recommended backoff: ``` sleep_ms = (Retry-After * 1000) + random(0..250) ```  Monthly + daily-AI tier quotas (`free`, `starter`, `pro`, `enterprise`) are enforced separately and also surface as 429s; they include `tier`, `scope`, and `resets_at` fields.
 
 The version of the OpenAPI document: 1.0.0
 Contact: ivan@vanio.ai
@@ -15,22 +15,60 @@ require 'time'
 
 module Repull
   class ErrorError < ApiModelBase
+    # Stable machine-parseable error identifier. Match on this for retry logic. Codes are namespaced and never change meaning.
     attr_accessor :code
 
+    # Human-readable cause. Echoes the offending value when relevant.
     attr_accessor :message
 
+    # Exact recovery steps. Surface this verbatim in your UI / agent reasoning trace — it is written to be actionable without further reading.
+    attr_accessor :fix
+
+    # Canonical write-up for this error code. URL pattern: `https://repull.dev/docs/errors/{code}`.
     attr_accessor :docs_url
 
-    # Example of correct usage
-    attr_accessor :example
+    # Opaque per-request id. Mirrors the `x-request-id` response header. Capture it before retrying so logs can be correlated.
+    attr_accessor :request_id
+
+    # Body field, query param, or path segment the error is about. Present when the error is parameter-specific.
+    attr_accessor :field
+
+    # Echo of the offending value (truncated to 200 chars). Useful for debugging — helps callers see what the server actually parsed.
+    attr_accessor :value_received
+
+    # Allowed values when the error is enum-related (e.g. unknown `provider`, unknown `status`).
+    attr_accessor :valid_values
+
+    # Sorted list of every query param this endpoint accepts. Present on `code: \"unknown_params\"` (HTTP 422) so SDK consumers can self-correct without reading docs.
+    attr_accessor :valid_params
+
+    # The endpoint path that produced the error. Present on `code: \"unknown_params\"` so consumers can match validation failures to the operation they invoked.
+    attr_accessor :endpoint
+
+    # Suggestion for typos and near-matches. Present when the server can guess the intent.
+    attr_accessor :did_you_mean
+
+    # Seconds the client should wait before retrying. Mirrors the `Retry-After` HTTP header. Present on rate-limit responses and on transient upstream failures that are safe to retry.
+    attr_accessor :retry_after
+
+    attr_accessor :support
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
         :'code' => :'code',
         :'message' => :'message',
+        :'fix' => :'fix',
         :'docs_url' => :'docs_url',
-        :'example' => :'example'
+        :'request_id' => :'request_id',
+        :'field' => :'field',
+        :'value_received' => :'value_received',
+        :'valid_values' => :'valid_values',
+        :'valid_params' => :'validParams',
+        :'endpoint' => :'endpoint',
+        :'did_you_mean' => :'did_you_mean',
+        :'retry_after' => :'retry_after',
+        :'support' => :'support'
       }
     end
 
@@ -49,14 +87,24 @@ module Repull
       {
         :'code' => :'String',
         :'message' => :'String',
+        :'fix' => :'String',
         :'docs_url' => :'String',
-        :'example' => :'String'
+        :'request_id' => :'String',
+        :'field' => :'String',
+        :'value_received' => :'Object',
+        :'valid_values' => :'Array<String>',
+        :'valid_params' => :'Array<String>',
+        :'endpoint' => :'String',
+        :'did_you_mean' => :'String',
+        :'retry_after' => :'Integer',
+        :'support' => :'ErrorErrorSupport'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'value_received',
       ])
     end
 
@@ -78,18 +126,68 @@ module Repull
 
       if attributes.key?(:'code')
         self.code = attributes[:'code']
+      else
+        self.code = nil
       end
 
       if attributes.key?(:'message')
         self.message = attributes[:'message']
+      else
+        self.message = nil
+      end
+
+      if attributes.key?(:'fix')
+        self.fix = attributes[:'fix']
+      else
+        self.fix = nil
       end
 
       if attributes.key?(:'docs_url')
         self.docs_url = attributes[:'docs_url']
+      else
+        self.docs_url = nil
       end
 
-      if attributes.key?(:'example')
-        self.example = attributes[:'example']
+      if attributes.key?(:'request_id')
+        self.request_id = attributes[:'request_id']
+      else
+        self.request_id = nil
+      end
+
+      if attributes.key?(:'field')
+        self.field = attributes[:'field']
+      end
+
+      if attributes.key?(:'value_received')
+        self.value_received = attributes[:'value_received']
+      end
+
+      if attributes.key?(:'valid_values')
+        if (value = attributes[:'valid_values']).is_a?(Array)
+          self.valid_values = value
+        end
+      end
+
+      if attributes.key?(:'valid_params')
+        if (value = attributes[:'valid_params']).is_a?(Array)
+          self.valid_params = value
+        end
+      end
+
+      if attributes.key?(:'endpoint')
+        self.endpoint = attributes[:'endpoint']
+      end
+
+      if attributes.key?(:'did_you_mean')
+        self.did_you_mean = attributes[:'did_you_mean']
+      end
+
+      if attributes.key?(:'retry_after')
+        self.retry_after = attributes[:'retry_after']
+      end
+
+      if attributes.key?(:'support')
+        self.support = attributes[:'support']
       end
     end
 
@@ -98,6 +196,26 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
+      if @code.nil?
+        invalid_properties.push('invalid value for "code", code cannot be nil.')
+      end
+
+      if @message.nil?
+        invalid_properties.push('invalid value for "message", message cannot be nil.')
+      end
+
+      if @fix.nil?
+        invalid_properties.push('invalid value for "fix", fix cannot be nil.')
+      end
+
+      if @docs_url.nil?
+        invalid_properties.push('invalid value for "docs_url", docs_url cannot be nil.')
+      end
+
+      if @request_id.nil?
+        invalid_properties.push('invalid value for "request_id", request_id cannot be nil.')
+      end
+
       invalid_properties
     end
 
@@ -105,7 +223,62 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
+      return false if @code.nil?
+      return false if @message.nil?
+      return false if @fix.nil?
+      return false if @docs_url.nil?
+      return false if @request_id.nil?
       true
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] code Value to be assigned
+    def code=(code)
+      if code.nil?
+        fail ArgumentError, 'code cannot be nil'
+      end
+
+      @code = code
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] message Value to be assigned
+    def message=(message)
+      if message.nil?
+        fail ArgumentError, 'message cannot be nil'
+      end
+
+      @message = message
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] fix Value to be assigned
+    def fix=(fix)
+      if fix.nil?
+        fail ArgumentError, 'fix cannot be nil'
+      end
+
+      @fix = fix
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] docs_url Value to be assigned
+    def docs_url=(docs_url)
+      if docs_url.nil?
+        fail ArgumentError, 'docs_url cannot be nil'
+      end
+
+      @docs_url = docs_url
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] request_id Value to be assigned
+    def request_id=(request_id)
+      if request_id.nil?
+        fail ArgumentError, 'request_id cannot be nil'
+      end
+
+      @request_id = request_id
     end
 
     # Checks equality by comparing each attribute.
@@ -115,8 +288,17 @@ module Repull
       self.class == o.class &&
           code == o.code &&
           message == o.message &&
+          fix == o.fix &&
           docs_url == o.docs_url &&
-          example == o.example
+          request_id == o.request_id &&
+          field == o.field &&
+          value_received == o.value_received &&
+          valid_values == o.valid_values &&
+          valid_params == o.valid_params &&
+          endpoint == o.endpoint &&
+          did_you_mean == o.did_you_mean &&
+          retry_after == o.retry_after &&
+          support == o.support
     end
 
     # @see the `==` method
@@ -128,7 +310,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [code, message, docs_url, example].hash
+      [code, message, fix, docs_url, request_id, field, value_received, valid_values, valid_params, endpoint, did_you_mean, retry_after, support].hash
     end
 
     # Builds the object from hash

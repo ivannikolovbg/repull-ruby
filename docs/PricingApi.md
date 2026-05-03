@@ -103,7 +103,7 @@ Repull.configure do |config|
 end
 
 api_instance = Repull::PricingApi.new
-bulk_pricing_request = Repull::BulkPricingRequest.new({action: 'action_example', items: [Repull::BulkPricingItem.new({listing_id: 4118, dates: ["2026-05-14", "2026-05-15"]})]}) # BulkPricingRequest | 
+bulk_pricing_request = Repull::BulkPricingRequest.new({action: 'action_example', items: [Repull::BulkPricingItem.new({listing_id: '4118', dates: ["2026-05-14", "2026-05-15"]})]}) # BulkPricingRequest | 
 
 begin
   # Bulk apply or decline pricing recommendations
@@ -233,7 +233,7 @@ end
 
 Pricing recommendation audit trail
 
-Cursor-paginated audit trail of pricing recommendations vs applied prices for a listing across a date window. Use `pagination.next_cursor` from one response as the `cursor` query param of the next request.  Defaults to ±90 days from today. Cursor is a keyset on `date ASC` — stable even if rows are added during a partner's pagination walk. `limit` is capped at 500 — exceeding returns 422.
+Cursor-paginated audit trail of pricing recommendations vs applied prices for a listing across a date window. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request.  Defaults to ±90 days from today. Cursor is a keyset on `date ASC` — stable even if rows are added during a partner's pagination walk. `limit` is capped at 500 — exceeding returns 422.
 
 ### Examples
 
@@ -252,7 +252,7 @@ opts = {
   start_date: Date.parse('2013-10-20'), # Date | Inclusive. Defaults to today - 90 days.
   end_date: Date.parse('2013-10-20'), # Date | Inclusive. Defaults to today + 90 days.
   limit: 56, # Integer | 
-  cursor: 'cursor_example' # String | Opaque cursor returned in the previous response's `pagination.next_cursor`. Omit to fetch the first page.
+  cursor: 'cursor_example' # String | Opaque cursor returned in the previous response's `pagination.nextCursor`. Omit to fetch the first page.
 }
 
 begin
@@ -290,7 +290,7 @@ end
 | **start_date** | **Date** | Inclusive. Defaults to today - 90 days. | [optional] |
 | **end_date** | **Date** | Inclusive. Defaults to today + 90 days. | [optional] |
 | **limit** | **Integer** |  | [optional][default to 100] |
-| **cursor** | **String** | Opaque cursor returned in the previous response&#39;s &#x60;pagination.next_cursor&#x60;. Omit to fetch the first page. | [optional] |
+| **cursor** | **String** | Opaque cursor returned in the previous response&#39;s &#x60;pagination.nextCursor&#x60;. Omit to fetch the first page. | [optional] |
 
 ### Return type
 

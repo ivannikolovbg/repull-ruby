@@ -4,7 +4,7 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **listing_id** | **Integer** |  | [optional] |
+| **listing_id** | **String** |  | [optional] |
 | **level** | **String** |  | [optional] |
 | **scope** | [**ListingSegmentsResponseScope**](ListingSegmentsResponseScope.md) |  | [optional] |
 | **my_segment** | **String** | The source listing&#39;s own &#x60;ai_segment&#x60; (or null if not yet scored). | [optional] |

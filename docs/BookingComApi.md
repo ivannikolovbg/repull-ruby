@@ -22,6 +22,8 @@ All URIs are relative to *https://api.repull.dev*
 
 Create Booking.com property
 
+Onboard a new Booking.com hotel via the OAuth Connect flow. Returns the hotel id once Stage-1 designation completes in the Extranet.
+
 ### Examples
 
 ```ruby
@@ -85,6 +87,8 @@ This endpoint does not need any parameter.
 > get_booking_content
 
 Get Booking.com content
+
+Fetch the current content (descriptions, amenities, photos) for a Booking.com property. Used to round-trip edits through Repull.
 
 ### Examples
 
@@ -228,6 +232,8 @@ end
 
 List Booking.com conversations
 
+List Booking.com guest conversations. Cursor-paginated. Use the messaging POST to send a reply.
+
 ### Examples
 
 ```ruby
@@ -291,6 +297,8 @@ This endpoint does not need any parameter.
 > <BookingPropertyListResponse> list_booking_properties
 
 List Booking.com properties
+
+List Booking.com hotels claimed by this workspace. Each row includes the Booking-side hotel id and the connected room types.
 
 ### Examples
 
@@ -356,6 +364,8 @@ This endpoint does not need any parameter.
 
 Send Booking.com message
 
+Send a message in a Booking.com conversation as the host. Booking enforces content rules similar to Airbnb.
+
 ### Examples
 
 ```ruby
@@ -418,6 +428,8 @@ nil (empty response body)
 > sync_booking
 
 Bulk sync to Booking.com
+
+Trigger a full bulk sync of properties + availability + rates to Booking.com. Runs async — returns 202 with a job id; poll `/v1/sync/jobs/{id}` for status.
 
 ### Examples
 
@@ -482,6 +494,8 @@ nil (empty response body)
 
 Update Booking.com rates/availability
 
+Push availability + rate changes to Booking.com's OTA system. Accepts the standard OTA rate message — see Booking's OTA docs for the field shape. Errors from upstream surface as `booking_error`.
+
 ### Examples
 
 ```ruby
@@ -544,6 +558,8 @@ nil (empty response body)
 > update_booking_content
 
 Update Booking.com content
+
+Push content changes (descriptions, amenities, photos) to Booking.com. Booking enforces editorial review on text fields — changes appear after their content moderation queue clears.
 
 ### Examples
 

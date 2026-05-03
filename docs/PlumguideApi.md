@@ -17,6 +17,8 @@ All URIs are relative to *https://api.repull.dev*
 
 Get Plumguide availability
 
+Read the per-day availability calendar for a Plumguide listing. Returns the same row shape as Airbnb availability for SDK convenience.
+
 ### Examples
 
 ```ruby
@@ -80,6 +82,8 @@ nil (empty response body)
 
 Get Plumguide pricing
 
+Read the current pricing for a Plumguide listing (base price, currency, weekend uplift).
+
 ### Examples
 
 ```ruby
@@ -142,6 +146,8 @@ nil (empty response body)
 > <PlumguideListingListResponse> list_plumguide_listings
 
 List Plumguide listings
+
+List Plumguide listings this workspace has access to. Plumguide is approval-based — listings appear once Plumguide has accepted them.
 
 ### Examples
 
@@ -207,6 +213,8 @@ This endpoint does not need any parameter.
 
 Push availability to Plumguide
 
+Push per-day availability changes to Plumguide. Plumguide accepts only the next 24 months — dates beyond that are silently ignored.
+
 ### Examples
 
 ```ruby
@@ -269,6 +277,8 @@ nil (empty response body)
 > update_plumguide_pricing
 
 Push pricing to Plumguide
+
+Push pricing changes to Plumguide. Plumguide rounds all prices to whole units of the listing currency — sub-unit precision is silently truncated.
 
 ### Examples
 

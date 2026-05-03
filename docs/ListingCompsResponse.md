@@ -4,7 +4,7 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **listing_id** | **Integer** |  | [optional] |
+| **listing_id** | **String** |  | [optional] |
 | **date_range** | [**ListingPricingResponseDateRange**](ListingPricingResponseDateRange.md) |  | [optional] |
 | **radius_km** | **Float** |  | [optional] |
 | **total** | **Integer** |  | [optional] |

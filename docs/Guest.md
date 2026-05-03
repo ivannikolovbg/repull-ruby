@@ -4,7 +4,7 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **id** | **Integer** |  | [optional] |
+| **id** | **String** |  | [optional] |
 | **display_name** | **String** | Short display name (first name). | [optional] |
 | **display_name_long** | **String** | Long display name (first + last). Falls back to displayName when last name is missing. | [optional] |
 | **avatar_url** | **String** |  | [optional] |

@@ -5,6 +5,7 @@
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **data** | [**Array&lt;CustomSchemaSummary&gt;**](CustomSchemaSummary.md) |  | [optional] |
+| **pagination** | [**Pagination**](Pagination.md) |  | [optional] |
 
 ## Example
 
@@ -12,7 +13,8 @@
 require 'repull'
 
 instance = Repull::CustomSchemaListResponse.new(
-  data: null
+  data: null,
+  pagination: null
 )
 ```
 

@@ -4,13 +4,13 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **id** | **Integer** | Internal Repull review id — pass back to &#x60;/v1/reviews/{id}&#x60;. | [optional] |
+| **id** | **String** | Internal Repull review id — pass back to &#x60;/v1/reviews/{id}&#x60;. | [optional] |
 | **external_id** | **String** | ID in the source channel (Airbnb review id, Booking review id, etc.). | [optional] |
 | **platform** | **String** |  | [optional] |
-| **listing_id** | **Integer** | Internal Repull listing id the review is attached to. | [optional] |
-| **reservation_id** | **Integer** |  | [optional] |
+| **listing_id** | **String** | Internal Repull listing id the review is attached to. | [optional] |
+| **reservation_id** | **String** |  | [optional] |
 | **reservation_confirmation_code** | **String** | Channel-side confirmation code for the reservation being reviewed. | [optional] |
-| **guest_id** | **Integer** |  | [optional] |
+| **guest_id** | **String** |  | [optional] |
 | **guest_name** | **String** |  | [optional] |
 | **guest_avatar** | **String** |  | [optional] |
 | **reviewer_role** | **String** | Who wrote the review — &#x60;guest&#x60; (about the host/property) or &#x60;host&#x60; (about the guest). | [optional] |

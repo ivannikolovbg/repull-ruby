@@ -1,7 +1,7 @@
 =begin
 #Repull API
 
-#The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.  ## Quick Start 1. Get an API key at https://repull.dev/dashboard 2. Connect a PMS: `POST /v1/connect/{provider}` 3. List properties: `GET /v1/properties` 4. Get reservations: `GET /v1/reservations`  ## Authentication All requests require a Bearer token: ``` Authorization: Bearer sk_test_YOUR_API_KEY ```  Sandbox keys start with `sk_test_`, production with `sk_live_`.
+#The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.  ## Designed for AI agents Every error response on this API includes machine-parseable fields so an LLM (Claude in MCP, Cursor, Cline, GPT, etc.) can self-recover without escalating to a human: - `error.code` — stable string identifier (e.g. `invalid_params`, `rate_limit_exceeded`) - `error.message` — human-readable cause - `error.fix` — exact recovery steps (e.g. \"Pass `check_in_after` as ISO 8601: `?check_in_after=2026-01-15`\") - `error.docs_url` — link to the canonical write-up at `https://repull.dev/docs/errors/{code}` - `error.request_id` — id to correlate with server-side logs - `error.field` / `error.value_received` / `error.valid_values` / `error.did_you_mean` — when the error is parameter-specific - `error.retry_after` — seconds to wait before retrying (rate-limit + transient upstream)  `Access-Control-Expose-Headers` lists `x-request-id` and the `X-RateLimit-*` family so browsers can read them on cross-origin responses.  ## Quick Start 1. Get an API key at https://repull.dev/dashboard 2. Connect a PMS: `POST /v1/connect/{provider}` 3. List properties: `GET /v1/properties` 4. Get reservations: `GET /v1/reservations`  ## Authentication All requests require a Bearer token: ``` Authorization: Bearer sk_test_YOUR_API_KEY ```  Sandbox keys start with `sk_test_`, production with `sk_live_`.  ## Request Correlation (X-Request-ID) Every response carries an `X-Request-ID` header, e.g. `X-Request-ID: req_01HXY...`. Include this id in support tickets and bug reports — we can trace the full request lifecycle (auth, rate limit, handler, downstream calls, log row) from a single id.  You may set the header on the inbound request to forward your own trace id; we will echo it back instead of generating a new one. Accepted format: `^[\\\\w.-]{1,128}$`.  The id is also embedded in error envelopes as `request_id` so server-side log diffs work even when the response headers are stripped by an intermediate proxy.  ## Rate Limits The public API enforces a per-API-key sliding-window rate limit on top of the per-tier monthly + daily-AI quotas.  **Default policy:** 600 requests per 60 seconds, per API key. Sliding window — there is no fixed-minute boundary you can burst across.  Every response includes:  | Header | Meaning | |---|---| | `X-RateLimit-Limit` | Requests permitted in the current window. | | `X-RateLimit-Remaining` | Requests left in the current window after this call. | | `X-RateLimit-Reset` | Unix epoch (seconds) when the next slot opens. | | `X-RateLimit-Policy` | Machine-readable policy descriptor, e.g. `600;w=60`. | | `Retry-After` | Seconds to wait before retrying. **Only present on 429 responses.** |  **On 429 (rate_limit_exceeded):** the response body matches the standard error envelope with `code: \"rate_limit_exceeded\"`, plus `limit`, `window_seconds`, `retry_after`, and `request_id` fields. SDKs MUST honor `Retry-After` and use exponential backoff with jitter on subsequent retries — never a tight loop.  Recommended backoff: ``` sleep_ms = (Retry-After * 1000) + random(0..250) ```  Monthly + daily-AI tier quotas (`free`, `starter`, `pro`, `enterprise`) are enforced separately and also surface as 429s; they include `tier`, `scope`, and `resets_at` fields.
 
 The version of the OpenAPI document: 1.0.0
 Contact: ivan@vanio.ai
@@ -20,6 +20,7 @@ module Repull
       @api_client = api_client
     end
     # Cancel reservation
+    # Cancel an existing reservation. Cancellation rules vary by provider — Airbnb host-cancellations carry penalties; Booking.com cancellations apply the per-rate-plan policy. Once 200 is returned, the upstream PMS state is committed.
     # @param id [Integer] 
     # @param [Hash] opts the optional parameters
     # @return [nil]
@@ -29,6 +30,7 @@ module Repull
     end
 
     # Cancel reservation
+    # Cancel an existing reservation. Cancellation rules vary by provider — Airbnb host-cancellations carry penalties; Booking.com cancellations apply the per-rate-plan policy. Once 200 is returned, the upstream PMS state is committed.
     # @param id [Integer] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
@@ -79,6 +81,7 @@ module Repull
     end
 
     # Create a reservation
+    # Create a reservation in the source PMS. Required fields depend on the connected provider (e.g. Airbnb requires guest email; Booking.com requires hotel id). Validation errors return 422 with the offending `field` populated.
     # @param create_reservation_request [CreateReservationRequest] 
     # @param [Hash] opts the optional parameters
     # @return [Reservation]
@@ -88,6 +91,7 @@ module Repull
     end
 
     # Create a reservation
+    # Create a reservation in the source PMS. Required fields depend on the connected provider (e.g. Airbnb requires guest email; Booking.com requires hotel id). Validation errors return 422 with the offending &#x60;field&#x60; populated.
     # @param create_reservation_request [CreateReservationRequest] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(Reservation, Integer, Hash)>] Reservation data, response status code and response headers
@@ -211,12 +215,11 @@ module Repull
     end
 
     # List reservations
-    # Cursor-paginated list of reservations across all connected PMS platforms. Filter by platform, status, listing, or check-in date range.  **Pagination:** Walk pages with `?cursor=` — pass `pagination.next_cursor` from one response back as `?cursor=` on the next request. Stop when `pagination.has_more` is `false`. `limit` defaults to 50, max 100; requesting more returns 422 (no silent truncation).  **Deprecation:** The `?offset=` query param is supported for backward compatibility but is deprecated and will be removed after the `Sunset` header date. Responses to offset requests carry a `Deprecation: true` header. Migrate to `?cursor=`.
+    # Cursor-paginated list of reservations across all connected PMS platforms. Filter by platform, status, listing, or check-in date range.  **Pagination:** Walk pages with `?cursor=` — pass `pagination.nextCursor` from one response back as `?cursor=` on the next request. Stop when `pagination.hasMore` is `false`. `limit` defaults to 50, max 100; requesting more returns 422 (no silent truncation).  **Breaking change:** `?offset=` is no longer accepted. Requests passing it return 422 with a `did_you_mean: 'cursor'` hint.
     # @param [Hash] opts the optional parameters
     # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
     # @option opts [Integer] :limit Page size (max 100). Requests over the cap return 422. (default to 50)
-    # @option opts [String] :cursor Opaque cursor returned in the previous response&#39;s &#x60;pagination.next_cursor&#x60;. Omit to fetch the first page.
-    # @option opts [Integer] :offset Deprecated — use &#x60;cursor&#x60; instead. Will be removed after the &#x60;Sunset&#x60; response header date.
+    # @option opts [String] :cursor Opaque cursor returned in the previous response&#39;s &#x60;pagination.nextCursor&#x60;. Omit to fetch the first page.
     # @option opts [String] :platform Filter by booking platform
     # @option opts [String] :status 
     # @option opts [Integer] :listing_id Filter to a single listing
@@ -224,6 +227,7 @@ module Repull
     # @option opts [Date] :check_in_before Check-in date &lt;&#x3D; this value
     # @option opts [Date] :check_in_from Deprecated alias for &#x60;check_in_after&#x60;.
     # @option opts [Date] :check_in_to Deprecated alias for &#x60;check_in_before&#x60;.
+    # @option opts [Boolean] :include_total When &#x60;true&#x60; (default), the response&#39;s &#x60;pagination.total&#x60; carries the count of rows matching the current filter, across all pages. Pass &#x60;false&#x60; to skip the count for very large workspaces where the per-page COUNT(*) cost matters. (default to true)
     # @return [ReservationListResponse]
     def list_reservations(opts = {})
       data, _status_code, _headers = list_reservations_with_http_info(opts)
@@ -231,12 +235,11 @@ module Repull
     end
 
     # List reservations
-    # Cursor-paginated list of reservations across all connected PMS platforms. Filter by platform, status, listing, or check-in date range.  **Pagination:** Walk pages with &#x60;?cursor&#x3D;&#x60; — pass &#x60;pagination.next_cursor&#x60; from one response back as &#x60;?cursor&#x3D;&#x60; on the next request. Stop when &#x60;pagination.has_more&#x60; is &#x60;false&#x60;. &#x60;limit&#x60; defaults to 50, max 100; requesting more returns 422 (no silent truncation).  **Deprecation:** The &#x60;?offset&#x3D;&#x60; query param is supported for backward compatibility but is deprecated and will be removed after the &#x60;Sunset&#x60; header date. Responses to offset requests carry a &#x60;Deprecation: true&#x60; header. Migrate to &#x60;?cursor&#x3D;&#x60;.
+    # Cursor-paginated list of reservations across all connected PMS platforms. Filter by platform, status, listing, or check-in date range.  **Pagination:** Walk pages with &#x60;?cursor&#x3D;&#x60; — pass &#x60;pagination.nextCursor&#x60; from one response back as &#x60;?cursor&#x3D;&#x60; on the next request. Stop when &#x60;pagination.hasMore&#x60; is &#x60;false&#x60;. &#x60;limit&#x60; defaults to 50, max 100; requesting more returns 422 (no silent truncation).  **Breaking change:** &#x60;?offset&#x3D;&#x60; is no longer accepted. Requests passing it return 422 with a &#x60;did_you_mean: &#39;cursor&#39;&#x60; hint.
     # @param [Hash] opts the optional parameters
     # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
     # @option opts [Integer] :limit Page size (max 100). Requests over the cap return 422. (default to 50)
-    # @option opts [String] :cursor Opaque cursor returned in the previous response&#39;s &#x60;pagination.next_cursor&#x60;. Omit to fetch the first page.
-    # @option opts [Integer] :offset Deprecated — use &#x60;cursor&#x60; instead. Will be removed after the &#x60;Sunset&#x60; response header date.
+    # @option opts [String] :cursor Opaque cursor returned in the previous response&#39;s &#x60;pagination.nextCursor&#x60;. Omit to fetch the first page.
     # @option opts [String] :platform Filter by booking platform
     # @option opts [String] :status 
     # @option opts [Integer] :listing_id Filter to a single listing
@@ -244,6 +247,7 @@ module Repull
     # @option opts [Date] :check_in_before Check-in date &lt;&#x3D; this value
     # @option opts [Date] :check_in_from Deprecated alias for &#x60;check_in_after&#x60;.
     # @option opts [Date] :check_in_to Deprecated alias for &#x60;check_in_before&#x60;.
+    # @option opts [Boolean] :include_total When &#x60;true&#x60; (default), the response&#39;s &#x60;pagination.total&#x60; carries the count of rows matching the current filter, across all pages. Pass &#x60;false&#x60; to skip the count for very large workspaces where the per-page COUNT(*) cost matters. (default to true)
     # @return [Array<(ReservationListResponse, Integer, Hash)>] ReservationListResponse data, response status code and response headers
     def list_reservations_with_http_info(opts = {})
       if @api_client.config.debugging
@@ -257,10 +261,6 @@ module Repull
         fail ArgumentError, 'invalid value for "opts[:"limit"]" when calling ReservationsApi.list_reservations, must be greater than or equal to 1.'
       end
 
-      if @api_client.config.client_side_validation && !opts[:'offset'].nil? && opts[:'offset'] < 0
-        fail ArgumentError, 'invalid value for "opts[:"offset"]" when calling ReservationsApi.list_reservations, must be greater than or equal to 0.'
-      end
-
       allowable_values = ["confirmed", "pending", "cancelled", "completed"]
       if @api_client.config.client_side_validation && opts[:'status'] && !allowable_values.include?(opts[:'status'])
         fail ArgumentError, "invalid value for \"status\", must be one of #{allowable_values}"
@@ -272,14 +272,14 @@ module Repull
       query_params = opts[:query_params] || {}
       query_params[:'limit'] = opts[:'limit'] if !opts[:'limit'].nil?
       query_params[:'cursor'] = opts[:'cursor'] if !opts[:'cursor'].nil?
-      query_params[:'offset'] = opts[:'offset'] if !opts[:'offset'].nil?
       query_params[:'platform'] = opts[:'platform'] if !opts[:'platform'].nil?
       query_params[:'status'] = opts[:'status'] if !opts[:'status'].nil?
-      query_params[:'listing_id'] = opts[:'listing_id'] if !opts[:'listing_id'].nil?
+      query_params[:'listingId'] = opts[:'listing_id'] if !opts[:'listing_id'].nil?
       query_params[:'check_in_after'] = opts[:'check_in_after'] if !opts[:'check_in_after'].nil?
       query_params[:'check_in_before'] = opts[:'check_in_before'] if !opts[:'check_in_before'].nil?
       query_params[:'checkInFrom'] = opts[:'check_in_from'] if !opts[:'check_in_from'].nil?
       query_params[:'checkInTo'] = opts[:'check_in_to'] if !opts[:'check_in_to'].nil?
+      query_params[:'include_total'] = opts[:'include_total'] if !opts[:'include_total'].nil?
 
       # header parameters
       header_params = opts[:header_params] || {}
@@ -317,6 +317,7 @@ module Repull
     end
 
     # Update reservation
+    # Patch reservation fields (dates, status, special requests). Only fields included in the body are modified. Use the cancel endpoint for cancellations — DELETE handles cancellation but not partial updates.
     # @param id [Integer] 
     # @param [Hash] opts the optional parameters
     # @option opts [UpdateReservationRequest] :update_reservation_request 
@@ -327,6 +328,7 @@ module Repull
     end
 
     # Update reservation
+    # Patch reservation fields (dates, status, special requests). Only fields included in the body are modified. Use the cancel endpoint for cancellations — DELETE handles cancellation but not partial updates.
     # @param id [Integer] 
     # @param [Hash] opts the optional parameters
     # @option opts [UpdateReservationRequest] :update_reservation_request 

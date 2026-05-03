@@ -4,7 +4,7 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **id** | **Integer** | Repull listing id | [optional] |
+| **id** | **String** | Repull listing id | [optional] |
 | **name** | **String** |  | [optional] |
 | **address** | [**ListingAddress**](ListingAddress.md) |  | [optional] |
 | **thumbnail_url** | **String** |  | [optional] |

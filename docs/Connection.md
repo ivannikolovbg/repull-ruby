@@ -4,7 +4,7 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **id** | **Integer** |  | [optional] |
+| **id** | **String** |  | [optional] |
 | **provider** | **String** |  | [optional] |
 | **status** | **String** |  | [optional] |
 | **external_account_id** | **String** |  | [optional] |

@@ -87,7 +87,7 @@ end
 
 List guests
 
-Cursor-paginated list of guests in the workspace. Walks `guests.id ASC` keyset for constant per-page cost regardless of how many guests the customer has. Use `pagination.next_cursor` from one response as the `cursor` query param of the next request.  Filters: `q` (substring on name/email/phone), `has_reservation` (`true`|`false`), `listing_id` (restrict to guests with at least one reservation on that listing).
+Cursor-paginated list of guests in the workspace. Walks `guests.id ASC` keyset for constant per-page cost regardless of how many guests the customer has. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request.  Filters: `q` (substring on name/email/phone), `has_reservation` (`true`|`false`), `listing_id` (restrict to guests with at least one reservation on that listing).
 
 ### Examples
 
@@ -103,7 +103,7 @@ end
 api_instance = Repull::GuestsApi.new
 opts = {
   x_schema: 'my-app-schema', # String | Apply a custom or built-in schema to transform the response. Built-in: `native` (default), `calry`, `calry-v1`. Custom: any schema name created via `POST /v1/schema/custom`. Unknown / inactive schema names fall back to `native`.
-  cursor: 'cursor_example', # String | Opaque cursor returned in the previous response's `pagination.next_cursor`. Omit to fetch the first page.
+  cursor: 'cursor_example', # String | Opaque cursor returned in the previous response's `pagination.nextCursor`. Omit to fetch the first page.
   limit: 56, # Integer | Max items per page. Hard cap is 100.
   q: 'q_example', # String | Case-insensitive substring search on name, email, or phone.
   has_reservation: true, # Boolean | Restrict to guests that do (`true`) or do not (`false`) have any reservation on file.
@@ -142,7 +142,7 @@ end
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **x_schema** | **String** | Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;. | [optional] |
-| **cursor** | **String** | Opaque cursor returned in the previous response&#39;s &#x60;pagination.next_cursor&#x60;. Omit to fetch the first page. | [optional] |
+| **cursor** | **String** | Opaque cursor returned in the previous response&#39;s &#x60;pagination.nextCursor&#x60;. Omit to fetch the first page. | [optional] |
 | **limit** | **Integer** | Max items per page. Hard cap is 100. | [optional][default to 20] |
 | **q** | **String** | Case-insensitive substring search on name, email, or phone. | [optional] |
 | **has_reservation** | **Boolean** | Restrict to guests that do (&#x60;true&#x60;) or do not (&#x60;false&#x60;) have any reservation on file. | [optional] |

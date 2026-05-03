@@ -14,16 +14,21 @@ require 'date'
 require 'time'
 
 module Repull
-  class AirbnbThreadListResponse < ApiModelBase
-    attr_accessor :data
+  # LAST-RESORT contact handle. Only set on errors that genuinely cannot be self-fixed (billing dispute, account-state corruption, OAuth partner intervention). Never fall back to support before trying `fix` and `docs_url`.
+  class ErrorErrorSupport < ApiModelBase
+    attr_accessor :email
 
-    attr_accessor :pagination
+    attr_accessor :url
+
+    # Internal reference to quote when contacting support.
+    attr_accessor :reference
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'data' => :'data',
-        :'pagination' => :'pagination'
+        :'email' => :'email',
+        :'url' => :'url',
+        :'reference' => :'reference'
       }
     end
 
@@ -40,8 +45,9 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'data' => :'Array<AirbnbThread>',
-        :'pagination' => :'Pagination'
+        :'email' => :'String',
+        :'url' => :'String',
+        :'reference' => :'String'
       }
     end
 
@@ -55,26 +61,28 @@ module Repull
     # @param [Hash] attributes Model attributes in the form of hash
     def initialize(attributes = {})
       if (!attributes.is_a?(Hash))
-        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::AirbnbThreadListResponse` initialize method"
+        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::ErrorErrorSupport` initialize method"
       end
 
       # check to see if the attribute exists and convert string to symbol for hash key
       acceptable_attribute_map = self.class.acceptable_attribute_map
       attributes = attributes.each_with_object({}) { |(k, v), h|
         if (!acceptable_attribute_map.key?(k.to_sym))
-          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::AirbnbThreadListResponse`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
+          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::ErrorErrorSupport`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
         end
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'data')
-        if (value = attributes[:'data']).is_a?(Array)
-          self.data = value
-        end
+      if attributes.key?(:'email')
+        self.email = attributes[:'email']
       end
 
-      if attributes.key?(:'pagination')
-        self.pagination = attributes[:'pagination']
+      if attributes.key?(:'url')
+        self.url = attributes[:'url']
+      end
+
+      if attributes.key?(:'reference')
+        self.reference = attributes[:'reference']
       end
     end
 
@@ -98,8 +106,9 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          data == o.data &&
-          pagination == o.pagination
+          email == o.email &&
+          url == o.url &&
+          reference == o.reference
     end
 
     # @see the `==` method
@@ -111,7 +120,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [data, pagination].hash
+      [email, url, reference].hash
     end
 
     # Builds the object from hash

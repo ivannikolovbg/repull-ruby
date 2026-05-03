@@ -5,7 +5,7 @@
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **data** | [**Array&lt;Listing&gt;**](Listing.md) |  | [optional] |
-| **pagination** | [**CursorPagination**](CursorPagination.md) |  | [optional] |
+| **pagination** | [**Pagination**](Pagination.md) |  | [optional] |
 
 ## Example
 

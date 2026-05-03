@@ -4,9 +4,9 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **id** | **Integer** | Internal Repull reservation ID |  |
-| **listing_id** | **Integer** | Internal Repull listing ID this reservation is on. |  |
-| **guest_id** | **Integer** | Internal Repull guest ID. Use &#x60;GET /v1/guests/{id}&#x60; for the full profile. |  |
+| **id** | **String** | Internal Repull reservation ID |  |
+| **listing_id** | **String** | Internal Repull listing ID this reservation is on. |  |
+| **guest_id** | **String** | Internal Repull guest ID. Use &#x60;GET /v1/guests/{id}&#x60; for the full profile. |  |
 | **check_in** | **Date** |  |  |
 | **check_out** | **Date** |  |  |
 | **status** | **String** |  |  |

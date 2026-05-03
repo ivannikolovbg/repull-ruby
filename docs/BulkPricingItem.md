@@ -4,7 +4,7 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **listing_id** | **Integer** |  |  |
+| **listing_id** | **String** |  |  |
 | **dates** | **Array&lt;Date&gt;** |  |  |
 
 ## Example

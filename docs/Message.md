@@ -4,7 +4,7 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **id** | **Integer** |  | [optional] |
+| **id** | **String** |  | [optional] |
 | **external_message_id** | **String** | ID assigned by the source channel (Airbnb message id, Booking message id, etc.). Stable across syncs. | [optional] |
 | **direction** | **String** |  | [optional] |
 | **sender_type** | **String** | Free-form sender role from the channel (e.g. &#x60;guest&#x60;, &#x60;host&#x60;, &#x60;system&#x60;, &#x60;airbnb&#x60;). Use &#x60;direction&#x60; for binary inbound/outbound logic. | [optional] |

@@ -5,7 +5,7 @@
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **data** | [**Array&lt;MarketBrowseEntry&gt;**](MarketBrowseEntry.md) |  | [optional] |
-| **pagination** | [**MarketBrowsePagination**](MarketBrowsePagination.md) |  | [optional] |
+| **pagination** | [**Pagination**](Pagination.md) |  | [optional] |
 
 ## Example
 

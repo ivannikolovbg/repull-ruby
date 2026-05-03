@@ -4,7 +4,7 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **id** | **Integer** |  | [optional] |
+| **id** | **String** |  | [optional] |
 | **body** | **String** |  | [optional] |
 | **category** | **String** |  | [optional] |
 | **created_at** | **Time** |  | [optional] |

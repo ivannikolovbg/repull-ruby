@@ -4,11 +4,11 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **id** | **Integer** |  | [optional] |
+| **id** | **String** |  | [optional] |
 | **platform** | **String** |  | [optional] |
-| **guest_id** | **Integer** |  | [optional] |
-| **listing_id** | **Integer** |  | [optional] |
-| **reservation_id** | **Integer** |  | [optional] |
+| **guest_id** | **String** |  | [optional] |
+| **listing_id** | **String** |  | [optional] |
+| **reservation_id** | **String** |  | [optional] |
 | **subject** | **String** | Thread subject (email/website channels) or null when not applicable. | [optional] |
 | **last_message_at** | **Time** |  | [optional] |
 | **last_message_preview** | **String** | Short preview of the most recent message body for list-UI rendering. | [optional] |

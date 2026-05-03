@@ -4,7 +4,7 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **id** | **Integer** | Internal Repull property ID | [optional] |
+| **id** | **String** | Internal Repull property ID | [optional] |
 | **external_id** | **String** | ID in the source PMS | [optional] |
 | **name** | **String** | Property name | [optional] |
 | **address** | **String** | Full address | [optional] |

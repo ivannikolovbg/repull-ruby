@@ -17,6 +17,8 @@ All URIs are relative to *https://api.repull.dev*
 
 Cancel reservation
 
+Cancel an existing reservation. Cancellation rules vary by provider — Airbnb host-cancellations carry penalties; Booking.com cancellations apply the per-rate-plan policy. Once 200 is returned, the upstream PMS state is committed.
+
 ### Examples
 
 ```ruby
@@ -83,6 +85,8 @@ nil (empty response body)
 
 Create a reservation
 
+Create a reservation in the source PMS. Required fields depend on the connected provider (e.g. Airbnb requires guest email; Booking.com requires hotel id). Validation errors return 422 with the offending `field` populated.
+
 ### Examples
 
 ```ruby
@@ -95,7 +99,7 @@ Repull.configure do |config|
 end
 
 api_instance = Repull::ReservationsApi.new
-create_reservation_request = Repull::CreateReservationRequest.new({property_id: 37, check_in: Date.today, check_out: Date.today, guest_first_name: 'guest_first_name_example', guest_last_name: 'guest_last_name_example'}) # CreateReservationRequest | 
+create_reservation_request = Repull::CreateReservationRequest.new({property_id: 'property_id_example', check_in: Date.today, check_out: Date.today, guest_first_name: 'guest_first_name_example', guest_last_name: 'guest_last_name_example'}) # CreateReservationRequest | 
 
 begin
   # Create a reservation
@@ -223,7 +227,7 @@ end
 
 List reservations
 
-Cursor-paginated list of reservations across all connected PMS platforms. Filter by platform, status, listing, or check-in date range.  **Pagination:** Walk pages with `?cursor=` — pass `pagination.next_cursor` from one response back as `?cursor=` on the next request. Stop when `pagination.has_more` is `false`. `limit` defaults to 50, max 100; requesting more returns 422 (no silent truncation).  **Deprecation:** The `?offset=` query param is supported for backward compatibility but is deprecated and will be removed after the `Sunset` header date. Responses to offset requests carry a `Deprecation: true` header. Migrate to `?cursor=`.
+Cursor-paginated list of reservations across all connected PMS platforms. Filter by platform, status, listing, or check-in date range.  **Pagination:** Walk pages with `?cursor=` — pass `pagination.nextCursor` from one response back as `?cursor=` on the next request. Stop when `pagination.hasMore` is `false`. `limit` defaults to 50, max 100; requesting more returns 422 (no silent truncation).  **Breaking change:** `?offset=` is no longer accepted. Requests passing it return 422 with a `did_you_mean: 'cursor'` hint.
 
 ### Examples
 
@@ -240,15 +244,15 @@ api_instance = Repull::ReservationsApi.new
 opts = {
   x_schema: 'my-app-schema', # String | Apply a custom or built-in schema to transform the response. Built-in: `native` (default), `calry`, `calry-v1`. Custom: any schema name created via `POST /v1/schema/custom`. Unknown / inactive schema names fall back to `native`.
   limit: 56, # Integer | Page size (max 100). Requests over the cap return 422.
-  cursor: 'cursor_example', # String | Opaque cursor returned in the previous response's `pagination.next_cursor`. Omit to fetch the first page.
-  offset: 56, # Integer | Deprecated — use `cursor` instead. Will be removed after the `Sunset` response header date.
+  cursor: 'cursor_example', # String | Opaque cursor returned in the previous response's `pagination.nextCursor`. Omit to fetch the first page.
   platform: 'platform_example', # String | Filter by booking platform
   status: 'confirmed', # String | 
   listing_id: 56, # Integer | Filter to a single listing
   check_in_after: Date.parse('2013-10-20'), # Date | Check-in date >= this value
   check_in_before: Date.parse('2013-10-20'), # Date | Check-in date <= this value
   check_in_from: Date.parse('2013-10-20'), # Date | Deprecated alias for `check_in_after`.
-  check_in_to: Date.parse('2013-10-20') # Date | Deprecated alias for `check_in_before`.
+  check_in_to: Date.parse('2013-10-20'), # Date | Deprecated alias for `check_in_before`.
+  include_total: true # Boolean | When `true` (default), the response's `pagination.total` carries the count of rows matching the current filter, across all pages. Pass `false` to skip the count for very large workspaces where the per-page COUNT(*) cost matters.
 }
 
 begin
@@ -284,8 +288,7 @@ end
 | ---- | ---- | ----------- | ----- |
 | **x_schema** | **String** | Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;. | [optional] |
 | **limit** | **Integer** | Page size (max 100). Requests over the cap return 422. | [optional][default to 50] |
-| **cursor** | **String** | Opaque cursor returned in the previous response&#39;s &#x60;pagination.next_cursor&#x60;. Omit to fetch the first page. | [optional] |
-| **offset** | **Integer** | Deprecated — use &#x60;cursor&#x60; instead. Will be removed after the &#x60;Sunset&#x60; response header date. | [optional] |
+| **cursor** | **String** | Opaque cursor returned in the previous response&#39;s &#x60;pagination.nextCursor&#x60;. Omit to fetch the first page. | [optional] |
 | **platform** | **String** | Filter by booking platform | [optional] |
 | **status** | **String** |  | [optional] |
 | **listing_id** | **Integer** | Filter to a single listing | [optional] |
@@ -293,6 +296,7 @@ end
 | **check_in_before** | **Date** | Check-in date &lt;&#x3D; this value | [optional] |
 | **check_in_from** | **Date** | Deprecated alias for &#x60;check_in_after&#x60;. | [optional] |
 | **check_in_to** | **Date** | Deprecated alias for &#x60;check_in_before&#x60;. | [optional] |
+| **include_total** | **Boolean** | When &#x60;true&#x60; (default), the response&#39;s &#x60;pagination.total&#x60; carries the count of rows matching the current filter, across all pages. Pass &#x60;false&#x60; to skip the count for very large workspaces where the per-page COUNT(*) cost matters. | [optional][default to true] |
 
 ### Return type
 
@@ -313,6 +317,8 @@ end
 > update_reservation(id, opts)
 
 Update reservation
+
+Patch reservation fields (dates, status, special requests). Only fields included in the body are modified. Use the cancel endpoint for cancellations — DELETE handles cancellation but not partial updates.
 
 ### Examples
 

@@ -1,7 +1,7 @@
 =begin
 #Repull API
 
-#The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.  ## Quick Start 1. Get an API key at https://repull.dev/dashboard 2. Connect a PMS: `POST /v1/connect/{provider}` 3. List properties: `GET /v1/properties` 4. Get reservations: `GET /v1/reservations`  ## Authentication All requests require a Bearer token: ``` Authorization: Bearer sk_test_YOUR_API_KEY ```  Sandbox keys start with `sk_test_`, production with `sk_live_`.
+#The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.  ## Designed for AI agents Every error response on this API includes machine-parseable fields so an LLM (Claude in MCP, Cursor, Cline, GPT, etc.) can self-recover without escalating to a human: - `error.code` — stable string identifier (e.g. `invalid_params`, `rate_limit_exceeded`) - `error.message` — human-readable cause - `error.fix` — exact recovery steps (e.g. \"Pass `check_in_after` as ISO 8601: `?check_in_after=2026-01-15`\") - `error.docs_url` — link to the canonical write-up at `https://repull.dev/docs/errors/{code}` - `error.request_id` — id to correlate with server-side logs - `error.field` / `error.value_received` / `error.valid_values` / `error.did_you_mean` — when the error is parameter-specific - `error.retry_after` — seconds to wait before retrying (rate-limit + transient upstream)  `Access-Control-Expose-Headers` lists `x-request-id` and the `X-RateLimit-*` family so browsers can read them on cross-origin responses.  ## Quick Start 1. Get an API key at https://repull.dev/dashboard 2. Connect a PMS: `POST /v1/connect/{provider}` 3. List properties: `GET /v1/properties` 4. Get reservations: `GET /v1/reservations`  ## Authentication All requests require a Bearer token: ``` Authorization: Bearer sk_test_YOUR_API_KEY ```  Sandbox keys start with `sk_test_`, production with `sk_live_`.  ## Request Correlation (X-Request-ID) Every response carries an `X-Request-ID` header, e.g. `X-Request-ID: req_01HXY...`. Include this id in support tickets and bug reports — we can trace the full request lifecycle (auth, rate limit, handler, downstream calls, log row) from a single id.  You may set the header on the inbound request to forward your own trace id; we will echo it back instead of generating a new one. Accepted format: `^[\\\\w.-]{1,128}$`.  The id is also embedded in error envelopes as `request_id` so server-side log diffs work even when the response headers are stripped by an intermediate proxy.  ## Rate Limits The public API enforces a per-API-key sliding-window rate limit on top of the per-tier monthly + daily-AI quotas.  **Default policy:** 600 requests per 60 seconds, per API key. Sliding window — there is no fixed-minute boundary you can burst across.  Every response includes:  | Header | Meaning | |---|---| | `X-RateLimit-Limit` | Requests permitted in the current window. | | `X-RateLimit-Remaining` | Requests left in the current window after this call. | | `X-RateLimit-Reset` | Unix epoch (seconds) when the next slot opens. | | `X-RateLimit-Policy` | Machine-readable policy descriptor, e.g. `600;w=60`. | | `Retry-After` | Seconds to wait before retrying. **Only present on 429 responses.** |  **On 429 (rate_limit_exceeded):** the response body matches the standard error envelope with `code: \"rate_limit_exceeded\"`, plus `limit`, `window_seconds`, `retry_after`, and `request_id` fields. SDKs MUST honor `Retry-After` and use exponential backoff with jitter on subsequent retries — never a tight loop.  Recommended backoff: ``` sleep_ms = (Retry-After * 1000) + random(0..250) ```  Monthly + daily-AI tier quotas (`free`, `starter`, `pro`, `enterprise`) are enforced separately and also surface as 429s; they include `tier`, `scope`, and `resets_at` fields.
 
 The version of the OpenAPI document: 1.0.0
 Contact: ivan@vanio.ai
@@ -20,6 +20,7 @@ module Repull
       @api_client = api_client
     end
     # Create Booking.com property
+    # Onboard a new Booking.com hotel via the OAuth Connect flow. Returns the hotel id once Stage-1 designation completes in the Extranet.
     # @param [Hash] opts the optional parameters
     # @return [BookingProperty]
     def create_booking_property(opts = {})
@@ -28,6 +29,7 @@ module Repull
     end
 
     # Create Booking.com property
+    # Onboard a new Booking.com hotel via the OAuth Connect flow. Returns the hotel id once Stage-1 designation completes in the Extranet.
     # @param [Hash] opts the optional parameters
     # @return [Array<(BookingProperty, Integer, Hash)>] BookingProperty data, response status code and response headers
     def create_booking_property_with_http_info(opts = {})
@@ -75,6 +77,7 @@ module Repull
     end
 
     # Get Booking.com content
+    # Fetch the current content (descriptions, amenities, photos) for a Booking.com property. Used to round-trip edits through Repull.
     # @param [Hash] opts the optional parameters
     # @return [nil]
     def get_booking_content(opts = {})
@@ -83,6 +86,7 @@ module Repull
     end
 
     # Get Booking.com content
+    # Fetch the current content (descriptions, amenities, photos) for a Booking.com property. Used to round-trip edits through Repull.
     # @param [Hash] opts the optional parameters
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
     def get_booking_content_with_http_info(opts = {})
@@ -163,7 +167,7 @@ module Repull
 
       # query parameters
       query_params = opts[:query_params] || {}
-      query_params[:'start_date'] = opts[:'start_date'] if !opts[:'start_date'].nil?
+      query_params[:'startDate'] = opts[:'start_date'] if !opts[:'start_date'].nil?
       query_params[:'number_of_days'] = opts[:'number_of_days'] if !opts[:'number_of_days'].nil?
       query_params[:'room_id'] = opts[:'room_id'] if !opts[:'room_id'].nil?
       query_params[:'room_level'] = opts[:'room_level'] if !opts[:'room_level'].nil?
@@ -203,6 +207,7 @@ module Repull
     end
 
     # List Booking.com conversations
+    # List Booking.com guest conversations. Cursor-paginated. Use the messaging POST to send a reply.
     # @param [Hash] opts the optional parameters
     # @return [BookingConversationListResponse]
     def list_booking_conversations(opts = {})
@@ -211,6 +216,7 @@ module Repull
     end
 
     # List Booking.com conversations
+    # List Booking.com guest conversations. Cursor-paginated. Use the messaging POST to send a reply.
     # @param [Hash] opts the optional parameters
     # @return [Array<(BookingConversationListResponse, Integer, Hash)>] BookingConversationListResponse data, response status code and response headers
     def list_booking_conversations_with_http_info(opts = {})
@@ -258,6 +264,7 @@ module Repull
     end
 
     # List Booking.com properties
+    # List Booking.com hotels claimed by this workspace. Each row includes the Booking-side hotel id and the connected room types.
     # @param [Hash] opts the optional parameters
     # @return [BookingPropertyListResponse]
     def list_booking_properties(opts = {})
@@ -266,6 +273,7 @@ module Repull
     end
 
     # List Booking.com properties
+    # List Booking.com hotels claimed by this workspace. Each row includes the Booking-side hotel id and the connected room types.
     # @param [Hash] opts the optional parameters
     # @return [Array<(BookingPropertyListResponse, Integer, Hash)>] BookingPropertyListResponse data, response status code and response headers
     def list_booking_properties_with_http_info(opts = {})
@@ -313,6 +321,7 @@ module Repull
     end
 
     # Send Booking.com message
+    # Send a message in a Booking.com conversation as the host. Booking enforces content rules similar to Airbnb.
     # @param [Hash] opts the optional parameters
     # @return [nil]
     def send_booking_message(opts = {})
@@ -321,6 +330,7 @@ module Repull
     end
 
     # Send Booking.com message
+    # Send a message in a Booking.com conversation as the host. Booking enforces content rules similar to Airbnb.
     # @param [Hash] opts the optional parameters
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
     def send_booking_message_with_http_info(opts = {})
@@ -366,6 +376,7 @@ module Repull
     end
 
     # Bulk sync to Booking.com
+    # Trigger a full bulk sync of properties + availability + rates to Booking.com. Runs async — returns 202 with a job id; poll `/v1/sync/jobs/{id}` for status.
     # @param [Hash] opts the optional parameters
     # @return [nil]
     def sync_booking(opts = {})
@@ -374,6 +385,7 @@ module Repull
     end
 
     # Bulk sync to Booking.com
+    # Trigger a full bulk sync of properties + availability + rates to Booking.com. Runs async — returns 202 with a job id; poll &#x60;/v1/sync/jobs/{id}&#x60; for status.
     # @param [Hash] opts the optional parameters
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
     def sync_booking_with_http_info(opts = {})
@@ -419,6 +431,7 @@ module Repull
     end
 
     # Update Booking.com rates/availability
+    # Push availability + rate changes to Booking.com's OTA system. Accepts the standard OTA rate message — see Booking's OTA docs for the field shape. Errors from upstream surface as `booking_error`.
     # @param [Hash] opts the optional parameters
     # @return [nil]
     def update_booking_availability(opts = {})
@@ -427,6 +440,7 @@ module Repull
     end
 
     # Update Booking.com rates/availability
+    # Push availability + rate changes to Booking.com&#39;s OTA system. Accepts the standard OTA rate message — see Booking&#39;s OTA docs for the field shape. Errors from upstream surface as &#x60;booking_error&#x60;.
     # @param [Hash] opts the optional parameters
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
     def update_booking_availability_with_http_info(opts = {})
@@ -472,6 +486,7 @@ module Repull
     end
 
     # Update Booking.com content
+    # Push content changes (descriptions, amenities, photos) to Booking.com. Booking enforces editorial review on text fields — changes appear after their content moderation queue clears.
     # @param [Hash] opts the optional parameters
     # @return [nil]
     def update_booking_content(opts = {})
@@ -480,6 +495,7 @@ module Repull
     end
 
     # Update Booking.com content
+    # Push content changes (descriptions, amenities, photos) to Booking.com. Booking enforces editorial review on text fields — changes appear after their content moderation queue clears.
     # @param [Hash] opts the optional parameters
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
     def update_booking_content_with_http_info(opts = {})

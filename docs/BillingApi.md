@@ -84,6 +84,8 @@ nil (empty response body)
 
 Get plan and usage
 
+Fetch the current plan, usage counters, and billing-cycle reset date for this workspace. Use this to surface a \"you have used X / Y\" indicator in your dashboard.
+
 ### Examples
 
 ```ruby

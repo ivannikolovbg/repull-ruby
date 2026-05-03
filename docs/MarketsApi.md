@@ -166,7 +166,7 @@ end
 
 Paginated discovery catalog
 
-Cursor-paginated, search-filterable catalog of every Atlas-tracked market the customer could expand into. Backed by the precomputed `market_summaries` table (>=5 active comps per city). Supports fuzzy `q` substring search (trigram-indexed), `country` (ISO 3166-1 alpha-2) filter, and `sort` (`listings_desc` | `name_asc`). Use the `next_cursor` from `pagination` to walk pages — the cursor is an opaque base64 token; do not parse it.
+Cursor-paginated, search-filterable catalog of every Atlas-tracked market the customer could expand into. Backed by the precomputed `market_summaries` table (>=5 active comps per city). Supports fuzzy `q` substring search (trigram-indexed), `country` (ISO 3166-1 alpha-2) filter, and `sort` (`listings_desc` | `name_asc`). Use the `nextCursor` from `pagination` to walk pages — the cursor is an opaque base64 token; do not parse it.  `pagination.total` is the count of markets matching the current `q`/`country`/`min_listings` filter (across all pages). Renamed from the upstream's legacy `total_in_filter` so SDK consumers see the same `pagination.total` field as on every other list endpoint.
 
 ### Examples
 
@@ -184,7 +184,7 @@ opts = {
   q: 'q_example', # String | Substring match on city name (case-insensitive).
   country: 'country_example', # String | ISO 3166-1 alpha-2 (e.g. `US`, `ES`).
   min_listings: 56, # Integer | Minimum comp-set size — cities with fewer active comps are excluded.
-  cursor: 'cursor_example', # String | Opaque cursor returned by the previous page's `pagination.next_cursor`.
+  cursor: 'cursor_example', # String | Opaque cursor returned by the previous page's `pagination.nextCursor`.
   limit: 56, # Integer | 
   sort: 'listings_desc' # String | 
 }
@@ -223,7 +223,7 @@ end
 | **q** | **String** | Substring match on city name (case-insensitive). | [optional] |
 | **country** | **String** | ISO 3166-1 alpha-2 (e.g. &#x60;US&#x60;, &#x60;ES&#x60;). | [optional] |
 | **min_listings** | **Integer** | Minimum comp-set size — cities with fewer active comps are excluded. | [optional][default to 5] |
-| **cursor** | **String** | Opaque cursor returned by the previous page&#39;s &#x60;pagination.next_cursor&#x60;. | [optional] |
+| **cursor** | **String** | Opaque cursor returned by the previous page&#39;s &#x60;pagination.nextCursor&#x60;. | [optional] |
 | **limit** | **Integer** |  | [optional][default to 30] |
 | **sort** | **String** |  | [optional][default to &#39;listings_desc&#39;] |
 

@@ -1,7 +1,7 @@
 =begin
 #Repull API
 
-#The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.  ## Quick Start 1. Get an API key at https://repull.dev/dashboard 2. Connect a PMS: `POST /v1/connect/{provider}` 3. List properties: `GET /v1/properties` 4. Get reservations: `GET /v1/reservations`  ## Authentication All requests require a Bearer token: ``` Authorization: Bearer sk_test_YOUR_API_KEY ```  Sandbox keys start with `sk_test_`, production with `sk_live_`.
+#The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.  ## Designed for AI agents Every error response on this API includes machine-parseable fields so an LLM (Claude in MCP, Cursor, Cline, GPT, etc.) can self-recover without escalating to a human: - `error.code` — stable string identifier (e.g. `invalid_params`, `rate_limit_exceeded`) - `error.message` — human-readable cause - `error.fix` — exact recovery steps (e.g. \"Pass `check_in_after` as ISO 8601: `?check_in_after=2026-01-15`\") - `error.docs_url` — link to the canonical write-up at `https://repull.dev/docs/errors/{code}` - `error.request_id` — id to correlate with server-side logs - `error.field` / `error.value_received` / `error.valid_values` / `error.did_you_mean` — when the error is parameter-specific - `error.retry_after` — seconds to wait before retrying (rate-limit + transient upstream)  `Access-Control-Expose-Headers` lists `x-request-id` and the `X-RateLimit-*` family so browsers can read them on cross-origin responses.  ## Quick Start 1. Get an API key at https://repull.dev/dashboard 2. Connect a PMS: `POST /v1/connect/{provider}` 3. List properties: `GET /v1/properties` 4. Get reservations: `GET /v1/reservations`  ## Authentication All requests require a Bearer token: ``` Authorization: Bearer sk_test_YOUR_API_KEY ```  Sandbox keys start with `sk_test_`, production with `sk_live_`.  ## Request Correlation (X-Request-ID) Every response carries an `X-Request-ID` header, e.g. `X-Request-ID: req_01HXY...`. Include this id in support tickets and bug reports — we can trace the full request lifecycle (auth, rate limit, handler, downstream calls, log row) from a single id.  You may set the header on the inbound request to forward your own trace id; we will echo it back instead of generating a new one. Accepted format: `^[\\\\w.-]{1,128}$`.  The id is also embedded in error envelopes as `request_id` so server-side log diffs work even when the response headers are stripped by an intermediate proxy.  ## Rate Limits The public API enforces a per-API-key sliding-window rate limit on top of the per-tier monthly + daily-AI quotas.  **Default policy:** 600 requests per 60 seconds, per API key. Sliding window — there is no fixed-minute boundary you can burst across.  Every response includes:  | Header | Meaning | |---|---| | `X-RateLimit-Limit` | Requests permitted in the current window. | | `X-RateLimit-Remaining` | Requests left in the current window after this call. | | `X-RateLimit-Reset` | Unix epoch (seconds) when the next slot opens. | | `X-RateLimit-Policy` | Machine-readable policy descriptor, e.g. `600;w=60`. | | `Retry-After` | Seconds to wait before retrying. **Only present on 429 responses.** |  **On 429 (rate_limit_exceeded):** the response body matches the standard error envelope with `code: \"rate_limit_exceeded\"`, plus `limit`, `window_seconds`, `retry_after`, and `request_id` fields. SDKs MUST honor `Retry-After` and use exponential backoff with jitter on subsequent retries — never a tight loop.  Recommended backoff: ``` sleep_ms = (Retry-After * 1000) + random(0..250) ```  Monthly + daily-AI tier quotas (`free`, `starter`, `pro`, `enterprise`) are enforced separately and also surface as 429s; they include `tier`, `scope`, and `resets_at` fields.
 
 The version of the OpenAPI document: 1.0.0
 Contact: ivan@vanio.ai
@@ -20,6 +20,7 @@ module Repull
       @api_client = api_client
     end
     # Listing action (push/publish/unlist/delete)
+    # Apply a state action to an Airbnb listing — `push` (sync local changes upstream), `publish` (make publicly bookable), `unlist` (hide), or `delete` (permanent). Each action has different reversibility — see docs.
     # @param id [String] 
     # @param [Hash] opts the optional parameters
     # @return [nil]
@@ -29,6 +30,7 @@ module Repull
     end
 
     # Listing action (push/publish/unlist/delete)
+    # Apply a state action to an Airbnb listing — &#x60;push&#x60; (sync local changes upstream), &#x60;publish&#x60; (make publicly bookable), &#x60;unlist&#x60; (hide), or &#x60;delete&#x60; (permanent). Each action has different reversibility — see docs.
     # @param id [String] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
@@ -79,6 +81,7 @@ module Repull
     end
 
     # Accept/decline/cancel Airbnb reservation
+    # Apply a state action to an Airbnb reservation — `accept` / `decline` (for inquiries and reservation requests), `cancel` (host cancellation, carries penalties), `pre-approve` (for inquiries).
     # @param code [String] 
     # @param [Hash] opts the optional parameters
     # @return [nil]
@@ -88,6 +91,7 @@ module Repull
     end
 
     # Accept/decline/cancel Airbnb reservation
+    # Apply a state action to an Airbnb reservation — &#x60;accept&#x60; / &#x60;decline&#x60; (for inquiries and reservation requests), &#x60;cancel&#x60; (host cancellation, carries penalties), &#x60;pre-approve&#x60; (for inquiries).
     # @param code [String] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
@@ -138,6 +142,7 @@ module Repull
     end
 
     # Create/push Airbnb listing
+    # Create a new Airbnb listing or push an existing Repull listing to Airbnb. Requires a connected Airbnb account. Returns the created listing id; publishing happens via the listing-action endpoint.
     # @param [Hash] opts the optional parameters
     # @return [AirbnbListing]
     def create_airbnb_listing(opts = {})
@@ -146,6 +151,7 @@ module Repull
     end
 
     # Create/push Airbnb listing
+    # Create a new Airbnb listing or push an existing Repull listing to Airbnb. Requires a connected Airbnb account. Returns the created listing id; publishing happens via the listing-action endpoint.
     # @param [Hash] opts the optional parameters
     # @return [Array<(AirbnbListing, Integer, Hash)>] AirbnbListing data, response status code and response headers
     def create_airbnb_listing_with_http_info(opts = {})
@@ -193,6 +199,7 @@ module Repull
     end
 
     # Get Airbnb listing
+    # Fetch a single Airbnb listing by id with full pricing, availability, and content. Listing ids are Airbnb-side ids (numeric strings).
     # @param id [String] 
     # @param [Hash] opts the optional parameters
     # @return [AirbnbListing]
@@ -202,6 +209,7 @@ module Repull
     end
 
     # Get Airbnb listing
+    # Fetch a single Airbnb listing by id with full pricing, availability, and content. Listing ids are Airbnb-side ids (numeric strings).
     # @param id [String] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(AirbnbListing, Integer, Hash)>] AirbnbListing data, response status code and response headers
@@ -254,6 +262,7 @@ module Repull
     end
 
     # Get Airbnb availability
+    # Read the per-day availability calendar for an Airbnb listing. Returns one row per day including price overrides, min-stay, and blocked status.
     # @param id [String] 
     # @param [Hash] opts the optional parameters
     # @return [nil]
@@ -263,6 +272,7 @@ module Repull
     end
 
     # Get Airbnb availability
+    # Read the per-day availability calendar for an Airbnb listing. Returns one row per day including price overrides, min-stay, and blocked status.
     # @param id [String] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
@@ -313,6 +323,7 @@ module Repull
     end
 
     # Get Airbnb pricing
+    # Read the current pricing config (base price, weekend uplift, length-of-stay discounts, smart-pricing bounds) for an Airbnb listing.
     # @param id [String] 
     # @param [Hash] opts the optional parameters
     # @return [nil]
@@ -322,6 +333,7 @@ module Repull
     end
 
     # Get Airbnb pricing
+    # Read the current pricing config (base price, weekend uplift, length-of-stay discounts, smart-pricing bounds) for an Airbnb listing.
     # @param id [String] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
@@ -372,6 +384,7 @@ module Repull
     end
 
     # Get Airbnb reservation
+    # Fetch a single Airbnb reservation by Airbnb confirmation code (e.g. `HMABCDEF12`).
     # @param code [String] 
     # @param [Hash] opts the optional parameters
     # @return [AirbnbReservation]
@@ -381,6 +394,7 @@ module Repull
     end
 
     # Get Airbnb reservation
+    # Fetch a single Airbnb reservation by Airbnb confirmation code (e.g. &#x60;HMABCDEF12&#x60;).
     # @param code [String] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(AirbnbReservation, Integer, Hash)>] AirbnbReservation data, response status code and response headers
@@ -433,6 +447,7 @@ module Repull
     end
 
     # List Airbnb photos
+    # List photos attached to an Airbnb listing in display order. Returns the public CDN URL plus Airbnb-side metadata (id, caption, room).
     # @param id [String] 
     # @param [Hash] opts the optional parameters
     # @return [nil]
@@ -442,6 +457,7 @@ module Repull
     end
 
     # List Airbnb photos
+    # List photos attached to an Airbnb listing in display order. Returns the public CDN URL plus Airbnb-side metadata (id, caption, room).
     # @param id [String] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
@@ -492,6 +508,7 @@ module Repull
     end
 
     # List Airbnb listings
+    # List every Airbnb listing this workspace has access to via the connected Airbnb account. Sourced from the Airbnb Listing API. Listings sync automatically every few minutes — pass `?refresh=true` to force a fresh upstream pull.
     # @param [Hash] opts the optional parameters
     # @return [AirbnbListingListResponse]
     def list_airbnb_listings(opts = {})
@@ -500,6 +517,7 @@ module Repull
     end
 
     # List Airbnb listings
+    # List every Airbnb listing this workspace has access to via the connected Airbnb account. Sourced from the Airbnb Listing API. Listings sync automatically every few minutes — pass &#x60;?refresh&#x3D;true&#x60; to force a fresh upstream pull.
     # @param [Hash] opts the optional parameters
     # @return [Array<(AirbnbListingListResponse, Integer, Hash)>] AirbnbListingListResponse data, response status code and response headers
     def list_airbnb_listings_with_http_info(opts = {})
@@ -547,6 +565,7 @@ module Repull
     end
 
     # List Airbnb reservations
+    # List reservations sourced directly from Airbnb. Use this when you need Airbnb-specific fields (guest payout split, cancellation policy snapshot) that the unified `/v1/reservations` endpoint flattens away.
     # @param [Hash] opts the optional parameters
     # @return [AirbnbReservationListResponse]
     def list_airbnb_reservations(opts = {})
@@ -555,6 +574,7 @@ module Repull
     end
 
     # List Airbnb reservations
+    # List reservations sourced directly from Airbnb. Use this when you need Airbnb-specific fields (guest payout split, cancellation policy snapshot) that the unified &#x60;/v1/reservations&#x60; endpoint flattens away.
     # @param [Hash] opts the optional parameters
     # @return [Array<(AirbnbReservationListResponse, Integer, Hash)>] AirbnbReservationListResponse data, response status code and response headers
     def list_airbnb_reservations_with_http_info(opts = {})
@@ -602,6 +622,7 @@ module Repull
     end
 
     # List Airbnb reviews
+    # List reviews left by guests on Airbnb listings in this workspace. Includes both reviews of the host and reviews of the guest (where the host has not yet submitted theirs).
     # @param [Hash] opts the optional parameters
     # @return [AirbnbReviewListResponse]
     def list_airbnb_reviews(opts = {})
@@ -610,6 +631,7 @@ module Repull
     end
 
     # List Airbnb reviews
+    # List reviews left by guests on Airbnb listings in this workspace. Includes both reviews of the host and reviews of the guest (where the host has not yet submitted theirs).
     # @param [Hash] opts the optional parameters
     # @return [Array<(AirbnbReviewListResponse, Integer, Hash)>] AirbnbReviewListResponse data, response status code and response headers
     def list_airbnb_reviews_with_http_info(opts = {})
@@ -657,6 +679,7 @@ module Repull
     end
 
     # Get Airbnb messages
+    # Fetch the full message log for an Airbnb thread, ordered oldest-to-newest. Walk pages with `?cursor=` until `pagination.hasMore` is `false`.
     # @param thread_id [String] 
     # @param [Hash] opts the optional parameters
     # @return [MessageListResponse]
@@ -666,6 +689,7 @@ module Repull
     end
 
     # Get Airbnb messages
+    # Fetch the full message log for an Airbnb thread, ordered oldest-to-newest. Walk pages with &#x60;?cursor&#x3D;&#x60; until &#x60;pagination.hasMore&#x60; is &#x60;false&#x60;.
     # @param thread_id [String] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(MessageListResponse, Integer, Hash)>] MessageListResponse data, response status code and response headers
@@ -718,6 +742,7 @@ module Repull
     end
 
     # List Airbnb message threads
+    # List Airbnb message threads (one per guest conversation). Cursor-paginated. Each thread includes a preview of the latest message.
     # @param [Hash] opts the optional parameters
     # @return [AirbnbThreadListResponse]
     def list_airbnb_threads(opts = {})
@@ -726,6 +751,7 @@ module Repull
     end
 
     # List Airbnb message threads
+    # List Airbnb message threads (one per guest conversation). Cursor-paginated. Each thread includes a preview of the latest message.
     # @param [Hash] opts the optional parameters
     # @return [Array<(AirbnbThreadListResponse, Integer, Hash)>] AirbnbThreadListResponse data, response status code and response headers
     def list_airbnb_threads_with_http_info(opts = {})
@@ -773,6 +799,7 @@ module Repull
     end
 
     # Respond to Airbnb review
+    # Post a public response to a guest review. Airbnb allows one response per review — repeated POSTs return 409.
     # @param [Hash] opts the optional parameters
     # @return [nil]
     def respond_airbnb_review(opts = {})
@@ -781,6 +808,7 @@ module Repull
     end
 
     # Respond to Airbnb review
+    # Post a public response to a guest review. Airbnb allows one response per review — repeated POSTs return 409.
     # @param [Hash] opts the optional parameters
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
     def respond_airbnb_review_with_http_info(opts = {})
@@ -826,6 +854,7 @@ module Repull
     end
 
     # Send Airbnb message
+    # Send a message in an Airbnb thread as the host. Airbnb enforces content rules (no off-platform contact info, no external URLs) — violating messages are rejected upstream and surface as `airbnb_error`.
     # @param thread_id [String] 
     # @param [Hash] opts the optional parameters
     # @return [nil]
@@ -835,6 +864,7 @@ module Repull
     end
 
     # Send Airbnb message
+    # Send a message in an Airbnb thread as the host. Airbnb enforces content rules (no off-platform contact info, no external URLs) — violating messages are rejected upstream and surface as &#x60;airbnb_error&#x60;.
     # @param thread_id [String] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
@@ -940,6 +970,7 @@ module Repull
     end
 
     # Update Airbnb availability
+    # Push per-day availability + pricing overrides to Airbnb. Accepts a sparse map (date → fields) — only included dates are updated.
     # @param id [String] 
     # @param [Hash] opts the optional parameters
     # @return [nil]
@@ -949,6 +980,7 @@ module Repull
     end
 
     # Update Airbnb availability
+    # Push per-day availability + pricing overrides to Airbnb. Accepts a sparse map (date → fields) — only included dates are updated.
     # @param id [String] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
@@ -999,6 +1031,7 @@ module Repull
     end
 
     # Update Airbnb pricing
+    # Push pricing changes to Airbnb. The full pricing object is replaced — to patch a single field, GET first, mutate locally, then PUT the whole object.
     # @param id [String] 
     # @param [Hash] opts the optional parameters
     # @return [nil]
@@ -1008,6 +1041,7 @@ module Repull
     end
 
     # Update Airbnb pricing
+    # Push pricing changes to Airbnb. The full pricing object is replaced — to patch a single field, GET first, mutate locally, then PUT the whole object.
     # @param id [String] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
@@ -1058,6 +1092,7 @@ module Repull
     end
 
     # Upload photos to Airbnb
+    # Upload one or more photos to an Airbnb listing. Accepts public image URLs (Airbnb fetches them) — direct binary upload is not supported on this endpoint.
     # @param id [String] 
     # @param [Hash] opts the optional parameters
     # @return [nil]
@@ -1067,6 +1102,7 @@ module Repull
     end
 
     # Upload photos to Airbnb
+    # Upload one or more photos to an Airbnb listing. Accepts public image URLs (Airbnb fetches them) — direct binary upload is not supported on this endpoint.
     # @param id [String] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers

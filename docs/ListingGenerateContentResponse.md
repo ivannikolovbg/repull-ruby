@@ -4,7 +4,7 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **listing_id** | **Integer** |  | [optional] |
+| **listing_id** | **String** |  | [optional] |
 | **persisted** | **Boolean** |  | [optional] |
 | **content** | [**ListingContent**](ListingContent.md) |  | [optional] |
 

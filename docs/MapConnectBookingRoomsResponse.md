@@ -7,7 +7,7 @@
 | **success** | **Boolean** |  |  |
 | **mapped** | **Integer** | Number of rooms processed (mapped + unmapped). |  |
 | **session_id** | **String** |  |  |
-| **connection_id** | **Integer** |  |  |
+| **connection_id** | **String** |  |  |
 
 ## Example
 

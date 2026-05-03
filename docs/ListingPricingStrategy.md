@@ -4,9 +4,9 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **id** | **Integer** |  | [optional] |
-| **listing_id** | **Integer** |  | [optional] |
-| **customer_id** | **Integer** |  | [optional] |
+| **id** | **String** |  | [optional] |
+| **listing_id** | **String** |  | [optional] |
+| **customer_id** | **String** |  | [optional] |
 | **mode** | **String** | &#x60;recommend&#x60; surfaces suggestions; &#x60;auto&#x60; applies them on the next sync. | [optional] |
 | **min_price** | **Float** |  | [optional] |
 | **max_price** | **Float** |  | [optional] |

@@ -14,6 +14,8 @@ All URIs are relative to *https://api.repull.dev*
 
 Get property details
 
+Fetch a single property by Repull id. Property ids are workspace-scoped — an id from one workspace is not valid in another. 404 means the id does not exist OR belongs to a different workspace.
+
 ### Examples
 
 ```ruby
@@ -81,7 +83,7 @@ end
 
 List properties
 
-Returns all properties across connected PMS platforms. Supports pagination and filtering by provider.
+Cursor-paginated list of properties for the authenticated workspace. Walk pages with `?cursor=<pagination.nextCursor>`; stop when `pagination.hasMore` is `false`. Cursor is opaque base64 — do not parse it.  **Breaking change:** `?offset=` is no longer accepted. Requests passing it return 422 with a `did_you_mean: 'cursor'` hint.
 
 ### Examples
 
@@ -96,9 +98,10 @@ end
 
 api_instance = Repull::PropertiesApi.new
 opts = {
-  limit: 56, # Integer | Max items per page
-  offset: 56, # Integer | Pagination offset
-  provider: 'provider_example' # String | Filter by PMS provider
+  limit: 56, # Integer | Page size (max 100). Requests over the cap return 422.
+  cursor: 'cursor_example', # String | Opaque cursor returned in the previous response's `pagination.nextCursor`. Omit to fetch the first page.
+  status: 'active', # String | Filter by status. Default returns active only; pass `all` to include inactive.
+  include_total: true # Boolean | When `true` (default), the response's `pagination.total` carries the count of rows matching the current filter, across all pages. Pass `false` to skip the count for very large workspaces where the per-page COUNT(*) cost matters.
 }
 
 begin
@@ -132,9 +135,10 @@ end
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **limit** | **Integer** | Max items per page | [optional][default to 25] |
-| **offset** | **Integer** | Pagination offset | [optional][default to 0] |
-| **provider** | **String** | Filter by PMS provider | [optional] |
+| **limit** | **Integer** | Page size (max 100). Requests over the cap return 422. | [optional][default to 50] |
+| **cursor** | **String** | Opaque cursor returned in the previous response&#39;s &#x60;pagination.nextCursor&#x60;. Omit to fetch the first page. | [optional] |
+| **status** | **String** | Filter by status. Default returns active only; pass &#x60;all&#x60; to include inactive. | [optional] |
+| **include_total** | **Boolean** | When &#x60;true&#x60; (default), the response&#39;s &#x60;pagination.total&#x60; carries the count of rows matching the current filter, across all pages. Pass &#x60;false&#x60; to skip the count for very large workspaces where the per-page COUNT(*) cost matters. | [optional][default to true] |
 
 ### Return type
 

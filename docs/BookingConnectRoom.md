@@ -4,12 +4,12 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **room_id** | **Integer** | Repull-side &#x60;listings_booking_rooms.id&#x60;. Pass this back in the mapping submission. |  |
+| **room_id** | **String** | Repull-side &#x60;listings_booking_rooms.id&#x60;. Pass this back in the mapping submission. |  |
 | **room_name** | **String** |  |  |
 | **max_guests** | **Integer** |  | [optional] |
 | **number_of_rooms** | **Integer** | Number of inventory units of this room type at the hotel. |  |
-| **current_listing_id** | **Integer** | Currently mapped Repull listing ID, or null if not yet mapped. | [optional] |
-| **room_booking_id** | **Integer** | Booking.com-side room ID (used internally for &#x60;listing_platform_links&#x60;). | [optional] |
+| **current_listing_id** | **String** | Currently mapped Repull listing ID, or null if not yet mapped. | [optional] |
+| **room_booking_id** | **String** | Booking.com-side room ID (used internally for &#x60;listing_platform_links&#x60;). | [optional] |
 
 ## Example
 

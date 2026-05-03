@@ -4,7 +4,7 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **listing_id** | **Integer** |  | [optional] |
+| **listing_id** | **String** |  | [optional] |
 | **channel** | **String** |  | [optional] |
 | **result** | **Object** | Channel-specific push result (sections pushed, errors, etc.) | [optional] |
 

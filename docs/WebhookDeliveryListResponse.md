@@ -5,7 +5,7 @@
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **data** | [**Array&lt;WebhookDelivery&gt;**](WebhookDelivery.md) |  | [optional] |
-| **pagination** | [**WebhookDeliveryListResponsePagination**](WebhookDeliveryListResponsePagination.md) |  | [optional] |
+| **pagination** | [**Pagination**](Pagination.md) |  | [optional] |
 
 ## Example
 

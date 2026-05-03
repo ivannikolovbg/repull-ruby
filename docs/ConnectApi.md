@@ -164,6 +164,8 @@ end
 
 Disconnect provider
 
+Disconnect a PMS or OTA from this workspace. Revokes the OAuth token (where applicable), purges credentials, and stops all sync jobs. Resources synced from the provider remain queryable but become read-only and stop receiving updates.
+
 ### Examples
 
 ```ruby
@@ -499,7 +501,7 @@ require 'time'
 require 'repull'
 
 api_instance = Repull::ConnectApi.new
-map_connect_booking_rooms_request = Repull::MapConnectBookingRoomsRequest.new({session_id: 'session_id_example', mappings: [Repull::BookingRoomMapping.new({room_id: 37})]}) # MapConnectBookingRoomsRequest | 
+map_connect_booking_rooms_request = Repull::MapConnectBookingRoomsRequest.new({session_id: 'session_id_example', mappings: [Repull::BookingRoomMapping.new({room_id: 'room_id_example'})]}) # MapConnectBookingRoomsRequest | 
 
 begin
   # Submit room→listing mappings for a Booking.com Connect session

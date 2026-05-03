@@ -4,7 +4,7 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **id** | **Integer** |  | [optional] |
+| **id** | **String** |  | [optional] |
 | **airbnb_id** | **String** | Airbnb-side host id. | [optional] |
 | **first_name** | **String** |  | [optional] |
 | **display_name** | **String** |  | [optional] |

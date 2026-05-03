@@ -4,7 +4,8 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **markets** | [**Array&lt;MarketSummary&gt;**](MarketSummary.md) |  | [optional] |
+| **data** | [**Array&lt;MarketSummary&gt;**](MarketSummary.md) | Per-city KPIs for every market the customer operates in. | [optional] |
+| **pagination** | [**Pagination**](Pagination.md) |  | [optional] |
 | **totals** | [**MarketsOverviewResponseTotals**](MarketsOverviewResponseTotals.md) |  | [optional] |
 | **my_listings** | [**Array&lt;MarketMyListing&gt;**](MarketMyListing.md) |  | [optional] |
 | **free_market** | **String** | City auto-assigned as the customer&#39;s free market (largest by listing count). Null for customers with no listings. | [optional] |
@@ -18,7 +19,8 @@
 require 'repull'
 
 instance = Repull::MarketsOverviewResponse.new(
-  markets: null,
+  data: null,
+  pagination: null,
   totals: null,
   my_listings: null,
   free_market: null,

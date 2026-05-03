@@ -84,6 +84,8 @@ nil (empty response body)
 
 List VRBO listings
 
+List VRBO listings this workspace owns. VRBO is agency-model — Repull reads listings via the public iCal/HTTP feeds.
+
 ### Examples
 
 ```ruby
@@ -147,6 +149,8 @@ This endpoint does not need any parameter.
 > <VrboReservationListResponse> list_vrbo_reservations
 
 List VRBO reservations
+
+List VRBO reservations sourced from the public booking feed. Lag is typically 5-10 minutes vs. Airbnb / Booking.com.
 
 ### Examples
 

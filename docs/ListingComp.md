@@ -4,7 +4,7 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **comp_id** | **Integer** |  | [optional] |
+| **comp_id** | **String** |  | [optional] |
 | **listing_name** | **String** |  | [optional] |
 | **distance_km** | **Float** | Haversine distance from the source listing in km, rounded to 3 decimals. | [optional] |
 | **bedrooms** | **Integer** |  | [optional] |

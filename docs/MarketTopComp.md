@@ -4,7 +4,7 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **id** | **Integer** |  | [optional] |
+| **id** | **String** |  | [optional] |
 | **platform_listing_id** | **String** |  | [optional] |
 | **title** | **String** |  | [optional] |
 | **property_type** | **String** |  | [optional] |

@@ -4,7 +4,7 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **listing_id** | **Integer** |  | [optional] |
+| **listing_id** | **String** |  | [optional] |
 | **channels** | [**Array&lt;ListingPublishStatusChannel&gt;**](ListingPublishStatusChannel.md) |  | [optional] |
 
 ## Example

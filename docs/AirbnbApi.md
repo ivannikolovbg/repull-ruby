@@ -31,6 +31,8 @@ All URIs are relative to *https://api.repull.dev*
 
 Listing action (push/publish/unlist/delete)
 
+Apply a state action to an Airbnb listing — `push` (sync local changes upstream), `publish` (make publicly bookable), `unlist` (hide), or `delete` (permanent). Each action has different reversibility — see docs.
+
 ### Examples
 
 ```ruby
@@ -96,6 +98,8 @@ nil (empty response body)
 > airbnb_reservation_action(code)
 
 Accept/decline/cancel Airbnb reservation
+
+Apply a state action to an Airbnb reservation — `accept` / `decline` (for inquiries and reservation requests), `cancel` (host cancellation, carries penalties), `pre-approve` (for inquiries).
 
 ### Examples
 
@@ -163,6 +167,8 @@ nil (empty response body)
 
 Create/push Airbnb listing
 
+Create a new Airbnb listing or push an existing Repull listing to Airbnb. Requires a connected Airbnb account. Returns the created listing id; publishing happens via the listing-action endpoint.
+
 ### Examples
 
 ```ruby
@@ -226,6 +232,8 @@ This endpoint does not need any parameter.
 > <AirbnbListing> get_airbnb_listing(id)
 
 Get Airbnb listing
+
+Fetch a single Airbnb listing by id with full pricing, availability, and content. Listing ids are Airbnb-side ids (numeric strings).
 
 ### Examples
 
@@ -294,6 +302,8 @@ end
 
 Get Airbnb availability
 
+Read the per-day availability calendar for an Airbnb listing. Returns one row per day including price overrides, min-stay, and blocked status.
+
 ### Examples
 
 ```ruby
@@ -360,6 +370,8 @@ nil (empty response body)
 
 Get Airbnb pricing
 
+Read the current pricing config (base price, weekend uplift, length-of-stay discounts, smart-pricing bounds) for an Airbnb listing.
+
 ### Examples
 
 ```ruby
@@ -425,6 +437,8 @@ nil (empty response body)
 > <AirbnbReservation> get_airbnb_reservation(code)
 
 Get Airbnb reservation
+
+Fetch a single Airbnb reservation by Airbnb confirmation code (e.g. `HMABCDEF12`).
 
 ### Examples
 
@@ -493,6 +507,8 @@ end
 
 List Airbnb photos
 
+List photos attached to an Airbnb listing in display order. Returns the public CDN URL plus Airbnb-side metadata (id, caption, room).
+
 ### Examples
 
 ```ruby
@@ -559,6 +575,8 @@ nil (empty response body)
 
 List Airbnb listings
 
+List every Airbnb listing this workspace has access to via the connected Airbnb account. Sourced from the Airbnb Listing API. Listings sync automatically every few minutes — pass `?refresh=true` to force a fresh upstream pull.
+
 ### Examples
 
 ```ruby
@@ -622,6 +640,8 @@ This endpoint does not need any parameter.
 > <AirbnbReservationListResponse> list_airbnb_reservations
 
 List Airbnb reservations
+
+List reservations sourced directly from Airbnb. Use this when you need Airbnb-specific fields (guest payout split, cancellation policy snapshot) that the unified `/v1/reservations` endpoint flattens away.
 
 ### Examples
 
@@ -687,6 +707,8 @@ This endpoint does not need any parameter.
 
 List Airbnb reviews
 
+List reviews left by guests on Airbnb listings in this workspace. Includes both reviews of the host and reviews of the guest (where the host has not yet submitted theirs).
+
 ### Examples
 
 ```ruby
@@ -750,6 +772,8 @@ This endpoint does not need any parameter.
 > <MessageListResponse> list_airbnb_thread_messages(thread_id)
 
 Get Airbnb messages
+
+Fetch the full message log for an Airbnb thread, ordered oldest-to-newest. Walk pages with `?cursor=` until `pagination.hasMore` is `false`.
 
 ### Examples
 
@@ -818,6 +842,8 @@ end
 
 List Airbnb message threads
 
+List Airbnb message threads (one per guest conversation). Cursor-paginated. Each thread includes a preview of the latest message.
+
 ### Examples
 
 ```ruby
@@ -882,6 +908,8 @@ This endpoint does not need any parameter.
 
 Respond to Airbnb review
 
+Post a public response to a guest review. Airbnb allows one response per review — repeated POSTs return 409.
+
 ### Examples
 
 ```ruby
@@ -944,6 +972,8 @@ nil (empty response body)
 > send_airbnb_message(thread_id)
 
 Send Airbnb message
+
+Send a message in an Airbnb thread as the host. Airbnb enforces content rules (no off-platform contact info, no external URLs) — violating messages are rejected upstream and surface as `airbnb_error`.
 
 ### Examples
 
@@ -1076,6 +1106,8 @@ nil (empty response body)
 
 Update Airbnb availability
 
+Push per-day availability + pricing overrides to Airbnb. Accepts a sparse map (date → fields) — only included dates are updated.
+
 ### Examples
 
 ```ruby
@@ -1142,6 +1174,8 @@ nil (empty response body)
 
 Update Airbnb pricing
 
+Push pricing changes to Airbnb. The full pricing object is replaced — to patch a single field, GET first, mutate locally, then PUT the whole object.
+
 ### Examples
 
 ```ruby
@@ -1207,6 +1241,8 @@ nil (empty response body)
 > upload_airbnb_listing_photos(id)
 
 Upload photos to Airbnb
+
+Upload one or more photos to an Airbnb listing. Accepts public image URLs (Airbnb fetches them) — direct binary upload is not supported on this endpoint.
 
 ### Examples
 

@@ -4,7 +4,7 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **id** | **Integer** |  | [optional] |
+| **id** | **String** |  | [optional] |
 | **display_name** | **String** |  | [optional] |
 | **display_name_long** | **String** |  | [optional] |
 | **avatar_url** | **String** |  | [optional] |

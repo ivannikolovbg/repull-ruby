@@ -4,7 +4,7 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **id** | **Integer** |  | [optional] |
+| **id** | **String** |  | [optional] |
 | **display_name** | **String** |  | [optional] |
 | **avatar_url** | **String** |  | [optional] |
 | **contacts** | [**Array&lt;ConversationGuestContact&gt;**](ConversationGuestContact.md) |  | [optional] |

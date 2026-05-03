@@ -6,7 +6,7 @@
 | ---- | ---- | ----------- | ----- |
 | **connected** | **Boolean** |  | [optional] |
 | **provider** | **String** |  | [optional] |
-| **id** | **Integer** | Repull-side connection ID. Stable across token refreshes. | [optional] |
+| **id** | **String** | Repull-side connection ID. Stable across token refreshes. | [optional] |
 | **status** | **String** |  | [optional] |
 | **external_account_id** | **String** | Provider-side account ID (e.g. the Airbnb host ID). | [optional] |
 | **created_at** | **Time** |  | [optional] |

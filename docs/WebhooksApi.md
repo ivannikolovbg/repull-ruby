@@ -94,6 +94,8 @@ end
 
 Delete webhook subscription
 
+Delete a webhook subscription. In-flight deliveries already on the queue are still attempted; new events stop firing immediately.
+
 ### Examples
 
 ```ruby
@@ -159,6 +161,8 @@ nil (empty response body)
 > <WebhookSubscription> get_webhook(id)
 
 Get webhook subscription
+
+Fetch a single webhook subscription by id. Use the `deliveries` sub-resource to list recent attempts, and `ping` to send a test event.
 
 ### Examples
 
@@ -298,7 +302,7 @@ end
 
 List webhook deliveries
 
-Paginated history of every delivery attempt for this subscription.
+Cursor-paginated history of every delivery attempt for this subscription. Walk pages with `?cursor=<pagination.nextCursor>`; stop when `pagination.hasMore` is `false`. The cursor is opaque base64 — do not parse it.
 
 ### Examples
 
@@ -440,6 +444,8 @@ This endpoint does not need any parameter.
 > <WebhookListResponse> list_webhooks
 
 List webhook subscriptions
+
+List every webhook subscription registered for this workspace. Each row includes the destination URL, subscribed event types, and the most recent delivery summary.
 
 ### Examples
 

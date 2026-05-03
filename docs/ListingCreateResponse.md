@@ -4,7 +4,7 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **id** | **Integer** | New listing ID — use for follow-up generate-content / publish calls | [optional] |
+| **id** | **String** | New listing ID — use for follow-up generate-content / publish calls | [optional] |
 
 ## Example
 

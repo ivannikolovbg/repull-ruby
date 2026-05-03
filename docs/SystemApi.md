@@ -13,6 +13,8 @@ All URIs are relative to *https://api.repull.dev*
 
 Health check
 
+Liveness probe. Returns `{ status: \"ok\", version }` when the API process is running. No auth required. Suitable for uptime monitors, load-balancer health checks, and SDK self-tests.
+
 ### Examples
 
 ```ruby

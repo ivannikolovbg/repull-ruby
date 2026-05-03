@@ -5,7 +5,7 @@
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **hotel_id** | **String** |  | [optional] |
-| **listing_id** | **Integer** |  | [optional] |
+| **listing_id** | **String** |  | [optional] |
 | **pushed** | **Integer** | Number of updates Booking.com accepted as &#x60;success&#x60;. Falls back to total update count when Booking omits per-update status on full success. | [optional] |
 | **requested** | **Integer** |  | [optional] |
 | **errors** | **Array&lt;Hash&lt;String, Object&gt;&gt;** | Per-update failure rows from Booking — shape mirrors the Booking rates API response. | [optional] |

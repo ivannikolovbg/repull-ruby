@@ -4,7 +4,7 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **listing_id** | **Integer** |  | [optional] |
+| **listing_id** | **String** |  | [optional] |
 | **date_range** | [**ListingPricingResponseDateRange**](ListingPricingResponseDateRange.md) |  | [optional] |
 | **recommendations** | [**Array&lt;ListingPricingRecommendation&gt;**](ListingPricingRecommendation.md) |  | [optional] |
 | **listing** | [**ListingPricingResponseListing**](ListingPricingResponseListing.md) |  | [optional] |
