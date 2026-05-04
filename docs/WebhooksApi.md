@@ -39,7 +39,7 @@ Repull.configure do |config|
 end
 
 api_instance = Repull::WebhooksApi.new
-create_webhook_request = Repull::CreateWebhookRequest.new({url: 'url_example', events: ['events_example']}) # CreateWebhookRequest | 
+create_webhook_request = Repull::CreateWebhookRequest.new({url: 'url_example', events: [Repull::WebhookEventType::RESERVATION_CREATED]}) # CreateWebhookRequest | 
 
 begin
   # Create webhook subscription
@@ -302,7 +302,7 @@ end
 
 List webhook deliveries
 
-Cursor-paginated history of every delivery attempt for this subscription. Walk pages with `?cursor=<pagination.nextCursor>`; stop when `pagination.hasMore` is `false`. The cursor is opaque base64 — do not parse it.
+Cursor-paginated history of every delivery attempt for this subscription. Walk pages with `?cursor=<pagination.nextCursor>`; stop when `pagination.hasMore` is `false`. The cursor is opaque base64 — do not parse it. `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) — mutually exclusive with `cursor`.
 
 ### Examples
 
@@ -320,6 +320,7 @@ id = '38400000-8cf0-11bd-b23e-10b96e4ef00d' # String |
 opts = {
   limit: 56, # Integer | 
   cursor: 'cursor_example', # String | 
+  offset: 56, # Integer | First-class alias for cursor-based pagination. Mutually exclusive with `cursor` — passing both returns 422. Accepts integers in `[0, 10000]`; deeper walks must use `cursor` (constant per-page cost). The response always includes `pagination.next_cursor` so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying.
   status: 'success' # String | 
 }
 
@@ -357,6 +358,7 @@ end
 | **id** | **String** |  |  |
 | **limit** | **Integer** |  | [optional][default to 25] |
 | **cursor** | **String** |  | [optional] |
+| **offset** | **Integer** | First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.next_cursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. | [optional][default to 0] |
 | **status** | **String** |  | [optional][default to &#39;all&#39;] |
 
 ### Return type
@@ -733,7 +735,7 @@ end
 
 api_instance = Repull::WebhooksApi.new
 id = '38400000-8cf0-11bd-b23e-10b96e4ef00d' # String | 
-event_type = 'reservation.created' # String | 
+event_type = Repull::WebhookEventType::RESERVATION_CREATED # WebhookEventType | 
 
 begin
   # Send test event of a specific type
@@ -766,7 +768,7 @@ end
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **id** | **String** |  |  |
-| **event_type** | **String** |  |  |
+| **event_type** | [**WebhookEventType**](.md) |  |  |
 
 ### Return type
 

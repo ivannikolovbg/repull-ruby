@@ -7,6 +7,7 @@ All URIs are relative to *https://api.repull.dev*
 | [**airbnb_listing_action**](AirbnbApi.md#airbnb_listing_action) | **POST** /v1/channels/airbnb/listings/{id} | Listing action (push/publish/unlist/delete) |
 | [**airbnb_reservation_action**](AirbnbApi.md#airbnb_reservation_action) | **POST** /v1/channels/airbnb/reservations/{code} | Accept/decline/cancel Airbnb reservation |
 | [**create_airbnb_listing**](AirbnbApi.md#create_airbnb_listing) | **POST** /v1/channels/airbnb/listings | Create/push Airbnb listing |
+| [**edit_airbnb_review**](AirbnbApi.md#edit_airbnb_review) | **PUT** /v1/channels/airbnb/reviews/{id} | Edit Airbnb host review |
 | [**get_airbnb_listing**](AirbnbApi.md#get_airbnb_listing) | **GET** /v1/channels/airbnb/listings/{id} | Get Airbnb listing |
 | [**get_airbnb_listing_availability**](AirbnbApi.md#get_airbnb_listing_availability) | **GET** /v1/channels/airbnb/listings/{id}/availability | Get Airbnb availability |
 | [**get_airbnb_listing_pricing**](AirbnbApi.md#get_airbnb_listing_pricing) | **GET** /v1/channels/airbnb/listings/{id}/pricing | Get Airbnb pricing |
@@ -17,7 +18,8 @@ All URIs are relative to *https://api.repull.dev*
 | [**list_airbnb_reviews**](AirbnbApi.md#list_airbnb_reviews) | **GET** /v1/channels/airbnb/reviews | List Airbnb reviews |
 | [**list_airbnb_thread_messages**](AirbnbApi.md#list_airbnb_thread_messages) | **GET** /v1/channels/airbnb/messaging/{threadId}/messages | Get Airbnb messages |
 | [**list_airbnb_threads**](AirbnbApi.md#list_airbnb_threads) | **GET** /v1/channels/airbnb/messaging | List Airbnb message threads |
-| [**respond_airbnb_review**](AirbnbApi.md#respond_airbnb_review) | **POST** /v1/channels/airbnb/reviews | Respond to Airbnb review |
+| [**respond_airbnb_review**](AirbnbApi.md#respond_airbnb_review) | **POST** /v1/channels/airbnb/reviews/{id}/respond | Respond to Airbnb review |
+| [**respond_airbnb_review_legacy**](AirbnbApi.md#respond_airbnb_review_legacy) | **POST** /v1/channels/airbnb/reviews | Respond to / submit Airbnb review (legacy) |
 | [**send_airbnb_message**](AirbnbApi.md#send_airbnb_message) | **POST** /v1/channels/airbnb/messaging/{threadId}/messages | Send Airbnb message |
 | [**sync_airbnb**](AirbnbApi.md#sync_airbnb) | **POST** /v1/channels/airbnb/sync | Bulk sync to Airbnb |
 | [**update_airbnb_listing_availability**](AirbnbApi.md#update_airbnb_listing_availability) | **PUT** /v1/channels/airbnb/listings/{id}/availability | Update Airbnb availability |
@@ -227,13 +229,84 @@ This endpoint does not need any parameter.
 - **Accept**: application/json
 
 
+## edit_airbnb_review
+
+> <AirbnbReview> edit_airbnb_review(id, airbnb_review)
+
+Edit Airbnb host review
+
+Edit a host-side review for an Airbnb stay. Airbnb collapses POST + PUT into the same upstream call (`PUT /v2/listing_reviews/{id}`), so this endpoint covers both initial submit and subsequent edits while the review window is open.  Body is a partial `AirbnbReview` — pass the fields you want to change (rating, public review, private feedback, category ratings).
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::AirbnbApi.new
+id = 'id_example' # String | Airbnb review id (`HRabc123` style).
+airbnb_review = Repull::AirbnbReview.new # AirbnbReview | 
+
+begin
+  # Edit Airbnb host review
+  result = api_instance.edit_airbnb_review(id, airbnb_review)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->edit_airbnb_review: #{e}"
+end
+```
+
+#### Using the edit_airbnb_review_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<AirbnbReview>, Integer, Hash)> edit_airbnb_review_with_http_info(id, airbnb_review)
+
+```ruby
+begin
+  # Edit Airbnb host review
+  data, status_code, headers = api_instance.edit_airbnb_review_with_http_info(id, airbnb_review)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <AirbnbReview>
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->edit_airbnb_review_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Airbnb review id (&#x60;HRabc123&#x60; style). |  |
+| **airbnb_review** | [**AirbnbReview**](AirbnbReview.md) |  |  |
+
+### Return type
+
+[**AirbnbReview**](AirbnbReview.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
 ## get_airbnb_listing
 
-> <AirbnbListing> get_airbnb_listing(id)
+> <AirbnbListing> get_airbnb_listing(id, opts)
 
 Get Airbnb listing
 
-Fetch a single Airbnb listing by id with full pricing, availability, and content. Listing ids are Airbnb-side ids (numeric strings).
+Fetch all Airbnb connection rows for a single Vanio listing id. A property may be linked from multiple Airbnb hosts — every match is returned. Pass `?include=amenities` to enrich each row with its current Airbnb amenities.
 
 ### Examples
 
@@ -248,10 +321,13 @@ end
 
 api_instance = Repull::AirbnbApi.new
 id = 'id_example' # String | 
+opts = {
+  include: 'amenities' # String | Comma-separated expansions. Currently supported: `amenities`.
+}
 
 begin
   # Get Airbnb listing
-  result = api_instance.get_airbnb_listing(id)
+  result = api_instance.get_airbnb_listing(id, opts)
   p result
 rescue Repull::ApiError => e
   puts "Error when calling AirbnbApi->get_airbnb_listing: #{e}"
@@ -262,12 +338,12 @@ end
 
 This returns an Array which contains the response data, status code and headers.
 
-> <Array(<AirbnbListing>, Integer, Hash)> get_airbnb_listing_with_http_info(id)
+> <Array(<AirbnbListing>, Integer, Hash)> get_airbnb_listing_with_http_info(id, opts)
 
 ```ruby
 begin
   # Get Airbnb listing
-  data, status_code, headers = api_instance.get_airbnb_listing_with_http_info(id)
+  data, status_code, headers = api_instance.get_airbnb_listing_with_http_info(id, opts)
   p status_code # => 2xx
   p headers # => { ... }
   p data # => <AirbnbListing>
@@ -281,6 +357,7 @@ end
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **id** | **String** |  |  |
+| **include** | **String** | Comma-separated expansions. Currently supported: &#x60;amenities&#x60;. | [optional] |
 
 ### Return type
 
@@ -571,11 +648,11 @@ nil (empty response body)
 
 ## list_airbnb_listings
 
-> <AirbnbListingListResponse> list_airbnb_listings
+> <AirbnbListingListResponse> list_airbnb_listings(opts)
 
 List Airbnb listings
 
-List every Airbnb listing this workspace has access to via the connected Airbnb account. Sourced from the Airbnb Listing API. Listings sync automatically every few minutes — pass `?refresh=true` to force a fresh upstream pull.
+List every Airbnb listing this workspace has access to via the connected Airbnb account. Default response is a fast DB read pairing each Vanio listing with its `listings_airbnb` connection rows.  Pass `?include=amenities` to enrich each connection with its current Airbnb amenity set (one extra upstream call per unique Airbnb id, fanned out in parallel). Per-connection failures surface in `_errors.amenities` rather than failing the whole request.
 
 ### Examples
 
@@ -589,10 +666,13 @@ Repull.configure do |config|
 end
 
 api_instance = Repull::AirbnbApi.new
+opts = {
+  include: 'amenities' # String | Comma-separated expansions. Currently supported: `amenities` (adds `amenities` and `accessibility_amenities` arrays to each connection). Each expansion adds one upstream Airbnb call per unique listing id.
+}
 
 begin
   # List Airbnb listings
-  result = api_instance.list_airbnb_listings
+  result = api_instance.list_airbnb_listings(opts)
   p result
 rescue Repull::ApiError => e
   puts "Error when calling AirbnbApi->list_airbnb_listings: #{e}"
@@ -603,12 +683,12 @@ end
 
 This returns an Array which contains the response data, status code and headers.
 
-> <Array(<AirbnbListingListResponse>, Integer, Hash)> list_airbnb_listings_with_http_info
+> <Array(<AirbnbListingListResponse>, Integer, Hash)> list_airbnb_listings_with_http_info(opts)
 
 ```ruby
 begin
   # List Airbnb listings
-  data, status_code, headers = api_instance.list_airbnb_listings_with_http_info
+  data, status_code, headers = api_instance.list_airbnb_listings_with_http_info(opts)
   p status_code # => 2xx
   p headers # => { ... }
   p data # => <AirbnbListingListResponse>
@@ -619,7 +699,9 @@ end
 
 ### Parameters
 
-This endpoint does not need any parameter.
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **include** | **String** | Comma-separated expansions. Currently supported: &#x60;amenities&#x60; (adds &#x60;amenities&#x60; and &#x60;accessibility_amenities&#x60; arrays to each connection). Each expansion adds one upstream Airbnb call per unique listing id. | [optional] |
 
 ### Return type
 
@@ -637,11 +719,11 @@ This endpoint does not need any parameter.
 
 ## list_airbnb_reservations
 
-> <AirbnbReservationListResponse> list_airbnb_reservations
+> <AirbnbReservationListResponse> list_airbnb_reservations(opts)
 
 List Airbnb reservations
 
-List reservations sourced directly from Airbnb. Use this when you need Airbnb-specific fields (guest payout split, cancellation policy snapshot) that the unified `/v1/reservations` endpoint flattens away.
+Cursor-paginated list of reservations sourced directly from Airbnb. Use this when you need Airbnb-specific fields (guest payout split, cancellation policy snapshot) that the unified `/v1/reservations` endpoint flattens away.  Walk pages with `?cursor=<pagination.next_cursor>` until `pagination.has_more` is `false`. The cursor is opaque — never construct or parse it client-side.  `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) — see the `offset` parameter below. Mutually exclusive with `cursor`. Internally this walks upstream Airbnb cursor pages to skip rows, so deep offsets cost N/limit upstream round-trips; cursor remains the better choice for deep pagination.  When `status` is omitted, all statuses are returned (Airbnb defaults to `accepted` only on its own surface, but this endpoint normalises to \"all\"). Pass `?status=accepted` to scope.
 
 ### Examples
 
@@ -655,10 +737,20 @@ Repull.configure do |config|
 end
 
 api_instance = Repull::AirbnbApi.new
+opts = {
+  cursor: 'cursor_example', # String | Opaque cursor returned by the previous response's `pagination.next_cursor`. Omit to fetch the first page.
+  offset: 56, # Integer | First-class alias for cursor-based pagination. Mutually exclusive with `cursor` — passing both returns 422. Accepts integers in `[0, 10000]`; deeper walks must use `cursor` (constant per-page cost). The response always includes `pagination.next_cursor` so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying.
+  limit: 56, # Integer | Max items per page. Hard cap is 100.
+  listing_id: 'listing_id_example', # String | Filter to one Airbnb listing id (numeric string).
+  status: 'pending', # String | Filter by reservation status. Omit to receive all statuses.
+  start_date: Date.parse('2013-10-20'), # Date | ISO 8601 (YYYY-MM-DD) lower bound on Airbnb's date range filter.
+  end_date: Date.parse('2013-10-20'), # Date | ISO 8601 (YYYY-MM-DD) upper bound on Airbnb's date range filter.
+  include_total: true # Boolean | Whether to include `pagination.total`. Always populated when Airbnb returns a total count (effectively always); accepted for shape symmetry with the rest of the API.
+}
 
 begin
   # List Airbnb reservations
-  result = api_instance.list_airbnb_reservations
+  result = api_instance.list_airbnb_reservations(opts)
   p result
 rescue Repull::ApiError => e
   puts "Error when calling AirbnbApi->list_airbnb_reservations: #{e}"
@@ -669,12 +761,12 @@ end
 
 This returns an Array which contains the response data, status code and headers.
 
-> <Array(<AirbnbReservationListResponse>, Integer, Hash)> list_airbnb_reservations_with_http_info
+> <Array(<AirbnbReservationListResponse>, Integer, Hash)> list_airbnb_reservations_with_http_info(opts)
 
 ```ruby
 begin
   # List Airbnb reservations
-  data, status_code, headers = api_instance.list_airbnb_reservations_with_http_info
+  data, status_code, headers = api_instance.list_airbnb_reservations_with_http_info(opts)
   p status_code # => 2xx
   p headers # => { ... }
   p data # => <AirbnbReservationListResponse>
@@ -685,7 +777,16 @@ end
 
 ### Parameters
 
-This endpoint does not need any parameter.
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **cursor** | **String** | Opaque cursor returned by the previous response&#39;s &#x60;pagination.next_cursor&#x60;. Omit to fetch the first page. | [optional] |
+| **offset** | **Integer** | First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.next_cursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. | [optional][default to 0] |
+| **limit** | **Integer** | Max items per page. Hard cap is 100. | [optional][default to 50] |
+| **listing_id** | **String** | Filter to one Airbnb listing id (numeric string). | [optional] |
+| **status** | **String** | Filter by reservation status. Omit to receive all statuses. | [optional] |
+| **start_date** | **Date** | ISO 8601 (YYYY-MM-DD) lower bound on Airbnb&#39;s date range filter. | [optional] |
+| **end_date** | **Date** | ISO 8601 (YYYY-MM-DD) upper bound on Airbnb&#39;s date range filter. | [optional] |
+| **include_total** | **Boolean** | Whether to include &#x60;pagination.total&#x60;. Always populated when Airbnb returns a total count (effectively always); accepted for shape symmetry with the rest of the API. | [optional][default to true] |
 
 ### Return type
 
@@ -904,11 +1005,82 @@ This endpoint does not need any parameter.
 
 ## respond_airbnb_review
 
-> respond_airbnb_review
+> <AirbnbReview> respond_airbnb_review(id, respond_airbnb_review_request)
 
 Respond to Airbnb review
 
-Post a public response to a guest review. Airbnb allows one response per review — repeated POSTs return 409.
+Post a public host response to a guest review. Airbnb allows one response per review — repeated POSTs return 409. Response text is capped at 1000 characters.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::AirbnbApi.new
+id = 'id_example' # String | Airbnb review id.
+respond_airbnb_review_request = Repull::RespondAirbnbReviewRequest.new({response: 'response_example'}) # RespondAirbnbReviewRequest | 
+
+begin
+  # Respond to Airbnb review
+  result = api_instance.respond_airbnb_review(id, respond_airbnb_review_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->respond_airbnb_review: #{e}"
+end
+```
+
+#### Using the respond_airbnb_review_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<AirbnbReview>, Integer, Hash)> respond_airbnb_review_with_http_info(id, respond_airbnb_review_request)
+
+```ruby
+begin
+  # Respond to Airbnb review
+  data, status_code, headers = api_instance.respond_airbnb_review_with_http_info(id, respond_airbnb_review_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <AirbnbReview>
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->respond_airbnb_review_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Airbnb review id. |  |
+| **respond_airbnb_review_request** | [**RespondAirbnbReviewRequest**](RespondAirbnbReviewRequest.md) |  |  |
+
+### Return type
+
+[**AirbnbReview**](AirbnbReview.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## respond_airbnb_review_legacy
+
+> respond_airbnb_review_legacy
+
+Respond to / submit Airbnb review (legacy)
+
+Legacy action-based shape. Body `{ action: \"respond\"|\"submit\", reviewId, response?, review? }`. Kept for backwards compatibility — prefer `PUT /v1/channels/airbnb/reviews/{id}` (edit) and `POST /v1/channels/airbnb/reviews/{id}/respond` (reply) for new integrations.
 
 ### Examples
 
@@ -924,28 +1096,28 @@ end
 api_instance = Repull::AirbnbApi.new
 
 begin
-  # Respond to Airbnb review
-  api_instance.respond_airbnb_review
+  # Respond to / submit Airbnb review (legacy)
+  api_instance.respond_airbnb_review_legacy
 rescue Repull::ApiError => e
-  puts "Error when calling AirbnbApi->respond_airbnb_review: #{e}"
+  puts "Error when calling AirbnbApi->respond_airbnb_review_legacy: #{e}"
 end
 ```
 
-#### Using the respond_airbnb_review_with_http_info variant
+#### Using the respond_airbnb_review_legacy_with_http_info variant
 
 This returns an Array which contains the response data (`nil` in this case), status code and headers.
 
-> <Array(nil, Integer, Hash)> respond_airbnb_review_with_http_info
+> <Array(nil, Integer, Hash)> respond_airbnb_review_legacy_with_http_info
 
 ```ruby
 begin
-  # Respond to Airbnb review
-  data, status_code, headers = api_instance.respond_airbnb_review_with_http_info
+  # Respond to / submit Airbnb review (legacy)
+  data, status_code, headers = api_instance.respond_airbnb_review_legacy_with_http_info
   p status_code # => 2xx
   p headers # => { ... }
   p data # => nil
 rescue Repull::ApiError => e
-  puts "Error when calling AirbnbApi->respond_airbnb_review_with_http_info: #{e}"
+  puts "Error when calling AirbnbApi->respond_airbnb_review_legacy_with_http_info: #{e}"
 end
 ```
 

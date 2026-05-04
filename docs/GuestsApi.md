@@ -87,7 +87,7 @@ end
 
 List guests
 
-Cursor-paginated list of guests in the workspace. Walks `guests.id ASC` keyset for constant per-page cost regardless of how many guests the customer has. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request.  Filters: `q` (substring on name/email/phone), `has_reservation` (`true`|`false`), `listing_id` (restrict to guests with at least one reservation on that listing).
+Cursor-paginated list of guests in the workspace. Walks `guests.id ASC` keyset for constant per-page cost regardless of how many guests the customer has. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request.  `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) — see the `offset` parameter below. Mutually exclusive with `cursor`.  Filters: `q` (substring on name/email/phone), `has_reservation` (`true`|`false`), `listing_id` (restrict to guests with at least one reservation on that listing).
 
 ### Examples
 
@@ -104,6 +104,7 @@ api_instance = Repull::GuestsApi.new
 opts = {
   x_schema: 'my-app-schema', # String | Apply a custom or built-in schema to transform the response. Built-in: `native` (default), `calry`, `calry-v1`. Custom: any schema name created via `POST /v1/schema/custom`. Unknown / inactive schema names fall back to `native`.
   cursor: 'cursor_example', # String | Opaque cursor returned in the previous response's `pagination.nextCursor`. Omit to fetch the first page.
+  offset: 56, # Integer | First-class alias for cursor-based pagination. Mutually exclusive with `cursor` — passing both returns 422. Accepts integers in `[0, 10000]`; deeper walks must use `cursor` (constant per-page cost). The response always includes `pagination.next_cursor` so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying.
   limit: 56, # Integer | Max items per page. Hard cap is 100.
   q: 'q_example', # String | Case-insensitive substring search on name, email, or phone.
   has_reservation: true, # Boolean | Restrict to guests that do (`true`) or do not (`false`) have any reservation on file.
@@ -143,6 +144,7 @@ end
 | ---- | ---- | ----------- | ----- |
 | **x_schema** | **String** | Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;. | [optional] |
 | **cursor** | **String** | Opaque cursor returned in the previous response&#39;s &#x60;pagination.nextCursor&#x60;. Omit to fetch the first page. | [optional] |
+| **offset** | **Integer** | First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.next_cursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. | [optional][default to 0] |
 | **limit** | **Integer** | Max items per page. Hard cap is 100. | [optional][default to 20] |
 | **q** | **String** | Case-insensitive substring search on name, email, or phone. | [optional] |
 | **has_reservation** | **Boolean** | Restrict to guests that do (&#x60;true&#x60;) or do not (&#x60;false&#x60;) have any reservation on file. | [optional] |

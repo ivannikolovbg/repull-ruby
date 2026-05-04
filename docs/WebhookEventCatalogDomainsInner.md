@@ -6,7 +6,7 @@
 | ---- | ---- | ----------- | ----- |
 | **id** | **String** |  | [optional] |
 | **title** | **String** |  | [optional] |
-| **events** | [**Array&lt;WebhookEventCatalogDomainsInnerEventsInner&gt;**](WebhookEventCatalogDomainsInnerEventsInner.md) |  | [optional] |
+| **events** | [**Array&lt;WebhookEventCatalogEntry&gt;**](WebhookEventCatalogEntry.md) |  | [optional] |
 
 ## Example
 

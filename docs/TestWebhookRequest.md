@@ -5,7 +5,7 @@
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **url** | **String** |  | [optional] |
-| **event_type** | **String** |  | [optional] |
+| **event_type** | [**WebhookEventType**](WebhookEventType.md) |  | [optional] |
 | **signing_secret** | **String** |  | [optional] |
 
 ## Example

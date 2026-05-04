@@ -1,7 +1,7 @@
 =begin
 #Repull API
 
-#The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.  ## Designed for AI agents Every error response on this API includes machine-parseable fields so an LLM (Claude in MCP, Cursor, Cline, GPT, etc.) can self-recover without escalating to a human: - `error.code` — stable string identifier (e.g. `invalid_params`, `rate_limit_exceeded`) - `error.message` — human-readable cause - `error.fix` — exact recovery steps (e.g. \"Pass `check_in_after` as ISO 8601: `?check_in_after=2026-01-15`\") - `error.docs_url` — link to the canonical write-up at `https://repull.dev/docs/errors/{code}` - `error.request_id` — id to correlate with server-side logs - `error.field` / `error.value_received` / `error.valid_values` / `error.did_you_mean` — when the error is parameter-specific - `error.retry_after` — seconds to wait before retrying (rate-limit + transient upstream)  `Access-Control-Expose-Headers` lists `x-request-id` and the `X-RateLimit-*` family so browsers can read them on cross-origin responses.  ## Quick Start 1. Get an API key at https://repull.dev/dashboard 2. Connect a PMS: `POST /v1/connect/{provider}` 3. List properties: `GET /v1/properties` 4. Get reservations: `GET /v1/reservations`  ## Authentication All requests require a Bearer token: ``` Authorization: Bearer sk_test_YOUR_API_KEY ```  Sandbox keys start with `sk_test_`, production with `sk_live_`.  ## Request Correlation (X-Request-ID) Every response carries an `X-Request-ID` header, e.g. `X-Request-ID: req_01HXY...`. Include this id in support tickets and bug reports — we can trace the full request lifecycle (auth, rate limit, handler, downstream calls, log row) from a single id.  You may set the header on the inbound request to forward your own trace id; we will echo it back instead of generating a new one. Accepted format: `^[\\\\w.-]{1,128}$`.  The id is also embedded in error envelopes as `request_id` so server-side log diffs work even when the response headers are stripped by an intermediate proxy.  ## Rate Limits The public API enforces a per-API-key sliding-window rate limit on top of the per-tier monthly + daily-AI quotas.  **Default policy:** 600 requests per 60 seconds, per API key. Sliding window — there is no fixed-minute boundary you can burst across.  Every response includes:  | Header | Meaning | |---|---| | `X-RateLimit-Limit` | Requests permitted in the current window. | | `X-RateLimit-Remaining` | Requests left in the current window after this call. | | `X-RateLimit-Reset` | Unix epoch (seconds) when the next slot opens. | | `X-RateLimit-Policy` | Machine-readable policy descriptor, e.g. `600;w=60`. | | `Retry-After` | Seconds to wait before retrying. **Only present on 429 responses.** |  **On 429 (rate_limit_exceeded):** the response body matches the standard error envelope with `code: \"rate_limit_exceeded\"`, plus `limit`, `window_seconds`, `retry_after`, and `request_id` fields. SDKs MUST honor `Retry-After` and use exponential backoff with jitter on subsequent retries — never a tight loop.  Recommended backoff: ``` sleep_ms = (Retry-After * 1000) + random(0..250) ```  Monthly + daily-AI tier quotas (`free`, `starter`, `pro`, `enterprise`) are enforced separately and also surface as 429s; they include `tier`, `scope`, and `resets_at` fields.
+#The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.  ## Designed for AI agents Every error response on this API includes machine-parseable fields so an LLM (Claude in MCP, Cursor, Cline, GPT, etc.) can self-recover without escalating to a human: - `error.code` — stable string identifier (e.g. `invalid_params`, `rate_limit_exceeded`) - `error.message` — human-readable cause - `error.fix` — exact recovery steps (e.g. \"Pass `check_in_after` as ISO 8601: `?check_in_after=2026-01-15`\") - `error.docs_url` — link to the canonical write-up at `https://repull.dev/docs/errors/{code}` - `error.request_id` — id to correlate with server-side logs - `error.field` / `error.value_received` / `error.valid_values` / `error.did_you_mean` — when the error is parameter-specific - `error.retry_after` — seconds to wait before retrying (rate-limit + transient upstream)  `Access-Control-Expose-Headers` lists `x-request-id` and the `X-RateLimit-*` family so browsers can read them on cross-origin responses.  ## Quick Start 1. Get an API key at https://repull.dev/dashboard 2. Connect a PMS: `POST /v1/connect/{provider}` 3. List properties: `GET /v1/properties` 4. Get reservations: `GET /v1/reservations`  ## Authentication All requests require a Bearer token: ``` Authorization: Bearer sk_test_YOUR_API_KEY ```  Sandbox keys start with `sk_test_`, production with `sk_live_`.  ## Request Correlation (X-Request-ID) Every response carries an `X-Request-ID` header, e.g. `X-Request-ID: req_01HXY...`. Include this id in support tickets and bug reports — we can trace the full request lifecycle (auth, rate limit, handler, downstream calls, log row) from a single id.  You may set the header on the inbound request to forward your own trace id; we will echo it back instead of generating a new one. Accepted format: `^[\\\\w.-]{1,128}$`.  The id is also embedded in error envelopes as `request_id` so server-side log diffs work even when the response headers are stripped by an intermediate proxy.  ## Rate Limits The public API enforces a per-API-key sliding-window rate limit on top of the per-tier monthly + daily-AI quotas.  **Default policy:** 600 requests per 60 seconds, per API key. Sliding window — there is no fixed-minute boundary you can burst across.  Every response includes:  | Header | Meaning | |---|---| | `X-RateLimit-Limit` | Requests permitted in the current window. | | `X-RateLimit-Remaining` | Requests left in the current window after this call. | | `X-RateLimit-Reset` | Unix epoch (seconds) when the next slot opens. | | `X-RateLimit-Policy` | Machine-readable policy descriptor, e.g. `600;w=60`. | | `Retry-After` | Seconds to wait before retrying. **Only present on 429 responses.** |  **On 429 (rate_limit_exceeded):** the response body matches the standard error envelope with `code: \"rate_limit_exceeded\"`, plus `limit`, `window_seconds`, `retry_after`, and `request_id` fields. SDKs MUST honor `Retry-After` and use exponential backoff with jitter on subsequent retries — never a tight loop.  Recommended backoff: ``` sleep_ms = (Retry-After * 1000) + random(0..250) ```  Monthly + daily-AI tier quotas (`free`, `starter`, `custom`) are enforced separately and also surface as 429s; they include `tier`, `scope`, and `resets_at` fields.
 
 The version of the OpenAPI document: 1.0.0
 Contact: ivan@vanio.ai
@@ -14,41 +14,25 @@ require 'date'
 require 'time'
 
 module Repull
-  # An Airbnb listing in the host account. Mirrors the Airbnb partner API shape with light normalization.
+  # A Vanio listing paired with its Airbnb connection rows. The list endpoint groups every `listings_airbnb` row that points at the same Vanio `listingId` under a single `connections[]` array.
   class AirbnbListing < ApiModelBase
-    # Airbnb listing ID
-    attr_accessor :id
+    # Vanio (Repull) listing id
+    attr_accessor :listing_id
 
     # Listing title
     attr_accessor :name
 
-    # Listing status (active, unlisted, etc.)
-    attr_accessor :status
+    attr_accessor :city
 
-    attr_accessor :property_type
-
-    attr_accessor :room_type
-
-    attr_accessor :bedrooms
-
-    attr_accessor :bathrooms
-
-    attr_accessor :max_guests
-
-    attr_accessor :thumbnail_url
+    attr_accessor :connections
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'id' => :'id',
+        :'listing_id' => :'listingId',
         :'name' => :'name',
-        :'status' => :'status',
-        :'property_type' => :'propertyType',
-        :'room_type' => :'roomType',
-        :'bedrooms' => :'bedrooms',
-        :'bathrooms' => :'bathrooms',
-        :'max_guests' => :'maxGuests',
-        :'thumbnail_url' => :'thumbnailUrl'
+        :'city' => :'city',
+        :'connections' => :'connections'
       }
     end
 
@@ -65,27 +49,17 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'id' => :'String',
+        :'listing_id' => :'Integer',
         :'name' => :'String',
-        :'status' => :'String',
-        :'property_type' => :'String',
-        :'room_type' => :'String',
-        :'bedrooms' => :'Integer',
-        :'bathrooms' => :'Float',
-        :'max_guests' => :'Integer',
-        :'thumbnail_url' => :'String'
+        :'city' => :'String',
+        :'connections' => :'Array<AirbnbConnection>'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
-        :'property_type',
-        :'room_type',
-        :'bedrooms',
-        :'bathrooms',
-        :'max_guests',
-        :'thumbnail_url'
+        :'city',
       ])
     end
 
@@ -105,40 +79,22 @@ module Repull
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'id')
-        self.id = attributes[:'id']
+      if attributes.key?(:'listing_id')
+        self.listing_id = attributes[:'listing_id']
       end
 
       if attributes.key?(:'name')
         self.name = attributes[:'name']
       end
 
-      if attributes.key?(:'status')
-        self.status = attributes[:'status']
+      if attributes.key?(:'city')
+        self.city = attributes[:'city']
       end
 
-      if attributes.key?(:'property_type')
-        self.property_type = attributes[:'property_type']
-      end
-
-      if attributes.key?(:'room_type')
-        self.room_type = attributes[:'room_type']
-      end
-
-      if attributes.key?(:'bedrooms')
-        self.bedrooms = attributes[:'bedrooms']
-      end
-
-      if attributes.key?(:'bathrooms')
-        self.bathrooms = attributes[:'bathrooms']
-      end
-
-      if attributes.key?(:'max_guests')
-        self.max_guests = attributes[:'max_guests']
-      end
-
-      if attributes.key?(:'thumbnail_url')
-        self.thumbnail_url = attributes[:'thumbnail_url']
+      if attributes.key?(:'connections')
+        if (value = attributes[:'connections']).is_a?(Array)
+          self.connections = value
+        end
       end
     end
 
@@ -162,15 +118,10 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          id == o.id &&
+          listing_id == o.listing_id &&
           name == o.name &&
-          status == o.status &&
-          property_type == o.property_type &&
-          room_type == o.room_type &&
-          bedrooms == o.bedrooms &&
-          bathrooms == o.bathrooms &&
-          max_guests == o.max_guests &&
-          thumbnail_url == o.thumbnail_url
+          city == o.city &&
+          connections == o.connections
     end
 
     # @see the `==` method
@@ -182,7 +133,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, name, status, property_type, room_type, bedrooms, bathrooms, max_guests, thumbnail_url].hash
+      [listing_id, name, city, connections].hash
     end
 
     # Builds the object from hash

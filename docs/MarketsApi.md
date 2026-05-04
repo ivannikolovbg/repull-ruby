@@ -166,7 +166,7 @@ end
 
 Paginated discovery catalog
 
-Cursor-paginated, search-filterable catalog of every Atlas-tracked market the customer could expand into. Backed by the precomputed `market_summaries` table (>=5 active comps per city). Supports fuzzy `q` substring search (trigram-indexed), `country` (ISO 3166-1 alpha-2) filter, and `sort` (`listings_desc` | `name_asc`). Use the `nextCursor` from `pagination` to walk pages — the cursor is an opaque base64 token; do not parse it.  `pagination.total` is the count of markets matching the current `q`/`country`/`min_listings` filter (across all pages). Renamed from the upstream's legacy `total_in_filter` so SDK consumers see the same `pagination.total` field as on every other list endpoint.
+Cursor-paginated, search-filterable catalog of every Atlas-tracked market the customer could expand into. Backed by the precomputed `market_summaries` table (>=5 active comps per city). Supports fuzzy `q` substring search (trigram-indexed), `country` (ISO 3166-1 alpha-2) filter, and `sort` (`listings_desc` | `name_asc`). Use the `nextCursor` from `pagination` to walk pages — the cursor is an opaque base64 token; do not parse it.  `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) — see the `offset` parameter below. Mutually exclusive with `cursor`.  `pagination.total` is the count of markets matching the current `q`/`country`/`min_listings` filter (across all pages) — same shape as every other list endpoint.
 
 ### Examples
 
@@ -185,6 +185,7 @@ opts = {
   country: 'country_example', # String | ISO 3166-1 alpha-2 (e.g. `US`, `ES`).
   min_listings: 56, # Integer | Minimum comp-set size — cities with fewer active comps are excluded.
   cursor: 'cursor_example', # String | Opaque cursor returned by the previous page's `pagination.nextCursor`.
+  offset: 56, # Integer | First-class alias for cursor-based pagination. Mutually exclusive with `cursor` — passing both returns 422. Accepts integers in `[0, 10000]`; deeper walks must use `cursor` (constant per-page cost). The response always includes `pagination.next_cursor` so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying.
   limit: 56, # Integer | 
   sort: 'listings_desc' # String | 
 }
@@ -224,6 +225,7 @@ end
 | **country** | **String** | ISO 3166-1 alpha-2 (e.g. &#x60;US&#x60;, &#x60;ES&#x60;). | [optional] |
 | **min_listings** | **Integer** | Minimum comp-set size — cities with fewer active comps are excluded. | [optional][default to 5] |
 | **cursor** | **String** | Opaque cursor returned by the previous page&#39;s &#x60;pagination.nextCursor&#x60;. | [optional] |
+| **offset** | **Integer** | First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.next_cursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. | [optional][default to 0] |
 | **limit** | **Integer** |  | [optional][default to 30] |
 | **sort** | **String** |  | [optional][default to &#39;listings_desc&#39;] |
 

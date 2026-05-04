@@ -6,7 +6,7 @@
 | ---- | ---- | ----------- | ----- |
 | **url** | **String** |  | [optional] |
 | **description** | **String** |  | [optional] |
-| **events** | **Array&lt;String&gt;** |  | [optional] |
+| **events** | [**Array&lt;WebhookEventType&gt;**](WebhookEventType.md) |  | [optional] |
 | **status** | **String** |  | [optional] |
 
 ## Example

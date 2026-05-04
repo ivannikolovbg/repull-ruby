@@ -2,6 +2,25 @@
 
 All notable changes to the `repull` gem are documented here.
 
+## [0.2.1] - 2026-05-04
+
+### Added — Studio routes (16 ops)
+
+Repull Studio is now reachable from the Ruby SDK. New `Repull::StudioApi`
+class covers all 10 paths and 16 operations:
+
+- `list_studio_projects`, `create_studio_project`, `get_studio_project`,
+  `update_studio_project`, `delete_studio_project`
+- `list_studio_project_files`, `upsert_studio_project_file`,
+  `delete_studio_project_file`
+- `create_studio_project_generation`, `generate_studio_completion`
+- `list_studio_deployments`, `create_studio_deployment`,
+  `get_studio_deployment`, `delete_studio_deployment`,
+  `suspend_studio_deployment`, `wake_studio_deployment`
+
+New models: `StudioProject`, `StudioFile`, `StudioGeneration`,
+`StudioDeployment`, `StudioError`.
+
 ## [0.2.0] - 2026-05-02
 
 ### Changed (breaking)
