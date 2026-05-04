@@ -7,7 +7,7 @@
 | **id** | **String** |  | [optional] |
 | **url** | **String** |  | [optional] |
 | **description** | **String** |  | [optional] |
-| **events** | **Array&lt;String&gt;** |  | [optional] |
+| **events** | [**Array&lt;WebhookEventType&gt;**](WebhookEventType.md) |  | [optional] |
 | **api_version** | **String** |  | [optional] |
 | **status** | **String** |  | [optional] |
 | **consecutive_failures** | **Integer** |  | [optional] |

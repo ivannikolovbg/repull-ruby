@@ -6,7 +6,7 @@
 | ---- | ---- | ----------- | ----- |
 | **id** | **String** |  | [optional] |
 | **event_id** | **String** | Stable across retries of the same logical event. | [optional] |
-| **event_type** | **String** |  | [optional] |
+| **event_type** | [**WebhookEventType**](WebhookEventType.md) |  | [optional] |
 | **status_code** | **Integer** |  | [optional] |
 | **response_time_ms** | **Integer** |  | [optional] |
 | **attempt** | **Integer** |  | [optional] |

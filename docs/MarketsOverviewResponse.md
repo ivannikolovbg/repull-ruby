@@ -10,7 +10,7 @@
 | **my_listings** | [**Array&lt;MarketMyListing&gt;**](MarketMyListing.md) |  | [optional] |
 | **free_market** | **String** | City auto-assigned as the customer&#39;s free market (largest by listing count). Null for customers with no listings. | [optional] |
 | **subscriptions** | [**MarketsOverviewResponseSubscriptions**](MarketsOverviewResponseSubscriptions.md) |  | [optional] |
-| **tier** | **String** | Resolved Repull tier (free / pro / scale). | [optional] |
+| **tier** | **String** | Resolved Repull tier (free / starter / custom). | [optional] |
 | **browse** | [**MarketsOverviewResponseBrowse**](MarketsOverviewResponseBrowse.md) |  | [optional] |
 
 ## Example

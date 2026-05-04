@@ -6,8 +6,8 @@
 | ---- | ---- | ----------- | ----- |
 | **id** | **String** |  | [optional] |
 | **event_id** | **String** |  | [optional] |
-| **event_type** | **String** |  | [optional] |
-| **payload** | **Object** |  | [optional] |
+| **event_type** | [**WebhookEventType**](WebhookEventType.md) |  | [optional] |
+| **payload** | [**WebhookEvent**](WebhookEvent.md) |  | [optional] |
 | **request_headers** | **Object** |  | [optional] |
 | **status_code** | **Integer** |  | [optional] |
 | **response_headers** | **Object** |  | [optional] |

@@ -9,6 +9,8 @@ All URIs are relative to *https://api.repull.dev*
 | [**get_booking_listing_pricing**](BookingComApi.md#get_booking_listing_pricing) | **GET** /v1/channels/booking/listings/{id}/pricing | Get Booking.com pricing for a listing |
 | [**list_booking_conversations**](BookingComApi.md#list_booking_conversations) | **GET** /v1/channels/booking/messaging | List Booking.com conversations |
 | [**list_booking_properties**](BookingComApi.md#list_booking_properties) | **GET** /v1/channels/booking/properties | List Booking.com properties |
+| [**list_booking_reviews**](BookingComApi.md#list_booking_reviews) | **GET** /v1/channels/booking/reviews | List Booking.com reviews |
+| [**reply_booking_review**](BookingComApi.md#reply_booking_review) | **POST** /v1/channels/booking/reviews | Reply to Booking.com review |
 | [**send_booking_message**](BookingComApi.md#send_booking_message) | **POST** /v1/channels/booking/messaging | Send Booking.com message |
 | [**sync_booking**](BookingComApi.md#sync_booking) | **POST** /v1/channels/booking/sync | Bulk sync to Booking.com |
 | [**update_booking_availability**](BookingComApi.md#update_booking_availability) | **PUT** /v1/channels/booking/availability | Update Booking.com rates/availability |
@@ -355,6 +357,143 @@ This endpoint does not need any parameter.
 ### HTTP request headers
 
 - **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## list_booking_reviews
+
+> list_booking_reviews(property_id)
+
+List Booking.com reviews
+
+List guest reviews for a Booking.com property. Pass `property_id` (the Booking.com hotel id) as a query param — required.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::BookingComApi.new
+property_id = 'property_id_example' # String | Booking.com hotel/property id.
+
+begin
+  # List Booking.com reviews
+  api_instance.list_booking_reviews(property_id)
+rescue Repull::ApiError => e
+  puts "Error when calling BookingComApi->list_booking_reviews: #{e}"
+end
+```
+
+#### Using the list_booking_reviews_with_http_info variant
+
+This returns an Array which contains the response data (`nil` in this case), status code and headers.
+
+> <Array(nil, Integer, Hash)> list_booking_reviews_with_http_info(property_id)
+
+```ruby
+begin
+  # List Booking.com reviews
+  data, status_code, headers = api_instance.list_booking_reviews_with_http_info(property_id)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => nil
+rescue Repull::ApiError => e
+  puts "Error when calling BookingComApi->list_booking_reviews_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **property_id** | **String** | Booking.com hotel/property id. |  |
+
+### Return type
+
+nil (empty response body)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## reply_booking_review
+
+> <ReplyBookingReview200Response> reply_booking_review(reply_booking_review_request)
+
+Reply to Booking.com review
+
+Post a public host reply to a guest review on Booking.com. Booking allows one host reply per review — repeated POSTs are rejected by upstream.  Booking.com does NOT support host-authored reviews of guests via the API (platform-level limitation), so this endpoint is reply-only.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::BookingComApi.new
+reply_booking_review_request = Repull::ReplyBookingReviewRequest.new({property_id: 'property_id_example', review_id: 'review_id_example', response: 'response_example'}) # ReplyBookingReviewRequest | 
+
+begin
+  # Reply to Booking.com review
+  result = api_instance.reply_booking_review(reply_booking_review_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling BookingComApi->reply_booking_review: #{e}"
+end
+```
+
+#### Using the reply_booking_review_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<ReplyBookingReview200Response>, Integer, Hash)> reply_booking_review_with_http_info(reply_booking_review_request)
+
+```ruby
+begin
+  # Reply to Booking.com review
+  data, status_code, headers = api_instance.reply_booking_review_with_http_info(reply_booking_review_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <ReplyBookingReview200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling BookingComApi->reply_booking_review_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **reply_booking_review_request** | [**ReplyBookingReviewRequest**](ReplyBookingReviewRequest.md) |  |  |
+
+### Return type
+
+[**ReplyBookingReview200Response**](ReplyBookingReview200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 

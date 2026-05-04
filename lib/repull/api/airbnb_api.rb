@@ -1,7 +1,7 @@
 =begin
 #Repull API
 
-#The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.  ## Designed for AI agents Every error response on this API includes machine-parseable fields so an LLM (Claude in MCP, Cursor, Cline, GPT, etc.) can self-recover without escalating to a human: - `error.code` — stable string identifier (e.g. `invalid_params`, `rate_limit_exceeded`) - `error.message` — human-readable cause - `error.fix` — exact recovery steps (e.g. \"Pass `check_in_after` as ISO 8601: `?check_in_after=2026-01-15`\") - `error.docs_url` — link to the canonical write-up at `https://repull.dev/docs/errors/{code}` - `error.request_id` — id to correlate with server-side logs - `error.field` / `error.value_received` / `error.valid_values` / `error.did_you_mean` — when the error is parameter-specific - `error.retry_after` — seconds to wait before retrying (rate-limit + transient upstream)  `Access-Control-Expose-Headers` lists `x-request-id` and the `X-RateLimit-*` family so browsers can read them on cross-origin responses.  ## Quick Start 1. Get an API key at https://repull.dev/dashboard 2. Connect a PMS: `POST /v1/connect/{provider}` 3. List properties: `GET /v1/properties` 4. Get reservations: `GET /v1/reservations`  ## Authentication All requests require a Bearer token: ``` Authorization: Bearer sk_test_YOUR_API_KEY ```  Sandbox keys start with `sk_test_`, production with `sk_live_`.  ## Request Correlation (X-Request-ID) Every response carries an `X-Request-ID` header, e.g. `X-Request-ID: req_01HXY...`. Include this id in support tickets and bug reports — we can trace the full request lifecycle (auth, rate limit, handler, downstream calls, log row) from a single id.  You may set the header on the inbound request to forward your own trace id; we will echo it back instead of generating a new one. Accepted format: `^[\\\\w.-]{1,128}$`.  The id is also embedded in error envelopes as `request_id` so server-side log diffs work even when the response headers are stripped by an intermediate proxy.  ## Rate Limits The public API enforces a per-API-key sliding-window rate limit on top of the per-tier monthly + daily-AI quotas.  **Default policy:** 600 requests per 60 seconds, per API key. Sliding window — there is no fixed-minute boundary you can burst across.  Every response includes:  | Header | Meaning | |---|---| | `X-RateLimit-Limit` | Requests permitted in the current window. | | `X-RateLimit-Remaining` | Requests left in the current window after this call. | | `X-RateLimit-Reset` | Unix epoch (seconds) when the next slot opens. | | `X-RateLimit-Policy` | Machine-readable policy descriptor, e.g. `600;w=60`. | | `Retry-After` | Seconds to wait before retrying. **Only present on 429 responses.** |  **On 429 (rate_limit_exceeded):** the response body matches the standard error envelope with `code: \"rate_limit_exceeded\"`, plus `limit`, `window_seconds`, `retry_after`, and `request_id` fields. SDKs MUST honor `Retry-After` and use exponential backoff with jitter on subsequent retries — never a tight loop.  Recommended backoff: ``` sleep_ms = (Retry-After * 1000) + random(0..250) ```  Monthly + daily-AI tier quotas (`free`, `starter`, `pro`, `enterprise`) are enforced separately and also surface as 429s; they include `tier`, `scope`, and `resets_at` fields.
+#The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.  ## Designed for AI agents Every error response on this API includes machine-parseable fields so an LLM (Claude in MCP, Cursor, Cline, GPT, etc.) can self-recover without escalating to a human: - `error.code` — stable string identifier (e.g. `invalid_params`, `rate_limit_exceeded`) - `error.message` — human-readable cause - `error.fix` — exact recovery steps (e.g. \"Pass `check_in_after` as ISO 8601: `?check_in_after=2026-01-15`\") - `error.docs_url` — link to the canonical write-up at `https://repull.dev/docs/errors/{code}` - `error.request_id` — id to correlate with server-side logs - `error.field` / `error.value_received` / `error.valid_values` / `error.did_you_mean` — when the error is parameter-specific - `error.retry_after` — seconds to wait before retrying (rate-limit + transient upstream)  `Access-Control-Expose-Headers` lists `x-request-id` and the `X-RateLimit-*` family so browsers can read them on cross-origin responses.  ## Quick Start 1. Get an API key at https://repull.dev/dashboard 2. Connect a PMS: `POST /v1/connect/{provider}` 3. List properties: `GET /v1/properties` 4. Get reservations: `GET /v1/reservations`  ## Authentication All requests require a Bearer token: ``` Authorization: Bearer sk_test_YOUR_API_KEY ```  Sandbox keys start with `sk_test_`, production with `sk_live_`.  ## Request Correlation (X-Request-ID) Every response carries an `X-Request-ID` header, e.g. `X-Request-ID: req_01HXY...`. Include this id in support tickets and bug reports — we can trace the full request lifecycle (auth, rate limit, handler, downstream calls, log row) from a single id.  You may set the header on the inbound request to forward your own trace id; we will echo it back instead of generating a new one. Accepted format: `^[\\\\w.-]{1,128}$`.  The id is also embedded in error envelopes as `request_id` so server-side log diffs work even when the response headers are stripped by an intermediate proxy.  ## Rate Limits The public API enforces a per-API-key sliding-window rate limit on top of the per-tier monthly + daily-AI quotas.  **Default policy:** 600 requests per 60 seconds, per API key. Sliding window — there is no fixed-minute boundary you can burst across.  Every response includes:  | Header | Meaning | |---|---| | `X-RateLimit-Limit` | Requests permitted in the current window. | | `X-RateLimit-Remaining` | Requests left in the current window after this call. | | `X-RateLimit-Reset` | Unix epoch (seconds) when the next slot opens. | | `X-RateLimit-Policy` | Machine-readable policy descriptor, e.g. `600;w=60`. | | `Retry-After` | Seconds to wait before retrying. **Only present on 429 responses.** |  **On 429 (rate_limit_exceeded):** the response body matches the standard error envelope with `code: \"rate_limit_exceeded\"`, plus `limit`, `window_seconds`, `retry_after`, and `request_id` fields. SDKs MUST honor `Retry-After` and use exponential backoff with jitter on subsequent retries — never a tight loop.  Recommended backoff: ``` sleep_ms = (Retry-After * 1000) + random(0..250) ```  Monthly + daily-AI tier quotas (`free`, `starter`, `custom`) are enforced separately and also surface as 429s; they include `tier`, `scope`, and `resets_at` fields.
 
 The version of the OpenAPI document: 1.0.0
 Contact: ivan@vanio.ai
@@ -198,10 +198,85 @@ module Repull
       return data, status_code, headers
     end
 
+    # Edit Airbnb host review
+    # Edit a host-side review for an Airbnb stay. Airbnb collapses POST + PUT into the same upstream call (`PUT /v2/listing_reviews/{id}`), so this endpoint covers both initial submit and subsequent edits while the review window is open.  Body is a partial `AirbnbReview` — pass the fields you want to change (rating, public review, private feedback, category ratings).
+    # @param id [String] Airbnb review id (&#x60;HRabc123&#x60; style).
+    # @param airbnb_review [AirbnbReview] 
+    # @param [Hash] opts the optional parameters
+    # @return [AirbnbReview]
+    def edit_airbnb_review(id, airbnb_review, opts = {})
+      data, _status_code, _headers = edit_airbnb_review_with_http_info(id, airbnb_review, opts)
+      data
+    end
+
+    # Edit Airbnb host review
+    # Edit a host-side review for an Airbnb stay. Airbnb collapses POST + PUT into the same upstream call (&#x60;PUT /v2/listing_reviews/{id}&#x60;), so this endpoint covers both initial submit and subsequent edits while the review window is open.  Body is a partial &#x60;AirbnbReview&#x60; — pass the fields you want to change (rating, public review, private feedback, category ratings).
+    # @param id [String] Airbnb review id (&#x60;HRabc123&#x60; style).
+    # @param airbnb_review [AirbnbReview] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(AirbnbReview, Integer, Hash)>] AirbnbReview data, response status code and response headers
+    def edit_airbnb_review_with_http_info(id, airbnb_review, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: AirbnbApi.edit_airbnb_review ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling AirbnbApi.edit_airbnb_review"
+      end
+      # verify the required parameter 'airbnb_review' is set
+      if @api_client.config.client_side_validation && airbnb_review.nil?
+        fail ArgumentError, "Missing the required parameter 'airbnb_review' when calling AirbnbApi.edit_airbnb_review"
+      end
+      # resource path
+      local_var_path = '/v1/channels/airbnb/reviews/{id}'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(airbnb_review)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'AirbnbReview'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"AirbnbApi.edit_airbnb_review",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:PUT, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: AirbnbApi#edit_airbnb_review\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # Get Airbnb listing
-    # Fetch a single Airbnb listing by id with full pricing, availability, and content. Listing ids are Airbnb-side ids (numeric strings).
+    # Fetch all Airbnb connection rows for a single Vanio listing id. A property may be linked from multiple Airbnb hosts — every match is returned. Pass `?include=amenities` to enrich each row with its current Airbnb amenities.
     # @param id [String] 
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :include Comma-separated expansions. Currently supported: &#x60;amenities&#x60;.
     # @return [AirbnbListing]
     def get_airbnb_listing(id, opts = {})
       data, _status_code, _headers = get_airbnb_listing_with_http_info(id, opts)
@@ -209,9 +284,10 @@ module Repull
     end
 
     # Get Airbnb listing
-    # Fetch a single Airbnb listing by id with full pricing, availability, and content. Listing ids are Airbnb-side ids (numeric strings).
+    # Fetch all Airbnb connection rows for a single Vanio listing id. A property may be linked from multiple Airbnb hosts — every match is returned. Pass &#x60;?include&#x3D;amenities&#x60; to enrich each row with its current Airbnb amenities.
     # @param id [String] 
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :include Comma-separated expansions. Currently supported: &#x60;amenities&#x60;.
     # @return [Array<(AirbnbListing, Integer, Hash)>] AirbnbListing data, response status code and response headers
     def get_airbnb_listing_with_http_info(id, opts = {})
       if @api_client.config.debugging
@@ -226,6 +302,7 @@ module Repull
 
       # query parameters
       query_params = opts[:query_params] || {}
+      query_params[:'include'] = opts[:'include'] if !opts[:'include'].nil?
 
       # header parameters
       header_params = opts[:header_params] || {}
@@ -508,8 +585,9 @@ module Repull
     end
 
     # List Airbnb listings
-    # List every Airbnb listing this workspace has access to via the connected Airbnb account. Sourced from the Airbnb Listing API. Listings sync automatically every few minutes — pass `?refresh=true` to force a fresh upstream pull.
+    # List every Airbnb listing this workspace has access to via the connected Airbnb account. Default response is a fast DB read pairing each Vanio listing with its `listings_airbnb` connection rows.  Pass `?include=amenities` to enrich each connection with its current Airbnb amenity set (one extra upstream call per unique Airbnb id, fanned out in parallel). Per-connection failures surface in `_errors.amenities` rather than failing the whole request.
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :include Comma-separated expansions. Currently supported: &#x60;amenities&#x60; (adds &#x60;amenities&#x60; and &#x60;accessibility_amenities&#x60; arrays to each connection). Each expansion adds one upstream Airbnb call per unique listing id.
     # @return [AirbnbListingListResponse]
     def list_airbnb_listings(opts = {})
       data, _status_code, _headers = list_airbnb_listings_with_http_info(opts)
@@ -517,8 +595,9 @@ module Repull
     end
 
     # List Airbnb listings
-    # List every Airbnb listing this workspace has access to via the connected Airbnb account. Sourced from the Airbnb Listing API. Listings sync automatically every few minutes — pass &#x60;?refresh&#x3D;true&#x60; to force a fresh upstream pull.
+    # List every Airbnb listing this workspace has access to via the connected Airbnb account. Default response is a fast DB read pairing each Vanio listing with its &#x60;listings_airbnb&#x60; connection rows.  Pass &#x60;?include&#x3D;amenities&#x60; to enrich each connection with its current Airbnb amenity set (one extra upstream call per unique Airbnb id, fanned out in parallel). Per-connection failures surface in &#x60;_errors.amenities&#x60; rather than failing the whole request.
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :include Comma-separated expansions. Currently supported: &#x60;amenities&#x60; (adds &#x60;amenities&#x60; and &#x60;accessibility_amenities&#x60; arrays to each connection). Each expansion adds one upstream Airbnb call per unique listing id.
     # @return [Array<(AirbnbListingListResponse, Integer, Hash)>] AirbnbListingListResponse data, response status code and response headers
     def list_airbnb_listings_with_http_info(opts = {})
       if @api_client.config.debugging
@@ -529,6 +608,7 @@ module Repull
 
       # query parameters
       query_params = opts[:query_params] || {}
+      query_params[:'include'] = opts[:'include'] if !opts[:'include'].nil?
 
       # header parameters
       header_params = opts[:header_params] || {}
@@ -565,8 +645,16 @@ module Repull
     end
 
     # List Airbnb reservations
-    # List reservations sourced directly from Airbnb. Use this when you need Airbnb-specific fields (guest payout split, cancellation policy snapshot) that the unified `/v1/reservations` endpoint flattens away.
+    # Cursor-paginated list of reservations sourced directly from Airbnb. Use this when you need Airbnb-specific fields (guest payout split, cancellation policy snapshot) that the unified `/v1/reservations` endpoint flattens away.  Walk pages with `?cursor=<pagination.next_cursor>` until `pagination.has_more` is `false`. The cursor is opaque — never construct or parse it client-side.  `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) — see the `offset` parameter below. Mutually exclusive with `cursor`. Internally this walks upstream Airbnb cursor pages to skip rows, so deep offsets cost N/limit upstream round-trips; cursor remains the better choice for deep pagination.  When `status` is omitted, all statuses are returned (Airbnb defaults to `accepted` only on its own surface, but this endpoint normalises to \"all\"). Pass `?status=accepted` to scope.
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :cursor Opaque cursor returned by the previous response&#39;s &#x60;pagination.next_cursor&#x60;. Omit to fetch the first page.
+    # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.next_cursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
+    # @option opts [Integer] :limit Max items per page. Hard cap is 100. (default to 50)
+    # @option opts [String] :listing_id Filter to one Airbnb listing id (numeric string).
+    # @option opts [String] :status Filter by reservation status. Omit to receive all statuses.
+    # @option opts [Date] :start_date ISO 8601 (YYYY-MM-DD) lower bound on Airbnb&#39;s date range filter.
+    # @option opts [Date] :end_date ISO 8601 (YYYY-MM-DD) upper bound on Airbnb&#39;s date range filter.
+    # @option opts [Boolean] :include_total Whether to include &#x60;pagination.total&#x60;. Always populated when Airbnb returns a total count (effectively always); accepted for shape symmetry with the rest of the API. (default to true)
     # @return [AirbnbReservationListResponse]
     def list_airbnb_reservations(opts = {})
       data, _status_code, _headers = list_airbnb_reservations_with_http_info(opts)
@@ -574,18 +662,54 @@ module Repull
     end
 
     # List Airbnb reservations
-    # List reservations sourced directly from Airbnb. Use this when you need Airbnb-specific fields (guest payout split, cancellation policy snapshot) that the unified &#x60;/v1/reservations&#x60; endpoint flattens away.
+    # Cursor-paginated list of reservations sourced directly from Airbnb. Use this when you need Airbnb-specific fields (guest payout split, cancellation policy snapshot) that the unified &#x60;/v1/reservations&#x60; endpoint flattens away.  Walk pages with &#x60;?cursor&#x3D;&lt;pagination.next_cursor&gt;&#x60; until &#x60;pagination.has_more&#x60; is &#x60;false&#x60;. The cursor is opaque — never construct or parse it client-side.  &#x60;?offset&#x3D;&#x60; is also accepted as a first-class alias for shallow paging (0..10000) — see the &#x60;offset&#x60; parameter below. Mutually exclusive with &#x60;cursor&#x60;. Internally this walks upstream Airbnb cursor pages to skip rows, so deep offsets cost N/limit upstream round-trips; cursor remains the better choice for deep pagination.  When &#x60;status&#x60; is omitted, all statuses are returned (Airbnb defaults to &#x60;accepted&#x60; only on its own surface, but this endpoint normalises to \&quot;all\&quot;). Pass &#x60;?status&#x3D;accepted&#x60; to scope.
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :cursor Opaque cursor returned by the previous response&#39;s &#x60;pagination.next_cursor&#x60;. Omit to fetch the first page.
+    # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.next_cursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
+    # @option opts [Integer] :limit Max items per page. Hard cap is 100. (default to 50)
+    # @option opts [String] :listing_id Filter to one Airbnb listing id (numeric string).
+    # @option opts [String] :status Filter by reservation status. Omit to receive all statuses.
+    # @option opts [Date] :start_date ISO 8601 (YYYY-MM-DD) lower bound on Airbnb&#39;s date range filter.
+    # @option opts [Date] :end_date ISO 8601 (YYYY-MM-DD) upper bound on Airbnb&#39;s date range filter.
+    # @option opts [Boolean] :include_total Whether to include &#x60;pagination.total&#x60;. Always populated when Airbnb returns a total count (effectively always); accepted for shape symmetry with the rest of the API. (default to true)
     # @return [Array<(AirbnbReservationListResponse, Integer, Hash)>] AirbnbReservationListResponse data, response status code and response headers
     def list_airbnb_reservations_with_http_info(opts = {})
       if @api_client.config.debugging
         @api_client.config.logger.debug 'Calling API: AirbnbApi.list_airbnb_reservations ...'
+      end
+      if @api_client.config.client_side_validation && !opts[:'offset'].nil? && opts[:'offset'] > 10000
+        fail ArgumentError, 'invalid value for "opts[:"offset"]" when calling AirbnbApi.list_airbnb_reservations, must be smaller than or equal to 10000.'
+      end
+
+      if @api_client.config.client_side_validation && !opts[:'offset'].nil? && opts[:'offset'] < 0
+        fail ArgumentError, 'invalid value for "opts[:"offset"]" when calling AirbnbApi.list_airbnb_reservations, must be greater than or equal to 0.'
+      end
+
+      if @api_client.config.client_side_validation && !opts[:'limit'].nil? && opts[:'limit'] > 100
+        fail ArgumentError, 'invalid value for "opts[:"limit"]" when calling AirbnbApi.list_airbnb_reservations, must be smaller than or equal to 100.'
+      end
+
+      if @api_client.config.client_side_validation && !opts[:'limit'].nil? && opts[:'limit'] < 1
+        fail ArgumentError, 'invalid value for "opts[:"limit"]" when calling AirbnbApi.list_airbnb_reservations, must be greater than or equal to 1.'
+      end
+
+      allowable_values = ["pending", "accepted", "denied", "cancelled", "completed", "failed_verification", "request_voided"]
+      if @api_client.config.client_side_validation && opts[:'status'] && !allowable_values.include?(opts[:'status'])
+        fail ArgumentError, "invalid value for \"status\", must be one of #{allowable_values}"
       end
       # resource path
       local_var_path = '/v1/channels/airbnb/reservations'
 
       # query parameters
       query_params = opts[:query_params] || {}
+      query_params[:'cursor'] = opts[:'cursor'] if !opts[:'cursor'].nil?
+      query_params[:'offset'] = opts[:'offset'] if !opts[:'offset'].nil?
+      query_params[:'limit'] = opts[:'limit'] if !opts[:'limit'].nil?
+      query_params[:'listing_id'] = opts[:'listing_id'] if !opts[:'listing_id'].nil?
+      query_params[:'status'] = opts[:'status'] if !opts[:'status'].nil?
+      query_params[:'start_date'] = opts[:'start_date'] if !opts[:'start_date'].nil?
+      query_params[:'end_date'] = opts[:'end_date'] if !opts[:'end_date'].nil?
+      query_params[:'include_total'] = opts[:'include_total'] if !opts[:'include_total'].nil?
 
       # header parameters
       header_params = opts[:header_params] || {}
@@ -799,21 +923,95 @@ module Repull
     end
 
     # Respond to Airbnb review
-    # Post a public response to a guest review. Airbnb allows one response per review — repeated POSTs return 409.
+    # Post a public host response to a guest review. Airbnb allows one response per review — repeated POSTs return 409. Response text is capped at 1000 characters.
+    # @param id [String] Airbnb review id.
+    # @param respond_airbnb_review_request [RespondAirbnbReviewRequest] 
     # @param [Hash] opts the optional parameters
-    # @return [nil]
-    def respond_airbnb_review(opts = {})
-      respond_airbnb_review_with_http_info(opts)
-      nil
+    # @return [AirbnbReview]
+    def respond_airbnb_review(id, respond_airbnb_review_request, opts = {})
+      data, _status_code, _headers = respond_airbnb_review_with_http_info(id, respond_airbnb_review_request, opts)
+      data
     end
 
     # Respond to Airbnb review
-    # Post a public response to a guest review. Airbnb allows one response per review — repeated POSTs return 409.
+    # Post a public host response to a guest review. Airbnb allows one response per review — repeated POSTs return 409. Response text is capped at 1000 characters.
+    # @param id [String] Airbnb review id.
+    # @param respond_airbnb_review_request [RespondAirbnbReviewRequest] 
     # @param [Hash] opts the optional parameters
-    # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
-    def respond_airbnb_review_with_http_info(opts = {})
+    # @return [Array<(AirbnbReview, Integer, Hash)>] AirbnbReview data, response status code and response headers
+    def respond_airbnb_review_with_http_info(id, respond_airbnb_review_request, opts = {})
       if @api_client.config.debugging
         @api_client.config.logger.debug 'Calling API: AirbnbApi.respond_airbnb_review ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling AirbnbApi.respond_airbnb_review"
+      end
+      # verify the required parameter 'respond_airbnb_review_request' is set
+      if @api_client.config.client_side_validation && respond_airbnb_review_request.nil?
+        fail ArgumentError, "Missing the required parameter 'respond_airbnb_review_request' when calling AirbnbApi.respond_airbnb_review"
+      end
+      # resource path
+      local_var_path = '/v1/channels/airbnb/reviews/{id}/respond'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(respond_airbnb_review_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'AirbnbReview'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"AirbnbApi.respond_airbnb_review",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: AirbnbApi#respond_airbnb_review\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Respond to / submit Airbnb review (legacy)
+    # Legacy action-based shape. Body `{ action: \"respond\"|\"submit\", reviewId, response?, review? }`. Kept for backwards compatibility — prefer `PUT /v1/channels/airbnb/reviews/{id}` (edit) and `POST /v1/channels/airbnb/reviews/{id}/respond` (reply) for new integrations.
+    # @param [Hash] opts the optional parameters
+    # @return [nil]
+    def respond_airbnb_review_legacy(opts = {})
+      respond_airbnb_review_legacy_with_http_info(opts)
+      nil
+    end
+
+    # Respond to / submit Airbnb review (legacy)
+    # Legacy action-based shape. Body &#x60;{ action: \&quot;respond\&quot;|\&quot;submit\&quot;, reviewId, response?, review? }&#x60;. Kept for backwards compatibility — prefer &#x60;PUT /v1/channels/airbnb/reviews/{id}&#x60; (edit) and &#x60;POST /v1/channels/airbnb/reviews/{id}/respond&#x60; (reply) for new integrations.
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
+    def respond_airbnb_review_legacy_with_http_info(opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: AirbnbApi.respond_airbnb_review_legacy ...'
       end
       # resource path
       local_var_path = '/v1/channels/airbnb/reviews'
@@ -837,7 +1035,7 @@ module Repull
       auth_names = opts[:debug_auth_names] || ['bearerAuth']
 
       new_options = opts.merge(
-        :operation => :"AirbnbApi.respond_airbnb_review",
+        :operation => :"AirbnbApi.respond_airbnb_review_legacy",
         :header_params => header_params,
         :query_params => query_params,
         :form_params => form_params,
@@ -848,7 +1046,7 @@ module Repull
 
       data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
       if @api_client.config.debugging
-        @api_client.config.logger.debug "API called: AirbnbApi#respond_airbnb_review\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+        @api_client.config.logger.debug "API called: AirbnbApi#respond_airbnb_review_legacy\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end

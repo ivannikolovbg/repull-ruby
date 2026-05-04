@@ -5,7 +5,7 @@
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **url** | **String** |  |  |
-| **events** | **Array&lt;String&gt;** |  |  |
+| **events** | [**Array&lt;WebhookEventType&gt;**](WebhookEventType.md) |  |  |
 | **description** | **String** |  | [optional] |
 | **api_version** | **String** |  | [optional] |
 
