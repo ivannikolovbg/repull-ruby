@@ -14,16 +14,43 @@ require 'date'
 require 'time'
 
 module Repull
-  class ReservationCancelledPayloadRefund < ApiModelBase
-    attr_accessor :amount
+  # Lightweight reservation snapshot delivered as `data.object` on every reservation webhook event. Stable across `reservation.created`, `reservation.updated`, and `reservation.cancelled`. Fetch the full reservation via `GET /v1/reservations/{id}` if you need pricing, guest contact info, or audit history — those are deliberately omitted to keep deliveries small.
+  class ReservationWebhookObject < ApiModelBase
+    # Repull-internal reservation id. Pass to `GET /v1/reservations/{id}`.
+    attr_accessor :id
 
-    attr_accessor :currency
+    # Channel-side confirmation code (Airbnb HM-prefixed, Booking.com numeric, etc.). Stable across the lifetime of the reservation.
+    attr_accessor :uid
+
+    # Source channel — `airbnb`, `booking`, `vrbo`, `direct`, `owner`, `mid_stay_clean`, etc.
+    attr_accessor :channel
+
+    # Repull listing id this reservation is on.
+    attr_accessor :listing_id
+
+    # Workspace (customer) id this reservation belongs to.
+    attr_accessor :customer_id
+
+    # Check-in date (local property date, no timezone).
+    attr_accessor :checkin_date
+
+    # Check-out date (local property date, no timezone).
+    attr_accessor :checkout_date
+
+    # Lifecycle status — typically `confirmed`, `cancelled`, `pending`, `inquiry`.
+    attr_accessor :status
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'amount' => :'amount',
-        :'currency' => :'currency'
+        :'id' => :'id',
+        :'uid' => :'uid',
+        :'channel' => :'channel',
+        :'listing_id' => :'listingId',
+        :'customer_id' => :'customerId',
+        :'checkin_date' => :'checkinDate',
+        :'checkout_date' => :'checkoutDate',
+        :'status' => :'status'
       }
     end
 
@@ -40,8 +67,14 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'amount' => :'String',
-        :'currency' => :'String'
+        :'id' => :'Integer',
+        :'uid' => :'String',
+        :'channel' => :'String',
+        :'listing_id' => :'Integer',
+        :'customer_id' => :'Integer',
+        :'checkin_date' => :'Date',
+        :'checkout_date' => :'Date',
+        :'status' => :'String'
       }
     end
 
@@ -55,24 +88,64 @@ module Repull
     # @param [Hash] attributes Model attributes in the form of hash
     def initialize(attributes = {})
       if (!attributes.is_a?(Hash))
-        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::ReservationCancelledPayloadRefund` initialize method"
+        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::ReservationWebhookObject` initialize method"
       end
 
       # check to see if the attribute exists and convert string to symbol for hash key
       acceptable_attribute_map = self.class.acceptable_attribute_map
       attributes = attributes.each_with_object({}) { |(k, v), h|
         if (!acceptable_attribute_map.key?(k.to_sym))
-          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::ReservationCancelledPayloadRefund`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
+          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::ReservationWebhookObject`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
         end
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'amount')
-        self.amount = attributes[:'amount']
+      if attributes.key?(:'id')
+        self.id = attributes[:'id']
+      else
+        self.id = nil
       end
 
-      if attributes.key?(:'currency')
-        self.currency = attributes[:'currency']
+      if attributes.key?(:'uid')
+        self.uid = attributes[:'uid']
+      else
+        self.uid = nil
+      end
+
+      if attributes.key?(:'channel')
+        self.channel = attributes[:'channel']
+      else
+        self.channel = nil
+      end
+
+      if attributes.key?(:'listing_id')
+        self.listing_id = attributes[:'listing_id']
+      else
+        self.listing_id = nil
+      end
+
+      if attributes.key?(:'customer_id')
+        self.customer_id = attributes[:'customer_id']
+      else
+        self.customer_id = nil
+      end
+
+      if attributes.key?(:'checkin_date')
+        self.checkin_date = attributes[:'checkin_date']
+      else
+        self.checkin_date = nil
+      end
+
+      if attributes.key?(:'checkout_date')
+        self.checkout_date = attributes[:'checkout_date']
+      else
+        self.checkout_date = nil
+      end
+
+      if attributes.key?(:'status')
+        self.status = attributes[:'status']
+      else
+        self.status = nil
       end
     end
 
@@ -81,6 +154,38 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
+      if @id.nil?
+        invalid_properties.push('invalid value for "id", id cannot be nil.')
+      end
+
+      if @uid.nil?
+        invalid_properties.push('invalid value for "uid", uid cannot be nil.')
+      end
+
+      if @channel.nil?
+        invalid_properties.push('invalid value for "channel", channel cannot be nil.')
+      end
+
+      if @listing_id.nil?
+        invalid_properties.push('invalid value for "listing_id", listing_id cannot be nil.')
+      end
+
+      if @customer_id.nil?
+        invalid_properties.push('invalid value for "customer_id", customer_id cannot be nil.')
+      end
+
+      if @checkin_date.nil?
+        invalid_properties.push('invalid value for "checkin_date", checkin_date cannot be nil.')
+      end
+
+      if @checkout_date.nil?
+        invalid_properties.push('invalid value for "checkout_date", checkout_date cannot be nil.')
+      end
+
+      if @status.nil?
+        invalid_properties.push('invalid value for "status", status cannot be nil.')
+      end
+
       invalid_properties
     end
 
@@ -88,7 +193,95 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
+      return false if @id.nil?
+      return false if @uid.nil?
+      return false if @channel.nil?
+      return false if @listing_id.nil?
+      return false if @customer_id.nil?
+      return false if @checkin_date.nil?
+      return false if @checkout_date.nil?
+      return false if @status.nil?
       true
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] id Value to be assigned
+    def id=(id)
+      if id.nil?
+        fail ArgumentError, 'id cannot be nil'
+      end
+
+      @id = id
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] uid Value to be assigned
+    def uid=(uid)
+      if uid.nil?
+        fail ArgumentError, 'uid cannot be nil'
+      end
+
+      @uid = uid
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] channel Value to be assigned
+    def channel=(channel)
+      if channel.nil?
+        fail ArgumentError, 'channel cannot be nil'
+      end
+
+      @channel = channel
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] listing_id Value to be assigned
+    def listing_id=(listing_id)
+      if listing_id.nil?
+        fail ArgumentError, 'listing_id cannot be nil'
+      end
+
+      @listing_id = listing_id
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] customer_id Value to be assigned
+    def customer_id=(customer_id)
+      if customer_id.nil?
+        fail ArgumentError, 'customer_id cannot be nil'
+      end
+
+      @customer_id = customer_id
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] checkin_date Value to be assigned
+    def checkin_date=(checkin_date)
+      if checkin_date.nil?
+        fail ArgumentError, 'checkin_date cannot be nil'
+      end
+
+      @checkin_date = checkin_date
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] checkout_date Value to be assigned
+    def checkout_date=(checkout_date)
+      if checkout_date.nil?
+        fail ArgumentError, 'checkout_date cannot be nil'
+      end
+
+      @checkout_date = checkout_date
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] status Value to be assigned
+    def status=(status)
+      if status.nil?
+        fail ArgumentError, 'status cannot be nil'
+      end
+
+      @status = status
     end
 
     # Checks equality by comparing each attribute.
@@ -96,8 +289,14 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          amount == o.amount &&
-          currency == o.currency
+          id == o.id &&
+          uid == o.uid &&
+          channel == o.channel &&
+          listing_id == o.listing_id &&
+          customer_id == o.customer_id &&
+          checkin_date == o.checkin_date &&
+          checkout_date == o.checkout_date &&
+          status == o.status
     end
 
     # @see the `==` method
@@ -109,7 +308,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [amount, currency].hash
+      [id, uid, channel, listing_id, customer_id, checkin_date, checkout_date, status].hash
     end
 
     # Builds the object from hash

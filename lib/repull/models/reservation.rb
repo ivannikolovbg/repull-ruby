@@ -14,7 +14,7 @@ require 'date'
 require 'time'
 
 module Repull
-  # A booking/reservation from a connected PMS. Identical shape between list-row (`GET /v1/reservations`) and detail (`GET /v1/reservations/{id}`) — SDK consumers can use the same type for both.
+  # A booking/reservation from a connected PMS. Identical shape between list-row (`GET /v1/reservations`) and detail (`GET /v1/reservations/{id}`) — SDK consumers can use the same type for both.  The canonical (post-2026-05) shape uses nested `primaryGuest`, `occupancy`, `financials` blocks. The legacy flat fields (`guestId`, `totalPrice`, `currency`, `guestDetails`) remain populated for back-compat and are marked `deprecated` here. New consumers should read from the nested blocks; existing consumers continue to work unchanged.
   class Reservation < ApiModelBase
     # Internal Repull reservation ID
     attr_accessor :id
@@ -22,7 +22,7 @@ module Repull
     # Internal Repull listing ID this reservation is on.
     attr_accessor :listing_id
 
-    # Internal Repull guest ID. Use `GET /v1/guests/{id}` for the full profile.
+    # DEPRECATED — use `primaryGuest.id`. Internal Repull guest ID. Kept populated for back-compat.
     attr_accessor :guest_id
 
     attr_accessor :check_in
@@ -31,25 +31,40 @@ module Repull
 
     attr_accessor :status
 
-    # Booking source. Lowercase. May be null on legacy rows.
+    # Booking source / channel. Lowercase. May be null on legacy rows. Canonical name as of 2026-05; `platform` is kept as an alias.
+    attr_accessor :source
+
+    # DEPRECATED alias for `source`. Same value, kept for back-compat.
     attr_accessor :platform
-
-    # Decimal-as-string (precision 10, scale 2) to preserve precision across mixed-currency totals.
-    attr_accessor :total_price
-
-    # ISO 4217 currency code.
-    attr_accessor :currency
 
     # Channel-side confirmation code (Airbnb HMxxx, Booking.com numeric, etc.).
     attr_accessor :confirmation_code
 
-    # Raw guest details from the source channel (firstName, lastName, email, phone, count, etc.). Shape varies by platform — use the dedicated guest endpoint for a normalized profile.
+    # Inline guest summary. May be undefined for owner-blocks / pre-arrival rows.
+    attr_accessor :primary_guest
+
+    # Normalized guest counts. May be undefined when the source channel did not provide counts.
+    attr_accessor :occupancy
+
+    # Normalized money block. Always populated for paid reservations.
+    attr_accessor :financials
+
+    # DEPRECATED — use `financials.totalPrice` (a number). Decimal-as-string (precision 10, scale 2) kept for back-compat.
+    attr_accessor :total_price
+
+    # DEPRECATED — use `financials.currency`. ISO 4217 currency code.
+    attr_accessor :currency
+
+    # DEPRECATED — use `occupancy` for normalized counts and `primaryGuest` for guest identity. Raw guest details from the source channel; shape varies by platform.
     attr_accessor :guest_details
 
     # When the reservation row was created in Repull (not the booking-on-channel timestamp).
     attr_accessor :created_at
 
-    # Pre-resolved display name (`firstName lastName`) extracted from `guestDetails`. Null when no first name is available.
+    # When the booking was made on the source channel (when reported by the channel).
+    attr_accessor :booked_at
+
+    # Pre-resolved display name (`firstName lastName`) from the joined guest row. Undefined when no first name is available.
     attr_accessor :guest_name
 
     # Attribute mapping from ruby-style variable name to JSON key.
@@ -61,12 +76,17 @@ module Repull
         :'check_in' => :'checkIn',
         :'check_out' => :'checkOut',
         :'status' => :'status',
+        :'source' => :'source',
         :'platform' => :'platform',
+        :'confirmation_code' => :'confirmationCode',
+        :'primary_guest' => :'primaryGuest',
+        :'occupancy' => :'occupancy',
+        :'financials' => :'financials',
         :'total_price' => :'totalPrice',
         :'currency' => :'currency',
-        :'confirmation_code' => :'confirmationCode',
         :'guest_details' => :'guestDetails',
         :'created_at' => :'createdAt',
+        :'booked_at' => :'bookedAt',
         :'guest_name' => :'guestName'
       }
     end
@@ -90,12 +110,17 @@ module Repull
         :'check_in' => :'Date',
         :'check_out' => :'Date',
         :'status' => :'String',
+        :'source' => :'String',
         :'platform' => :'String',
+        :'confirmation_code' => :'String',
+        :'primary_guest' => :'ReservationPrimaryGuest',
+        :'occupancy' => :'ReservationOccupancy',
+        :'financials' => :'ReservationFinancials',
         :'total_price' => :'String',
         :'currency' => :'String',
-        :'confirmation_code' => :'String',
         :'guest_details' => :'Hash<String, Object>',
         :'created_at' => :'Time',
+        :'booked_at' => :'Time',
         :'guest_name' => :'String'
       }
     end
@@ -103,7 +128,9 @@ module Repull
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'source',
         :'platform',
+        :'booked_at',
         :'guest_name'
       ])
     end
@@ -138,8 +165,6 @@ module Repull
 
       if attributes.key?(:'guest_id')
         self.guest_id = attributes[:'guest_id']
-      else
-        self.guest_id = nil
       end
 
       if attributes.key?(:'check_in')
@@ -160,20 +185,12 @@ module Repull
         self.status = nil
       end
 
+      if attributes.key?(:'source')
+        self.source = attributes[:'source']
+      end
+
       if attributes.key?(:'platform')
         self.platform = attributes[:'platform']
-      end
-
-      if attributes.key?(:'total_price')
-        self.total_price = attributes[:'total_price']
-      else
-        self.total_price = nil
-      end
-
-      if attributes.key?(:'currency')
-        self.currency = attributes[:'currency']
-      else
-        self.currency = nil
       end
 
       if attributes.key?(:'confirmation_code')
@@ -182,18 +199,40 @@ module Repull
         self.confirmation_code = nil
       end
 
+      if attributes.key?(:'primary_guest')
+        self.primary_guest = attributes[:'primary_guest']
+      end
+
+      if attributes.key?(:'occupancy')
+        self.occupancy = attributes[:'occupancy']
+      end
+
+      if attributes.key?(:'financials')
+        self.financials = attributes[:'financials']
+      end
+
+      if attributes.key?(:'total_price')
+        self.total_price = attributes[:'total_price']
+      end
+
+      if attributes.key?(:'currency')
+        self.currency = attributes[:'currency']
+      end
+
       if attributes.key?(:'guest_details')
         if (value = attributes[:'guest_details']).is_a?(Hash)
           self.guest_details = value
         end
-      else
-        self.guest_details = nil
       end
 
       if attributes.key?(:'created_at')
         self.created_at = attributes[:'created_at']
       else
         self.created_at = nil
+      end
+
+      if attributes.key?(:'booked_at')
+        self.booked_at = attributes[:'booked_at']
       end
 
       if attributes.key?(:'guest_name')
@@ -214,10 +253,6 @@ module Repull
         invalid_properties.push('invalid value for "listing_id", listing_id cannot be nil.')
       end
 
-      if @guest_id.nil?
-        invalid_properties.push('invalid value for "guest_id", guest_id cannot be nil.')
-      end
-
       if @check_in.nil?
         invalid_properties.push('invalid value for "check_in", check_in cannot be nil.')
       end
@@ -230,20 +265,8 @@ module Repull
         invalid_properties.push('invalid value for "status", status cannot be nil.')
       end
 
-      if @total_price.nil?
-        invalid_properties.push('invalid value for "total_price", total_price cannot be nil.')
-      end
-
-      if @currency.nil?
-        invalid_properties.push('invalid value for "currency", currency cannot be nil.')
-      end
-
       if @confirmation_code.nil?
         invalid_properties.push('invalid value for "confirmation_code", confirmation_code cannot be nil.')
-      end
-
-      if @guest_details.nil?
-        invalid_properties.push('invalid value for "guest_details", guest_details cannot be nil.')
       end
 
       if @created_at.nil?
@@ -259,14 +282,10 @@ module Repull
       warn '[DEPRECATED] the `valid?` method is obsolete'
       return false if @id.nil?
       return false if @listing_id.nil?
-      return false if @guest_id.nil?
       return false if @check_in.nil?
       return false if @check_out.nil?
       return false if @status.nil?
-      return false if @total_price.nil?
-      return false if @currency.nil?
       return false if @confirmation_code.nil?
-      return false if @guest_details.nil?
       return false if @created_at.nil?
       true
     end
@@ -289,16 +308,6 @@ module Repull
       end
 
       @listing_id = listing_id
-    end
-
-    # Custom attribute writer method with validation
-    # @param [Object] guest_id Value to be assigned
-    def guest_id=(guest_id)
-      if guest_id.nil?
-        fail ArgumentError, 'guest_id cannot be nil'
-      end
-
-      @guest_id = guest_id
     end
 
     # Custom attribute writer method with validation
@@ -332,26 +341,6 @@ module Repull
     end
 
     # Custom attribute writer method with validation
-    # @param [Object] total_price Value to be assigned
-    def total_price=(total_price)
-      if total_price.nil?
-        fail ArgumentError, 'total_price cannot be nil'
-      end
-
-      @total_price = total_price
-    end
-
-    # Custom attribute writer method with validation
-    # @param [Object] currency Value to be assigned
-    def currency=(currency)
-      if currency.nil?
-        fail ArgumentError, 'currency cannot be nil'
-      end
-
-      @currency = currency
-    end
-
-    # Custom attribute writer method with validation
     # @param [Object] confirmation_code Value to be assigned
     def confirmation_code=(confirmation_code)
       if confirmation_code.nil?
@@ -359,16 +348,6 @@ module Repull
       end
 
       @confirmation_code = confirmation_code
-    end
-
-    # Custom attribute writer method with validation
-    # @param [Object] guest_details Value to be assigned
-    def guest_details=(guest_details)
-      if guest_details.nil?
-        fail ArgumentError, 'guest_details cannot be nil'
-      end
-
-      @guest_details = guest_details
     end
 
     # Custom attribute writer method with validation
@@ -392,12 +371,17 @@ module Repull
           check_in == o.check_in &&
           check_out == o.check_out &&
           status == o.status &&
+          source == o.source &&
           platform == o.platform &&
+          confirmation_code == o.confirmation_code &&
+          primary_guest == o.primary_guest &&
+          occupancy == o.occupancy &&
+          financials == o.financials &&
           total_price == o.total_price &&
           currency == o.currency &&
-          confirmation_code == o.confirmation_code &&
           guest_details == o.guest_details &&
           created_at == o.created_at &&
+          booked_at == o.booked_at &&
           guest_name == o.guest_name
     end
 
@@ -410,7 +394,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, listing_id, guest_id, check_in, check_out, status, platform, total_price, currency, confirmation_code, guest_details, created_at, guest_name].hash
+      [id, listing_id, guest_id, check_in, check_out, status, source, platform, confirmation_code, primary_guest, occupancy, financials, total_price, currency, guest_details, created_at, booked_at, guest_name].hash
     end
 
     # Builds the object from hash

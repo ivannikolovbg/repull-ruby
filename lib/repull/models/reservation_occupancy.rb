@@ -14,22 +14,27 @@ require 'date'
 require 'time'
 
 module Repull
-  class ReservationCreatedPayloadPricing < ApiModelBase
-    attr_accessor :subtotal
+  # Normalized guest counts for the stay. Mirrors the legacy `guestDetails.numberOf*` fields under canonical short names. Omitted when no count fields are present on the reservation.
+  class ReservationOccupancy < ApiModelBase
+    attr_accessor :adults
 
-    attr_accessor :taxes
+    attr_accessor :children
 
+    attr_accessor :infants
+
+    attr_accessor :pets
+
+    # Total guests (sum across all categories as reported by the source channel).
     attr_accessor :total
-
-    attr_accessor :currency
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'subtotal' => :'subtotal',
-        :'taxes' => :'taxes',
-        :'total' => :'total',
-        :'currency' => :'currency'
+        :'adults' => :'adults',
+        :'children' => :'children',
+        :'infants' => :'infants',
+        :'pets' => :'pets',
+        :'total' => :'total'
       }
     end
 
@@ -46,16 +51,22 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'subtotal' => :'String',
-        :'taxes' => :'String',
-        :'total' => :'String',
-        :'currency' => :'String'
+        :'adults' => :'Integer',
+        :'children' => :'Integer',
+        :'infants' => :'Integer',
+        :'pets' => :'Integer',
+        :'total' => :'Integer'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'adults',
+        :'children',
+        :'infants',
+        :'pets',
+        :'total'
       ])
     end
 
@@ -63,32 +74,36 @@ module Repull
     # @param [Hash] attributes Model attributes in the form of hash
     def initialize(attributes = {})
       if (!attributes.is_a?(Hash))
-        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::ReservationCreatedPayloadPricing` initialize method"
+        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::ReservationOccupancy` initialize method"
       end
 
       # check to see if the attribute exists and convert string to symbol for hash key
       acceptable_attribute_map = self.class.acceptable_attribute_map
       attributes = attributes.each_with_object({}) { |(k, v), h|
         if (!acceptable_attribute_map.key?(k.to_sym))
-          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::ReservationCreatedPayloadPricing`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
+          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::ReservationOccupancy`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
         end
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'subtotal')
-        self.subtotal = attributes[:'subtotal']
+      if attributes.key?(:'adults')
+        self.adults = attributes[:'adults']
       end
 
-      if attributes.key?(:'taxes')
-        self.taxes = attributes[:'taxes']
+      if attributes.key?(:'children')
+        self.children = attributes[:'children']
+      end
+
+      if attributes.key?(:'infants')
+        self.infants = attributes[:'infants']
+      end
+
+      if attributes.key?(:'pets')
+        self.pets = attributes[:'pets']
       end
 
       if attributes.key?(:'total')
         self.total = attributes[:'total']
-      end
-
-      if attributes.key?(:'currency')
-        self.currency = attributes[:'currency']
       end
     end
 
@@ -112,10 +127,11 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          subtotal == o.subtotal &&
-          taxes == o.taxes &&
-          total == o.total &&
-          currency == o.currency
+          adults == o.adults &&
+          children == o.children &&
+          infants == o.infants &&
+          pets == o.pets &&
+          total == o.total
     end
 
     # @see the `==` method
@@ -127,7 +143,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [subtotal, taxes, total, currency].hash
+      [adults, children, infants, pets, total].hash
     end
 
     # Builds the object from hash

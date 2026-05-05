@@ -86,11 +86,12 @@ module Repull
     end
 
     # List messages in a conversation
-    # Cursor-paginated messages within one thread. Defaults to newest-first (`?order=desc`); pass `?order=asc` for chronological replay. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request.
+    # Cursor-paginated messages within one thread. Defaults to newest-first (`?order=desc`); pass `?order=asc` for chronological replay. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request.  `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) — see the `offset` parameter below. Mutually exclusive with `cursor`.
     # @param id [Integer] Internal Repull thread id.
     # @param [Hash] opts the optional parameters
     # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
     # @option opts [String] :cursor Opaque cursor returned in the previous response&#39;s &#x60;pagination.nextCursor&#x60;.
+    # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.next_cursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
     # @option opts [Integer] :limit  (default to 20)
     # @option opts [String] :order &#x60;desc&#x60; (default) returns newest first. &#x60;asc&#x60; returns chronological replay. (default to 'desc')
     # @return [MessageListResponse]
@@ -100,11 +101,12 @@ module Repull
     end
 
     # List messages in a conversation
-    # Cursor-paginated messages within one thread. Defaults to newest-first (&#x60;?order&#x3D;desc&#x60;); pass &#x60;?order&#x3D;asc&#x60; for chronological replay. Use &#x60;pagination.nextCursor&#x60; from one response as the &#x60;cursor&#x60; query param of the next request.
+    # Cursor-paginated messages within one thread. Defaults to newest-first (&#x60;?order&#x3D;desc&#x60;); pass &#x60;?order&#x3D;asc&#x60; for chronological replay. Use &#x60;pagination.nextCursor&#x60; from one response as the &#x60;cursor&#x60; query param of the next request.  &#x60;?offset&#x3D;&#x60; is also accepted as a first-class alias for shallow paging (0..10000) — see the &#x60;offset&#x60; parameter below. Mutually exclusive with &#x60;cursor&#x60;.
     # @param id [Integer] Internal Repull thread id.
     # @param [Hash] opts the optional parameters
     # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
     # @option opts [String] :cursor Opaque cursor returned in the previous response&#39;s &#x60;pagination.nextCursor&#x60;.
+    # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.next_cursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
     # @option opts [Integer] :limit  (default to 20)
     # @option opts [String] :order &#x60;desc&#x60; (default) returns newest first. &#x60;asc&#x60; returns chronological replay. (default to 'desc')
     # @return [Array<(MessageListResponse, Integer, Hash)>] MessageListResponse data, response status code and response headers
@@ -116,6 +118,14 @@ module Repull
       if @api_client.config.client_side_validation && id.nil?
         fail ArgumentError, "Missing the required parameter 'id' when calling ConversationsApi.list_conversation_messages"
       end
+      if @api_client.config.client_side_validation && !opts[:'offset'].nil? && opts[:'offset'] > 10000
+        fail ArgumentError, 'invalid value for "opts[:"offset"]" when calling ConversationsApi.list_conversation_messages, must be smaller than or equal to 10000.'
+      end
+
+      if @api_client.config.client_side_validation && !opts[:'offset'].nil? && opts[:'offset'] < 0
+        fail ArgumentError, 'invalid value for "opts[:"offset"]" when calling ConversationsApi.list_conversation_messages, must be greater than or equal to 0.'
+      end
+
       if @api_client.config.client_side_validation && !opts[:'limit'].nil? && opts[:'limit'] > 100
         fail ArgumentError, 'invalid value for "opts[:"limit"]" when calling ConversationsApi.list_conversation_messages, must be smaller than or equal to 100.'
       end
@@ -134,6 +144,7 @@ module Repull
       # query parameters
       query_params = opts[:query_params] || {}
       query_params[:'cursor'] = opts[:'cursor'] if !opts[:'cursor'].nil?
+      query_params[:'offset'] = opts[:'offset'] if !opts[:'offset'].nil?
       query_params[:'limit'] = opts[:'limit'] if !opts[:'limit'].nil?
       query_params[:'order'] = opts[:'order'] if !opts[:'order'].nil?
 

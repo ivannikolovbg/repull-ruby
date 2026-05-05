@@ -15,7 +15,7 @@ require 'time'
 
 module Repull
   class ListingGenerateContentRequest < ApiModelBase
-    # Up to 8 reference photos. When present, Kimi K2 vision is used for grounded copy.
+    # Up to 8 reference photos. When present, Repull AI vision is used for grounded copy.
     attr_accessor :photos
 
     attr_accessor :style

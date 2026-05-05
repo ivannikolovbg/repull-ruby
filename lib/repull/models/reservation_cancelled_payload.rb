@@ -14,30 +14,26 @@ require 'date'
 require 'time'
 
 module Repull
-  # Payload for `reservation.cancelled`. A reservation was cancelled by the guest, host, or platform.
+  # Payload for `reservation.cancelled`. A reservation was cancelled by the guest, host, or platform. `data.object` reflects the post-cancel snapshot (status will be `cancelled`); top-level fields capture cancellation metadata.
   class ReservationCancelledPayload < ApiModelBase
-    attr_accessor :id
+    attr_accessor :object
 
-    attr_accessor :confirmation_code
-
+    # When the cancellation was recorded.
     attr_accessor :cancelled_at
 
-    # Who initiated the cancellation (guest, host, platform).
+    # Who initiated the cancellation.
     attr_accessor :cancelled_by
 
+    # Free-form cancellation reason from the source channel, if available.
     attr_accessor :reason
-
-    attr_accessor :refund
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'id' => :'id',
-        :'confirmation_code' => :'confirmationCode',
+        :'object' => :'object',
         :'cancelled_at' => :'cancelledAt',
         :'cancelled_by' => :'cancelledBy',
-        :'reason' => :'reason',
-        :'refund' => :'refund'
+        :'reason' => :'reason'
       }
     end
 
@@ -54,20 +50,17 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'id' => :'Integer',
-        :'confirmation_code' => :'String',
+        :'object' => :'ReservationWebhookObject',
         :'cancelled_at' => :'Time',
         :'cancelled_by' => :'String',
-        :'reason' => :'String',
-        :'refund' => :'ReservationCancelledPayloadRefund'
+        :'reason' => :'String'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
-        :'reason',
-        :'refund'
+        :'reason'
       ])
     end
 
@@ -87,12 +80,10 @@ module Repull
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'id')
-        self.id = attributes[:'id']
-      end
-
-      if attributes.key?(:'confirmation_code')
-        self.confirmation_code = attributes[:'confirmation_code']
+      if attributes.key?(:'object')
+        self.object = attributes[:'object']
+      else
+        self.object = nil
       end
 
       if attributes.key?(:'cancelled_at')
@@ -106,10 +97,6 @@ module Repull
       if attributes.key?(:'reason')
         self.reason = attributes[:'reason']
       end
-
-      if attributes.key?(:'refund')
-        self.refund = attributes[:'refund']
-      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -117,6 +104,10 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
+      if @object.nil?
+        invalid_properties.push('invalid value for "object", object cannot be nil.')
+      end
+
       invalid_properties
     end
 
@@ -124,7 +115,18 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
+      return false if @object.nil?
       true
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] object Value to be assigned
+    def object=(object)
+      if object.nil?
+        fail ArgumentError, 'object cannot be nil'
+      end
+
+      @object = object
     end
 
     # Checks equality by comparing each attribute.
@@ -132,12 +134,10 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          id == o.id &&
-          confirmation_code == o.confirmation_code &&
+          object == o.object &&
           cancelled_at == o.cancelled_at &&
           cancelled_by == o.cancelled_by &&
-          reason == o.reason &&
-          refund == o.refund
+          reason == o.reason
     end
 
     # @see the `==` method
@@ -149,7 +149,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, confirmation_code, cancelled_at, cancelled_by, reason, refund].hash
+      [object, cancelled_at, cancelled_by, reason].hash
     end
 
     # Builds the object from hash

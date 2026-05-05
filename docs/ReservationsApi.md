@@ -249,10 +249,16 @@ opts = {
   platform: 'platform_example', # String | Filter by booking platform
   status: 'confirmed', # String | 
   listing_id: 56, # Integer | Filter to a single listing
-  check_in_after: Date.parse('2013-10-20'), # Date | Check-in date >= this value
-  check_in_before: Date.parse('2013-10-20'), # Date | Check-in date <= this value
+  check_in_after: Date.parse('Sun May 31 00:00:00 UTC 2026'), # Date | Check-in date >= this value
+  check_in_before: Date.parse('Sun May 31 00:00:00 UTC 2026'), # Date | Check-in date <= this value
+  check_out_after: Date.parse('Sun May 31 00:00:00 UTC 2026'), # Date | Check-out date >= this value
+  check_out_before: Date.parse('Sun May 31 00:00:00 UTC 2026'), # Date | Check-out date <= this value
   check_in_from: Date.parse('2013-10-20'), # Date | Deprecated alias for `check_in_after`.
   check_in_to: Date.parse('2013-10-20'), # Date | Deprecated alias for `check_in_before`.
+  check_in_after2: Date.parse('2013-10-20'), # Date | Use `check_in_after` (snake_case) instead.
+  check_in_before2: Date.parse('2013-10-20'), # Date | Use `check_in_before` (snake_case) instead.
+  check_out_after2: Date.parse('2013-10-20'), # Date | Use `check_out_after` (snake_case) instead.
+  check_out_before2: Date.parse('2013-10-20'), # Date | Use `check_out_before` (snake_case) instead.
   include_total: true # Boolean | When `true` (default), the response's `pagination.total` carries the count of rows matching the current filter, across all pages. Pass `false` to skip the count for very large workspaces where the per-page COUNT(*) cost matters.
 }
 
@@ -296,8 +302,14 @@ end
 | **listing_id** | **Integer** | Filter to a single listing | [optional] |
 | **check_in_after** | **Date** | Check-in date &gt;&#x3D; this value | [optional] |
 | **check_in_before** | **Date** | Check-in date &lt;&#x3D; this value | [optional] |
+| **check_out_after** | **Date** | Check-out date &gt;&#x3D; this value | [optional] |
+| **check_out_before** | **Date** | Check-out date &lt;&#x3D; this value | [optional] |
 | **check_in_from** | **Date** | Deprecated alias for &#x60;check_in_after&#x60;. | [optional] |
 | **check_in_to** | **Date** | Deprecated alias for &#x60;check_in_before&#x60;. | [optional] |
+| **check_in_after2** | **Date** | Use &#x60;check_in_after&#x60; (snake_case) instead. | [optional] |
+| **check_in_before2** | **Date** | Use &#x60;check_in_before&#x60; (snake_case) instead. | [optional] |
+| **check_out_after2** | **Date** | Use &#x60;check_out_after&#x60; (snake_case) instead. | [optional] |
+| **check_out_before2** | **Date** | Use &#x60;check_out_before&#x60; (snake_case) instead. | [optional] |
 | **include_total** | **Boolean** | When &#x60;true&#x60; (default), the response&#39;s &#x60;pagination.total&#x60; carries the count of rows matching the current filter, across all pages. Pass &#x60;false&#x60; to skip the count for very large workspaces where the per-page COUNT(*) cost matters. | [optional][default to true] |
 
 ### Return type

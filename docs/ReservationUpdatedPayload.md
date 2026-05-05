@@ -4,10 +4,8 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **id** | **Integer** |  | [optional] |
-| **confirmation_code** | **String** |  | [optional] |
-| **changes** | **Hash&lt;String, Object&gt;** | Map of &#x60;field&#x60; → &#x60;{ from, to }&#x60; pairs describing what changed. | [optional] |
-| **updated_at** | **Time** |  | [optional] |
+| **object** | [**ReservationWebhookObject**](ReservationWebhookObject.md) |  |  |
+| **previous_attributes** | **Hash&lt;String, Object&gt;** | Sparse map: every key here is a field on the reservation snapshot whose value changed in this event, mapped to its prior value. Mirrors the keys of &#x60;ReservationWebhookObject&#x60; (e.g. &#x60;checkinDate&#x60;, &#x60;checkoutDate&#x60;, &#x60;status&#x60;). Receivers can diff &#x60;object[k]&#x60; vs &#x60;previousAttributes[k]&#x60; to know what moved. | [optional] |
 
 ## Example
 
@@ -15,10 +13,8 @@
 require 'repull'
 
 instance = Repull::ReservationUpdatedPayload.new(
-  id: 215906,
-  confirmation_code: HMA1234567,
-  changes: {&quot;checkOut&quot;:{&quot;from&quot;:&quot;2026-06-05&quot;,&quot;to&quot;:&quot;2026-06-07&quot;},&quot;pricing&quot;:{&quot;from&quot;:{&quot;total&quot;:&quot;1320.00&quot;},&quot;to&quot;:{&quot;total&quot;:&quot;1640.00&quot;}}},
-  updated_at: 2026-05-01T13:00Z
+  object: null,
+  previous_attributes: {&quot;checkinDate&quot;:&quot;2026-06-11&quot;,&quot;checkoutDate&quot;:&quot;2026-06-16&quot;}
 )
 ```
 

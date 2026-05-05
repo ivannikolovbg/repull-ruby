@@ -14,47 +14,14 @@ require 'date'
 require 'time'
 
 module Repull
-  # Payload for `reservation.created`. A new reservation arrived from any connected channel or direct booking.
+  # Payload for `reservation.created`. A new reservation arrived from any connected channel or direct booking. Stripe-pattern envelope: `data.object` carries the reservation snapshot.
   class ReservationCreatedPayload < ApiModelBase
-    attr_accessor :id
-
-    attr_accessor :confirmation_code
-
-    attr_accessor :listing_id
-
-    attr_accessor :platform
-
-    attr_accessor :status
-
-    attr_accessor :check_in
-
-    attr_accessor :check_out
-
-    attr_accessor :nights
-
-    attr_accessor :guests
-
-    attr_accessor :primary_guest
-
-    attr_accessor :pricing
-
-    attr_accessor :created_at
+    attr_accessor :object
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'id' => :'id',
-        :'confirmation_code' => :'confirmationCode',
-        :'listing_id' => :'listingId',
-        :'platform' => :'platform',
-        :'status' => :'status',
-        :'check_in' => :'checkIn',
-        :'check_out' => :'checkOut',
-        :'nights' => :'nights',
-        :'guests' => :'guests',
-        :'primary_guest' => :'primaryGuest',
-        :'pricing' => :'pricing',
-        :'created_at' => :'createdAt'
+        :'object' => :'object'
       }
     end
 
@@ -71,18 +38,7 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'id' => :'Integer',
-        :'confirmation_code' => :'String',
-        :'listing_id' => :'Integer',
-        :'platform' => :'String',
-        :'status' => :'String',
-        :'check_in' => :'Date',
-        :'check_out' => :'Date',
-        :'nights' => :'Integer',
-        :'guests' => :'ReservationCreatedPayloadGuests',
-        :'primary_guest' => :'ReservationCreatedPayloadPrimaryGuest',
-        :'pricing' => :'ReservationCreatedPayloadPricing',
-        :'created_at' => :'Time'
+        :'object' => :'ReservationWebhookObject'
       }
     end
 
@@ -108,52 +64,10 @@ module Repull
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'id')
-        self.id = attributes[:'id']
-      end
-
-      if attributes.key?(:'confirmation_code')
-        self.confirmation_code = attributes[:'confirmation_code']
-      end
-
-      if attributes.key?(:'listing_id')
-        self.listing_id = attributes[:'listing_id']
-      end
-
-      if attributes.key?(:'platform')
-        self.platform = attributes[:'platform']
-      end
-
-      if attributes.key?(:'status')
-        self.status = attributes[:'status']
-      end
-
-      if attributes.key?(:'check_in')
-        self.check_in = attributes[:'check_in']
-      end
-
-      if attributes.key?(:'check_out')
-        self.check_out = attributes[:'check_out']
-      end
-
-      if attributes.key?(:'nights')
-        self.nights = attributes[:'nights']
-      end
-
-      if attributes.key?(:'guests')
-        self.guests = attributes[:'guests']
-      end
-
-      if attributes.key?(:'primary_guest')
-        self.primary_guest = attributes[:'primary_guest']
-      end
-
-      if attributes.key?(:'pricing')
-        self.pricing = attributes[:'pricing']
-      end
-
-      if attributes.key?(:'created_at')
-        self.created_at = attributes[:'created_at']
+      if attributes.key?(:'object')
+        self.object = attributes[:'object']
+      else
+        self.object = nil
       end
     end
 
@@ -162,6 +76,10 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
+      if @object.nil?
+        invalid_properties.push('invalid value for "object", object cannot be nil.')
+      end
+
       invalid_properties
     end
 
@@ -169,7 +87,18 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
+      return false if @object.nil?
       true
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] object Value to be assigned
+    def object=(object)
+      if object.nil?
+        fail ArgumentError, 'object cannot be nil'
+      end
+
+      @object = object
     end
 
     # Checks equality by comparing each attribute.
@@ -177,18 +106,7 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          id == o.id &&
-          confirmation_code == o.confirmation_code &&
-          listing_id == o.listing_id &&
-          platform == o.platform &&
-          status == o.status &&
-          check_in == o.check_in &&
-          check_out == o.check_out &&
-          nights == o.nights &&
-          guests == o.guests &&
-          primary_guest == o.primary_guest &&
-          pricing == o.pricing &&
-          created_at == o.created_at
+          object == o.object
     end
 
     # @see the `==` method
@@ -200,7 +118,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, confirmation_code, listing_id, platform, status, check_in, check_out, nights, guests, primary_guest, pricing, created_at].hash
+      [object].hash
     end
 
     # Builds the object from hash

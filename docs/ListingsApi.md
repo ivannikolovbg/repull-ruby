@@ -88,7 +88,7 @@ end
 
 AI-generate listing content
 
-Generate guest-facing copy (title, summary, description, amenities, etc.) for a listing using Kimi K2. When `photos` are provided the vision model is used for photo-grounded copy. Persists into the listing by default.
+Generate guest-facing copy (title, summary, description, amenities, etc.) for a listing using Repull AI. When `photos` are provided the vision model is used for photo-grounded copy. Persists into the listing by default.
 
 ### Examples
 

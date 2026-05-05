@@ -4,12 +4,10 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **id** | **Integer** |  | [optional] |
-| **confirmation_code** | **String** |  | [optional] |
-| **cancelled_at** | **Time** |  | [optional] |
-| **cancelled_by** | **String** | Who initiated the cancellation (guest, host, platform). | [optional] |
-| **reason** | **String** |  | [optional] |
-| **refund** | [**ReservationCancelledPayloadRefund**](ReservationCancelledPayloadRefund.md) |  | [optional] |
+| **object** | [**ReservationWebhookObject**](ReservationWebhookObject.md) |  |  |
+| **cancelled_at** | **Time** | When the cancellation was recorded. | [optional] |
+| **cancelled_by** | **String** | Who initiated the cancellation. | [optional] |
+| **reason** | **String** | Free-form cancellation reason from the source channel, if available. | [optional] |
 
 ## Example
 
@@ -17,12 +15,10 @@
 require 'repull'
 
 instance = Repull::ReservationCancelledPayload.new(
-  id: 215906,
-  confirmation_code: HMA1234567,
+  object: null,
   cancelled_at: 2026-05-01T14:00Z,
   cancelled_by: guest,
-  reason: guest_requested,
-  refund: null
+  reason: guest_requested
 )
 ```
 

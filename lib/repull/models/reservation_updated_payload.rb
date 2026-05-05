@@ -14,24 +14,18 @@ require 'date'
 require 'time'
 
 module Repull
-  # Payload for `reservation.updated`. Dates, guest count, status, or pricing changed on an existing reservation. The `changes` map carries `{ from, to }` deltas for each field that moved.
+  # Payload for `reservation.updated`. Dates, status, or any tracked field changed on an existing reservation. `data.object` is the post-change snapshot; `data.previousAttributes` lists ONLY the fields that actually moved, with their prior values. Fields not in `previousAttributes` did not change.
   class ReservationUpdatedPayload < ApiModelBase
-    attr_accessor :id
+    attr_accessor :object
 
-    attr_accessor :confirmation_code
-
-    # Map of `field` → `{ from, to }` pairs describing what changed.
-    attr_accessor :changes
-
-    attr_accessor :updated_at
+    # Sparse map: every key here is a field on the reservation snapshot whose value changed in this event, mapped to its prior value. Mirrors the keys of `ReservationWebhookObject` (e.g. `checkinDate`, `checkoutDate`, `status`). Receivers can diff `object[k]` vs `previousAttributes[k]` to know what moved.
+    attr_accessor :previous_attributes
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'id' => :'id',
-        :'confirmation_code' => :'confirmationCode',
-        :'changes' => :'changes',
-        :'updated_at' => :'updatedAt'
+        :'object' => :'object',
+        :'previous_attributes' => :'previousAttributes'
       }
     end
 
@@ -48,10 +42,8 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'id' => :'Integer',
-        :'confirmation_code' => :'String',
-        :'changes' => :'Hash<String, Object>',
-        :'updated_at' => :'Time'
+        :'object' => :'ReservationWebhookObject',
+        :'previous_attributes' => :'Hash<String, Object>'
       }
     end
 
@@ -77,22 +69,16 @@ module Repull
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'id')
-        self.id = attributes[:'id']
+      if attributes.key?(:'object')
+        self.object = attributes[:'object']
+      else
+        self.object = nil
       end
 
-      if attributes.key?(:'confirmation_code')
-        self.confirmation_code = attributes[:'confirmation_code']
-      end
-
-      if attributes.key?(:'changes')
-        if (value = attributes[:'changes']).is_a?(Hash)
-          self.changes = value
+      if attributes.key?(:'previous_attributes')
+        if (value = attributes[:'previous_attributes']).is_a?(Hash)
+          self.previous_attributes = value
         end
-      end
-
-      if attributes.key?(:'updated_at')
-        self.updated_at = attributes[:'updated_at']
       end
     end
 
@@ -101,6 +87,10 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
+      if @object.nil?
+        invalid_properties.push('invalid value for "object", object cannot be nil.')
+      end
+
       invalid_properties
     end
 
@@ -108,7 +98,18 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
+      return false if @object.nil?
       true
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] object Value to be assigned
+    def object=(object)
+      if object.nil?
+        fail ArgumentError, 'object cannot be nil'
+      end
+
+      @object = object
     end
 
     # Checks equality by comparing each attribute.
@@ -116,10 +117,8 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          id == o.id &&
-          confirmation_code == o.confirmation_code &&
-          changes == o.changes &&
-          updated_at == o.updated_at
+          object == o.object &&
+          previous_attributes == o.previous_attributes
     end
 
     # @see the `==` method
@@ -131,7 +130,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, confirmation_code, changes, updated_at].hash
+      [object, previous_attributes].hash
     end
 
     # Builds the object from hash

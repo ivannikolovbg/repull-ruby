@@ -44,7 +44,7 @@ npx --yes @openapitools/openapi-generator-cli@latest generate \
   -i "$SPEC_PATH" \
   -g ruby \
   -o "$GEN_OUT" \
-  --additional-properties=gemName=repull,moduleName=Repull,gemVersion=0.1.0
+  --additional-properties=gemName=repull,moduleName=Repull,gemVersion=0.2.1
 
 echo "==> syncing lib/ + docs/"
 rm -rf "$ROOT/lib/repull" "$ROOT/lib/repull.rb" "$ROOT/docs"

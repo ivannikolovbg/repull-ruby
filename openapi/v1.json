@@ -211,9 +211,93 @@
           }
         }
       },
+      "ReservationPrimaryGuest": {
+        "type": "object",
+        "description": "Inline guest summary resolved by JOIN-ing the `guests` table. Populated for every reservation that has a linked guest row; OMITTED entirely (not null) for owner-blocks / pre-arrival rows / partial-sync gaps. Always optional-chain in SDK consumers.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Internal Repull guest ID. Use `GET /v1/guests/{id}` for the full profile."
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "nullable": true,
+            "description": "Primary email contact (or first non-primary if no primary set)."
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "description": "Primary phone contact (or first non-primary if no primary set)."
+          },
+          "language": {
+            "type": "string",
+            "nullable": true,
+            "description": "Guest's preferred language (BCP-47 / ISO 639-1)."
+          }
+        }
+      },
+      "ReservationOccupancy": {
+        "type": "object",
+        "description": "Normalized guest counts for the stay. Mirrors the legacy `guestDetails.numberOf*` fields under canonical short names. Omitted when no count fields are present on the reservation.",
+        "properties": {
+          "adults": {
+            "type": "integer",
+            "nullable": true
+          },
+          "children": {
+            "type": "integer",
+            "nullable": true
+          },
+          "infants": {
+            "type": "integer",
+            "nullable": true
+          },
+          "pets": {
+            "type": "integer",
+            "nullable": true
+          },
+          "total": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Total guests (sum across all categories as reported by the source channel)."
+          }
+        }
+      },
+      "ReservationFinancials": {
+        "type": "object",
+        "description": "Normalized money block. `totalPrice` is a `number` (NOT a decimal-as-string) \u2014 the legacy top-level `totalPrice` string field is kept on the parent for back-compat but is deprecated.",
+        "properties": {
+          "totalPrice": {
+            "type": "number",
+            "nullable": true,
+            "description": "Stay total in `currency`. Number, not string.",
+            "example": 1250
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true,
+            "description": "ISO 4217 currency code.",
+            "example": "USD"
+          },
+          "paymentStatus": {
+            "type": "string",
+            "nullable": true,
+            "description": "Payment lifecycle status (e.g. `pending`, `paid`, `refunded`)."
+          }
+        }
+      },
       "Reservation": {
         "type": "object",
-        "description": "A booking/reservation from a connected PMS. Identical shape between list-row (`GET /v1/reservations`) and detail (`GET /v1/reservations/{id}`) \u2014 SDK consumers can use the same type for both.",
+        "description": "A booking/reservation from a connected PMS. Identical shape between list-row (`GET /v1/reservations`) and detail (`GET /v1/reservations/{id}`) \u2014 SDK consumers can use the same type for both.\n\nThe canonical (post-2026-05) shape uses nested `primaryGuest`, `occupancy`, `financials` blocks. The legacy flat fields (`guestId`, `totalPrice`, `currency`, `guestDetails`) remain populated for back-compat and are marked `deprecated` here. New consumers should read from the nested blocks; existing consumers continue to work unchanged.",
         "properties": {
           "id": {
             "type": "string",
@@ -225,7 +309,8 @@
           },
           "guestId": {
             "type": "string",
-            "description": "Internal Repull guest ID. Use `GET /v1/guests/{id}` for the full profile."
+            "deprecated": true,
+            "description": "DEPRECATED \u2014 use `primaryGuest.id`. Internal Repull guest ID. Kept populated for back-compat."
           },
           "checkIn": {
             "type": "string",
@@ -241,30 +326,64 @@
             "type": "string",
             "example": "confirmed"
           },
+          "source": {
+            "type": "string",
+            "nullable": true,
+            "description": "Booking source / channel. Lowercase. May be null on legacy rows. Canonical name as of 2026-05; `platform` is kept as an alias.",
+            "example": "airbnb"
+          },
           "platform": {
             "type": "string",
             "nullable": true,
-            "description": "Booking source. Lowercase. May be null on legacy rows.",
+            "deprecated": true,
+            "description": "DEPRECATED alias for `source`. Same value, kept for back-compat.",
             "example": "airbnb"
-          },
-          "totalPrice": {
-            "type": "string",
-            "description": "Decimal-as-string (precision 10, scale 2) to preserve precision across mixed-currency totals.",
-            "example": "1250.00"
-          },
-          "currency": {
-            "type": "string",
-            "description": "ISO 4217 currency code.",
-            "example": "USD"
           },
           "confirmationCode": {
             "type": "string",
             "description": "Channel-side confirmation code (Airbnb HMxxx, Booking.com numeric, etc.).",
             "example": "HMXYZ123"
           },
+          "primaryGuest": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReservationPrimaryGuest"
+              }
+            ],
+            "description": "Inline guest summary. May be undefined for owner-blocks / pre-arrival rows."
+          },
+          "occupancy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReservationOccupancy"
+              }
+            ],
+            "description": "Normalized guest counts. May be undefined when the source channel did not provide counts."
+          },
+          "financials": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReservationFinancials"
+              }
+            ],
+            "description": "Normalized money block. Always populated for paid reservations."
+          },
+          "totalPrice": {
+            "type": "string",
+            "deprecated": true,
+            "description": "DEPRECATED \u2014 use `financials.totalPrice` (a number). Decimal-as-string (precision 10, scale 2) kept for back-compat.",
+            "example": "1250.00"
+          },
+          "currency": {
+            "type": "string",
+            "deprecated": true,
+            "description": "DEPRECATED \u2014 use `financials.currency`. ISO 4217 currency code.",
+            "example": "USD"
+          },
           "guestDetails": {
             "type": "object",
-            "description": "Raw guest details from the source channel (firstName, lastName, email, phone, count, etc.). Shape varies by platform \u2014 use the dedicated guest endpoint for a normalized profile.",
+            "deprecated": true,
+            "description": "DEPRECATED \u2014 use `occupancy` for normalized counts and `primaryGuest` for guest identity. Raw guest details from the source channel; shape varies by platform.",
             "additionalProperties": true
           },
           "createdAt": {
@@ -272,23 +391,25 @@
             "format": "date-time",
             "description": "When the reservation row was created in Repull (not the booking-on-channel timestamp)."
           },
+          "bookedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the booking was made on the source channel (when reported by the channel)."
+          },
           "guestName": {
             "type": "string",
             "nullable": true,
-            "description": "Pre-resolved display name (`firstName lastName`) extracted from `guestDetails`. Null when no first name is available."
+            "description": "Pre-resolved display name (`firstName lastName`) from the joined guest row. Undefined when no first name is available."
           }
         },
         "required": [
           "id",
           "listingId",
-          "guestId",
           "checkIn",
           "checkOut",
           "status",
-          "totalPrice",
-          "currency",
           "confirmationCode",
-          "guestDetails",
           "createdAt"
         ]
       },
@@ -1451,185 +1572,123 @@
           "repull.ping"
         ]
       },
-      "ReservationCreatedPayload": {
+      "ReservationWebhookObject": {
         "type": "object",
-        "description": "Payload for `reservation.created`. A new reservation arrived from any connected channel or direct booking.",
+        "description": "Lightweight reservation snapshot delivered as `data.object` on every reservation webhook event. Stable across `reservation.created`, `reservation.updated`, and `reservation.cancelled`. Fetch the full reservation via `GET /v1/reservations/{id}` if you need pricing, guest contact info, or audit history \u2014 those are deliberately omitted to keep deliveries small.",
+        "required": [
+          "id",
+          "uid",
+          "channel",
+          "listingId",
+          "customerId",
+          "checkinDate",
+          "checkoutDate",
+          "status"
+        ],
         "properties": {
           "id": {
             "type": "integer",
-            "example": 215906
+            "description": "Repull-internal reservation id. Pass to `GET /v1/reservations/{id}`.",
+            "example": 212605
           },
-          "confirmationCode": {
+          "uid": {
             "type": "string",
-            "example": "HMA1234567"
+            "description": "Channel-side confirmation code (Airbnb HM-prefixed, Booking.com numeric, etc.). Stable across the lifetime of the reservation.",
+            "example": "HMX4CMA2X9"
+          },
+          "channel": {
+            "type": "string",
+            "description": "Source channel \u2014 `airbnb`, `booking`, `vrbo`, `direct`, `owner`, `mid_stay_clean`, etc.",
+            "example": "airbnb"
           },
           "listingId": {
             "type": "integer",
-            "example": 6250
+            "description": "Repull listing id this reservation is on.",
+            "example": 5668
           },
-          "platform": {
+          "customerId": {
+            "type": "integer",
+            "description": "Workspace (customer) id this reservation belongs to.",
+            "example": 1
+          },
+          "checkinDate": {
             "type": "string",
-            "example": "airbnb"
+            "format": "date",
+            "description": "Check-in date (local property date, no timezone).",
+            "example": "2026-06-10"
+          },
+          "checkoutDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Check-out date (local property date, no timezone).",
+            "example": "2026-06-16"
           },
           "status": {
             "type": "string",
+            "description": "Lifecycle status \u2014 typically `confirmed`, `cancelled`, `pending`, `inquiry`.",
             "example": "confirmed"
-          },
-          "checkIn": {
-            "type": "string",
-            "format": "date",
-            "example": "2026-06-01"
-          },
-          "checkOut": {
-            "type": "string",
-            "format": "date",
-            "example": "2026-06-05"
-          },
-          "nights": {
-            "type": "integer",
-            "example": 4
-          },
-          "guests": {
-            "type": "object",
-            "properties": {
-              "adults": {
-                "type": "integer",
-                "example": 2
-              },
-              "children": {
-                "type": "integer",
-                "example": 0
-              },
-              "infants": {
-                "type": "integer",
-                "example": 0
-              }
-            }
-          },
-          "primaryGuest": {
-            "type": "object",
-            "properties": {
-              "firstName": {
-                "type": "string",
-                "example": "Alex"
-              },
-              "lastName": {
-                "type": "string",
-                "example": "Morgan"
-              },
-              "email": {
-                "type": "string",
-                "format": "email",
-                "example": "alex@example.com"
-              }
-            }
-          },
-          "pricing": {
-            "type": "object",
-            "properties": {
-              "subtotal": {
-                "type": "string",
-                "example": "1200.00"
-              },
-              "taxes": {
-                "type": "string",
-                "example": "120.00"
-              },
-              "total": {
-                "type": "string",
-                "example": "1320.00"
-              },
-              "currency": {
-                "type": "string",
-                "example": "USD"
-              }
-            }
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2026-05-01T12:34:56.000Z"
+          }
+        }
+      },
+      "ReservationCreatedPayload": {
+        "type": "object",
+        "description": "Payload for `reservation.created`. A new reservation arrived from any connected channel or direct booking. Stripe-pattern envelope: `data.object` carries the reservation snapshot.",
+        "required": [
+          "object"
+        ],
+        "properties": {
+          "object": {
+            "$ref": "#/components/schemas/ReservationWebhookObject"
           }
         }
       },
       "ReservationUpdatedPayload": {
         "type": "object",
-        "description": "Payload for `reservation.updated`. Dates, guest count, status, or pricing changed on an existing reservation. The `changes` map carries `{ from, to }` deltas for each field that moved.",
+        "description": "Payload for `reservation.updated`. Dates, status, or any tracked field changed on an existing reservation. `data.object` is the post-change snapshot; `data.previousAttributes` lists ONLY the fields that actually moved, with their prior values. Fields not in `previousAttributes` did not change.",
+        "required": [
+          "object"
+        ],
         "properties": {
-          "id": {
-            "type": "integer",
-            "example": 215906
+          "object": {
+            "$ref": "#/components/schemas/ReservationWebhookObject"
           },
-          "confirmationCode": {
-            "type": "string",
-            "example": "HMA1234567"
-          },
-          "changes": {
+          "previousAttributes": {
             "type": "object",
+            "description": "Sparse map: every key here is a field on the reservation snapshot whose value changed in this event, mapped to its prior value. Mirrors the keys of `ReservationWebhookObject` (e.g. `checkinDate`, `checkoutDate`, `status`). Receivers can diff `object[k]` vs `previousAttributes[k]` to know what moved.",
             "additionalProperties": true,
-            "description": "Map of `field` \u2192 `{ from, to }` pairs describing what changed.",
             "example": {
-              "checkOut": {
-                "from": "2026-06-05",
-                "to": "2026-06-07"
-              },
-              "pricing": {
-                "from": {
-                  "total": "1320.00"
-                },
-                "to": {
-                  "total": "1640.00"
-                }
-              }
+              "checkinDate": "2026-06-11",
+              "checkoutDate": "2026-06-16"
             }
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2026-05-01T13:00:00.000Z"
           }
         }
       },
       "ReservationCancelledPayload": {
         "type": "object",
-        "description": "Payload for `reservation.cancelled`. A reservation was cancelled by the guest, host, or platform.",
+        "description": "Payload for `reservation.cancelled`. A reservation was cancelled by the guest, host, or platform. `data.object` reflects the post-cancel snapshot (status will be `cancelled`); top-level fields capture cancellation metadata.",
+        "required": [
+          "object"
+        ],
         "properties": {
-          "id": {
-            "type": "integer",
-            "example": 215906
-          },
-          "confirmationCode": {
-            "type": "string",
-            "example": "HMA1234567"
+          "object": {
+            "$ref": "#/components/schemas/ReservationWebhookObject"
           },
           "cancelledAt": {
             "type": "string",
             "format": "date-time",
+            "description": "When the cancellation was recorded.",
             "example": "2026-05-01T14:00:00.000Z"
           },
           "cancelledBy": {
             "type": "string",
-            "example": "guest",
-            "description": "Who initiated the cancellation (guest, host, platform)."
+            "description": "Who initiated the cancellation.",
+            "example": "guest"
           },
           "reason": {
             "type": "string",
             "nullable": true,
+            "description": "Free-form cancellation reason from the source channel, if available.",
             "example": "guest_requested"
-          },
-          "refund": {
-            "type": "object",
-            "nullable": true,
-            "properties": {
-              "amount": {
-                "type": "string",
-                "example": "1320.00"
-              },
-              "currency": {
-                "type": "string",
-                "example": "USD"
-              }
-            }
           }
         }
       },
@@ -3496,7 +3555,7 @@
               "type": "string",
               "format": "uri"
             },
-            "description": "Up to 8 reference photos. When present, Kimi K2 vision is used for grounded copy.",
+            "description": "Up to 8 reference photos. When present, Repull AI vision is used for grounded copy.",
             "maxItems": 8
           },
           "style": {
@@ -6171,7 +6230,8 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "format": "date"
+              "format": "date",
+              "example": "2026-05-31"
             },
             "description": "Check-in date >= this value"
           },
@@ -6180,9 +6240,30 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "format": "date"
+              "format": "date",
+              "example": "2026-05-31"
             },
             "description": "Check-in date <= this value"
+          },
+          {
+            "name": "check_out_after",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-05-31"
+            },
+            "description": "Check-out date >= this value"
+          },
+          {
+            "name": "check_out_before",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-05-31"
+            },
+            "description": "Check-out date <= this value"
           },
           {
             "name": "checkInFrom",
@@ -6203,6 +6284,50 @@
             },
             "deprecated": true,
             "description": "Deprecated alias for `check_in_before`."
+          },
+          {
+            "name": "checkInAfter",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "deprecated": true,
+            "description": "Use `check_in_after` (snake_case) instead.",
+            "x-go-name": "CheckInAfterCamel"
+          },
+          {
+            "name": "checkInBefore",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "deprecated": true,
+            "description": "Use `check_in_before` (snake_case) instead.",
+            "x-go-name": "CheckInBeforeCamel"
+          },
+          {
+            "name": "checkOutAfter",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "deprecated": true,
+            "description": "Use `check_out_after` (snake_case) instead.",
+            "x-go-name": "CheckOutAfterCamel"
+          },
+          {
+            "name": "checkOutBefore",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "deprecated": true,
+            "description": "Use `check_out_before` (snake_case) instead.",
+            "x-go-name": "CheckOutBeforeCamel"
           },
           {
             "$ref": "#/components/parameters/IncludeTotal"
@@ -6777,7 +6902,7 @@
       "get": {
         "operationId": "listConversationMessages",
         "summary": "List messages in a conversation",
-        "description": "Cursor-paginated messages within one thread. Defaults to newest-first (`?order=desc`); pass `?order=asc` for chronological replay. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request.",
+        "description": "Cursor-paginated messages within one thread. Defaults to newest-first (`?order=desc`); pass `?order=asc` for chronological replay. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request.\n\n`?offset=` is also accepted as a first-class alias for shallow paging (0..10000) \u2014 see the `offset` parameter below. Mutually exclusive with `cursor`.",
         "tags": [
           "Conversations"
         ],
@@ -6801,6 +6926,9 @@
               "type": "string"
             },
             "description": "Opaque cursor returned in the previous response's `pagination.nextCursor`."
+          },
+          {
+            "$ref": "#/components/parameters/Offset"
           },
           {
             "name": "limit",
@@ -8843,7 +8971,7 @@
       "post": {
         "operationId": "generateListingContent",
         "summary": "AI-generate listing content",
-        "description": "Generate guest-facing copy (title, summary, description, amenities, etc.) for a listing using Kimi K2. When `photos` are provided the vision model is used for photo-grounded copy. Persists into the listing by default.",
+        "description": "Generate guest-facing copy (title, summary, description, amenities, etc.) for a listing using Repull AI. When `photos` are provided the vision model is used for photo-grounded copy. Persists into the listing by default.",
         "tags": [
           "Listings"
         ],
@@ -9833,7 +9961,7 @@
       "get": {
         "operationId": "getListingPricingHistory",
         "summary": "Pricing recommendation audit trail",
-        "description": "Cursor-paginated audit trail of pricing recommendations vs applied prices for a listing across a date window. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request.\n\nDefaults to \u00b190 days from today. Cursor is a keyset on `date ASC` \u2014 stable even if rows are added during a partner's pagination walk. `limit` is capped at 500 \u2014 exceeding returns 422.",
+        "description": "Cursor-paginated audit trail of pricing recommendations vs applied prices for a listing across a date window. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request.\n\nDefaults to \u00b190 days from today. Cursor is a keyset on `date ASC` \u2014 stable even if rows are added during a partner's pagination walk. `limit` is capped at 500 \u2014 exceeding returns 422.\n\n`?offset=` is also accepted as a first-class alias for shallow paging (0..10000) \u2014 see the `offset` parameter below. Mutually exclusive with `cursor`.",
         "tags": [
           "Pricing"
         ],
@@ -9885,6 +10013,9 @@
               "type": "string"
             },
             "description": "Opaque cursor returned in the previous response's `pagination.nextCursor`. Omit to fetch the first page."
+          },
+          {
+            "$ref": "#/components/parameters/Offset"
           }
         ],
         "responses": {

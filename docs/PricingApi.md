@@ -233,7 +233,7 @@ end
 
 Pricing recommendation audit trail
 
-Cursor-paginated audit trail of pricing recommendations vs applied prices for a listing across a date window. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request.  Defaults to ±90 days from today. Cursor is a keyset on `date ASC` — stable even if rows are added during a partner's pagination walk. `limit` is capped at 500 — exceeding returns 422.
+Cursor-paginated audit trail of pricing recommendations vs applied prices for a listing across a date window. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request.  Defaults to ±90 days from today. Cursor is a keyset on `date ASC` — stable even if rows are added during a partner's pagination walk. `limit` is capped at 500 — exceeding returns 422.  `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) — see the `offset` parameter below. Mutually exclusive with `cursor`.
 
 ### Examples
 
@@ -252,7 +252,8 @@ opts = {
   start_date: Date.parse('2013-10-20'), # Date | Inclusive. Defaults to today - 90 days.
   end_date: Date.parse('2013-10-20'), # Date | Inclusive. Defaults to today + 90 days.
   limit: 56, # Integer | 
-  cursor: 'cursor_example' # String | Opaque cursor returned in the previous response's `pagination.nextCursor`. Omit to fetch the first page.
+  cursor: 'cursor_example', # String | Opaque cursor returned in the previous response's `pagination.nextCursor`. Omit to fetch the first page.
+  offset: 56 # Integer | First-class alias for cursor-based pagination. Mutually exclusive with `cursor` — passing both returns 422. Accepts integers in `[0, 10000]`; deeper walks must use `cursor` (constant per-page cost). The response always includes `pagination.next_cursor` so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying.
 }
 
 begin
@@ -291,6 +292,7 @@ end
 | **end_date** | **Date** | Inclusive. Defaults to today + 90 days. | [optional] |
 | **limit** | **Integer** |  | [optional][default to 100] |
 | **cursor** | **String** | Opaque cursor returned in the previous response&#39;s &#x60;pagination.nextCursor&#x60;. Omit to fetch the first page. | [optional] |
+| **offset** | **Integer** | First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.next_cursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. | [optional][default to 0] |
 
 ### Return type
 

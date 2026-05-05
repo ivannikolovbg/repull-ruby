@@ -226,8 +226,14 @@ module Repull
     # @option opts [Integer] :listing_id Filter to a single listing
     # @option opts [Date] :check_in_after Check-in date &gt;&#x3D; this value
     # @option opts [Date] :check_in_before Check-in date &lt;&#x3D; this value
+    # @option opts [Date] :check_out_after Check-out date &gt;&#x3D; this value
+    # @option opts [Date] :check_out_before Check-out date &lt;&#x3D; this value
     # @option opts [Date] :check_in_from Deprecated alias for &#x60;check_in_after&#x60;.
     # @option opts [Date] :check_in_to Deprecated alias for &#x60;check_in_before&#x60;.
+    # @option opts [Date] :check_in_after2 Use &#x60;check_in_after&#x60; (snake_case) instead.
+    # @option opts [Date] :check_in_before2 Use &#x60;check_in_before&#x60; (snake_case) instead.
+    # @option opts [Date] :check_out_after2 Use &#x60;check_out_after&#x60; (snake_case) instead.
+    # @option opts [Date] :check_out_before2 Use &#x60;check_out_before&#x60; (snake_case) instead.
     # @option opts [Boolean] :include_total When &#x60;true&#x60; (default), the response&#39;s &#x60;pagination.total&#x60; carries the count of rows matching the current filter, across all pages. Pass &#x60;false&#x60; to skip the count for very large workspaces where the per-page COUNT(*) cost matters. (default to true)
     # @return [ReservationListResponse]
     def list_reservations(opts = {})
@@ -247,8 +253,14 @@ module Repull
     # @option opts [Integer] :listing_id Filter to a single listing
     # @option opts [Date] :check_in_after Check-in date &gt;&#x3D; this value
     # @option opts [Date] :check_in_before Check-in date &lt;&#x3D; this value
+    # @option opts [Date] :check_out_after Check-out date &gt;&#x3D; this value
+    # @option opts [Date] :check_out_before Check-out date &lt;&#x3D; this value
     # @option opts [Date] :check_in_from Deprecated alias for &#x60;check_in_after&#x60;.
     # @option opts [Date] :check_in_to Deprecated alias for &#x60;check_in_before&#x60;.
+    # @option opts [Date] :check_in_after2 Use &#x60;check_in_after&#x60; (snake_case) instead.
+    # @option opts [Date] :check_in_before2 Use &#x60;check_in_before&#x60; (snake_case) instead.
+    # @option opts [Date] :check_out_after2 Use &#x60;check_out_after&#x60; (snake_case) instead.
+    # @option opts [Date] :check_out_before2 Use &#x60;check_out_before&#x60; (snake_case) instead.
     # @option opts [Boolean] :include_total When &#x60;true&#x60; (default), the response&#39;s &#x60;pagination.total&#x60; carries the count of rows matching the current filter, across all pages. Pass &#x60;false&#x60; to skip the count for very large workspaces where the per-page COUNT(*) cost matters. (default to true)
     # @return [Array<(ReservationListResponse, Integer, Hash)>] ReservationListResponse data, response status code and response headers
     def list_reservations_with_http_info(opts = {})
@@ -288,8 +300,14 @@ module Repull
       query_params[:'listingId'] = opts[:'listing_id'] if !opts[:'listing_id'].nil?
       query_params[:'check_in_after'] = opts[:'check_in_after'] if !opts[:'check_in_after'].nil?
       query_params[:'check_in_before'] = opts[:'check_in_before'] if !opts[:'check_in_before'].nil?
+      query_params[:'check_out_after'] = opts[:'check_out_after'] if !opts[:'check_out_after'].nil?
+      query_params[:'check_out_before'] = opts[:'check_out_before'] if !opts[:'check_out_before'].nil?
       query_params[:'checkInFrom'] = opts[:'check_in_from'] if !opts[:'check_in_from'].nil?
       query_params[:'checkInTo'] = opts[:'check_in_to'] if !opts[:'check_in_to'].nil?
+      query_params[:'checkInAfter'] = opts[:'check_in_after2'] if !opts[:'check_in_after2'].nil?
+      query_params[:'checkInBefore'] = opts[:'check_in_before2'] if !opts[:'check_in_before2'].nil?
+      query_params[:'checkOutAfter'] = opts[:'check_out_after2'] if !opts[:'check_out_after2'].nil?
+      query_params[:'checkOutBefore'] = opts[:'check_out_before2'] if !opts[:'check_out_before2'].nil?
       query_params[:'include_total'] = opts[:'include_total'] if !opts[:'include_total'].nil?
 
       # header parameters

@@ -14,19 +14,33 @@ require 'date'
 require 'time'
 
 module Repull
-  class ReservationCreatedPayloadGuests < ApiModelBase
-    attr_accessor :adults
+  # Inline guest summary resolved by JOIN-ing the `guests` table. Populated for every reservation that has a linked guest row; OMITTED entirely (not null) for owner-blocks / pre-arrival rows / partial-sync gaps. Always optional-chain in SDK consumers.
+  class ReservationPrimaryGuest < ApiModelBase
+    # Internal Repull guest ID. Use `GET /v1/guests/{id}` for the full profile.
+    attr_accessor :id
 
-    attr_accessor :children
+    attr_accessor :first_name
 
-    attr_accessor :infants
+    attr_accessor :last_name
+
+    # Primary email contact (or first non-primary if no primary set).
+    attr_accessor :email
+
+    # Primary phone contact (or first non-primary if no primary set).
+    attr_accessor :phone
+
+    # Guest's preferred language (BCP-47 / ISO 639-1).
+    attr_accessor :language
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'adults' => :'adults',
-        :'children' => :'children',
-        :'infants' => :'infants'
+        :'id' => :'id',
+        :'first_name' => :'firstName',
+        :'last_name' => :'lastName',
+        :'email' => :'email',
+        :'phone' => :'phone',
+        :'language' => :'language'
       }
     end
 
@@ -43,15 +57,23 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'adults' => :'Integer',
-        :'children' => :'Integer',
-        :'infants' => :'Integer'
+        :'id' => :'String',
+        :'first_name' => :'String',
+        :'last_name' => :'String',
+        :'email' => :'String',
+        :'phone' => :'String',
+        :'language' => :'String'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'first_name',
+        :'last_name',
+        :'email',
+        :'phone',
+        :'language'
       ])
     end
 
@@ -59,28 +81,40 @@ module Repull
     # @param [Hash] attributes Model attributes in the form of hash
     def initialize(attributes = {})
       if (!attributes.is_a?(Hash))
-        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::ReservationCreatedPayloadGuests` initialize method"
+        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::ReservationPrimaryGuest` initialize method"
       end
 
       # check to see if the attribute exists and convert string to symbol for hash key
       acceptable_attribute_map = self.class.acceptable_attribute_map
       attributes = attributes.each_with_object({}) { |(k, v), h|
         if (!acceptable_attribute_map.key?(k.to_sym))
-          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::ReservationCreatedPayloadGuests`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
+          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::ReservationPrimaryGuest`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
         end
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'adults')
-        self.adults = attributes[:'adults']
+      if attributes.key?(:'id')
+        self.id = attributes[:'id']
       end
 
-      if attributes.key?(:'children')
-        self.children = attributes[:'children']
+      if attributes.key?(:'first_name')
+        self.first_name = attributes[:'first_name']
       end
 
-      if attributes.key?(:'infants')
-        self.infants = attributes[:'infants']
+      if attributes.key?(:'last_name')
+        self.last_name = attributes[:'last_name']
+      end
+
+      if attributes.key?(:'email')
+        self.email = attributes[:'email']
+      end
+
+      if attributes.key?(:'phone')
+        self.phone = attributes[:'phone']
+      end
+
+      if attributes.key?(:'language')
+        self.language = attributes[:'language']
       end
     end
 
@@ -104,9 +138,12 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          adults == o.adults &&
-          children == o.children &&
-          infants == o.infants
+          id == o.id &&
+          first_name == o.first_name &&
+          last_name == o.last_name &&
+          email == o.email &&
+          phone == o.phone &&
+          language == o.language
     end
 
     # @see the `==` method
@@ -118,7 +155,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [adults, children, infants].hash
+      [id, first_name, last_name, email, phone, language].hash
     end
 
     # Builds the object from hash

@@ -14,19 +14,23 @@ require 'date'
 require 'time'
 
 module Repull
-  class ReservationCreatedPayloadPrimaryGuest < ApiModelBase
-    attr_accessor :first_name
+  # Normalized money block. `totalPrice` is a `number` (NOT a decimal-as-string) — the legacy top-level `totalPrice` string field is kept on the parent for back-compat but is deprecated.
+  class ReservationFinancials < ApiModelBase
+    # Stay total in `currency`. Number, not string.
+    attr_accessor :total_price
 
-    attr_accessor :last_name
+    # ISO 4217 currency code.
+    attr_accessor :currency
 
-    attr_accessor :email
+    # Payment lifecycle status (e.g. `pending`, `paid`, `refunded`).
+    attr_accessor :payment_status
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'first_name' => :'firstName',
-        :'last_name' => :'lastName',
-        :'email' => :'email'
+        :'total_price' => :'totalPrice',
+        :'currency' => :'currency',
+        :'payment_status' => :'paymentStatus'
       }
     end
 
@@ -43,15 +47,18 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'first_name' => :'String',
-        :'last_name' => :'String',
-        :'email' => :'String'
+        :'total_price' => :'Float',
+        :'currency' => :'String',
+        :'payment_status' => :'String'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'total_price',
+        :'currency',
+        :'payment_status'
       ])
     end
 
@@ -59,28 +66,28 @@ module Repull
     # @param [Hash] attributes Model attributes in the form of hash
     def initialize(attributes = {})
       if (!attributes.is_a?(Hash))
-        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::ReservationCreatedPayloadPrimaryGuest` initialize method"
+        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::ReservationFinancials` initialize method"
       end
 
       # check to see if the attribute exists and convert string to symbol for hash key
       acceptable_attribute_map = self.class.acceptable_attribute_map
       attributes = attributes.each_with_object({}) { |(k, v), h|
         if (!acceptable_attribute_map.key?(k.to_sym))
-          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::ReservationCreatedPayloadPrimaryGuest`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
+          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::ReservationFinancials`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
         end
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'first_name')
-        self.first_name = attributes[:'first_name']
+      if attributes.key?(:'total_price')
+        self.total_price = attributes[:'total_price']
       end
 
-      if attributes.key?(:'last_name')
-        self.last_name = attributes[:'last_name']
+      if attributes.key?(:'currency')
+        self.currency = attributes[:'currency']
       end
 
-      if attributes.key?(:'email')
-        self.email = attributes[:'email']
+      if attributes.key?(:'payment_status')
+        self.payment_status = attributes[:'payment_status']
       end
     end
 
@@ -104,9 +111,9 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          first_name == o.first_name &&
-          last_name == o.last_name &&
-          email == o.email
+          total_price == o.total_price &&
+          currency == o.currency &&
+          payment_status == o.payment_status
     end
 
     # @see the `==` method
@@ -118,7 +125,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [first_name, last_name, email].hash
+      [total_price, currency, payment_status].hash
     end
 
     # Builds the object from hash

@@ -231,13 +231,14 @@ module Repull
     end
 
     # Pricing recommendation audit trail
-    # Cursor-paginated audit trail of pricing recommendations vs applied prices for a listing across a date window. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request.  Defaults to ±90 days from today. Cursor is a keyset on `date ASC` — stable even if rows are added during a partner's pagination walk. `limit` is capped at 500 — exceeding returns 422.
+    # Cursor-paginated audit trail of pricing recommendations vs applied prices for a listing across a date window. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request.  Defaults to ±90 days from today. Cursor is a keyset on `date ASC` — stable even if rows are added during a partner's pagination walk. `limit` is capped at 500 — exceeding returns 422.  `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) — see the `offset` parameter below. Mutually exclusive with `cursor`.
     # @param id [Integer] 
     # @param [Hash] opts the optional parameters
     # @option opts [Date] :start_date Inclusive. Defaults to today - 90 days.
     # @option opts [Date] :end_date Inclusive. Defaults to today + 90 days.
     # @option opts [Integer] :limit  (default to 100)
     # @option opts [String] :cursor Opaque cursor returned in the previous response&#39;s &#x60;pagination.nextCursor&#x60;. Omit to fetch the first page.
+    # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.next_cursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
     # @return [ListingPricingHistoryResponse]
     def get_listing_pricing_history(id, opts = {})
       data, _status_code, _headers = get_listing_pricing_history_with_http_info(id, opts)
@@ -245,13 +246,14 @@ module Repull
     end
 
     # Pricing recommendation audit trail
-    # Cursor-paginated audit trail of pricing recommendations vs applied prices for a listing across a date window. Use &#x60;pagination.nextCursor&#x60; from one response as the &#x60;cursor&#x60; query param of the next request.  Defaults to ±90 days from today. Cursor is a keyset on &#x60;date ASC&#x60; — stable even if rows are added during a partner&#39;s pagination walk. &#x60;limit&#x60; is capped at 500 — exceeding returns 422.
+    # Cursor-paginated audit trail of pricing recommendations vs applied prices for a listing across a date window. Use &#x60;pagination.nextCursor&#x60; from one response as the &#x60;cursor&#x60; query param of the next request.  Defaults to ±90 days from today. Cursor is a keyset on &#x60;date ASC&#x60; — stable even if rows are added during a partner&#39;s pagination walk. &#x60;limit&#x60; is capped at 500 — exceeding returns 422.  &#x60;?offset&#x3D;&#x60; is also accepted as a first-class alias for shallow paging (0..10000) — see the &#x60;offset&#x60; parameter below. Mutually exclusive with &#x60;cursor&#x60;.
     # @param id [Integer] 
     # @param [Hash] opts the optional parameters
     # @option opts [Date] :start_date Inclusive. Defaults to today - 90 days.
     # @option opts [Date] :end_date Inclusive. Defaults to today + 90 days.
     # @option opts [Integer] :limit  (default to 100)
     # @option opts [String] :cursor Opaque cursor returned in the previous response&#39;s &#x60;pagination.nextCursor&#x60;. Omit to fetch the first page.
+    # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.next_cursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
     # @return [Array<(ListingPricingHistoryResponse, Integer, Hash)>] ListingPricingHistoryResponse data, response status code and response headers
     def get_listing_pricing_history_with_http_info(id, opts = {})
       if @api_client.config.debugging
@@ -269,6 +271,14 @@ module Repull
         fail ArgumentError, 'invalid value for "opts[:"limit"]" when calling PricingApi.get_listing_pricing_history, must be greater than or equal to 1.'
       end
 
+      if @api_client.config.client_side_validation && !opts[:'offset'].nil? && opts[:'offset'] > 10000
+        fail ArgumentError, 'invalid value for "opts[:"offset"]" when calling PricingApi.get_listing_pricing_history, must be smaller than or equal to 10000.'
+      end
+
+      if @api_client.config.client_side_validation && !opts[:'offset'].nil? && opts[:'offset'] < 0
+        fail ArgumentError, 'invalid value for "opts[:"offset"]" when calling PricingApi.get_listing_pricing_history, must be greater than or equal to 0.'
+      end
+
       # resource path
       local_var_path = '/v1/listings/{id}/pricing/history'.sub('{id}', CGI.escape(id.to_s))
 
@@ -278,6 +288,7 @@ module Repull
       query_params[:'endDate'] = opts[:'end_date'] if !opts[:'end_date'].nil?
       query_params[:'limit'] = opts[:'limit'] if !opts[:'limit'].nil?
       query_params[:'cursor'] = opts[:'cursor'] if !opts[:'cursor'].nil?
+      query_params[:'offset'] = opts[:'offset'] if !opts[:'offset'].nil?
 
       # header parameters
       header_params = opts[:header_params] || {}
