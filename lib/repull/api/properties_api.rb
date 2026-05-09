@@ -20,9 +20,10 @@ module Repull
       @api_client = api_client
     end
     # Get property details
-    # Fetch a single property by Repull id. Property ids are workspace-scoped — an id from one workspace is not valid in another. 404 means the id does not exist OR belongs to a different workspace.
+    # Fetch a single property by Repull id. Property ids are workspace-scoped — an id from one workspace is not valid in another. 404 means the id does not exist OR belongs to a different workspace.  **Optional expansions:** Pass `?include=amenities` to enrich the response with the property's amenities (sourced from the unified `listings_amenities` table). Returns `[]` when the property has no amenity rows. The default response stays lean; consumers must opt in.
     # @param id [Integer] 
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :include Comma-separated optional expansions. Currently supported: &#x60;amenities&#x60;. Unknown values return 422.
     # @return [Property]
     def get_property(id, opts = {})
       data, _status_code, _headers = get_property_with_http_info(id, opts)
@@ -30,9 +31,10 @@ module Repull
     end
 
     # Get property details
-    # Fetch a single property by Repull id. Property ids are workspace-scoped — an id from one workspace is not valid in another. 404 means the id does not exist OR belongs to a different workspace.
+    # Fetch a single property by Repull id. Property ids are workspace-scoped — an id from one workspace is not valid in another. 404 means the id does not exist OR belongs to a different workspace.  **Optional expansions:** Pass &#x60;?include&#x3D;amenities&#x60; to enrich the response with the property&#39;s amenities (sourced from the unified &#x60;listings_amenities&#x60; table). Returns &#x60;[]&#x60; when the property has no amenity rows. The default response stays lean; consumers must opt in.
     # @param id [Integer] 
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :include Comma-separated optional expansions. Currently supported: &#x60;amenities&#x60;. Unknown values return 422.
     # @return [Array<(Property, Integer, Hash)>] Property data, response status code and response headers
     def get_property_with_http_info(id, opts = {})
       if @api_client.config.debugging
@@ -42,11 +44,16 @@ module Repull
       if @api_client.config.client_side_validation && id.nil?
         fail ArgumentError, "Missing the required parameter 'id' when calling PropertiesApi.get_property"
       end
+      allowable_values = ["amenities"]
+      if @api_client.config.client_side_validation && opts[:'include'] && !allowable_values.include?(opts[:'include'])
+        fail ArgumentError, "invalid value for \"include\", must be one of #{allowable_values}"
+      end
       # resource path
       local_var_path = '/v1/properties/{id}'.sub('{id}', CGI.escape(id.to_s))
 
       # query parameters
       query_params = opts[:query_params] || {}
+      query_params[:'include'] = opts[:'include'] if !opts[:'include'].nil?
 
       # header parameters
       header_params = opts[:header_params] || {}

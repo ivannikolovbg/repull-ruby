@@ -14,16 +14,27 @@ require 'date'
 require 'time'
 
 module Repull
-  class AirbnbConnectionErrorsValue < ApiModelBase
-    attr_accessor :message
+  # Top-level freshness indicator for any DB-backed Airbnb read. Tells consumers WHY a column may be `null` or stale without sprinkling per-row error envelopes through the response. The endpoint always returns 200 + DB data; this field is the single signal for \"should I prompt the user to reconnect / wait for sync?\".
+  class AirbnbDataFreshness < ApiModelBase
+    # Most recent sync timestamp across the rows in the response. `null` when nothing has ever synced for this customer.
+    attr_accessor :last_synced_at
 
-    attr_accessor :status
+    # `true` when any host is disconnected, when the local cache is empty, or when the cache hasn't been refreshed in 24h+. `false` when hosts are healthy and sync is fresh.
+    attr_accessor :stale
+
+    # Why the data is stale. One of `host_disconnected_since_<iso>`, `sync_lag_>_24h`, `never_synced`. Omitted when `stale` is `false`.
+    attr_accessor :reason
+
+    # Dashboard URL the consumer can open to resolve the staleness (typically the Airbnb reconnect screen). Omitted when `stale` is `false`.
+    attr_accessor :fix_url
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'message' => :'message',
-        :'status' => :'status'
+        :'last_synced_at' => :'last_synced_at',
+        :'stale' => :'stale',
+        :'reason' => :'reason',
+        :'fix_url' => :'fix_url'
       }
     end
 
@@ -40,15 +51,19 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'message' => :'String',
-        :'status' => :'Integer'
+        :'last_synced_at' => :'Time',
+        :'stale' => :'Boolean',
+        :'reason' => :'String',
+        :'fix_url' => :'String'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
-        :'status'
+        :'last_synced_at',
+        :'reason',
+        :'fix_url'
       ])
     end
 
@@ -56,24 +71,36 @@ module Repull
     # @param [Hash] attributes Model attributes in the form of hash
     def initialize(attributes = {})
       if (!attributes.is_a?(Hash))
-        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::AirbnbConnectionErrorsValue` initialize method"
+        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::AirbnbDataFreshness` initialize method"
       end
 
       # check to see if the attribute exists and convert string to symbol for hash key
       acceptable_attribute_map = self.class.acceptable_attribute_map
       attributes = attributes.each_with_object({}) { |(k, v), h|
         if (!acceptable_attribute_map.key?(k.to_sym))
-          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::AirbnbConnectionErrorsValue`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
+          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::AirbnbDataFreshness`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
         end
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'message')
-        self.message = attributes[:'message']
+      if attributes.key?(:'last_synced_at')
+        self.last_synced_at = attributes[:'last_synced_at']
+      else
+        self.last_synced_at = nil
       end
 
-      if attributes.key?(:'status')
-        self.status = attributes[:'status']
+      if attributes.key?(:'stale')
+        self.stale = attributes[:'stale']
+      else
+        self.stale = nil
+      end
+
+      if attributes.key?(:'reason')
+        self.reason = attributes[:'reason']
+      end
+
+      if attributes.key?(:'fix_url')
+        self.fix_url = attributes[:'fix_url']
       end
     end
 
@@ -82,6 +109,10 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
+      if @stale.nil?
+        invalid_properties.push('invalid value for "stale", stale cannot be nil.')
+      end
+
       invalid_properties
     end
 
@@ -89,7 +120,18 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
+      return false if @stale.nil?
       true
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] stale Value to be assigned
+    def stale=(stale)
+      if stale.nil?
+        fail ArgumentError, 'stale cannot be nil'
+      end
+
+      @stale = stale
     end
 
     # Checks equality by comparing each attribute.
@@ -97,8 +139,10 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          message == o.message &&
-          status == o.status
+          last_synced_at == o.last_synced_at &&
+          stale == o.stale &&
+          reason == o.reason &&
+          fix_url == o.fix_url
     end
 
     # @see the `==` method
@@ -110,7 +154,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [message, status].hash
+      [last_synced_at, stale, reason, fix_url].hash
     end
 
     # Builds the object from hash

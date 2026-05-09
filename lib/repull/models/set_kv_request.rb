@@ -14,63 +14,18 @@ require 'date'
 require 'time'
 
 module Repull
-  # A vacation rental property from a connected PMS
-  class Property < ApiModelBase
-    # Internal Repull property ID
-    attr_accessor :id
+  class SetKvRequest < ApiModelBase
+    # Any JSON-serializable value. Stored verbatim.
+    attr_accessor :value
 
-    # ID in the source PMS
-    attr_accessor :external_id
-
-    # Property name
-    attr_accessor :name
-
-    # Full address
-    attr_accessor :address
-
-    attr_accessor :city
-
-    attr_accessor :state
-
-    attr_accessor :country
-
-    attr_accessor :latitude
-
-    attr_accessor :longitude
-
-    attr_accessor :bedrooms
-
-    attr_accessor :bathrooms
-
-    attr_accessor :max_guests
-
-    # Primary photo URL
-    attr_accessor :thumbnail
-
-    # Source PMS
-    attr_accessor :provider
-
-    # Amenity rows for the property. **Only present when the caller passes `?include=amenities`.** Empty array (`[]`) when the property has no amenity rows.
-    attr_accessor :amenities
+    # Optional TTL in seconds. The row's `ttl_at` is set to `now() + ttl_seconds`. Past-`ttl_at` rows are filtered from reads. Pass a positive integer; `0` is rejected.
+    attr_accessor :ttl_seconds
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'id' => :'id',
-        :'external_id' => :'externalId',
-        :'name' => :'name',
-        :'address' => :'address',
-        :'city' => :'city',
-        :'state' => :'state',
-        :'country' => :'country',
-        :'latitude' => :'latitude',
-        :'longitude' => :'longitude',
-        :'bedrooms' => :'bedrooms',
-        :'bathrooms' => :'bathrooms',
-        :'max_guests' => :'maxGuests',
-        :'thumbnail' => :'thumbnail',
-        :'provider' => :'provider',
-        :'amenities' => :'amenities'
+        :'value' => :'value',
+        :'ttl_seconds' => :'ttl_seconds'
       }
     end
 
@@ -87,27 +42,15 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'id' => :'String',
-        :'external_id' => :'String',
-        :'name' => :'String',
-        :'address' => :'String',
-        :'city' => :'String',
-        :'state' => :'String',
-        :'country' => :'String',
-        :'latitude' => :'Float',
-        :'longitude' => :'Float',
-        :'bedrooms' => :'Integer',
-        :'bathrooms' => :'Float',
-        :'max_guests' => :'Integer',
-        :'thumbnail' => :'String',
-        :'provider' => :'String',
-        :'amenities' => :'Array<ListingAmenity>'
+        :'value' => :'Object',
+        :'ttl_seconds' => :'Integer'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'value',
       ])
     end
 
@@ -115,78 +58,26 @@ module Repull
     # @param [Hash] attributes Model attributes in the form of hash
     def initialize(attributes = {})
       if (!attributes.is_a?(Hash))
-        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::Property` initialize method"
+        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::SetKvRequest` initialize method"
       end
 
       # check to see if the attribute exists and convert string to symbol for hash key
       acceptable_attribute_map = self.class.acceptable_attribute_map
       attributes = attributes.each_with_object({}) { |(k, v), h|
         if (!acceptable_attribute_map.key?(k.to_sym))
-          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::Property`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
+          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::SetKvRequest`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
         end
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'id')
-        self.id = attributes[:'id']
+      if attributes.key?(:'value')
+        self.value = attributes[:'value']
+      else
+        self.value = nil
       end
 
-      if attributes.key?(:'external_id')
-        self.external_id = attributes[:'external_id']
-      end
-
-      if attributes.key?(:'name')
-        self.name = attributes[:'name']
-      end
-
-      if attributes.key?(:'address')
-        self.address = attributes[:'address']
-      end
-
-      if attributes.key?(:'city')
-        self.city = attributes[:'city']
-      end
-
-      if attributes.key?(:'state')
-        self.state = attributes[:'state']
-      end
-
-      if attributes.key?(:'country')
-        self.country = attributes[:'country']
-      end
-
-      if attributes.key?(:'latitude')
-        self.latitude = attributes[:'latitude']
-      end
-
-      if attributes.key?(:'longitude')
-        self.longitude = attributes[:'longitude']
-      end
-
-      if attributes.key?(:'bedrooms')
-        self.bedrooms = attributes[:'bedrooms']
-      end
-
-      if attributes.key?(:'bathrooms')
-        self.bathrooms = attributes[:'bathrooms']
-      end
-
-      if attributes.key?(:'max_guests')
-        self.max_guests = attributes[:'max_guests']
-      end
-
-      if attributes.key?(:'thumbnail')
-        self.thumbnail = attributes[:'thumbnail']
-      end
-
-      if attributes.key?(:'provider')
-        self.provider = attributes[:'provider']
-      end
-
-      if attributes.key?(:'amenities')
-        if (value = attributes[:'amenities']).is_a?(Array)
-          self.amenities = value
-        end
+      if attributes.key?(:'ttl_seconds')
+        self.ttl_seconds = attributes[:'ttl_seconds']
       end
     end
 
@@ -195,6 +86,10 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
+      if !@ttl_seconds.nil? && @ttl_seconds < 1
+        invalid_properties.push('invalid value for "ttl_seconds", must be greater than or equal to 1.')
+      end
+
       invalid_properties
     end
 
@@ -202,7 +97,22 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
+      return false if !@ttl_seconds.nil? && @ttl_seconds < 1
       true
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] ttl_seconds Value to be assigned
+    def ttl_seconds=(ttl_seconds)
+      if ttl_seconds.nil?
+        fail ArgumentError, 'ttl_seconds cannot be nil'
+      end
+
+      if ttl_seconds < 1
+        fail ArgumentError, 'invalid value for "ttl_seconds", must be greater than or equal to 1.'
+      end
+
+      @ttl_seconds = ttl_seconds
     end
 
     # Checks equality by comparing each attribute.
@@ -210,21 +120,8 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          id == o.id &&
-          external_id == o.external_id &&
-          name == o.name &&
-          address == o.address &&
-          city == o.city &&
-          state == o.state &&
-          country == o.country &&
-          latitude == o.latitude &&
-          longitude == o.longitude &&
-          bedrooms == o.bedrooms &&
-          bathrooms == o.bathrooms &&
-          max_guests == o.max_guests &&
-          thumbnail == o.thumbnail &&
-          provider == o.provider &&
-          amenities == o.amenities
+          value == o.value &&
+          ttl_seconds == o.ttl_seconds
     end
 
     # @see the `==` method
@@ -236,7 +133,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, external_id, name, address, city, state, country, latitude, longitude, bedrooms, bathrooms, max_guests, thumbnail, provider, amenities].hash
+      [value, ttl_seconds].hash
     end
 
     # Builds the object from hash

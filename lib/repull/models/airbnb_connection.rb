@@ -36,14 +36,11 @@ module Repull
 
     attr_accessor :created_at
 
-    # Present only when `?include=amenities` is passed. Sourced from `GET /v2/listings/:id/amenities` on Airbnb.
+    # Present only when `?include=amenities` is passed. Sourced from the local `listings_airbnb_amenities` cache (populated by the Airbnb sync worker). Returns `null` when the cache is empty for this connection — see the top-level `data_freshness` envelope to disambiguate \"never synced\" vs \"host disconnected\" vs \"fresh and genuinely empty\".
     attr_accessor :amenities
 
-    # Present only when `?include=amenities` is passed.
+    # Present only when `?include=amenities` is passed. Accessibility-tagged subset of the local amenity cache (step-free access, wide doorways, grab rails, disabled parking, wheelchair, accessible-height fixtures, hoists, etc). Returns an empty array when amenities synced but none qualify as accessibility; returns `null` when the cache is empty for this connection (use `data_freshness` to disambiguate \"never synced\" from \"fresh and genuinely empty\").
     attr_accessor :accessibility_amenities
-
-    # Per-expansion failures. Present only when an `?include=` upstream call failed for this connection (others may still succeed).
-    attr_accessor :_errors
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
@@ -57,8 +54,7 @@ module Repull
         :'markup' => :'markup',
         :'created_at' => :'createdAt',
         :'amenities' => :'amenities',
-        :'accessibility_amenities' => :'accessibility_amenities',
-        :'_errors' => :'_errors'
+        :'accessibility_amenities' => :'accessibility_amenities'
       }
     end
 
@@ -84,8 +80,7 @@ module Repull
         :'markup' => :'String',
         :'created_at' => :'Time',
         :'amenities' => :'Array<AirbnbConnectionAmenitiesInner>',
-        :'accessibility_amenities' => :'Array<Object>',
-        :'_errors' => :'Hash<String, AirbnbConnectionErrorsValue>'
+        :'accessibility_amenities' => :'Array<AirbnbConnectionAccessibilityAmenitiesInner>'
       }
     end
 
@@ -94,8 +89,7 @@ module Repull
       Set.new([
         :'markup',
         :'amenities',
-        :'accessibility_amenities',
-        :'_errors'
+        :'accessibility_amenities'
       ])
     end
 
@@ -158,12 +152,6 @@ module Repull
           self.accessibility_amenities = value
         end
       end
-
-      if attributes.key?(:'_errors')
-        if (value = attributes[:'_errors']).is_a?(Hash)
-          self._errors = value
-        end
-      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -195,8 +183,7 @@ module Repull
           markup == o.markup &&
           created_at == o.created_at &&
           amenities == o.amenities &&
-          accessibility_amenities == o.accessibility_amenities &&
-          _errors == o._errors
+          accessibility_amenities == o.accessibility_amenities
     end
 
     # @see the `==` method
@@ -208,7 +195,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, airbnb_id, host_id, active, sync_enabled, primary, markup, created_at, amenities, accessibility_amenities, _errors].hash
+      [id, airbnb_id, host_id, active, sync_enabled, primary, markup, created_at, amenities, accessibility_amenities].hash
     end
 
     # Builds the object from hash

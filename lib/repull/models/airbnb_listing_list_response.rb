@@ -19,11 +19,14 @@ module Repull
 
     attr_accessor :pagination
 
+    attr_accessor :data_freshness
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
         :'data' => :'data',
-        :'pagination' => :'pagination'
+        :'pagination' => :'pagination',
+        :'data_freshness' => :'data_freshness'
       }
     end
 
@@ -41,7 +44,8 @@ module Repull
     def self.openapi_types
       {
         :'data' => :'Array<AirbnbListing>',
-        :'pagination' => :'Pagination'
+        :'pagination' => :'Pagination',
+        :'data_freshness' => :'AirbnbDataFreshness'
       }
     end
 
@@ -71,10 +75,20 @@ module Repull
         if (value = attributes[:'data']).is_a?(Array)
           self.data = value
         end
+      else
+        self.data = nil
       end
 
       if attributes.key?(:'pagination')
         self.pagination = attributes[:'pagination']
+      else
+        self.pagination = nil
+      end
+
+      if attributes.key?(:'data_freshness')
+        self.data_freshness = attributes[:'data_freshness']
+      else
+        self.data_freshness = nil
       end
     end
 
@@ -83,6 +97,18 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
+      if @data.nil?
+        invalid_properties.push('invalid value for "data", data cannot be nil.')
+      end
+
+      if @pagination.nil?
+        invalid_properties.push('invalid value for "pagination", pagination cannot be nil.')
+      end
+
+      if @data_freshness.nil?
+        invalid_properties.push('invalid value for "data_freshness", data_freshness cannot be nil.')
+      end
+
       invalid_properties
     end
 
@@ -90,7 +116,40 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
+      return false if @data.nil?
+      return false if @pagination.nil?
+      return false if @data_freshness.nil?
       true
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] data Value to be assigned
+    def data=(data)
+      if data.nil?
+        fail ArgumentError, 'data cannot be nil'
+      end
+
+      @data = data
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] pagination Value to be assigned
+    def pagination=(pagination)
+      if pagination.nil?
+        fail ArgumentError, 'pagination cannot be nil'
+      end
+
+      @pagination = pagination
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] data_freshness Value to be assigned
+    def data_freshness=(data_freshness)
+      if data_freshness.nil?
+        fail ArgumentError, 'data_freshness cannot be nil'
+      end
+
+      @data_freshness = data_freshness
     end
 
     # Checks equality by comparing each attribute.
@@ -99,7 +158,8 @@ module Repull
       return true if self.equal?(o)
       self.class == o.class &&
           data == o.data &&
-          pagination == o.pagination
+          pagination == o.pagination &&
+          data_freshness == o.data_freshness
     end
 
     # @see the `==` method
@@ -111,7 +171,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [data, pagination].hash
+      [data, pagination, data_freshness].hash
     end
 
     # Builds the object from hash

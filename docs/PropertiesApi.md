@@ -10,11 +10,11 @@ All URIs are relative to *https://api.repull.dev*
 
 ## get_property
 
-> <Property> get_property(id)
+> <Property> get_property(id, opts)
 
 Get property details
 
-Fetch a single property by Repull id. Property ids are workspace-scoped — an id from one workspace is not valid in another. 404 means the id does not exist OR belongs to a different workspace.
+Fetch a single property by Repull id. Property ids are workspace-scoped — an id from one workspace is not valid in another. 404 means the id does not exist OR belongs to a different workspace.  **Optional expansions:** Pass `?include=amenities` to enrich the response with the property's amenities (sourced from the unified `listings_amenities` table). Returns `[]` when the property has no amenity rows. The default response stays lean; consumers must opt in.
 
 ### Examples
 
@@ -29,10 +29,13 @@ end
 
 api_instance = Repull::PropertiesApi.new
 id = 56 # Integer | 
+opts = {
+  include: 'amenities' # String | Comma-separated optional expansions. Currently supported: `amenities`. Unknown values return 422.
+}
 
 begin
   # Get property details
-  result = api_instance.get_property(id)
+  result = api_instance.get_property(id, opts)
   p result
 rescue Repull::ApiError => e
   puts "Error when calling PropertiesApi->get_property: #{e}"
@@ -43,12 +46,12 @@ end
 
 This returns an Array which contains the response data, status code and headers.
 
-> <Array(<Property>, Integer, Hash)> get_property_with_http_info(id)
+> <Array(<Property>, Integer, Hash)> get_property_with_http_info(id, opts)
 
 ```ruby
 begin
   # Get property details
-  data, status_code, headers = api_instance.get_property_with_http_info(id)
+  data, status_code, headers = api_instance.get_property_with_http_info(id, opts)
   p status_code # => 2xx
   p headers # => { ... }
   p data # => <Property>
@@ -62,6 +65,7 @@ end
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **id** | **Integer** |  |  |
+| **include** | **String** | Comma-separated optional expansions. Currently supported: &#x60;amenities&#x60;. Unknown values return 422. | [optional] |
 
 ### Return type
 

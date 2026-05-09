@@ -8,6 +8,7 @@ All URIs are relative to *https://api.repull.dev*
 | [**airbnb_reservation_action**](AirbnbApi.md#airbnb_reservation_action) | **POST** /v1/channels/airbnb/reservations/{code} | Accept/decline/cancel Airbnb reservation |
 | [**create_airbnb_listing**](AirbnbApi.md#create_airbnb_listing) | **POST** /v1/channels/airbnb/listings | Create/push Airbnb listing |
 | [**edit_airbnb_review**](AirbnbApi.md#edit_airbnb_review) | **PUT** /v1/channels/airbnb/reviews/{id} | Edit Airbnb host review |
+| [**get_airbnb_connection**](AirbnbApi.md#get_airbnb_connection) | **GET** /v1/channels/airbnb/connection | Get Airbnb connection state |
 | [**get_airbnb_listing**](AirbnbApi.md#get_airbnb_listing) | **GET** /v1/channels/airbnb/listings/{id} | Get Airbnb listing |
 | [**get_airbnb_listing_availability**](AirbnbApi.md#get_airbnb_listing_availability) | **GET** /v1/channels/airbnb/listings/{id}/availability | Get Airbnb availability |
 | [**get_airbnb_listing_pricing**](AirbnbApi.md#get_airbnb_listing_pricing) | **GET** /v1/channels/airbnb/listings/{id}/pricing | Get Airbnb pricing |
@@ -297,6 +298,72 @@ end
 ### HTTP request headers
 
 - **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## get_airbnb_connection
+
+> <AirbnbConnectionResponse> get_airbnb_connection
+
+Get Airbnb connection state
+
+Returns the workspace's Airbnb host connection state in one envelope. Use this instead of inferring connection health from per-listing 401s on `GET /v1/channels/airbnb/listings` — that's noisy (every per-listing call has to fail before you know) and ambiguous (a single 5xx looks identical to a deauth).  Pure DB read — does NOT touch Airbnb's API, so it's cheap to poll from a status-page surface.  The response includes one row per Airbnb host the workspace has linked. Each row carries `isConnected`, `lastSyncedAt`, `deactivatedAt`, and `lastDisconnectReason` (most recent non-backfill row in `airbnb_host_events`).  A self-serve `fixUrl` is included whenever `status` is anything other than `connected` — points at the dashboard where the host re-authorizes (or initiates the first OAuth flow for `never_connected` workspaces).
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::AirbnbApi.new
+
+begin
+  # Get Airbnb connection state
+  result = api_instance.get_airbnb_connection
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->get_airbnb_connection: #{e}"
+end
+```
+
+#### Using the get_airbnb_connection_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<AirbnbConnectionResponse>, Integer, Hash)> get_airbnb_connection_with_http_info
+
+```ruby
+begin
+  # Get Airbnb connection state
+  data, status_code, headers = api_instance.get_airbnb_connection_with_http_info
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <AirbnbConnectionResponse>
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->get_airbnb_connection_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+[**AirbnbConnectionResponse**](AirbnbConnectionResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 
@@ -652,7 +719,7 @@ nil (empty response body)
 
 List Airbnb listings
 
-List every Airbnb listing this workspace has access to via the connected Airbnb account. Default response is a fast DB read pairing each Vanio listing with its `listings_airbnb` connection rows.  Pass `?include=amenities` to enrich each connection with its current Airbnb amenity set (one extra upstream call per unique Airbnb id, fanned out in parallel). Per-connection failures surface in `_errors.amenities` rather than failing the whole request.
+List every Airbnb listing this workspace has access to via the connected Airbnb account. **Pure DB read — never calls Airbnb upstream.** The connect flow is what populates the local cache; the API serves what's already there. Customers with a disconnected host still see their last-synced data, with the top-level `data_freshness` envelope flagging the staleness and pointing at the reconnect URL.  Pass `?include=amenities` to enrich each connection with its locally-cached amenity set. Returns `null` per connection when the cache is empty.
 
 ### Examples
 
@@ -667,7 +734,7 @@ end
 
 api_instance = Repull::AirbnbApi.new
 opts = {
-  include: 'amenities' # String | Comma-separated expansions. Currently supported: `amenities` (adds `amenities` and `accessibility_amenities` arrays to each connection). Each expansion adds one upstream Airbnb call per unique listing id.
+  include: 'amenities' # String | Comma-separated expansions. Currently supported: `amenities` (adds `amenities` and `accessibility_amenities` arrays to each connection, sourced from the local `listings_airbnb_amenities` cache).
 }
 
 begin
@@ -701,7 +768,7 @@ end
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **include** | **String** | Comma-separated expansions. Currently supported: &#x60;amenities&#x60; (adds &#x60;amenities&#x60; and &#x60;accessibility_amenities&#x60; arrays to each connection). Each expansion adds one upstream Airbnb call per unique listing id. | [optional] |
+| **include** | **String** | Comma-separated expansions. Currently supported: &#x60;amenities&#x60; (adds &#x60;amenities&#x60; and &#x60;accessibility_amenities&#x60; arrays to each connection, sourced from the local &#x60;listings_airbnb_amenities&#x60; cache). | [optional] |
 
 ### Return type
 

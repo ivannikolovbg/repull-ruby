@@ -158,10 +158,11 @@ module Repull
     end
 
     # Get a listing
-    # Fetch a single listing by id. Returns the same shape as one element of the `GET /v1/listings` response, so you can bind the result to the same model. Cross-tenant access (a listing that belongs to a different workspace) returns 404 — never 403, never reveals the listing's existence.
+    # Fetch a single listing by id. Returns the same shape as one element of the `GET /v1/listings` response, so you can bind the result to the same model. Cross-tenant access (a listing that belongs to a different workspace) returns 404 — never 403, never reveals the listing's existence.  **Optional expansions:** Pass `?include=amenities` to enrich the response with the listing's amenities (sourced from the unified `listings_amenities` table). Returns `[]` when the listing has no amenity rows. The default response stays lean; consumers must opt in.
     # @param id [Integer] Repull listing id
     # @param [Hash] opts the optional parameters
     # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
+    # @option opts [String] :include Comma-separated optional expansions. Currently supported: &#x60;amenities&#x60;. Unknown values return 422.
     # @return [Listing]
     def get_listing(id, opts = {})
       data, _status_code, _headers = get_listing_with_http_info(id, opts)
@@ -169,10 +170,11 @@ module Repull
     end
 
     # Get a listing
-    # Fetch a single listing by id. Returns the same shape as one element of the &#x60;GET /v1/listings&#x60; response, so you can bind the result to the same model. Cross-tenant access (a listing that belongs to a different workspace) returns 404 — never 403, never reveals the listing&#39;s existence.
+    # Fetch a single listing by id. Returns the same shape as one element of the &#x60;GET /v1/listings&#x60; response, so you can bind the result to the same model. Cross-tenant access (a listing that belongs to a different workspace) returns 404 — never 403, never reveals the listing&#39;s existence.  **Optional expansions:** Pass &#x60;?include&#x3D;amenities&#x60; to enrich the response with the listing&#39;s amenities (sourced from the unified &#x60;listings_amenities&#x60; table). Returns &#x60;[]&#x60; when the listing has no amenity rows. The default response stays lean; consumers must opt in.
     # @param id [Integer] Repull listing id
     # @param [Hash] opts the optional parameters
     # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
+    # @option opts [String] :include Comma-separated optional expansions. Currently supported: &#x60;amenities&#x60;. Unknown values return 422.
     # @return [Array<(Listing, Integer, Hash)>] Listing data, response status code and response headers
     def get_listing_with_http_info(id, opts = {})
       if @api_client.config.debugging
@@ -182,11 +184,16 @@ module Repull
       if @api_client.config.client_side_validation && id.nil?
         fail ArgumentError, "Missing the required parameter 'id' when calling ListingsApi.get_listing"
       end
+      allowable_values = ["amenities"]
+      if @api_client.config.client_side_validation && opts[:'include'] && !allowable_values.include?(opts[:'include'])
+        fail ArgumentError, "invalid value for \"include\", must be one of #{allowable_values}"
+      end
       # resource path
       local_var_path = '/v1/listings/{id}'.sub('{id}', CGI.escape(id.to_s))
 
       # query parameters
       query_params = opts[:query_params] || {}
+      query_params[:'include'] = opts[:'include'] if !opts[:'include'].nil?
 
       # header parameters
       header_params = opts[:header_params] || {}
@@ -224,7 +231,7 @@ module Repull
     end
 
     # Per-channel publish status
-    # Returns one row per platform the listing has been pushed/pulled to, with last push timestamp and any dirty fields not yet synced.
+    # Returns connection state and sync activity per channel. `channels` is sync activity (empty until first push). `connections` is connection state (populated as soon as a channel is linked). Recommended polling cadence: at most once per 30s per listing — for bulk views, prefer `GET /v1/listings` and filter client-side.
     # @param id [Integer] 
     # @param [Hash] opts the optional parameters
     # @return [ListingPublishStatusResponse]
@@ -234,7 +241,7 @@ module Repull
     end
 
     # Per-channel publish status
-    # Returns one row per platform the listing has been pushed/pulled to, with last push timestamp and any dirty fields not yet synced.
+    # Returns connection state and sync activity per channel. &#x60;channels&#x60; is sync activity (empty until first push). &#x60;connections&#x60; is connection state (populated as soon as a channel is linked). Recommended polling cadence: at most once per 30s per listing — for bulk views, prefer &#x60;GET /v1/listings&#x60; and filter client-side.
     # @param id [Integer] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(ListingPublishStatusResponse, Integer, Hash)>] ListingPublishStatusResponse data, response status code and response headers
