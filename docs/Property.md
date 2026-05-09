@@ -18,6 +18,7 @@
 | **max_guests** | **Integer** |  | [optional] |
 | **thumbnail** | **String** | Primary photo URL | [optional] |
 | **provider** | **String** | Source PMS | [optional] |
+| **amenities** | [**Array&lt;ListingAmenity&gt;**](ListingAmenity.md) | Amenity rows for the property. **Only present when the caller passes &#x60;?include&#x3D;amenities&#x60;.** Empty array (&#x60;[]&#x60;) when the property has no amenity rows. | [optional] |
 
 ## Example
 
@@ -38,7 +39,8 @@ instance = Repull::Property.new(
   bathrooms: 1.5,
   max_guests: 6,
   thumbnail: null,
-  provider: hostaway
+  provider: hostaway,
+  amenities: null
 )
 ```
 

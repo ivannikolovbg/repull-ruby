@@ -161,7 +161,7 @@ end
 
 Get a listing
 
-Fetch a single listing by id. Returns the same shape as one element of the `GET /v1/listings` response, so you can bind the result to the same model. Cross-tenant access (a listing that belongs to a different workspace) returns 404 — never 403, never reveals the listing's existence.
+Fetch a single listing by id. Returns the same shape as one element of the `GET /v1/listings` response, so you can bind the result to the same model. Cross-tenant access (a listing that belongs to a different workspace) returns 404 — never 403, never reveals the listing's existence.  **Optional expansions:** Pass `?include=amenities` to enrich the response with the listing's amenities (sourced from the unified `listings_amenities` table). Returns `[]` when the listing has no amenity rows. The default response stays lean; consumers must opt in.
 
 ### Examples
 
@@ -177,7 +177,8 @@ end
 api_instance = Repull::ListingsApi.new
 id = 56 # Integer | Repull listing id
 opts = {
-  x_schema: 'my-app-schema' # String | Apply a custom or built-in schema to transform the response. Built-in: `native` (default), `calry`, `calry-v1`. Custom: any schema name created via `POST /v1/schema/custom`. Unknown / inactive schema names fall back to `native`.
+  x_schema: 'my-app-schema', # String | Apply a custom or built-in schema to transform the response. Built-in: `native` (default), `calry`, `calry-v1`. Custom: any schema name created via `POST /v1/schema/custom`. Unknown / inactive schema names fall back to `native`.
+  include: 'amenities' # String | Comma-separated optional expansions. Currently supported: `amenities`. Unknown values return 422.
 }
 
 begin
@@ -213,6 +214,7 @@ end
 | ---- | ---- | ----------- | ----- |
 | **id** | **Integer** | Repull listing id |  |
 | **x_schema** | **String** | Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;. | [optional] |
+| **include** | **String** | Comma-separated optional expansions. Currently supported: &#x60;amenities&#x60;. Unknown values return 422. | [optional] |
 
 ### Return type
 
@@ -234,7 +236,7 @@ end
 
 Per-channel publish status
 
-Returns one row per platform the listing has been pushed/pulled to, with last push timestamp and any dirty fields not yet synced.
+Returns connection state and sync activity per channel. `channels` is sync activity (empty until first push). `connections` is connection state (populated as soon as a channel is linked). Recommended polling cadence: at most once per 30s per listing — for bulk views, prefer `GET /v1/listings` and filter client-side.
 
 ### Examples
 

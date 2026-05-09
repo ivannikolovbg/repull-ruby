@@ -17,13 +17,18 @@ module Repull
   class ListingPublishStatusResponse < ApiModelBase
     attr_accessor :listing_id
 
+    # Sync activity per channel — empty if the listing has never been pushed/pulled. Empty does NOT mean \"not connected\"; check `connections` for that.
     attr_accessor :channels
+
+    # Connection state per channel. Populated even when `channels` is empty so callers can distinguish \"owned, never pushed\" from \"owned, never connected\".
+    attr_accessor :connections
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
         :'listing_id' => :'listingId',
-        :'channels' => :'channels'
+        :'channels' => :'channels',
+        :'connections' => :'connections'
       }
     end
 
@@ -41,7 +46,8 @@ module Repull
     def self.openapi_types
       {
         :'listing_id' => :'String',
-        :'channels' => :'Array<ListingPublishStatusChannel>'
+        :'channels' => :'Array<ListingPublishStatusChannel>',
+        :'connections' => :'Array<ListingPublishStatusConnection>'
       }
     end
 
@@ -76,6 +82,12 @@ module Repull
           self.channels = value
         end
       end
+
+      if attributes.key?(:'connections')
+        if (value = attributes[:'connections']).is_a?(Array)
+          self.connections = value
+        end
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -99,7 +111,8 @@ module Repull
       return true if self.equal?(o)
       self.class == o.class &&
           listing_id == o.listing_id &&
-          channels == o.channels
+          channels == o.channels &&
+          connections == o.connections
     end
 
     # @see the `==` method
@@ -111,7 +124,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [listing_id, channels].hash
+      [listing_id, channels, connections].hash
     end
 
     # Builds the object from hash

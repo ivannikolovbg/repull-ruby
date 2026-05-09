@@ -30,6 +30,9 @@ module Repull
     # Channels (Airbnb, Booking, VRBO, etc.) the listing is connected to.
     attr_accessor :channels
 
+    # Amenity rows for the listing. **Only present when the caller passes `?include=amenities`.** Empty array (`[]`) when the listing has no amenity rows.
+    attr_accessor :amenities
+
     attr_accessor :created_at
 
     attr_accessor :updated_at
@@ -43,6 +46,7 @@ module Repull
         :'thumbnail_url' => :'thumbnailUrl',
         :'status' => :'status',
         :'channels' => :'channels',
+        :'amenities' => :'amenities',
         :'created_at' => :'createdAt',
         :'updated_at' => :'updatedAt'
       }
@@ -67,6 +71,7 @@ module Repull
         :'thumbnail_url' => :'String',
         :'status' => :'String',
         :'channels' => :'Array<ListingChannel>',
+        :'amenities' => :'Array<ListingAmenity>',
         :'created_at' => :'Time',
         :'updated_at' => :'Time'
       }
@@ -121,6 +126,12 @@ module Repull
         end
       end
 
+      if attributes.key?(:'amenities')
+        if (value = attributes[:'amenities']).is_a?(Array)
+          self.amenities = value
+        end
+      end
+
       if attributes.key?(:'created_at')
         self.created_at = attributes[:'created_at']
       end
@@ -156,6 +167,7 @@ module Repull
           thumbnail_url == o.thumbnail_url &&
           status == o.status &&
           channels == o.channels &&
+          amenities == o.amenities &&
           created_at == o.created_at &&
           updated_at == o.updated_at
     end
@@ -169,7 +181,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, name, address, thumbnail_url, status, channels, created_at, updated_at].hash
+      [id, name, address, thumbnail_url, status, channels, amenities, created_at, updated_at].hash
     end
 
     # Builds the object from hash

@@ -29,6 +29,7 @@ module Repull
 
     attr_accessor :check_out
 
+    # Lifecycle status. The API normalises a multi-decade internal taxonomy down to these four buckets, so the value you receive is always one of the enum constants. `completed` is derived from `checkOut < today`.
     attr_accessor :status
 
     # Booking source / channel. Lowercase. May be null on legacy rows. Canonical name as of 2026-05; `platform` is kept as an alias.

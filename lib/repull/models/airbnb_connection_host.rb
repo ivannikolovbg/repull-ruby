@@ -14,63 +14,34 @@ require 'date'
 require 'time'
 
 module Repull
-  # A vacation rental property from a connected PMS
-  class Property < ApiModelBase
-    # Internal Repull property ID
-    attr_accessor :id
+  # One Airbnb host record under the workspace, decorated with its most recent disconnect reason from `airbnb_host_events` (backfill events excluded).
+  class AirbnbConnectionHost < ApiModelBase
+    # Upstream Airbnb user id.
+    attr_accessor :airbnb_user_id
 
-    # ID in the source PMS
-    attr_accessor :external_id
-
-    # Property name
+    # Display name (preferred form, falling back to legal first name). Null when both fields are empty.
     attr_accessor :name
 
-    # Full address
-    attr_accessor :address
+    attr_accessor :is_connected
 
-    attr_accessor :city
+    # When the host record was last touched (token refresh / activation / restriction). Closest available proxy for \"last successful sync\".
+    attr_accessor :last_synced_at
 
-    attr_accessor :state
+    # When the host was last marked inactive. Null on currently-connected hosts.
+    attr_accessor :deactivated_at
 
-    attr_accessor :country
-
-    attr_accessor :latitude
-
-    attr_accessor :longitude
-
-    attr_accessor :bedrooms
-
-    attr_accessor :bathrooms
-
-    attr_accessor :max_guests
-
-    # Primary photo URL
-    attr_accessor :thumbnail
-
-    # Source PMS
-    attr_accessor :provider
-
-    # Amenity rows for the property. **Only present when the caller passes `?include=amenities`.** Empty array (`[]`) when the property has no amenity rows.
-    attr_accessor :amenities
+    # Reason of the most recent non-backfill disconnect event. Common values: `token_refresh_rejected`, `auth_expired`, `user_revoked`. Null when the host has no recorded disconnects.
+    attr_accessor :last_disconnect_reason
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'id' => :'id',
-        :'external_id' => :'externalId',
+        :'airbnb_user_id' => :'airbnbUserId',
         :'name' => :'name',
-        :'address' => :'address',
-        :'city' => :'city',
-        :'state' => :'state',
-        :'country' => :'country',
-        :'latitude' => :'latitude',
-        :'longitude' => :'longitude',
-        :'bedrooms' => :'bedrooms',
-        :'bathrooms' => :'bathrooms',
-        :'max_guests' => :'maxGuests',
-        :'thumbnail' => :'thumbnail',
-        :'provider' => :'provider',
-        :'amenities' => :'amenities'
+        :'is_connected' => :'isConnected',
+        :'last_synced_at' => :'lastSyncedAt',
+        :'deactivated_at' => :'deactivatedAt',
+        :'last_disconnect_reason' => :'lastDisconnectReason'
       }
     end
 
@@ -87,27 +58,22 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'id' => :'String',
-        :'external_id' => :'String',
+        :'airbnb_user_id' => :'String',
         :'name' => :'String',
-        :'address' => :'String',
-        :'city' => :'String',
-        :'state' => :'String',
-        :'country' => :'String',
-        :'latitude' => :'Float',
-        :'longitude' => :'Float',
-        :'bedrooms' => :'Integer',
-        :'bathrooms' => :'Float',
-        :'max_guests' => :'Integer',
-        :'thumbnail' => :'String',
-        :'provider' => :'String',
-        :'amenities' => :'Array<ListingAmenity>'
+        :'is_connected' => :'Boolean',
+        :'last_synced_at' => :'Time',
+        :'deactivated_at' => :'Time',
+        :'last_disconnect_reason' => :'String'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'name',
+        :'last_synced_at',
+        :'deactivated_at',
+        :'last_disconnect_reason'
       ])
     end
 
@@ -115,78 +81,52 @@ module Repull
     # @param [Hash] attributes Model attributes in the form of hash
     def initialize(attributes = {})
       if (!attributes.is_a?(Hash))
-        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::Property` initialize method"
+        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::AirbnbConnectionHost` initialize method"
       end
 
       # check to see if the attribute exists and convert string to symbol for hash key
       acceptable_attribute_map = self.class.acceptable_attribute_map
       attributes = attributes.each_with_object({}) { |(k, v), h|
         if (!acceptable_attribute_map.key?(k.to_sym))
-          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::Property`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
+          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::AirbnbConnectionHost`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
         end
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'id')
-        self.id = attributes[:'id']
-      end
-
-      if attributes.key?(:'external_id')
-        self.external_id = attributes[:'external_id']
+      if attributes.key?(:'airbnb_user_id')
+        self.airbnb_user_id = attributes[:'airbnb_user_id']
+      else
+        self.airbnb_user_id = nil
       end
 
       if attributes.key?(:'name')
         self.name = attributes[:'name']
+      else
+        self.name = nil
       end
 
-      if attributes.key?(:'address')
-        self.address = attributes[:'address']
+      if attributes.key?(:'is_connected')
+        self.is_connected = attributes[:'is_connected']
+      else
+        self.is_connected = nil
       end
 
-      if attributes.key?(:'city')
-        self.city = attributes[:'city']
+      if attributes.key?(:'last_synced_at')
+        self.last_synced_at = attributes[:'last_synced_at']
+      else
+        self.last_synced_at = nil
       end
 
-      if attributes.key?(:'state')
-        self.state = attributes[:'state']
+      if attributes.key?(:'deactivated_at')
+        self.deactivated_at = attributes[:'deactivated_at']
+      else
+        self.deactivated_at = nil
       end
 
-      if attributes.key?(:'country')
-        self.country = attributes[:'country']
-      end
-
-      if attributes.key?(:'latitude')
-        self.latitude = attributes[:'latitude']
-      end
-
-      if attributes.key?(:'longitude')
-        self.longitude = attributes[:'longitude']
-      end
-
-      if attributes.key?(:'bedrooms')
-        self.bedrooms = attributes[:'bedrooms']
-      end
-
-      if attributes.key?(:'bathrooms')
-        self.bathrooms = attributes[:'bathrooms']
-      end
-
-      if attributes.key?(:'max_guests')
-        self.max_guests = attributes[:'max_guests']
-      end
-
-      if attributes.key?(:'thumbnail')
-        self.thumbnail = attributes[:'thumbnail']
-      end
-
-      if attributes.key?(:'provider')
-        self.provider = attributes[:'provider']
-      end
-
-      if attributes.key?(:'amenities')
-        if (value = attributes[:'amenities']).is_a?(Array)
-          self.amenities = value
-        end
+      if attributes.key?(:'last_disconnect_reason')
+        self.last_disconnect_reason = attributes[:'last_disconnect_reason']
+      else
+        self.last_disconnect_reason = nil
       end
     end
 
@@ -195,6 +135,14 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
+      if @airbnb_user_id.nil?
+        invalid_properties.push('invalid value for "airbnb_user_id", airbnb_user_id cannot be nil.')
+      end
+
+      if @is_connected.nil?
+        invalid_properties.push('invalid value for "is_connected", is_connected cannot be nil.')
+      end
+
       invalid_properties
     end
 
@@ -202,7 +150,29 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
+      return false if @airbnb_user_id.nil?
+      return false if @is_connected.nil?
       true
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] airbnb_user_id Value to be assigned
+    def airbnb_user_id=(airbnb_user_id)
+      if airbnb_user_id.nil?
+        fail ArgumentError, 'airbnb_user_id cannot be nil'
+      end
+
+      @airbnb_user_id = airbnb_user_id
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] is_connected Value to be assigned
+    def is_connected=(is_connected)
+      if is_connected.nil?
+        fail ArgumentError, 'is_connected cannot be nil'
+      end
+
+      @is_connected = is_connected
     end
 
     # Checks equality by comparing each attribute.
@@ -210,21 +180,12 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          id == o.id &&
-          external_id == o.external_id &&
+          airbnb_user_id == o.airbnb_user_id &&
           name == o.name &&
-          address == o.address &&
-          city == o.city &&
-          state == o.state &&
-          country == o.country &&
-          latitude == o.latitude &&
-          longitude == o.longitude &&
-          bedrooms == o.bedrooms &&
-          bathrooms == o.bathrooms &&
-          max_guests == o.max_guests &&
-          thumbnail == o.thumbnail &&
-          provider == o.provider &&
-          amenities == o.amenities
+          is_connected == o.is_connected &&
+          last_synced_at == o.last_synced_at &&
+          deactivated_at == o.deactivated_at &&
+          last_disconnect_reason == o.last_disconnect_reason
     end
 
     # @see the `==` method
@@ -236,7 +197,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, external_id, name, address, city, state, country, latitude, longitude, bedrooms, bathrooms, max_guests, thumbnail, provider, amenities].hash
+      [airbnb_user_id, name, is_connected, last_synced_at, deactivated_at, last_disconnect_reason].hash
     end
 
     # Builds the object from hash

@@ -272,6 +272,63 @@ module Repull
       return data, status_code, headers
     end
 
+    # Get Airbnb connection state
+    # Returns the workspace's Airbnb host connection state in one envelope. Use this instead of inferring connection health from per-listing 401s on `GET /v1/channels/airbnb/listings` — that's noisy (every per-listing call has to fail before you know) and ambiguous (a single 5xx looks identical to a deauth).  Pure DB read — does NOT touch Airbnb's API, so it's cheap to poll from a status-page surface.  The response includes one row per Airbnb host the workspace has linked. Each row carries `isConnected`, `lastSyncedAt`, `deactivatedAt`, and `lastDisconnectReason` (most recent non-backfill row in `airbnb_host_events`).  A self-serve `fixUrl` is included whenever `status` is anything other than `connected` — points at the dashboard where the host re-authorizes (or initiates the first OAuth flow for `never_connected` workspaces).
+    # @param [Hash] opts the optional parameters
+    # @return [AirbnbConnectionResponse]
+    def get_airbnb_connection(opts = {})
+      data, _status_code, _headers = get_airbnb_connection_with_http_info(opts)
+      data
+    end
+
+    # Get Airbnb connection state
+    # Returns the workspace&#39;s Airbnb host connection state in one envelope. Use this instead of inferring connection health from per-listing 401s on &#x60;GET /v1/channels/airbnb/listings&#x60; — that&#39;s noisy (every per-listing call has to fail before you know) and ambiguous (a single 5xx looks identical to a deauth).  Pure DB read — does NOT touch Airbnb&#39;s API, so it&#39;s cheap to poll from a status-page surface.  The response includes one row per Airbnb host the workspace has linked. Each row carries &#x60;isConnected&#x60;, &#x60;lastSyncedAt&#x60;, &#x60;deactivatedAt&#x60;, and &#x60;lastDisconnectReason&#x60; (most recent non-backfill row in &#x60;airbnb_host_events&#x60;).  A self-serve &#x60;fixUrl&#x60; is included whenever &#x60;status&#x60; is anything other than &#x60;connected&#x60; — points at the dashboard where the host re-authorizes (or initiates the first OAuth flow for &#x60;never_connected&#x60; workspaces).
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(AirbnbConnectionResponse, Integer, Hash)>] AirbnbConnectionResponse data, response status code and response headers
+    def get_airbnb_connection_with_http_info(opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: AirbnbApi.get_airbnb_connection ...'
+      end
+      # resource path
+      local_var_path = '/v1/channels/airbnb/connection'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'AirbnbConnectionResponse'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"AirbnbApi.get_airbnb_connection",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: AirbnbApi#get_airbnb_connection\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # Get Airbnb listing
     # Fetch all Airbnb connection rows for a single Vanio listing id. A property may be linked from multiple Airbnb hosts — every match is returned. Pass `?include=amenities` to enrich each row with its current Airbnb amenities.
     # @param id [String] 
@@ -585,9 +642,9 @@ module Repull
     end
 
     # List Airbnb listings
-    # List every Airbnb listing this workspace has access to via the connected Airbnb account. Default response is a fast DB read pairing each Vanio listing with its `listings_airbnb` connection rows.  Pass `?include=amenities` to enrich each connection with its current Airbnb amenity set (one extra upstream call per unique Airbnb id, fanned out in parallel). Per-connection failures surface in `_errors.amenities` rather than failing the whole request.
+    # List every Airbnb listing this workspace has access to via the connected Airbnb account. **Pure DB read — never calls Airbnb upstream.** The connect flow is what populates the local cache; the API serves what's already there. Customers with a disconnected host still see their last-synced data, with the top-level `data_freshness` envelope flagging the staleness and pointing at the reconnect URL.  Pass `?include=amenities` to enrich each connection with its locally-cached amenity set. Returns `null` per connection when the cache is empty.
     # @param [Hash] opts the optional parameters
-    # @option opts [String] :include Comma-separated expansions. Currently supported: &#x60;amenities&#x60; (adds &#x60;amenities&#x60; and &#x60;accessibility_amenities&#x60; arrays to each connection). Each expansion adds one upstream Airbnb call per unique listing id.
+    # @option opts [String] :include Comma-separated expansions. Currently supported: &#x60;amenities&#x60; (adds &#x60;amenities&#x60; and &#x60;accessibility_amenities&#x60; arrays to each connection, sourced from the local &#x60;listings_airbnb_amenities&#x60; cache).
     # @return [AirbnbListingListResponse]
     def list_airbnb_listings(opts = {})
       data, _status_code, _headers = list_airbnb_listings_with_http_info(opts)
@@ -595,9 +652,9 @@ module Repull
     end
 
     # List Airbnb listings
-    # List every Airbnb listing this workspace has access to via the connected Airbnb account. Default response is a fast DB read pairing each Vanio listing with its &#x60;listings_airbnb&#x60; connection rows.  Pass &#x60;?include&#x3D;amenities&#x60; to enrich each connection with its current Airbnb amenity set (one extra upstream call per unique Airbnb id, fanned out in parallel). Per-connection failures surface in &#x60;_errors.amenities&#x60; rather than failing the whole request.
+    # List every Airbnb listing this workspace has access to via the connected Airbnb account. **Pure DB read — never calls Airbnb upstream.** The connect flow is what populates the local cache; the API serves what&#39;s already there. Customers with a disconnected host still see their last-synced data, with the top-level &#x60;data_freshness&#x60; envelope flagging the staleness and pointing at the reconnect URL.  Pass &#x60;?include&#x3D;amenities&#x60; to enrich each connection with its locally-cached amenity set. Returns &#x60;null&#x60; per connection when the cache is empty.
     # @param [Hash] opts the optional parameters
-    # @option opts [String] :include Comma-separated expansions. Currently supported: &#x60;amenities&#x60; (adds &#x60;amenities&#x60; and &#x60;accessibility_amenities&#x60; arrays to each connection). Each expansion adds one upstream Airbnb call per unique listing id.
+    # @option opts [String] :include Comma-separated expansions. Currently supported: &#x60;amenities&#x60; (adds &#x60;amenities&#x60; and &#x60;accessibility_amenities&#x60; arrays to each connection, sourced from the local &#x60;listings_airbnb_amenities&#x60; cache).
     # @return [Array<(AirbnbListingListResponse, Integer, Hash)>] AirbnbListingListResponse data, response status code and response headers
     def list_airbnb_listings_with_http_info(opts = {})
       if @api_client.config.debugging

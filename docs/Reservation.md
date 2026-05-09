@@ -9,7 +9,7 @@
 | **guest_id** | **String** | DEPRECATED — use &#x60;primaryGuest.id&#x60;. Internal Repull guest ID. Kept populated for back-compat. | [optional] |
 | **check_in** | **Date** |  |  |
 | **check_out** | **Date** |  |  |
-| **status** | **String** |  |  |
+| **status** | **String** | Lifecycle status. The API normalises a multi-decade internal taxonomy down to these four buckets, so the value you receive is always one of the enum constants. &#x60;completed&#x60; is derived from &#x60;checkOut &lt; today&#x60;. |  |
 | **source** | **String** | Booking source / channel. Lowercase. May be null on legacy rows. Canonical name as of 2026-05; &#x60;platform&#x60; is kept as an alias. | [optional] |
 | **platform** | **String** | DEPRECATED alias for &#x60;source&#x60;. Same value, kept for back-compat. | [optional] |
 | **confirmation_code** | **String** | Channel-side confirmation code (Airbnb HMxxx, Booking.com numeric, etc.). |  |
