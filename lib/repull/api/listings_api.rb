@@ -158,11 +158,11 @@ module Repull
     end
 
     # Get a listing
-    # Fetch a single listing by id. Returns the same shape as one element of the `GET /v1/listings` response, so you can bind the result to the same model. Cross-tenant access (a listing that belongs to a different workspace) returns 404 — never 403, never reveals the listing's existence.  **Optional expansions:** Pass `?include=amenities` to enrich the response with the listing's amenities (sourced from the unified `listings_amenities` table). Returns `[]` when the listing has no amenity rows. The default response stays lean; consumers must opt in.
+    # Fetch a single listing by id. Returns the same shape as one element of the `GET /v1/listings` response, so you can bind the result to the same model. Cross-tenant access (a listing that belongs to a different workspace) returns 404 — never 403, never reveals the listing's existence.  **Optional expansions:** Pass `?include=amenities` to enrich the response with the listing's amenity rows (`[]` when the listing has none). Pass `?include=content` for the rich content slab (summary, description, space, house rules, etc. — sourced from `listings_descriptions` for the `en` locale; `null` when no row is stored). Pass `?include=details` for the structural slab (bedrooms, bathrooms, person capacity, check-in window, wifi, house manual, etc.; `null` when no row is stored). Combine comma-separated, e.g. `?include=amenities,content,details`. The default response stays lean; consumers must opt in.
     # @param id [Integer] Repull listing id
     # @param [Hash] opts the optional parameters
     # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
-    # @option opts [String] :include Comma-separated optional expansions. Currently supported: &#x60;amenities&#x60;. Unknown values return 422.
+    # @option opts [String] :include Comma-separated optional expansions. Currently supported: &#x60;amenities&#x60;, &#x60;content&#x60;, &#x60;details&#x60;. Unknown values return 422 with a &#x60;valid_values&#x60; envelope.
     # @return [Listing]
     def get_listing(id, opts = {})
       data, _status_code, _headers = get_listing_with_http_info(id, opts)
@@ -170,11 +170,11 @@ module Repull
     end
 
     # Get a listing
-    # Fetch a single listing by id. Returns the same shape as one element of the &#x60;GET /v1/listings&#x60; response, so you can bind the result to the same model. Cross-tenant access (a listing that belongs to a different workspace) returns 404 — never 403, never reveals the listing&#39;s existence.  **Optional expansions:** Pass &#x60;?include&#x3D;amenities&#x60; to enrich the response with the listing&#39;s amenities (sourced from the unified &#x60;listings_amenities&#x60; table). Returns &#x60;[]&#x60; when the listing has no amenity rows. The default response stays lean; consumers must opt in.
+    # Fetch a single listing by id. Returns the same shape as one element of the &#x60;GET /v1/listings&#x60; response, so you can bind the result to the same model. Cross-tenant access (a listing that belongs to a different workspace) returns 404 — never 403, never reveals the listing&#39;s existence.  **Optional expansions:** Pass &#x60;?include&#x3D;amenities&#x60; to enrich the response with the listing&#39;s amenity rows (&#x60;[]&#x60; when the listing has none). Pass &#x60;?include&#x3D;content&#x60; for the rich content slab (summary, description, space, house rules, etc. — sourced from &#x60;listings_descriptions&#x60; for the &#x60;en&#x60; locale; &#x60;null&#x60; when no row is stored). Pass &#x60;?include&#x3D;details&#x60; for the structural slab (bedrooms, bathrooms, person capacity, check-in window, wifi, house manual, etc.; &#x60;null&#x60; when no row is stored). Combine comma-separated, e.g. &#x60;?include&#x3D;amenities,content,details&#x60;. The default response stays lean; consumers must opt in.
     # @param id [Integer] Repull listing id
     # @param [Hash] opts the optional parameters
     # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
-    # @option opts [String] :include Comma-separated optional expansions. Currently supported: &#x60;amenities&#x60;. Unknown values return 422.
+    # @option opts [String] :include Comma-separated optional expansions. Currently supported: &#x60;amenities&#x60;, &#x60;content&#x60;, &#x60;details&#x60;. Unknown values return 422 with a &#x60;valid_values&#x60; envelope.
     # @return [Array<(Listing, Integer, Hash)>] Listing data, response status code and response headers
     def get_listing_with_http_info(id, opts = {})
       if @api_client.config.debugging
@@ -183,10 +183,6 @@ module Repull
       # verify the required parameter 'id' is set
       if @api_client.config.client_side_validation && id.nil?
         fail ArgumentError, "Missing the required parameter 'id' when calling ListingsApi.get_listing"
-      end
-      allowable_values = ["amenities"]
-      if @api_client.config.client_side_validation && opts[:'include'] && !allowable_values.include?(opts[:'include'])
-        fail ArgumentError, "invalid value for \"include\", must be one of #{allowable_values}"
       end
       # resource path
       local_var_path = '/v1/listings/{id}'.sub('{id}', CGI.escape(id.to_s))
@@ -294,7 +290,7 @@ module Repull
     end
 
     # List listings
-    # Cursor-paginated list of listings owned by the authenticated workspace. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request to walk the full set. `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) — see the `offset` parameter below. Mutually exclusive with `cursor`. Filters: `q` (substring on name/street/city), `status`, `channel`.
+    # Cursor-paginated list of listings owned by the authenticated workspace. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request to walk the full set. `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) — see the `offset` parameter below. Mutually exclusive with `cursor`. Filters: `q` (substring on name/street/city), `status`, `channel`.  **Optional expansions:** Pass `?include=content` to enrich each row with the rich content slab (summary, description, space, house rules, etc. — sourced from `listings_descriptions` for the `en` locale). Pass `?include=details` for the structural slab (bedrooms, bathrooms, person capacity, check-in window, wifi, house manual, etc.). Both default to `null` per row when the underlying `listings_descriptions` / `listings_details` row is missing — distinct from the field being absent (which signals the expansion was not requested). Combine comma-separated, e.g. `?include=content,details`. The default response stays lean; consumers must opt in.
     # @param [Hash] opts the optional parameters
     # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
     # @option opts [String] :cursor Opaque cursor returned in the previous response&#39;s &#x60;pagination.nextCursor&#x60;. Omit to fetch the first page.
@@ -303,6 +299,7 @@ module Repull
     # @option opts [String] :q Case-insensitive substring search on name, street, or city.
     # @option opts [String] :status Filter by listing status.
     # @option opts [String] :channel Restrict to listings published on the given channel (&#x60;airbnb&#x60;, &#x60;booking&#x60;, &#x60;vrbo&#x60;, etc.). Joins through &#x60;listing_platform_links&#x60; and matches active links only.
+    # @option opts [String] :include Comma-separated optional expansions. Currently supported: &#x60;content&#x60;, &#x60;details&#x60;. Unknown values return 422 with a &#x60;valid_values&#x60; envelope. (Note: &#x60;amenities&#x60; is not yet supported on the list endpoint — use the detail endpoint to fetch amenity rows for a single listing.)
     # @return [ListingListResponse]
     def list_listings(opts = {})
       data, _status_code, _headers = list_listings_with_http_info(opts)
@@ -310,7 +307,7 @@ module Repull
     end
 
     # List listings
-    # Cursor-paginated list of listings owned by the authenticated workspace. Use &#x60;pagination.nextCursor&#x60; from one response as the &#x60;cursor&#x60; query param of the next request to walk the full set. &#x60;?offset&#x3D;&#x60; is also accepted as a first-class alias for shallow paging (0..10000) — see the &#x60;offset&#x60; parameter below. Mutually exclusive with &#x60;cursor&#x60;. Filters: &#x60;q&#x60; (substring on name/street/city), &#x60;status&#x60;, &#x60;channel&#x60;.
+    # Cursor-paginated list of listings owned by the authenticated workspace. Use &#x60;pagination.nextCursor&#x60; from one response as the &#x60;cursor&#x60; query param of the next request to walk the full set. &#x60;?offset&#x3D;&#x60; is also accepted as a first-class alias for shallow paging (0..10000) — see the &#x60;offset&#x60; parameter below. Mutually exclusive with &#x60;cursor&#x60;. Filters: &#x60;q&#x60; (substring on name/street/city), &#x60;status&#x60;, &#x60;channel&#x60;.  **Optional expansions:** Pass &#x60;?include&#x3D;content&#x60; to enrich each row with the rich content slab (summary, description, space, house rules, etc. — sourced from &#x60;listings_descriptions&#x60; for the &#x60;en&#x60; locale). Pass &#x60;?include&#x3D;details&#x60; for the structural slab (bedrooms, bathrooms, person capacity, check-in window, wifi, house manual, etc.). Both default to &#x60;null&#x60; per row when the underlying &#x60;listings_descriptions&#x60; / &#x60;listings_details&#x60; row is missing — distinct from the field being absent (which signals the expansion was not requested). Combine comma-separated, e.g. &#x60;?include&#x3D;content,details&#x60;. The default response stays lean; consumers must opt in.
     # @param [Hash] opts the optional parameters
     # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
     # @option opts [String] :cursor Opaque cursor returned in the previous response&#39;s &#x60;pagination.nextCursor&#x60;. Omit to fetch the first page.
@@ -319,6 +316,7 @@ module Repull
     # @option opts [String] :q Case-insensitive substring search on name, street, or city.
     # @option opts [String] :status Filter by listing status.
     # @option opts [String] :channel Restrict to listings published on the given channel (&#x60;airbnb&#x60;, &#x60;booking&#x60;, &#x60;vrbo&#x60;, etc.). Joins through &#x60;listing_platform_links&#x60; and matches active links only.
+    # @option opts [String] :include Comma-separated optional expansions. Currently supported: &#x60;content&#x60;, &#x60;details&#x60;. Unknown values return 422 with a &#x60;valid_values&#x60; envelope. (Note: &#x60;amenities&#x60; is not yet supported on the list endpoint — use the detail endpoint to fetch amenity rows for a single listing.)
     # @return [Array<(ListingListResponse, Integer, Hash)>] ListingListResponse data, response status code and response headers
     def list_listings_with_http_info(opts = {})
       if @api_client.config.debugging
@@ -355,6 +353,7 @@ module Repull
       query_params[:'q'] = opts[:'q'] if !opts[:'q'].nil?
       query_params[:'status'] = opts[:'status'] if !opts[:'status'].nil?
       query_params[:'channel'] = opts[:'channel'] if !opts[:'channel'].nil?
+      query_params[:'include'] = opts[:'include'] if !opts[:'include'].nil?
 
       # header parameters
       header_params = opts[:header_params] || {}

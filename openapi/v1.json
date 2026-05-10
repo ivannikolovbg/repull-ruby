@@ -3702,40 +3702,174 @@
       },
       "ListingContent": {
         "type": "object",
+        "description": "Rich multilingual content slab for a listing \u2014 guest-facing copy sourced from `listings_descriptions` (the `en` row when surfaced via `?include=content`). Also returned as the AI-generated payload from `POST /v1/listings/{id}/generate-content` (where `title` and `amenities` are populated). All fields are individually nullable.",
         "properties": {
           "title": {
             "type": "string",
-            "maxLength": 50
+            "maxLength": 50,
+            "nullable": true,
+            "description": "Public listing title. Populated only by `generate-content`; not stored on `listings_descriptions`."
           },
           "summary": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "description": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "space": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "guestAccess": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "neighborhoodOverview": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
+          },
+          "gettingAround": {
+            "type": "string",
+            "nullable": true,
+            "description": "Free-text directions for getting to + around the property (e.g. \"Take Highway 95 north for 12 miles\")."
           },
           "transit": {
-            "type": "string"
-          },
-          "notes": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "houseRules": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
+          },
+          "additionalRules": {
+            "nullable": true,
+            "description": "Structured supplementary rules (JSON; shape evolves with the listings_descriptions schema)."
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "interactionWithGuests": {
+            "type": "string",
+            "nullable": true,
+            "description": "Host\u2019s description of how they engage with guests (e.g. \"Self check-in, available via message\")."
           },
           "amenities": {
             "type": "array",
             "items": {
               "type": "string"
-            }
+            },
+            "description": "Free-text amenity strings. Populated only by `generate-content`; the `?include=amenities` expansion returns the structured `ListingAmenity[]` instead."
+          }
+        }
+      },
+      "ListingDetails": {
+        "type": "object",
+        "description": "Structural detail slab for a listing \u2014 bedrooms/bathrooms/beds, person capacity, check-in window, wifi credentials, house manual, directions. Sourced from `listings_details` (one row per listing). Surfaced on `GET /v1/listings/{id}` and `GET /v1/listings` only when the caller passes `?include=details`. All fields are individually nullable.",
+        "properties": {
+          "propertyType": {
+            "type": "string",
+            "nullable": true,
+            "description": "Specific property type (e.g. `apartment`, `townhouse`, `cabin`)."
+          },
+          "propertyTypeCategory": {
+            "type": "string",
+            "nullable": true,
+            "description": "Coarser grouping above propertyType (e.g. `house`, `apartment`)."
+          },
+          "roomTypeCategory": {
+            "type": "string",
+            "nullable": true,
+            "description": "Sleeping arrangement (e.g. `entire_home`, `private_room`, `shared_room`)."
+          },
+          "bedrooms": {
+            "type": "integer",
+            "nullable": true
+          },
+          "bathrooms": {
+            "type": "string",
+            "nullable": true,
+            "description": "Numeric value carried as a string to preserve fractional bathrooms (e.g. `\"1.5\"`)."
+          },
+          "beds": {
+            "type": "integer",
+            "nullable": true
+          },
+          "personCapacity": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Maximum guest capacity."
+          },
+          "checkInTimeStart": {
+            "type": "string",
+            "nullable": true,
+            "description": "Earliest check-in time, free-form (e.g. `\"15:00\"`, `\"3 PM\"`, `\"flexible\"`)."
+          },
+          "checkInTimeEnd": {
+            "type": "string",
+            "nullable": true,
+            "description": "Latest check-in time."
+          },
+          "checkOutTime": {
+            "type": "string",
+            "nullable": true,
+            "description": "Check-out time."
+          },
+          "minNights": {
+            "type": "integer",
+            "nullable": true
+          },
+          "maxNights": {
+            "type": "integer",
+            "nullable": true
+          },
+          "advanceBookingDays": {
+            "type": "integer",
+            "nullable": true,
+            "description": "How far in advance bookings are allowed."
+          },
+          "turnoverDays": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Required gap (in days) between consecutive bookings."
+          },
+          "wifiNetwork": {
+            "type": "string",
+            "nullable": true
+          },
+          "wifiPassword": {
+            "type": "string",
+            "nullable": true
+          },
+          "houseManual": {
+            "type": "string",
+            "nullable": true,
+            "description": "Long-form house manual / welcome guide."
+          },
+          "directions": {
+            "type": "string",
+            "nullable": true,
+            "description": "Long-form arrival directions."
+          },
+          "propertySize": {
+            "nullable": true,
+            "description": "Structured size info (JSON; e.g. `{ \"value\": 65, \"unit\": \"sqm\" }`). Shape evolves with the listings_details schema."
+          },
+          "yearBuilt": {
+            "type": "integer",
+            "nullable": true
+          },
+          "numberOfFloors": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Total floors in the building."
+          },
+          "listingFloor": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Which floor the listing is on."
           }
         }
       },
@@ -3961,6 +4095,24 @@
               "$ref": "#/components/schemas/ListingAmenity"
             },
             "description": "Amenity rows for the listing. **Only present when the caller passes `?include=amenities`.** Empty array (`[]`) when the listing has no amenity rows."
+          },
+          "content": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ListingContent"
+              }
+            ],
+            "nullable": true,
+            "description": "**Only present when the caller passes `?include=content`.** Sourced from `listings_descriptions` for the `en` locale. `null` when the listing has no description row stored (vs the field being absent \u2014 that signals the caller did not opt into the expansion)."
+          },
+          "details": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ListingDetails"
+              }
+            ],
+            "nullable": true,
+            "description": "**Only present when the caller passes `?include=details`.** Sourced from `listings_details`. `null` when the listing has no details row stored (vs the field being absent \u2014 that signals the caller did not opt into the expansion)."
           },
           "createdAt": {
             "type": "string",
@@ -9052,7 +9204,7 @@
       "get": {
         "operationId": "listListings",
         "summary": "List listings",
-        "description": "Cursor-paginated list of listings owned by the authenticated workspace. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request to walk the full set. `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) \u2014 see the `offset` parameter below. Mutually exclusive with `cursor`. Filters: `q` (substring on name/street/city), `status`, `channel`.",
+        "description": "Cursor-paginated list of listings owned by the authenticated workspace. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request to walk the full set. `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) \u2014 see the `offset` parameter below. Mutually exclusive with `cursor`. Filters: `q` (substring on name/street/city), `status`, `channel`.\n\n**Optional expansions:** Pass `?include=content` to enrich each row with the rich content slab (summary, description, space, house rules, etc. \u2014 sourced from `listings_descriptions` for the `en` locale). Pass `?include=details` for the structural slab (bedrooms, bathrooms, person capacity, check-in window, wifi, house manual, etc.). Both default to `null` per row when the underlying `listings_descriptions` / `listings_details` row is missing \u2014 distinct from the field being absent (which signals the expansion was not requested). Combine comma-separated, e.g. `?include=content,details`. The default response stays lean; consumers must opt in.",
         "tags": [
           "Listings"
         ],
@@ -9111,6 +9263,16 @@
               "example": "airbnb"
             },
             "description": "Restrict to listings published on the given channel (`airbnb`, `booking`, `vrbo`, etc.). Joins through `listing_platform_links` and matches active links only."
+          },
+          {
+            "name": "include",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "content,details"
+            },
+            "description": "Comma-separated optional expansions. Currently supported: `content`, `details`. Unknown values return 422 with a `valid_values` envelope. (Note: `amenities` is not yet supported on the list endpoint \u2014 use the detail endpoint to fetch amenity rows for a single listing.)"
           }
         ],
         "responses": {
@@ -9170,7 +9332,7 @@
       "get": {
         "operationId": "getListing",
         "summary": "Get a listing",
-        "description": "Fetch a single listing by id. Returns the same shape as one element of the `GET /v1/listings` response, so you can bind the result to the same model. Cross-tenant access (a listing that belongs to a different workspace) returns 404 \u2014 never 403, never reveals the listing's existence.\n\n**Optional expansions:** Pass `?include=amenities` to enrich the response with the listing's amenities (sourced from the unified `listings_amenities` table). Returns `[]` when the listing has no amenity rows. The default response stays lean; consumers must opt in.",
+        "description": "Fetch a single listing by id. Returns the same shape as one element of the `GET /v1/listings` response, so you can bind the result to the same model. Cross-tenant access (a listing that belongs to a different workspace) returns 404 \u2014 never 403, never reveals the listing's existence.\n\n**Optional expansions:** Pass `?include=amenities` to enrich the response with the listing's amenity rows (`[]` when the listing has none). Pass `?include=content` for the rich content slab (summary, description, space, house rules, etc. \u2014 sourced from `listings_descriptions` for the `en` locale; `null` when no row is stored). Pass `?include=details` for the structural slab (bedrooms, bathrooms, person capacity, check-in window, wifi, house manual, etc.; `null` when no row is stored). Combine comma-separated, e.g. `?include=amenities,content,details`. The default response stays lean; consumers must opt in.",
         "tags": [
           "Listings"
         ],
@@ -9193,11 +9355,9 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": [
-                "amenities"
-              ]
+              "example": "content,details"
             },
-            "description": "Comma-separated optional expansions. Currently supported: `amenities`. Unknown values return 422."
+            "description": "Comma-separated optional expansions. Currently supported: `amenities`, `content`, `details`. Unknown values return 422 with a `valid_values` envelope."
           }
         ],
         "responses": {

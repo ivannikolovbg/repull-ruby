@@ -2,6 +2,13 @@
 
 All notable changes to the `repull` gem are documented here.
 
+## [0.2.3] - 2026-05-09
+
+### Added
+
+- **`Listing#content` and `Listing#details` accessors.** Optional, populated only when the caller passes `?include=content` or `?include=details` on listing read endpoints. Sourced from `listings_descriptions` (en locale) and `listings_details` respectively. Field absent = caller did not opt in; field `null` = no row stored.
+- **`Repull::ListingDetails` model.** New schema for the structured details payload returned by `?include=details`.
+
 ## [0.2.0] - 2026-05-02
 
 ### Changed (breaking)

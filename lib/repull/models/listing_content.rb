@@ -14,7 +14,9 @@ require 'date'
 require 'time'
 
 module Repull
+  # Rich multilingual content slab for a listing — guest-facing copy sourced from `listings_descriptions` (the `en` row when surfaced via `?include=content`). Also returned as the AI-generated payload from `POST /v1/listings/{id}/generate-content` (where `title` and `amenities` are populated). All fields are individually nullable.
   class ListingContent < ApiModelBase
+    # Public listing title. Populated only by `generate-content`; not stored on `listings_descriptions`.
     attr_accessor :title
 
     attr_accessor :summary
@@ -27,12 +29,22 @@ module Repull
 
     attr_accessor :neighborhood_overview
 
-    attr_accessor :transit
+    # Free-text directions for getting to + around the property (e.g. \"Take Highway 95 north for 12 miles\").
+    attr_accessor :getting_around
 
-    attr_accessor :notes
+    attr_accessor :transit
 
     attr_accessor :house_rules
 
+    # Structured supplementary rules (JSON; shape evolves with the listings_descriptions schema).
+    attr_accessor :additional_rules
+
+    attr_accessor :notes
+
+    # Host’s description of how they engage with guests (e.g. \"Self check-in, available via message\").
+    attr_accessor :interaction_with_guests
+
+    # Free-text amenity strings. Populated only by `generate-content`; the `?include=amenities` expansion returns the structured `ListingAmenity[]` instead.
     attr_accessor :amenities
 
     # Attribute mapping from ruby-style variable name to JSON key.
@@ -44,9 +56,12 @@ module Repull
         :'space' => :'space',
         :'guest_access' => :'guestAccess',
         :'neighborhood_overview' => :'neighborhoodOverview',
+        :'getting_around' => :'gettingAround',
         :'transit' => :'transit',
-        :'notes' => :'notes',
         :'house_rules' => :'houseRules',
+        :'additional_rules' => :'additionalRules',
+        :'notes' => :'notes',
+        :'interaction_with_guests' => :'interactionWithGuests',
         :'amenities' => :'amenities'
       }
     end
@@ -70,9 +85,12 @@ module Repull
         :'space' => :'String',
         :'guest_access' => :'String',
         :'neighborhood_overview' => :'String',
+        :'getting_around' => :'String',
         :'transit' => :'String',
-        :'notes' => :'String',
         :'house_rules' => :'String',
+        :'additional_rules' => :'Object',
+        :'notes' => :'String',
+        :'interaction_with_guests' => :'String',
         :'amenities' => :'Array<String>'
       }
     end
@@ -80,6 +98,18 @@ module Repull
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'title',
+        :'summary',
+        :'description',
+        :'space',
+        :'guest_access',
+        :'neighborhood_overview',
+        :'getting_around',
+        :'transit',
+        :'house_rules',
+        :'additional_rules',
+        :'notes',
+        :'interaction_with_guests',
       ])
     end
 
@@ -123,16 +153,28 @@ module Repull
         self.neighborhood_overview = attributes[:'neighborhood_overview']
       end
 
+      if attributes.key?(:'getting_around')
+        self.getting_around = attributes[:'getting_around']
+      end
+
       if attributes.key?(:'transit')
         self.transit = attributes[:'transit']
+      end
+
+      if attributes.key?(:'house_rules')
+        self.house_rules = attributes[:'house_rules']
+      end
+
+      if attributes.key?(:'additional_rules')
+        self.additional_rules = attributes[:'additional_rules']
       end
 
       if attributes.key?(:'notes')
         self.notes = attributes[:'notes']
       end
 
-      if attributes.key?(:'house_rules')
-        self.house_rules = attributes[:'house_rules']
+      if attributes.key?(:'interaction_with_guests')
+        self.interaction_with_guests = attributes[:'interaction_with_guests']
       end
 
       if attributes.key?(:'amenities')
@@ -165,11 +207,7 @@ module Repull
     # Custom attribute writer method with validation
     # @param [Object] title Value to be assigned
     def title=(title)
-      if title.nil?
-        fail ArgumentError, 'title cannot be nil'
-      end
-
-      if title.to_s.length > 50
+      if !title.nil? && title.to_s.length > 50
         fail ArgumentError, 'invalid value for "title", the character length must be smaller than or equal to 50.'
       end
 
@@ -187,9 +225,12 @@ module Repull
           space == o.space &&
           guest_access == o.guest_access &&
           neighborhood_overview == o.neighborhood_overview &&
+          getting_around == o.getting_around &&
           transit == o.transit &&
-          notes == o.notes &&
           house_rules == o.house_rules &&
+          additional_rules == o.additional_rules &&
+          notes == o.notes &&
+          interaction_with_guests == o.interaction_with_guests &&
           amenities == o.amenities
     end
 
@@ -202,7 +243,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [title, summary, description, space, guest_access, neighborhood_overview, transit, notes, house_rules, amenities].hash
+      [title, summary, description, space, guest_access, neighborhood_overview, getting_around, transit, house_rules, additional_rules, notes, interaction_with_guests, amenities].hash
     end
 
     # Builds the object from hash

@@ -33,6 +33,12 @@ module Repull
     # Amenity rows for the listing. **Only present when the caller passes `?include=amenities`.** Empty array (`[]`) when the listing has no amenity rows.
     attr_accessor :amenities
 
+    # **Only present when the caller passes `?include=content`.** Sourced from `listings_descriptions` for the `en` locale. `null` when the listing has no description row stored (vs the field being absent — that signals the caller did not opt into the expansion).
+    attr_accessor :content
+
+    # **Only present when the caller passes `?include=details`.** Sourced from `listings_details`. `null` when the listing has no details row stored (vs the field being absent — that signals the caller did not opt into the expansion).
+    attr_accessor :details
+
     attr_accessor :created_at
 
     attr_accessor :updated_at
@@ -47,6 +53,8 @@ module Repull
         :'status' => :'status',
         :'channels' => :'channels',
         :'amenities' => :'amenities',
+        :'content' => :'content',
+        :'details' => :'details',
         :'created_at' => :'createdAt',
         :'updated_at' => :'updatedAt'
       }
@@ -72,6 +80,8 @@ module Repull
         :'status' => :'String',
         :'channels' => :'Array<ListingChannel>',
         :'amenities' => :'Array<ListingAmenity>',
+        :'content' => :'ListingContent',
+        :'details' => :'ListingDetails',
         :'created_at' => :'Time',
         :'updated_at' => :'Time'
       }
@@ -81,6 +91,8 @@ module Repull
     def self.openapi_nullable
       Set.new([
         :'thumbnail_url',
+        :'content',
+        :'details',
       ])
     end
 
@@ -132,6 +144,14 @@ module Repull
         end
       end
 
+      if attributes.key?(:'content')
+        self.content = attributes[:'content']
+      end
+
+      if attributes.key?(:'details')
+        self.details = attributes[:'details']
+      end
+
       if attributes.key?(:'created_at')
         self.created_at = attributes[:'created_at']
       end
@@ -168,6 +188,8 @@ module Repull
           status == o.status &&
           channels == o.channels &&
           amenities == o.amenities &&
+          content == o.content &&
+          details == o.details &&
           created_at == o.created_at &&
           updated_at == o.updated_at
     end
@@ -181,7 +203,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, name, address, thumbnail_url, status, channels, amenities, created_at, updated_at].hash
+      [id, name, address, thumbnail_url, status, channels, amenities, content, details, created_at, updated_at].hash
     end
 
     # Builds the object from hash
