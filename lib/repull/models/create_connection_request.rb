@@ -19,7 +19,7 @@ module Repull
     # Airbnb only — where to redirect the user after the OAuth flow completes.
     attr_accessor :redirect_url
 
-    # Airbnb only — selects the OAuth scope set. 'read_only' grants calendar-only access; 'full_access' grants full host scopes (default).
+    # Airbnb only — selects the OAuth scope set. 'read_only' grants read-only scopes; 'messaging' grants read scopes plus message read/send but NOT property management, so it can coexist with another app (e.g. an existing PMS) that already holds property management on the same Airbnb account; 'full_access' (default) grants full host scopes including the exclusive property management (only one app per Airbnb account can hold it).
     attr_accessor :access_type
 
     # PMS providers — API key.
@@ -142,7 +142,7 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
-      access_type_validator = EnumAttributeValidator.new('String', ["read_only", "full_access"])
+      access_type_validator = EnumAttributeValidator.new('String', ["read_only", "full_access", "messaging"])
       return false unless access_type_validator.valid?(@access_type)
       true
     end
@@ -150,7 +150,7 @@ module Repull
     # Custom attribute writer method checking allowed values (enum).
     # @param [Object] access_type Object to be assigned
     def access_type=(access_type)
-      validator = EnumAttributeValidator.new('String', ["read_only", "full_access"])
+      validator = EnumAttributeValidator.new('String', ["read_only", "full_access", "messaging"])
       unless validator.valid?(access_type)
         fail ArgumentError, "invalid value for \"access_type\", must be one of #{validator.allowable_values}."
       end
