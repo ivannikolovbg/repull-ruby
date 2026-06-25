@@ -2,6 +2,13 @@
 
 All notable changes to the `repull` gem are documented here.
 
+## [0.2.6] - 2026-06-25
+
+### Added
+
+- **`Property#channels` accessor.** `Array<String>` of the OTAs/channels a property is actively published on (e.g. `airbnb`, `booking`, `vrbo`). Empty array when the property has no active channel links.
+- **`channel` filter on `GET /v1/properties`.** Pass `channel:` to `PropertiesApi#properties_get` to return only properties published on that channel.
+
 ## [0.2.5] - 2026-06-24
 
 ### Added

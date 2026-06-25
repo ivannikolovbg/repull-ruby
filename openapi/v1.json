@@ -213,6 +213,17 @@
             "description": "Source PMS",
             "example": "hostaway"
           },
+          "channels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "OTAs/channels this property is actively published on (e.g. `airbnb`, `booking`, `vrbo`). Empty array when the property has no active channel links.",
+            "example": [
+              "airbnb",
+              "booking"
+            ]
+          },
           "amenities": {
             "type": "array",
             "items": {
@@ -6482,6 +6493,20 @@
             "description": "Filter by lifecycle status (e.g. `live`, `draft`, `archived`). Pass `all` to disable the filter."
           },
           {
+            "name": "channel",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "airbnb",
+                "booking",
+                "vrbo"
+              ],
+              "example": "airbnb"
+            },
+            "description": "Filter to properties with an active link on the given OTA/channel (airbnb, booking, vrbo). Omit to include every channel. Each property also returns a `channels` array listing the OTAs it is published on."
+          },
+          {
             "$ref": "#/components/parameters/IncludeTotal"
           }
         ],
@@ -7733,7 +7758,7 @@
       "post": {
         "operationId": "create_connection",
         "summary": "Connect to PMS/OTA provider",
-        "description": "Establish a connection to a PMS or OTA platform. Credentials vary by provider \u2014 see docs for each provider.\n\nAirbnb-specific: pass `redirectUrl` (where to send the user after consent) and optionally `accessType`. Three tiers: `read_only` grants read-only scopes; `messaging` grants read scopes plus message read/send but NOT property management, so it can coexist with another app (e.g. an existing PMS) that already holds property management on the same Airbnb account; `full_access` \u2014 the default \u2014 grants full host scopes including the exclusive property management (only one app per Airbnb account can hold it). The response returns a hosted `url` to redirect the user to.",
+        "description": "Establish a connection to a PMS or OTA platform. Credentials vary by provider \u2014 see docs for each provider.\n\nAirbnb-specific: pass `redirectUrl` (where to send the user after consent) and optionally `accessType`. Three tiers: `read_only` grants read-only scopes; `messaging` grants read scopes plus message read/send but NOT property management, so it can coexist with another app (e.g. an existing PMS) that already holds property management on the same Airbnb account; `full_access` \u2014 the default \u2014 grants full host scopes including the exclusive property management (only one app per Airbnb account can hold it). The response returns a hosted `url` to redirect the user to.\n\nBooking.com: pass `redirectUrl` (no `accessType`). The response returns a hosted `url` \u2014 send the user there to designate FantasticStay in their Booking.com Extranet and paste their Hotel ID. Same response shape as Airbnb (`url`, `sessionId`, `expiresAt`).\n\nPMS providers (api-key based) pass `apiKey` instead; Plumguide passes `clientId`/`clientSecret`.",
         "tags": [
           "Connect"
         ],
@@ -7752,7 +7777,7 @@
                   "redirectUrl": {
                     "type": "string",
                     "format": "uri",
-                    "description": "Airbnb only \u2014 where to redirect the user after the OAuth flow completes."
+                    "description": "Airbnb + Booking.com \u2014 where to redirect the user after they finish the hosted connect flow."
                   },
                   "accessType": {
                     "type": "string",

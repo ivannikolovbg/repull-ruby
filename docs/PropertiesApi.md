@@ -108,6 +108,7 @@ opts = {
   q: 'q_example', # String | Case-insensitive substring search on name, street, or city.
   status: 'active', # String | Filter by status. Default returns active only; pass `inactive` to invert or `all` to include both.
   lifecycle_status: 'live', # String | Filter by lifecycle status (e.g. `live`, `draft`, `archived`). Pass `all` to disable the filter.
+  channel: 'airbnb', # String | Filter to properties with an active link on the given OTA/channel (airbnb, booking, vrbo). Omit to include every channel. Each property also returns a `channels` array listing the OTAs it is published on.
   include_total: true # Boolean | When `true` (default), the response's `pagination.total` carries the count of rows matching the current filter, across all pages. Pass `false` to skip the count for very large workspaces where the per-page COUNT(*) cost matters.
 }
 
@@ -148,6 +149,7 @@ end
 | **q** | **String** | Case-insensitive substring search on name, street, or city. | [optional] |
 | **status** | **String** | Filter by status. Default returns active only; pass &#x60;inactive&#x60; to invert or &#x60;all&#x60; to include both. | [optional][default to &#39;active&#39;] |
 | **lifecycle_status** | **String** | Filter by lifecycle status (e.g. &#x60;live&#x60;, &#x60;draft&#x60;, &#x60;archived&#x60;). Pass &#x60;all&#x60; to disable the filter. | [optional] |
+| **channel** | **String** | Filter to properties with an active link on the given OTA/channel (airbnb, booking, vrbo). Omit to include every channel. Each property also returns a &#x60;channels&#x60; array listing the OTAs it is published on. | [optional] |
 | **include_total** | **Boolean** | When &#x60;true&#x60; (default), the response&#39;s &#x60;pagination.total&#x60; carries the count of rows matching the current filter, across all pages. Pass &#x60;false&#x60; to skip the count for very large workspaces where the per-page COUNT(*) cost matters. | [optional][default to true] |
 
 ### Return type

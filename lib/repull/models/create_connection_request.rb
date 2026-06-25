@@ -16,7 +16,7 @@ require 'time'
 module Repull
   # Provider-specific credentials (apiKey, clientId/clientSecret, etc.) or OAuth init params for Airbnb.
   class CreateConnectionRequest < ApiModelBase
-    # Airbnb only — where to redirect the user after the OAuth flow completes.
+    # Airbnb + Booking.com — where to redirect the user after they finish the hosted connect flow.
     attr_accessor :redirect_url
 
     # Airbnb only — selects the OAuth scope set. 'read_only' grants read-only scopes; 'messaging' grants read scopes plus message read/send but NOT property management, so it can coexist with another app (e.g. an existing PMS) that already holds property management on the same Airbnb account; 'full_access' (default) grants full host scopes including the exclusive property management (only one app per Airbnb account can hold it).

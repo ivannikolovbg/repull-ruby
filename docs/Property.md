@@ -18,6 +18,7 @@
 | **max_guests** | **Integer** |  | [optional] |
 | **thumbnail** | **String** | Primary photo URL | [optional] |
 | **provider** | **String** | Source PMS | [optional] |
+| **channels** | **Array&lt;String&gt;** | OTAs/channels this property is actively published on (e.g. &#x60;airbnb&#x60;, &#x60;booking&#x60;, &#x60;vrbo&#x60;). Empty array when the property has no active channel links. | [optional] |
 | **amenities** | [**Array&lt;ListingAmenity&gt;**](ListingAmenity.md) | Amenity rows for the property. **Only present when the caller passes &#x60;?include&#x3D;amenities&#x60;.** Empty array (&#x60;[]&#x60;) when the property has no amenity rows. | [optional] |
 
 ## Example
@@ -40,6 +41,7 @@ instance = Repull::Property.new(
   max_guests: 6,
   thumbnail: null,
   provider: hostaway,
+  channels: [&quot;airbnb&quot;,&quot;booking&quot;],
   amenities: null
 )
 ```

@@ -50,6 +50,9 @@ module Repull
     # Source PMS
     attr_accessor :provider
 
+    # OTAs/channels this property is actively published on (e.g. `airbnb`, `booking`, `vrbo`). Empty array when the property has no active channel links.
+    attr_accessor :channels
+
     # Amenity rows for the property. **Only present when the caller passes `?include=amenities`.** Empty array (`[]`) when the property has no amenity rows.
     attr_accessor :amenities
 
@@ -70,6 +73,7 @@ module Repull
         :'max_guests' => :'maxGuests',
         :'thumbnail' => :'thumbnail',
         :'provider' => :'provider',
+        :'channels' => :'channels',
         :'amenities' => :'amenities'
       }
     end
@@ -101,6 +105,7 @@ module Repull
         :'max_guests' => :'Integer',
         :'thumbnail' => :'String',
         :'provider' => :'String',
+        :'channels' => :'Array<String>',
         :'amenities' => :'Array<ListingAmenity>'
       }
     end
@@ -183,6 +188,12 @@ module Repull
         self.provider = attributes[:'provider']
       end
 
+      if attributes.key?(:'channels')
+        if (value = attributes[:'channels']).is_a?(Array)
+          self.channels = value
+        end
+      end
+
       if attributes.key?(:'amenities')
         if (value = attributes[:'amenities']).is_a?(Array)
           self.amenities = value
@@ -224,6 +235,7 @@ module Repull
           max_guests == o.max_guests &&
           thumbnail == o.thumbnail &&
           provider == o.provider &&
+          channels == o.channels &&
           amenities == o.amenities
     end
 
@@ -236,7 +248,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, external_id, name, address, city, state, country, latitude, longitude, bedrooms, bathrooms, max_guests, thumbnail, provider, amenities].hash
+      [id, external_id, name, address, city, state, country, latitude, longitude, bedrooms, bathrooms, max_guests, thumbnail, provider, channels, amenities].hash
     end
 
     # Builds the object from hash

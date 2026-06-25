@@ -98,6 +98,7 @@ module Repull
     # @option opts [String] :q Case-insensitive substring search on name, street, or city.
     # @option opts [String] :status Filter by status. Default returns active only; pass &#x60;inactive&#x60; to invert or &#x60;all&#x60; to include both. (default to 'active')
     # @option opts [String] :lifecycle_status Filter by lifecycle status (e.g. &#x60;live&#x60;, &#x60;draft&#x60;, &#x60;archived&#x60;). Pass &#x60;all&#x60; to disable the filter.
+    # @option opts [String] :channel Filter to properties with an active link on the given OTA/channel (airbnb, booking, vrbo). Omit to include every channel. Each property also returns a &#x60;channels&#x60; array listing the OTAs it is published on.
     # @option opts [Boolean] :include_total When &#x60;true&#x60; (default), the response&#39;s &#x60;pagination.total&#x60; carries the count of rows matching the current filter, across all pages. Pass &#x60;false&#x60; to skip the count for very large workspaces where the per-page COUNT(*) cost matters. (default to true)
     # @return [PropertyListResponse]
     def list_properties(opts = {})
@@ -114,6 +115,7 @@ module Repull
     # @option opts [String] :q Case-insensitive substring search on name, street, or city.
     # @option opts [String] :status Filter by status. Default returns active only; pass &#x60;inactive&#x60; to invert or &#x60;all&#x60; to include both. (default to 'active')
     # @option opts [String] :lifecycle_status Filter by lifecycle status (e.g. &#x60;live&#x60;, &#x60;draft&#x60;, &#x60;archived&#x60;). Pass &#x60;all&#x60; to disable the filter.
+    # @option opts [String] :channel Filter to properties with an active link on the given OTA/channel (airbnb, booking, vrbo). Omit to include every channel. Each property also returns a &#x60;channels&#x60; array listing the OTAs it is published on.
     # @option opts [Boolean] :include_total When &#x60;true&#x60; (default), the response&#39;s &#x60;pagination.total&#x60; carries the count of rows matching the current filter, across all pages. Pass &#x60;false&#x60; to skip the count for very large workspaces where the per-page COUNT(*) cost matters. (default to true)
     # @return [Array<(PropertyListResponse, Integer, Hash)>] PropertyListResponse data, response status code and response headers
     def list_properties_with_http_info(opts = {})
@@ -140,6 +142,10 @@ module Repull
       if @api_client.config.client_side_validation && opts[:'status'] && !allowable_values.include?(opts[:'status'])
         fail ArgumentError, "invalid value for \"status\", must be one of #{allowable_values}"
       end
+      allowable_values = ["airbnb", "booking", "vrbo"]
+      if @api_client.config.client_side_validation && opts[:'channel'] && !allowable_values.include?(opts[:'channel'])
+        fail ArgumentError, "invalid value for \"channel\", must be one of #{allowable_values}"
+      end
       # resource path
       local_var_path = '/v1/properties'
 
@@ -151,6 +157,7 @@ module Repull
       query_params[:'q'] = opts[:'q'] if !opts[:'q'].nil?
       query_params[:'status'] = opts[:'status'] if !opts[:'status'].nil?
       query_params[:'lifecycle_status'] = opts[:'lifecycle_status'] if !opts[:'lifecycle_status'].nil?
+      query_params[:'channel'] = opts[:'channel'] if !opts[:'channel'].nil?
       query_params[:'include_total'] = opts[:'include_total'] if !opts[:'include_total'].nil?
 
       # header parameters
