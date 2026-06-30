@@ -9,6 +9,7 @@
 | **api_key** | **String** | PMS providers — API key. | [optional] |
 | **client_id** | **String** | Plumguide — client ID. | [optional] |
 | **client_secret** | **String** | Plumguide — client secret. | [optional] |
+| **locale** | **String** | Airbnb only — optional UI language for the hosted Connect pages. Accepts any supported locale code (currently &#x60;en&#x60;, &#x60;fr&#x60;); unknown codes are ignored and resolution falls back to the workspace &#x60;default_language&#x60;, then &#x60;Accept-Language&#x60;, then &#x60;en&#x60;. | [optional] |
 
 ## Example
 
@@ -20,7 +21,8 @@ instance = Repull::CreateConnectionRequest.new(
   access_type: null,
   api_key: null,
   client_id: null,
-  client_secret: null
+  client_secret: null,
+  locale: fr
 )
 ```
 

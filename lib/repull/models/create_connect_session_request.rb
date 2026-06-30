@@ -24,12 +24,16 @@ module Repull
     # Optional whitelist of provider IDs the picker should expose. Omit to show every channel in the registry.
     attr_accessor :allowed_providers
 
+    # Optional UI language for the hosted Connect pages. Accepts any supported locale code (currently `en`, `fr`). When set it pins the language for the whole flow, overriding the workspace `default_language`. Unknown codes are ignored and the page falls back to the workspace default, then `Accept-Language`, then `en`. The end user can still override per-visit with a `?locale=` query param on the hosted page.
+    attr_accessor :locale
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
         :'redirect_url' => :'redirectUrl',
         :'state' => :'state',
-        :'allowed_providers' => :'allowedProviders'
+        :'allowed_providers' => :'allowedProviders',
+        :'locale' => :'locale'
       }
     end
 
@@ -48,7 +52,8 @@ module Repull
       {
         :'redirect_url' => :'String',
         :'state' => :'String',
-        :'allowed_providers' => :'Array<String>'
+        :'allowed_providers' => :'Array<String>',
+        :'locale' => :'String'
       }
     end
 
@@ -56,7 +61,8 @@ module Repull
     def self.openapi_nullable
       Set.new([
         :'state',
-        :'allowed_providers'
+        :'allowed_providers',
+        :'locale'
       ])
     end
 
@@ -90,6 +96,10 @@ module Repull
         if (value = attributes[:'allowed_providers']).is_a?(Array)
           self.allowed_providers = value
         end
+      end
+
+      if attributes.key?(:'locale')
+        self.locale = attributes[:'locale']
       end
     end
 
@@ -130,7 +140,8 @@ module Repull
       self.class == o.class &&
           redirect_url == o.redirect_url &&
           state == o.state &&
-          allowed_providers == o.allowed_providers
+          allowed_providers == o.allowed_providers &&
+          locale == o.locale
     end
 
     # @see the `==` method
@@ -142,7 +153,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [redirect_url, state, allowed_providers].hash
+      [redirect_url, state, allowed_providers, locale].hash
     end
 
     # Builds the object from hash

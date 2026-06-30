@@ -31,6 +31,9 @@ module Repull
     # Plumguide — client secret.
     attr_accessor :client_secret
 
+    # Airbnb only — optional UI language for the hosted Connect pages. Accepts any supported locale code (currently `en`, `fr`); unknown codes are ignored and resolution falls back to the workspace `default_language`, then `Accept-Language`, then `en`.
+    attr_accessor :locale
+
     class EnumAttributeValidator
       attr_reader :datatype
       attr_reader :allowable_values
@@ -60,7 +63,8 @@ module Repull
         :'access_type' => :'accessType',
         :'api_key' => :'apiKey',
         :'client_id' => :'clientId',
-        :'client_secret' => :'clientSecret'
+        :'client_secret' => :'clientSecret',
+        :'locale' => :'locale'
       }
     end
 
@@ -81,13 +85,15 @@ module Repull
         :'access_type' => :'String',
         :'api_key' => :'String',
         :'client_id' => :'String',
-        :'client_secret' => :'String'
+        :'client_secret' => :'String',
+        :'locale' => :'String'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'locale'
       ])
     end
 
@@ -128,6 +134,10 @@ module Repull
       if attributes.key?(:'client_secret')
         self.client_secret = attributes[:'client_secret']
       end
+
+      if attributes.key?(:'locale')
+        self.locale = attributes[:'locale']
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -166,7 +176,8 @@ module Repull
           access_type == o.access_type &&
           api_key == o.api_key &&
           client_id == o.client_id &&
-          client_secret == o.client_secret
+          client_secret == o.client_secret &&
+          locale == o.locale
     end
 
     # @see the `==` method
@@ -178,7 +189,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [redirect_url, access_type, api_key, client_id, client_secret].hash
+      [redirect_url, access_type, api_key, client_id, client_secret, locale].hash
     end
 
     # Builds the object from hash
