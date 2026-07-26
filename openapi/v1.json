@@ -3,7 +3,7 @@
   "info": {
     "title": "Repull API",
     "version": "1.0.0",
-    "description": "The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.\n\n## Designed for AI agents\nEvery error response on this API includes machine-parseable fields so an LLM (Claude in MCP, Cursor, Cline, GPT, etc.) can self-recover without escalating to a human:\n- `error.code` \u2014 stable string identifier (e.g. `invalid_params`, `rate_limit_exceeded`)\n- `error.message` \u2014 human-readable cause\n- `error.fix` \u2014 exact recovery steps (e.g. \"Pass `check_in_after` as ISO 8601: `?check_in_after=2026-01-15`\")\n- `error.docs_url` \u2014 link to the canonical write-up at `https://repull.dev/docs/errors/{code}`\n- `error.request_id` \u2014 id to correlate with server-side logs\n- `error.field` / `error.value_received` / `error.valid_values` / `error.did_you_mean` \u2014 when the error is parameter-specific\n- `error.retry_after` \u2014 seconds to wait before retrying (rate-limit + transient upstream)\n\n`Access-Control-Expose-Headers` lists `x-request-id` and the `X-RateLimit-*` family so browsers can read them on cross-origin responses.\n\n## Quick Start\n1. Get an API key at https://repull.dev/dashboard\n2. Connect a PMS: `POST /v1/connect/{provider}`\n3. List properties: `GET /v1/properties`\n4. Get reservations: `GET /v1/reservations`\n\n## Authentication\nAll requests require a Bearer token:\n```\nAuthorization: Bearer sk_test_YOUR_API_KEY\n```\n\nSandbox keys start with `sk_test_`, production with `sk_live_`.\n\n## Request Correlation (X-Request-ID)\nEvery response carries an `X-Request-ID` header, e.g. `X-Request-ID: req_01HXY...`. Include this id in support tickets and bug reports \u2014 we can trace the full request lifecycle (auth, rate limit, handler, downstream calls, log row) from a single id.\n\nYou may set the header on the inbound request to forward your own trace id; we will echo it back instead of generating a new one. Accepted format: `^[\\\\w.-]{1,128}$`.\n\nThe id is also embedded in error envelopes as `request_id` so server-side log diffs work even when the response headers are stripped by an intermediate proxy.\n\n## Rate Limits\nThe public API enforces a per-API-key sliding-window rate limit on top of the per-tier monthly + daily-AI quotas.\n\n**Default policy:** 600 requests per 60 seconds, per API key. Sliding window \u2014 there is no fixed-minute boundary you can burst across.\n\nEvery response includes:\n\n| Header | Meaning |\n|---|---|\n| `X-RateLimit-Limit` | Requests permitted in the current window. |\n| `X-RateLimit-Remaining` | Requests left in the current window after this call. |\n| `X-RateLimit-Reset` | Unix epoch (seconds) when the next slot opens. |\n| `X-RateLimit-Policy` | Machine-readable policy descriptor, e.g. `600;w=60`. |\n| `Retry-After` | Seconds to wait before retrying. **Only present on 429 responses.** |\n\n**On 429 (rate_limit_exceeded):** the response body matches the standard error envelope with `code: \"rate_limit_exceeded\"`, plus `limit`, `window_seconds`, `retry_after`, and `request_id` fields. SDKs MUST honor `Retry-After` and use exponential backoff with jitter on subsequent retries \u2014 never a tight loop.\n\nRecommended backoff:\n```\nsleep_ms = (Retry-After * 1000) + random(0..250)\n```\n\nMonthly + daily-AI tier quotas (`free`, `starter`, `custom`) are enforced separately and also surface as 429s; they include `tier`, `scope`, and `resets_at` fields.\n\n## Plan Limits (402 \u2014 `listings_limit_exceeded`)\nThe Repull API also enforces a per-tier cap on **active listings**:\n\n| Tier | Active listings cap |\n|---|---|\n| `free` | 5 |\n| `starter` | 50 |\n| `custom` | unlimited |\n\nWhen a customer's active-listing count is above their tier cap, the API returns **`402 Payment Required`** with `error.code = \"listings_limit_exceeded\"` on every route EXCEPT:\n\n- `/v1/health` \u2014 uptime probes are never gated.\n- `/v1/usage/*` \u2014 so dashboards can render the over-cap state.\n- Any `DELETE` \u2014 so the customer can trim listings to get back under the cap without paying.\n\nUnlike 429, 402 is NOT a \"wait and retry\" condition \u2014 `Retry-After` is not set. The only paths back to 200 are:\n  1. `DELETE` enough listings to come back under the cap, or\n  2. Upgrade at `https://repull.dev/dashboard/billing`. The server-side usage cache is 60s, so the first 200 after an upgrade may take up to a minute.\n\nThe envelope mirrors `rate_limit_exceeded` for SDK ergonomics: `tier`, `limit`, `active_listings`, `upgrade_url`, plus the standard `code` / `message` / `fix` / `docs_url` / `request_id`.",
+    "description": "The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.\n\n## Designed for AI agents\nEvery error response on this API includes machine-parseable fields so an LLM (Claude in MCP, Cursor, Cline, GPT, etc.) can self-recover without escalating to a human:\n- `error.code` \u2014 stable string identifier (e.g. `invalid_params`, `rate_limit_exceeded`)\n- `error.message` \u2014 human-readable cause\n- `error.fix` \u2014 exact recovery steps (e.g. \"Pass `check_in_after` as ISO 8601: `?check_in_after=2026-01-15`\")\n- `error.docs_url` \u2014 link to the canonical write-up at `https://repull.dev/docs/errors/{code}`\n- `error.request_id` \u2014 id to correlate with server-side logs\n- `error.field` / `error.value_received` / `error.valid_values` / `error.did_you_mean` \u2014 when the error is parameter-specific\n- `error.retry_after` \u2014 seconds to wait before retrying (rate-limit + transient upstream)\n\n`Access-Control-Expose-Headers` lists `x-request-id` and the `X-RateLimit-*` family so browsers can read them on cross-origin responses.\n\n## Quick Start\n1. Get an API key at https://repull.dev/dashboard\n2. Connect a PMS: `POST /v1/connect/{provider}`\n3. List properties: `GET /v1/properties`\n4. Get reservations: `GET /v1/reservations`\n\n## Authentication\nAll requests require a Bearer token:\n```\nAuthorization: Bearer sk_test_YOUR_API_KEY\n```\n\nSandbox keys start with `sk_test_`, production with `sk_live_`.\n\n## Request Correlation (X-Request-ID)\nEvery response carries an `X-Request-ID` header, e.g. `X-Request-ID: req_01HXY...`. Include this id in support tickets and bug reports \u2014 we can trace the full request lifecycle (auth, rate limit, handler, downstream calls, log row) from a single id.\n\nYou may set the header on the inbound request to forward your own trace id; we will echo it back instead of generating a new one. Accepted format: `^[\\\\w.-]{1,128}$`.\n\nThe id is also embedded in error envelopes as `request_id` so server-side log diffs work even when the response headers are stripped by an intermediate proxy.\n\n## Rate Limits\nThe public API enforces a per-API-key sliding-window rate limit on top of the per-tier monthly + daily-AI quotas.\n\n**Default policy:** 600 requests per 60 seconds, per API key. Sliding window \u2014 there is no fixed-minute boundary you can burst across.\n\nEvery response includes:\n\n| Header | Meaning |\n|---|---|\n| `X-RateLimit-Limit` | Requests permitted in the current window. |\n| `X-RateLimit-Remaining` | Requests left in the current window after this call. |\n| `X-RateLimit-Reset` | Unix epoch (seconds) when the next slot opens. |\n| `X-RateLimit-Policy` | Machine-readable policy descriptor, e.g. `600;w=60`. |\n| `Retry-After` | Seconds to wait before retrying. **Only present on 429 responses.** |\n\n**On 429 (rate_limit_exceeded):** the response body matches the standard error envelope with `code: \"rate_limit_exceeded\"`, plus `limit`, `window_seconds`, `retry_after`, and `request_id` fields. SDKs MUST honor `Retry-After` and use exponential backoff with jitter on subsequent retries \u2014 never a tight loop.\n\nRecommended backoff:\n```\nsleep_ms = (Retry-After * 1000) + random(0..250)\n```\n\nMonthly + daily-AI tier quotas (`free`, `starter`, `custom`) are enforced separately and also surface as 429s; they include `tier`, `scope`, and `resets_at` fields.\n\n## Plan Limits (402 \u2014 `listings_limit_exceeded`)\nThe Repull API also enforces a per-tier cap on **active listings**:\n\n| Tier | Active listings cap |\n|---|---|\n| `free` | 3 |\n| `starter` | 50 |\n| `custom` | unlimited |\n\nWhen a customer's active-listing count is above their tier cap, the API returns **`402 Payment Required`** with `error.code = \"listings_limit_exceeded\"` on every route EXCEPT:\n\n- `/v1/health` \u2014 uptime probes are never gated.\n- `/v1/usage/*` \u2014 so dashboards can render the over-cap state.\n- Any `DELETE` \u2014 so the customer can trim listings to get back under the cap without paying.\n\nUnlike 429, 402 is NOT a \"wait and retry\" condition \u2014 `Retry-After` is not set. The only paths back to 200 are:\n  1. `DELETE` enough listings to come back under the cap, or\n  2. Upgrade at `https://repull.dev/dashboard/billing`. The server-side usage cache is 60s, so the first 200 after an upgrade may take up to a minute.\n\nThe envelope mirrors `rate_limit_exceeded` for SDK ergonomics: `tier`, `limit`, `active_listings`, `upgrade_url`, plus the standard `code` / `message` / `fix` / `docs_url` / `request_id`.",
     "contact": {
       "email": "ivan@vanio.ai",
       "url": "https://repull.dev"
@@ -3688,6 +3688,31 @@
           }
         }
       },
+      "ListingActiveRequest": {
+        "type": "object",
+        "required": [
+          "active"
+        ],
+        "properties": {
+          "active": {
+            "type": "boolean",
+            "description": "Target active state. `false` deactivates (excludes) the listing; `true` reactivates it (subject to the plan-listings cap)."
+          }
+        }
+      },
+      "ListingActiveResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The listing id (id fields are serialized as strings to preserve precision)."
+          },
+          "active": {
+            "type": "boolean",
+            "description": "The resulting active state after the toggle."
+          }
+        }
+      },
       "ListingGenerateContentRequest": {
         "type": "object",
         "properties": {
@@ -6286,7 +6311,7 @@
         }
       },
       "PaymentRequired": {
-        "description": "Plan-listings cap exceeded. The customer's active listing count is above the cap of their resolved Repull tier (`free` = 5, `starter` = 50, `custom` = unlimited). Returned on every route except `/v1/health`, `/v1/usage/*`, and any `DELETE` \u2014 these stay served so the customer can read their state, render the over-cap UI, or trim listings to get back under the cap.\n\nDistinct from 429 / `rate_limit_exceeded` \u2014 this is NOT a \"wait and retry\" condition. The only paths back to a 200 are:\n  1. `DELETE` enough listings via `DELETE /v1/listings/{id}` (or the channel-specific listings DELETE) until `active_listings <= limit`.\n  2. Upgrade to a tier with a higher cap at `https://repull.dev/dashboard/billing`. The very next request after the upgrade lands will see the new cap (server-side usage cache is 60s, so allow up to 1 minute for propagation).\n\nNo `Retry-After` header \u2014 backoff doesn't fix this.",
+        "description": "Plan-listings cap exceeded. The customer's active listing count is above the cap of their resolved Repull tier (`free` = 3, `starter` = 50, `custom` = unlimited). Returned on every route except `/v1/health`, `/v1/usage/*`, and any `DELETE` \u2014 these stay served so the customer can read their state, render the over-cap UI, or trim listings to get back under the cap.\n\nDistinct from 429 / `rate_limit_exceeded` \u2014 this is NOT a \"wait and retry\" condition. The only paths back to a 200 are:\n  1. `DELETE` enough listings via `DELETE /v1/listings/{id}` (or the channel-specific listings DELETE) until `active_listings <= limit`.\n  2. Upgrade to a tier with a higher cap at `https://repull.dev/dashboard/billing`. The very next request after the upgrade lands will see the new cap (server-side usage cache is 60s, so allow up to 1 minute for propagation).\n\nNo `Retry-After` header \u2014 backoff doesn't fix this.",
         "content": {
           "application/json": {
             "schema": {
@@ -6294,16 +6319,16 @@
             },
             "examples": {
               "freeTierOverCap": {
-                "summary": "Free tier customer over the 5-listings cap",
+                "summary": "Free tier customer over the 3-listings cap",
                 "value": {
                   "error": {
                     "code": "listings_limit_exceeded",
-                    "message": "Your account has 24 active listings but the 'free' tier is capped at 5. The Repull API only serves accounts whose listing count is within their plan.",
-                    "fix": "Either reduce your active listings to 5 or fewer (via DELETE endpoints \u2014 these are still served), or upgrade your plan at https://repull.dev/dashboard/billing to lift the cap immediately.",
+                    "message": "Your account has 24 active listings but the 'free' tier is capped at 3. The Repull API only serves accounts whose listing count is within their plan.",
+                    "fix": "Either reduce your active listings to 3 or fewer (via DELETE endpoints \u2014 these are still served), or upgrade your plan at https://repull.dev/dashboard/billing to lift the cap immediately.",
                     "docs_url": "https://repull.dev/docs/errors/listings_limit_exceeded",
                     "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                     "tier": "free",
-                    "limit": 5,
+                    "limit": 3,
                     "active_listings": 24,
                     "upgrade_url": "https://repull.dev/dashboard/billing"
                   }
@@ -8696,8 +8721,8 @@
       },
       "post": {
         "operationId": "airbnb_listing_action",
-        "summary": "Listing action (push/publish/unlist/delete)",
-        "description": "Apply a state action to an Airbnb listing \u2014 `push` (sync local changes upstream), `publish` (make publicly bookable), `unlist` (hide), or `delete` (permanent). Each action has different reversibility \u2014 see docs.",
+        "summary": "Listing action (delete/push/publish/unlist)",
+        "description": "Apply a state action to a listing by id.\n\n`delete` is implemented as a **deactivate of the Repull record only** \u2014 it sets the listing inactive and KEEPS the row; it does NOT touch the upstream Airbnb listing (Repull never deletes or deactivates on Airbnb's side). Use it to exclude a listing / trim back under the plan-listings cap; reactivate via `PATCH /v1/listings/{id}` with `{ \"active\": true }`. Idempotent.\n\n`push` (sync local changes upstream), `publish` (make publicly bookable), and `unlist` (hide) depend on the host-side sync orchestrator and currently return 501.",
         "tags": [
           "Airbnb"
         ],
@@ -9390,6 +9415,9 @@
           },
           "400": {
             "$ref": "#/components/responses/BadRequest"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
           }
         }
       }
@@ -9433,6 +9461,99 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Listing"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateListingActive",
+        "summary": "Deactivate or reactivate a listing",
+        "description": "Toggle a listing's active state. Send `{ \"active\": false }` to **deactivate** (exclude the listing from Repull) or `{ \"active\": true }` to **reactivate** it.\n\n\"Deactivate\" keeps the listing row \u2014 it is NOT a hard delete, and it NEVER touches the upstream channel (Airbnb / Hospitable / Booking.com). Repull only mutates its own copy of the inventory. Deactivating is the self-serve way to get back under the plan-listings cap without paying.\n\nReactivation respects the plan-listings cap: if activating this listing would push you over the cap for your tier, the call returns `402 listings_limit_exceeded` and the listing stays inactive. Deactivate another listing or upgrade first.\n\nIdempotent: setting a listing to the state it's already in returns 200.",
+        "tags": [
+          "Listings"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Repull listing id"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListingActiveRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated active state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListingActiveResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deactivateListing",
+        "summary": "Deactivate (exclude) a listing",
+        "description": "Deactivate a listing \u2014 sets it inactive and excludes it from Repull. This is a **soft** operation: the listing row is KEPT (never hard-deleted) and the upstream channel (Airbnb / Hospitable / Booking.com) is NEVER touched. Repull only mutates its own copy.\n\nEquivalent to `PATCH /v1/listings/{id}` with `{ \"active\": false }`. This is the primary self-serve way for a free-tier customer to trim back under the plan-listings cap \u2014 `DELETE` is served even when the account is over the cap (a 402-locked account can still call it). To bring a listing back, use `PATCH` with `{ \"active\": true }`.\n\nIdempotent: deactivating an already-inactive listing returns 200.",
+        "tags": [
+          "Listings"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Repull listing id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Listing deactivated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListingActiveResponse"
                 }
               }
             }

@@ -4,7 +4,7 @@ All URIs are relative to *https://api.repull.dev*
 
 | Method | HTTP request | Description |
 | ------ | ------------ | ----------- |
-| [**airbnb_listing_action**](AirbnbApi.md#airbnb_listing_action) | **POST** /v1/channels/airbnb/listings/{id} | Listing action (push/publish/unlist/delete) |
+| [**airbnb_listing_action**](AirbnbApi.md#airbnb_listing_action) | **POST** /v1/channels/airbnb/listings/{id} | Listing action (delete/push/publish/unlist) |
 | [**airbnb_reservation_action**](AirbnbApi.md#airbnb_reservation_action) | **POST** /v1/channels/airbnb/reservations/{code} | Accept/decline/cancel Airbnb reservation |
 | [**create_airbnb_listing**](AirbnbApi.md#create_airbnb_listing) | **POST** /v1/channels/airbnb/listings | Create/push Airbnb listing |
 | [**edit_airbnb_review**](AirbnbApi.md#edit_airbnb_review) | **PUT** /v1/channels/airbnb/reviews/{id} | Edit Airbnb host review |
@@ -32,9 +32,9 @@ All URIs are relative to *https://api.repull.dev*
 
 > airbnb_listing_action(id)
 
-Listing action (push/publish/unlist/delete)
+Listing action (delete/push/publish/unlist)
 
-Apply a state action to an Airbnb listing — `push` (sync local changes upstream), `publish` (make publicly bookable), `unlist` (hide), or `delete` (permanent). Each action has different reversibility — see docs.
+Apply a state action to a listing by id.  `delete` is implemented as a **deactivate of the Repull record only** — it sets the listing inactive and KEEPS the row; it does NOT touch the upstream Airbnb listing (Repull never deletes or deactivates on Airbnb's side). Use it to exclude a listing / trim back under the plan-listings cap; reactivate via `PATCH /v1/listings/{id}` with `{ \"active\": true }`. Idempotent.  `push` (sync local changes upstream), `publish` (make publicly bookable), and `unlist` (hide) depend on the host-side sync orchestrator and currently return 501.
 
 ### Examples
 
@@ -51,7 +51,7 @@ api_instance = Repull::AirbnbApi.new
 id = 'id_example' # String | 
 
 begin
-  # Listing action (push/publish/unlist/delete)
+  # Listing action (delete/push/publish/unlist)
   api_instance.airbnb_listing_action(id)
 rescue Repull::ApiError => e
   puts "Error when calling AirbnbApi->airbnb_listing_action: #{e}"
@@ -66,7 +66,7 @@ This returns an Array which contains the response data (`nil` in this case), sta
 
 ```ruby
 begin
-  # Listing action (push/publish/unlist/delete)
+  # Listing action (delete/push/publish/unlist)
   data, status_code, headers = api_instance.airbnb_listing_action_with_http_info(id)
   p status_code # => 2xx
   p headers # => { ... }

@@ -5,12 +5,14 @@ All URIs are relative to *https://api.repull.dev*
 | Method | HTTP request | Description |
 | ------ | ------------ | ----------- |
 | [**create_listing**](ListingsApi.md#create_listing) | **POST** /v1/listings | Create a Repull listing |
+| [**deactivate_listing**](ListingsApi.md#deactivate_listing) | **DELETE** /v1/listings/{id} | Deactivate (exclude) a listing |
 | [**generate_listing_content**](ListingsApi.md#generate_listing_content) | **POST** /v1/listings/{id}/generate-content | AI-generate listing content |
 | [**get_listing**](ListingsApi.md#get_listing) | **GET** /v1/listings/{id} | Get a listing |
 | [**get_listing_publish_status**](ListingsApi.md#get_listing_publish_status) | **GET** /v1/listings/{id}/publish-status | Per-channel publish status |
 | [**list_listings**](ListingsApi.md#list_listings) | **GET** /v1/listings | List listings |
 | [**publish_listing_to_airbnb**](ListingsApi.md#publish_listing_to_airbnb) | **POST** /v1/listings/{id}/publish/airbnb | Publish a listing to Airbnb |
 | [**publish_listing_to_booking**](ListingsApi.md#publish_listing_to_booking) | **POST** /v1/listings/{id}/publish/booking | Publish a listing to Booking.com |
+| [**update_listing_active**](ListingsApi.md#update_listing_active) | **PATCH** /v1/listings/{id} | Deactivate or reactivate a listing |
 
 
 ## create_listing
@@ -79,6 +81,75 @@ end
 ### HTTP request headers
 
 - **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## deactivate_listing
+
+> <ListingActiveResponse> deactivate_listing(id)
+
+Deactivate (exclude) a listing
+
+Deactivate a listing — sets it inactive and excludes it from Repull. This is a **soft** operation: the listing row is KEPT (never hard-deleted) and the upstream channel (Airbnb / Hospitable / Booking.com) is NEVER touched. Repull only mutates its own copy.  Equivalent to `PATCH /v1/listings/{id}` with `{ \"active\": false }`. This is the primary self-serve way for a free-tier customer to trim back under the plan-listings cap — `DELETE` is served even when the account is over the cap (a 402-locked account can still call it). To bring a listing back, use `PATCH` with `{ \"active\": true }`.  Idempotent: deactivating an already-inactive listing returns 200.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ListingsApi.new
+id = 56 # Integer | Repull listing id
+
+begin
+  # Deactivate (exclude) a listing
+  result = api_instance.deactivate_listing(id)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ListingsApi->deactivate_listing: #{e}"
+end
+```
+
+#### Using the deactivate_listing_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<ListingActiveResponse>, Integer, Hash)> deactivate_listing_with_http_info(id)
+
+```ruby
+begin
+  # Deactivate (exclude) a listing
+  data, status_code, headers = api_instance.deactivate_listing_with_http_info(id)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <ListingActiveResponse>
+rescue Repull::ApiError => e
+  puts "Error when calling ListingsApi->deactivate_listing_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **Integer** | Repull listing id |  |
+
+### Return type
+
+[**ListingActiveResponse**](ListingActiveResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 
@@ -523,5 +594,76 @@ end
 ### HTTP request headers
 
 - **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## update_listing_active
+
+> <ListingActiveResponse> update_listing_active(id, listing_active_request)
+
+Deactivate or reactivate a listing
+
+Toggle a listing's active state. Send `{ \"active\": false }` to **deactivate** (exclude the listing from Repull) or `{ \"active\": true }` to **reactivate** it.  \"Deactivate\" keeps the listing row — it is NOT a hard delete, and it NEVER touches the upstream channel (Airbnb / Hospitable / Booking.com). Repull only mutates its own copy of the inventory. Deactivating is the self-serve way to get back under the plan-listings cap without paying.  Reactivation respects the plan-listings cap: if activating this listing would push you over the cap for your tier, the call returns `402 listings_limit_exceeded` and the listing stays inactive. Deactivate another listing or upgrade first.  Idempotent: setting a listing to the state it's already in returns 200.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ListingsApi.new
+id = 56 # Integer | Repull listing id
+listing_active_request = Repull::ListingActiveRequest.new({active: false}) # ListingActiveRequest | 
+
+begin
+  # Deactivate or reactivate a listing
+  result = api_instance.update_listing_active(id, listing_active_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ListingsApi->update_listing_active: #{e}"
+end
+```
+
+#### Using the update_listing_active_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<ListingActiveResponse>, Integer, Hash)> update_listing_active_with_http_info(id, listing_active_request)
+
+```ruby
+begin
+  # Deactivate or reactivate a listing
+  data, status_code, headers = api_instance.update_listing_active_with_http_info(id, listing_active_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <ListingActiveResponse>
+rescue Repull::ApiError => e
+  puts "Error when calling ListingsApi->update_listing_active_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **Integer** | Repull listing id |  |
+| **listing_active_request** | [**ListingActiveRequest**](ListingActiveRequest.md) |  |  |
+
+### Return type
+
+[**ListingActiveResponse**](ListingActiveResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
 - **Accept**: application/json
 
