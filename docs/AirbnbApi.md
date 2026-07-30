@@ -4,9 +4,8 @@ All URIs are relative to *https://api.repull.dev*
 
 | Method | HTTP request | Description |
 | ------ | ------------ | ----------- |
-| [**airbnb_listing_action**](AirbnbApi.md#airbnb_listing_action) | **POST** /v1/channels/airbnb/listings/{id} | Listing action (delete/push/publish/unlist) |
+| [**airbnb_listing_action**](AirbnbApi.md#airbnb_listing_action) | **POST** /v1/channels/airbnb/listings/{id} | Listing action (delete/push/publish) |
 | [**airbnb_reservation_action**](AirbnbApi.md#airbnb_reservation_action) | **POST** /v1/channels/airbnb/reservations/{code} | Accept/decline/cancel Airbnb reservation |
-| [**create_airbnb_listing**](AirbnbApi.md#create_airbnb_listing) | **POST** /v1/channels/airbnb/listings | Create/push Airbnb listing |
 | [**edit_airbnb_review**](AirbnbApi.md#edit_airbnb_review) | **PUT** /v1/channels/airbnb/reviews/{id} | Edit Airbnb host review |
 | [**get_airbnb_connection**](AirbnbApi.md#get_airbnb_connection) | **GET** /v1/channels/airbnb/connection | Get Airbnb connection state |
 | [**get_airbnb_listing**](AirbnbApi.md#get_airbnb_listing) | **GET** /v1/channels/airbnb/listings/{id} | Get Airbnb listing |
@@ -19,10 +18,10 @@ All URIs are relative to *https://api.repull.dev*
 | [**list_airbnb_reviews**](AirbnbApi.md#list_airbnb_reviews) | **GET** /v1/channels/airbnb/reviews | List Airbnb reviews |
 | [**list_airbnb_thread_messages**](AirbnbApi.md#list_airbnb_thread_messages) | **GET** /v1/channels/airbnb/messaging/{threadId}/messages | Get Airbnb messages |
 | [**list_airbnb_threads**](AirbnbApi.md#list_airbnb_threads) | **GET** /v1/channels/airbnb/messaging | List Airbnb message threads |
+| [**map_airbnb_listing**](AirbnbApi.md#map_airbnb_listing) | **POST** /v1/channels/airbnb/listings/map | Map an Airbnb listing to a Repull listing |
 | [**respond_airbnb_review**](AirbnbApi.md#respond_airbnb_review) | **POST** /v1/channels/airbnb/reviews/{id}/respond | Respond to Airbnb review |
 | [**respond_airbnb_review_legacy**](AirbnbApi.md#respond_airbnb_review_legacy) | **POST** /v1/channels/airbnb/reviews | Respond to / submit Airbnb review (legacy) |
 | [**send_airbnb_message**](AirbnbApi.md#send_airbnb_message) | **POST** /v1/channels/airbnb/messaging/{threadId}/messages | Send Airbnb message |
-| [**sync_airbnb**](AirbnbApi.md#sync_airbnb) | **POST** /v1/channels/airbnb/sync | Bulk sync to Airbnb |
 | [**update_airbnb_listing_availability**](AirbnbApi.md#update_airbnb_listing_availability) | **PUT** /v1/channels/airbnb/listings/{id}/availability | Update Airbnb availability |
 | [**update_airbnb_listing_pricing**](AirbnbApi.md#update_airbnb_listing_pricing) | **PUT** /v1/channels/airbnb/listings/{id}/pricing | Update Airbnb pricing |
 | [**upload_airbnb_listing_photos**](AirbnbApi.md#upload_airbnb_listing_photos) | **POST** /v1/channels/airbnb/listings/{id}/photos | Upload photos to Airbnb |
@@ -30,11 +29,11 @@ All URIs are relative to *https://api.repull.dev*
 
 ## airbnb_listing_action
 
-> airbnb_listing_action(id)
+> airbnb_listing_action(id, opts)
 
-Listing action (delete/push/publish/unlist)
+Listing action (delete/push/publish)
 
-Apply a state action to a listing by id.  `delete` is implemented as a **deactivate of the Repull record only** — it sets the listing inactive and KEEPS the row; it does NOT touch the upstream Airbnb listing (Repull never deletes or deactivates on Airbnb's side). Use it to exclude a listing / trim back under the plan-listings cap; reactivate via `PATCH /v1/listings/{id}` with `{ \"active\": true }`. Idempotent.  `push` (sync local changes upstream), `publish` (make publicly bookable), and `unlist` (hide) depend on the host-side sync orchestrator and currently return 501.
+Apply a state action to a listing by id. The path `id` is the canonical Repull listing id.  `delete` is a **deactivate of the Repull record only** — it sets the listing inactive and KEEPS the row; it does NOT touch the upstream Airbnb listing (Repull never deletes or deactivates on Airbnb's side). Use it to exclude a listing / trim back under the plan-listings cap; reactivate via `PATCH /v1/listings/{id}` with `{ \"active\": true }`. Idempotent.  `push` / `publish` push the listing's content to Airbnb via the same host-side sync orchestrator as `POST /v1/listings/{id}/publish/airbnb` — pass `airbnbConnectionId` to update an already-mapped Airbnb listing, or `hostId` to create + publish a new one under that host. `force` re-pushes every field, ignoring dirty-field tracking.  Any other action (e.g. `pull`, `unlist`) returns a structured 422 naming the supported actions.
 
 ### Examples
 
@@ -49,10 +48,13 @@ end
 
 api_instance = Repull::AirbnbApi.new
 id = 'id_example' # String | 
+opts = {
+  airbnb_listing_action_request: Repull::AirbnbListingActionRequest.new({action: 'action_example'}) # AirbnbListingActionRequest | 
+}
 
 begin
-  # Listing action (delete/push/publish/unlist)
-  api_instance.airbnb_listing_action(id)
+  # Listing action (delete/push/publish)
+  api_instance.airbnb_listing_action(id, opts)
 rescue Repull::ApiError => e
   puts "Error when calling AirbnbApi->airbnb_listing_action: #{e}"
 end
@@ -62,12 +64,12 @@ end
 
 This returns an Array which contains the response data (`nil` in this case), status code and headers.
 
-> <Array(nil, Integer, Hash)> airbnb_listing_action_with_http_info(id)
+> <Array(nil, Integer, Hash)> airbnb_listing_action_with_http_info(id, opts)
 
 ```ruby
 begin
-  # Listing action (delete/push/publish/unlist)
-  data, status_code, headers = api_instance.airbnb_listing_action_with_http_info(id)
+  # Listing action (delete/push/publish)
+  data, status_code, headers = api_instance.airbnb_listing_action_with_http_info(id, opts)
   p status_code # => 2xx
   p headers # => { ... }
   p data # => nil
@@ -81,6 +83,7 @@ end
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **id** | **String** |  |  |
+| **airbnb_listing_action_request** | [**AirbnbListingActionRequest**](AirbnbListingActionRequest.md) |  | [optional] |
 
 ### Return type
 
@@ -92,8 +95,8 @@ nil (empty response body)
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Content-Type**: application/json
+- **Accept**: application/json
 
 
 ## airbnb_reservation_action
@@ -162,72 +165,6 @@ nil (empty response body)
 
 - **Content-Type**: Not defined
 - **Accept**: Not defined
-
-
-## create_airbnb_listing
-
-> <AirbnbListing> create_airbnb_listing
-
-Create/push Airbnb listing
-
-Create a new Airbnb listing or push an existing Repull listing to Airbnb. Requires a connected Airbnb account. Returns the created listing id; publishing happens via the listing-action endpoint.
-
-### Examples
-
-```ruby
-require 'time'
-require 'repull'
-# setup authorization
-Repull.configure do |config|
-  # Configure Bearer authorization (API Key): bearerAuth
-  config.access_token = 'YOUR_BEARER_TOKEN'
-end
-
-api_instance = Repull::AirbnbApi.new
-
-begin
-  # Create/push Airbnb listing
-  result = api_instance.create_airbnb_listing
-  p result
-rescue Repull::ApiError => e
-  puts "Error when calling AirbnbApi->create_airbnb_listing: #{e}"
-end
-```
-
-#### Using the create_airbnb_listing_with_http_info variant
-
-This returns an Array which contains the response data, status code and headers.
-
-> <Array(<AirbnbListing>, Integer, Hash)> create_airbnb_listing_with_http_info
-
-```ruby
-begin
-  # Create/push Airbnb listing
-  data, status_code, headers = api_instance.create_airbnb_listing_with_http_info
-  p status_code # => 2xx
-  p headers # => { ... }
-  p data # => <AirbnbListing>
-rescue Repull::ApiError => e
-  puts "Error when calling AirbnbApi->create_airbnb_listing_with_http_info: #{e}"
-end
-```
-
-### Parameters
-
-This endpoint does not need any parameter.
-
-### Return type
-
-[**AirbnbListing**](AirbnbListing.md)
-
-### Authorization
-
-[bearerAuth](../README.md#bearerAuth)
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
 
 
 ## edit_airbnb_review
@@ -1070,6 +1007,75 @@ This endpoint does not need any parameter.
 - **Accept**: application/json
 
 
+## map_airbnb_listing
+
+> <MapAirbnbListingResponse> map_airbnb_listing(map_airbnb_listing_request)
+
+Map an Airbnb listing to a Repull listing
+
+Link an existing Airbnb listing to a canonical Repull listing/property. **API-key-scoped** (unlike the Booking room mapping, which is Connect-session-scoped).  Discover the `airbnbId` (+ `hostId`) via `GET /v1/channels/airbnb/listings`, then re-point it at the `listingId` of your choice — the dedup / consolidation case where the Airbnb sync auto-created its own listing but you want the inventory under an existing property.  Repoints both the Airbnb record and its platform link to the target listing in one transaction. Idempotent — re-mapping to the same listing is a 200 no-op (`alreadyMapped: true`). Scope is enforced against your workspace on both the target listing and the existing Airbnb record; a listing that already links a different Airbnb listing returns 409.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::AirbnbApi.new
+map_airbnb_listing_request = Repull::MapAirbnbListingRequest.new({airbnb_id: 'airbnb_id_example', listing_id: 37}) # MapAirbnbListingRequest | 
+
+begin
+  # Map an Airbnb listing to a Repull listing
+  result = api_instance.map_airbnb_listing(map_airbnb_listing_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->map_airbnb_listing: #{e}"
+end
+```
+
+#### Using the map_airbnb_listing_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<MapAirbnbListingResponse>, Integer, Hash)> map_airbnb_listing_with_http_info(map_airbnb_listing_request)
+
+```ruby
+begin
+  # Map an Airbnb listing to a Repull listing
+  data, status_code, headers = api_instance.map_airbnb_listing_with_http_info(map_airbnb_listing_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <MapAirbnbListingResponse>
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->map_airbnb_listing_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **map_airbnb_listing_request** | [**MapAirbnbListingRequest**](MapAirbnbListingRequest.md) |  |  |
+
+### Return type
+
+[**MapAirbnbListingResponse**](MapAirbnbListingResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
 ## respond_airbnb_review
 
 > <AirbnbReview> respond_airbnb_review(id, respond_airbnb_review_request)
@@ -1274,78 +1280,13 @@ nil (empty response body)
 - **Accept**: Not defined
 
 
-## sync_airbnb
-
-> sync_airbnb
-
-Bulk sync to Airbnb
-
-Push all property data to Airbnb in one call.
-
-### Examples
-
-```ruby
-require 'time'
-require 'repull'
-# setup authorization
-Repull.configure do |config|
-  # Configure Bearer authorization (API Key): bearerAuth
-  config.access_token = 'YOUR_BEARER_TOKEN'
-end
-
-api_instance = Repull::AirbnbApi.new
-
-begin
-  # Bulk sync to Airbnb
-  api_instance.sync_airbnb
-rescue Repull::ApiError => e
-  puts "Error when calling AirbnbApi->sync_airbnb: #{e}"
-end
-```
-
-#### Using the sync_airbnb_with_http_info variant
-
-This returns an Array which contains the response data (`nil` in this case), status code and headers.
-
-> <Array(nil, Integer, Hash)> sync_airbnb_with_http_info
-
-```ruby
-begin
-  # Bulk sync to Airbnb
-  data, status_code, headers = api_instance.sync_airbnb_with_http_info
-  p status_code # => 2xx
-  p headers # => { ... }
-  p data # => nil
-rescue Repull::ApiError => e
-  puts "Error when calling AirbnbApi->sync_airbnb_with_http_info: #{e}"
-end
-```
-
-### Parameters
-
-This endpoint does not need any parameter.
-
-### Return type
-
-nil (empty response body)
-
-### Authorization
-
-[bearerAuth](../README.md#bearerAuth)
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: Not defined
-
-
 ## update_airbnb_listing_availability
 
-> update_airbnb_listing_availability(id)
+> update_airbnb_listing_availability(id, airbnb_availability_write_request)
 
 Update Airbnb availability
 
-Push per-day availability + pricing overrides to Airbnb. Accepts a sparse map (date → fields) — only included dates are updated.
+Push availability + restrictions to Airbnb. `type: \"calendar\"` writes per-date restrictions — min/max nights, closed-to-arrival, closed-to-departure, and stop-sell (`availability: \"unavailable\"`) — via a batch of operations that each target either a date range or an explicit date list. `type: \"rules\"` writes listing-level availability rules (default min/max nights, booking lead time, turnover days, seasonal/day-of-week min nights). Restrictions never leak across channels — this endpoint writes only to Airbnb.
 
 ### Examples
 
@@ -1360,10 +1301,11 @@ end
 
 api_instance = Repull::AirbnbApi.new
 id = 'id_example' # String | 
+airbnb_availability_write_request = Repull::AirbnbAvailabilityWriteRequest.new({type: 'type_example'}) # AirbnbAvailabilityWriteRequest | 
 
 begin
   # Update Airbnb availability
-  api_instance.update_airbnb_listing_availability(id)
+  api_instance.update_airbnb_listing_availability(id, airbnb_availability_write_request)
 rescue Repull::ApiError => e
   puts "Error when calling AirbnbApi->update_airbnb_listing_availability: #{e}"
 end
@@ -1373,12 +1315,12 @@ end
 
 This returns an Array which contains the response data (`nil` in this case), status code and headers.
 
-> <Array(nil, Integer, Hash)> update_airbnb_listing_availability_with_http_info(id)
+> <Array(nil, Integer, Hash)> update_airbnb_listing_availability_with_http_info(id, airbnb_availability_write_request)
 
 ```ruby
 begin
   # Update Airbnb availability
-  data, status_code, headers = api_instance.update_airbnb_listing_availability_with_http_info(id)
+  data, status_code, headers = api_instance.update_airbnb_listing_availability_with_http_info(id, airbnb_availability_write_request)
   p status_code # => 2xx
   p headers # => { ... }
   p data # => nil
@@ -1392,6 +1334,7 @@ end
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **id** | **String** |  |  |
+| **airbnb_availability_write_request** | [**AirbnbAvailabilityWriteRequest**](AirbnbAvailabilityWriteRequest.md) |  |  |
 
 ### Return type
 
@@ -1403,17 +1346,17 @@ nil (empty response body)
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
+- **Content-Type**: application/json
 - **Accept**: Not defined
 
 
 ## update_airbnb_listing_pricing
 
-> update_airbnb_listing_pricing(id)
+> update_airbnb_listing_pricing(id, airbnb_pricing_write_request)
 
 Update Airbnb pricing
 
-Push pricing changes to Airbnb. The full pricing object is replaced — to patch a single field, GET first, mutate locally, then PUT the whole object.
+Push pricing changes to Airbnb. The `type` discriminator selects the sub-resource (model, standard settings, LOS, rate-plan, fees, currency, rule, or per-date `calendar`). `type: \"calendar\"` carries the full per-date restriction set — nightly price, min/max nights, closed-to-arrival, closed-to-departure, and stop-sell (`availability: \"unavailable\"`). For settings sub-resources the full object is replaced — GET first, mutate locally, then PUT the whole object.
 
 ### Examples
 
@@ -1428,10 +1371,11 @@ end
 
 api_instance = Repull::AirbnbApi.new
 id = 'id_example' # String | 
+airbnb_pricing_write_request = Repull::AirbnbPricingWriteRequest.new({type: 'type_example'}) # AirbnbPricingWriteRequest | 
 
 begin
   # Update Airbnb pricing
-  api_instance.update_airbnb_listing_pricing(id)
+  api_instance.update_airbnb_listing_pricing(id, airbnb_pricing_write_request)
 rescue Repull::ApiError => e
   puts "Error when calling AirbnbApi->update_airbnb_listing_pricing: #{e}"
 end
@@ -1441,12 +1385,12 @@ end
 
 This returns an Array which contains the response data (`nil` in this case), status code and headers.
 
-> <Array(nil, Integer, Hash)> update_airbnb_listing_pricing_with_http_info(id)
+> <Array(nil, Integer, Hash)> update_airbnb_listing_pricing_with_http_info(id, airbnb_pricing_write_request)
 
 ```ruby
 begin
   # Update Airbnb pricing
-  data, status_code, headers = api_instance.update_airbnb_listing_pricing_with_http_info(id)
+  data, status_code, headers = api_instance.update_airbnb_listing_pricing_with_http_info(id, airbnb_pricing_write_request)
   p status_code # => 2xx
   p headers # => { ... }
   p data # => nil
@@ -1460,6 +1404,7 @@ end
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **id** | **String** |  |  |
+| **airbnb_pricing_write_request** | [**AirbnbPricingWriteRequest**](AirbnbPricingWriteRequest.md) |  |  |
 
 ### Return type
 
@@ -1471,7 +1416,7 @@ nil (empty response body)
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
+- **Content-Type**: application/json
 - **Accept**: Not defined
 
 

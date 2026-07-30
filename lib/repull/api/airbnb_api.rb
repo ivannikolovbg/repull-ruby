@@ -19,20 +19,22 @@ module Repull
     def initialize(api_client = ApiClient.default)
       @api_client = api_client
     end
-    # Listing action (delete/push/publish/unlist)
-    # Apply a state action to a listing by id.  `delete` is implemented as a **deactivate of the Repull record only** — it sets the listing inactive and KEEPS the row; it does NOT touch the upstream Airbnb listing (Repull never deletes or deactivates on Airbnb's side). Use it to exclude a listing / trim back under the plan-listings cap; reactivate via `PATCH /v1/listings/{id}` with `{ \"active\": true }`. Idempotent.  `push` (sync local changes upstream), `publish` (make publicly bookable), and `unlist` (hide) depend on the host-side sync orchestrator and currently return 501.
+    # Listing action (delete/push/publish)
+    # Apply a state action to a listing by id. The path `id` is the canonical Repull listing id.  `delete` is a **deactivate of the Repull record only** — it sets the listing inactive and KEEPS the row; it does NOT touch the upstream Airbnb listing (Repull never deletes or deactivates on Airbnb's side). Use it to exclude a listing / trim back under the plan-listings cap; reactivate via `PATCH /v1/listings/{id}` with `{ \"active\": true }`. Idempotent.  `push` / `publish` push the listing's content to Airbnb via the same host-side sync orchestrator as `POST /v1/listings/{id}/publish/airbnb` — pass `airbnbConnectionId` to update an already-mapped Airbnb listing, or `hostId` to create + publish a new one under that host. `force` re-pushes every field, ignoring dirty-field tracking.  Any other action (e.g. `pull`, `unlist`) returns a structured 422 naming the supported actions.
     # @param id [String] 
     # @param [Hash] opts the optional parameters
+    # @option opts [AirbnbListingActionRequest] :airbnb_listing_action_request 
     # @return [nil]
     def airbnb_listing_action(id, opts = {})
       airbnb_listing_action_with_http_info(id, opts)
       nil
     end
 
-    # Listing action (delete/push/publish/unlist)
-    # Apply a state action to a listing by id.  &#x60;delete&#x60; is implemented as a **deactivate of the Repull record only** — it sets the listing inactive and KEEPS the row; it does NOT touch the upstream Airbnb listing (Repull never deletes or deactivates on Airbnb&#39;s side). Use it to exclude a listing / trim back under the plan-listings cap; reactivate via &#x60;PATCH /v1/listings/{id}&#x60; with &#x60;{ \&quot;active\&quot;: true }&#x60;. Idempotent.  &#x60;push&#x60; (sync local changes upstream), &#x60;publish&#x60; (make publicly bookable), and &#x60;unlist&#x60; (hide) depend on the host-side sync orchestrator and currently return 501.
+    # Listing action (delete/push/publish)
+    # Apply a state action to a listing by id. The path &#x60;id&#x60; is the canonical Repull listing id.  &#x60;delete&#x60; is a **deactivate of the Repull record only** — it sets the listing inactive and KEEPS the row; it does NOT touch the upstream Airbnb listing (Repull never deletes or deactivates on Airbnb&#39;s side). Use it to exclude a listing / trim back under the plan-listings cap; reactivate via &#x60;PATCH /v1/listings/{id}&#x60; with &#x60;{ \&quot;active\&quot;: true }&#x60;. Idempotent.  &#x60;push&#x60; / &#x60;publish&#x60; push the listing&#39;s content to Airbnb via the same host-side sync orchestrator as &#x60;POST /v1/listings/{id}/publish/airbnb&#x60; — pass &#x60;airbnbConnectionId&#x60; to update an already-mapped Airbnb listing, or &#x60;hostId&#x60; to create + publish a new one under that host. &#x60;force&#x60; re-pushes every field, ignoring dirty-field tracking.  Any other action (e.g. &#x60;pull&#x60;, &#x60;unlist&#x60;) returns a structured 422 naming the supported actions.
     # @param id [String] 
     # @param [Hash] opts the optional parameters
+    # @option opts [AirbnbListingActionRequest] :airbnb_listing_action_request 
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
     def airbnb_listing_action_with_http_info(id, opts = {})
       if @api_client.config.debugging
@@ -50,12 +52,19 @@ module Repull
 
       # header parameters
       header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
 
       # form parameters
       form_params = opts[:form_params] || {}
 
       # http body (model)
-      post_body = opts[:debug_body]
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(opts[:'airbnb_listing_action_request'])
 
       # return_type
       return_type = opts[:debug_return_type]
@@ -137,63 +146,6 @@ module Repull
       data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: AirbnbApi#airbnb_reservation_action\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
-      end
-      return data, status_code, headers
-    end
-
-    # Create/push Airbnb listing
-    # Create a new Airbnb listing or push an existing Repull listing to Airbnb. Requires a connected Airbnb account. Returns the created listing id; publishing happens via the listing-action endpoint.
-    # @param [Hash] opts the optional parameters
-    # @return [AirbnbListing]
-    def create_airbnb_listing(opts = {})
-      data, _status_code, _headers = create_airbnb_listing_with_http_info(opts)
-      data
-    end
-
-    # Create/push Airbnb listing
-    # Create a new Airbnb listing or push an existing Repull listing to Airbnb. Requires a connected Airbnb account. Returns the created listing id; publishing happens via the listing-action endpoint.
-    # @param [Hash] opts the optional parameters
-    # @return [Array<(AirbnbListing, Integer, Hash)>] AirbnbListing data, response status code and response headers
-    def create_airbnb_listing_with_http_info(opts = {})
-      if @api_client.config.debugging
-        @api_client.config.logger.debug 'Calling API: AirbnbApi.create_airbnb_listing ...'
-      end
-      # resource path
-      local_var_path = '/v1/channels/airbnb/listings'
-
-      # query parameters
-      query_params = opts[:query_params] || {}
-
-      # header parameters
-      header_params = opts[:header_params] || {}
-      # HTTP header 'Accept' (if needed)
-      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
-
-      # form parameters
-      form_params = opts[:form_params] || {}
-
-      # http body (model)
-      post_body = opts[:debug_body]
-
-      # return_type
-      return_type = opts[:debug_return_type] || 'AirbnbListing'
-
-      # auth_names
-      auth_names = opts[:debug_auth_names] || ['bearerAuth']
-
-      new_options = opts.merge(
-        :operation => :"AirbnbApi.create_airbnb_listing",
-        :header_params => header_params,
-        :query_params => query_params,
-        :form_params => form_params,
-        :body => post_body,
-        :auth_names => auth_names,
-        :return_type => return_type
-      )
-
-      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
-      if @api_client.config.debugging
-        @api_client.config.logger.debug "API called: AirbnbApi#create_airbnb_listing\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end
@@ -979,6 +931,74 @@ module Repull
       return data, status_code, headers
     end
 
+    # Map an Airbnb listing to a Repull listing
+    # Link an existing Airbnb listing to a canonical Repull listing/property. **API-key-scoped** (unlike the Booking room mapping, which is Connect-session-scoped).  Discover the `airbnbId` (+ `hostId`) via `GET /v1/channels/airbnb/listings`, then re-point it at the `listingId` of your choice — the dedup / consolidation case where the Airbnb sync auto-created its own listing but you want the inventory under an existing property.  Repoints both the Airbnb record and its platform link to the target listing in one transaction. Idempotent — re-mapping to the same listing is a 200 no-op (`alreadyMapped: true`). Scope is enforced against your workspace on both the target listing and the existing Airbnb record; a listing that already links a different Airbnb listing returns 409.
+    # @param map_airbnb_listing_request [MapAirbnbListingRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [MapAirbnbListingResponse]
+    def map_airbnb_listing(map_airbnb_listing_request, opts = {})
+      data, _status_code, _headers = map_airbnb_listing_with_http_info(map_airbnb_listing_request, opts)
+      data
+    end
+
+    # Map an Airbnb listing to a Repull listing
+    # Link an existing Airbnb listing to a canonical Repull listing/property. **API-key-scoped** (unlike the Booking room mapping, which is Connect-session-scoped).  Discover the &#x60;airbnbId&#x60; (+ &#x60;hostId&#x60;) via &#x60;GET /v1/channels/airbnb/listings&#x60;, then re-point it at the &#x60;listingId&#x60; of your choice — the dedup / consolidation case where the Airbnb sync auto-created its own listing but you want the inventory under an existing property.  Repoints both the Airbnb record and its platform link to the target listing in one transaction. Idempotent — re-mapping to the same listing is a 200 no-op (&#x60;alreadyMapped: true&#x60;). Scope is enforced against your workspace on both the target listing and the existing Airbnb record; a listing that already links a different Airbnb listing returns 409.
+    # @param map_airbnb_listing_request [MapAirbnbListingRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(MapAirbnbListingResponse, Integer, Hash)>] MapAirbnbListingResponse data, response status code and response headers
+    def map_airbnb_listing_with_http_info(map_airbnb_listing_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: AirbnbApi.map_airbnb_listing ...'
+      end
+      # verify the required parameter 'map_airbnb_listing_request' is set
+      if @api_client.config.client_side_validation && map_airbnb_listing_request.nil?
+        fail ArgumentError, "Missing the required parameter 'map_airbnb_listing_request' when calling AirbnbApi.map_airbnb_listing"
+      end
+      # resource path
+      local_var_path = '/v1/channels/airbnb/listings/map'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(map_airbnb_listing_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'MapAirbnbListingResponse'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"AirbnbApi.map_airbnb_listing",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: AirbnbApi#map_airbnb_listing\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # Respond to Airbnb review
     # Post a public host response to a guest review. Airbnb allows one response per review — repeated POSTs return 409. Response text is capped at 1000 characters.
     # @param id [String] Airbnb review id.
@@ -1169,83 +1189,34 @@ module Repull
       return data, status_code, headers
     end
 
-    # Bulk sync to Airbnb
-    # Push all property data to Airbnb in one call.
-    # @param [Hash] opts the optional parameters
-    # @return [nil]
-    def sync_airbnb(opts = {})
-      sync_airbnb_with_http_info(opts)
-      nil
-    end
-
-    # Bulk sync to Airbnb
-    # Push all property data to Airbnb in one call.
-    # @param [Hash] opts the optional parameters
-    # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
-    def sync_airbnb_with_http_info(opts = {})
-      if @api_client.config.debugging
-        @api_client.config.logger.debug 'Calling API: AirbnbApi.sync_airbnb ...'
-      end
-      # resource path
-      local_var_path = '/v1/channels/airbnb/sync'
-
-      # query parameters
-      query_params = opts[:query_params] || {}
-
-      # header parameters
-      header_params = opts[:header_params] || {}
-
-      # form parameters
-      form_params = opts[:form_params] || {}
-
-      # http body (model)
-      post_body = opts[:debug_body]
-
-      # return_type
-      return_type = opts[:debug_return_type]
-
-      # auth_names
-      auth_names = opts[:debug_auth_names] || ['bearerAuth']
-
-      new_options = opts.merge(
-        :operation => :"AirbnbApi.sync_airbnb",
-        :header_params => header_params,
-        :query_params => query_params,
-        :form_params => form_params,
-        :body => post_body,
-        :auth_names => auth_names,
-        :return_type => return_type
-      )
-
-      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
-      if @api_client.config.debugging
-        @api_client.config.logger.debug "API called: AirbnbApi#sync_airbnb\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
-      end
-      return data, status_code, headers
-    end
-
     # Update Airbnb availability
-    # Push per-day availability + pricing overrides to Airbnb. Accepts a sparse map (date → fields) — only included dates are updated.
+    # Push availability + restrictions to Airbnb. `type: \"calendar\"` writes per-date restrictions — min/max nights, closed-to-arrival, closed-to-departure, and stop-sell (`availability: \"unavailable\"`) — via a batch of operations that each target either a date range or an explicit date list. `type: \"rules\"` writes listing-level availability rules (default min/max nights, booking lead time, turnover days, seasonal/day-of-week min nights). Restrictions never leak across channels — this endpoint writes only to Airbnb.
     # @param id [String] 
+    # @param airbnb_availability_write_request [AirbnbAvailabilityWriteRequest] 
     # @param [Hash] opts the optional parameters
     # @return [nil]
-    def update_airbnb_listing_availability(id, opts = {})
-      update_airbnb_listing_availability_with_http_info(id, opts)
+    def update_airbnb_listing_availability(id, airbnb_availability_write_request, opts = {})
+      update_airbnb_listing_availability_with_http_info(id, airbnb_availability_write_request, opts)
       nil
     end
 
     # Update Airbnb availability
-    # Push per-day availability + pricing overrides to Airbnb. Accepts a sparse map (date → fields) — only included dates are updated.
+    # Push availability + restrictions to Airbnb. &#x60;type: \&quot;calendar\&quot;&#x60; writes per-date restrictions — min/max nights, closed-to-arrival, closed-to-departure, and stop-sell (&#x60;availability: \&quot;unavailable\&quot;&#x60;) — via a batch of operations that each target either a date range or an explicit date list. &#x60;type: \&quot;rules\&quot;&#x60; writes listing-level availability rules (default min/max nights, booking lead time, turnover days, seasonal/day-of-week min nights). Restrictions never leak across channels — this endpoint writes only to Airbnb.
     # @param id [String] 
+    # @param airbnb_availability_write_request [AirbnbAvailabilityWriteRequest] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
-    def update_airbnb_listing_availability_with_http_info(id, opts = {})
+    def update_airbnb_listing_availability_with_http_info(id, airbnb_availability_write_request, opts = {})
       if @api_client.config.debugging
         @api_client.config.logger.debug 'Calling API: AirbnbApi.update_airbnb_listing_availability ...'
       end
       # verify the required parameter 'id' is set
       if @api_client.config.client_side_validation && id.nil?
         fail ArgumentError, "Missing the required parameter 'id' when calling AirbnbApi.update_airbnb_listing_availability"
+      end
+      # verify the required parameter 'airbnb_availability_write_request' is set
+      if @api_client.config.client_side_validation && airbnb_availability_write_request.nil?
+        fail ArgumentError, "Missing the required parameter 'airbnb_availability_write_request' when calling AirbnbApi.update_airbnb_listing_availability"
       end
       # resource path
       local_var_path = '/v1/channels/airbnb/listings/{id}/availability'.sub('{id}', CGI.escape(id.to_s))
@@ -1255,12 +1226,17 @@ module Repull
 
       # header parameters
       header_params = opts[:header_params] || {}
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
 
       # form parameters
       form_params = opts[:form_params] || {}
 
       # http body (model)
-      post_body = opts[:debug_body]
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(airbnb_availability_write_request)
 
       # return_type
       return_type = opts[:debug_return_type]
@@ -1286,27 +1262,33 @@ module Repull
     end
 
     # Update Airbnb pricing
-    # Push pricing changes to Airbnb. The full pricing object is replaced — to patch a single field, GET first, mutate locally, then PUT the whole object.
+    # Push pricing changes to Airbnb. The `type` discriminator selects the sub-resource (model, standard settings, LOS, rate-plan, fees, currency, rule, or per-date `calendar`). `type: \"calendar\"` carries the full per-date restriction set — nightly price, min/max nights, closed-to-arrival, closed-to-departure, and stop-sell (`availability: \"unavailable\"`). For settings sub-resources the full object is replaced — GET first, mutate locally, then PUT the whole object.
     # @param id [String] 
+    # @param airbnb_pricing_write_request [AirbnbPricingWriteRequest] 
     # @param [Hash] opts the optional parameters
     # @return [nil]
-    def update_airbnb_listing_pricing(id, opts = {})
-      update_airbnb_listing_pricing_with_http_info(id, opts)
+    def update_airbnb_listing_pricing(id, airbnb_pricing_write_request, opts = {})
+      update_airbnb_listing_pricing_with_http_info(id, airbnb_pricing_write_request, opts)
       nil
     end
 
     # Update Airbnb pricing
-    # Push pricing changes to Airbnb. The full pricing object is replaced — to patch a single field, GET first, mutate locally, then PUT the whole object.
+    # Push pricing changes to Airbnb. The &#x60;type&#x60; discriminator selects the sub-resource (model, standard settings, LOS, rate-plan, fees, currency, rule, or per-date &#x60;calendar&#x60;). &#x60;type: \&quot;calendar\&quot;&#x60; carries the full per-date restriction set — nightly price, min/max nights, closed-to-arrival, closed-to-departure, and stop-sell (&#x60;availability: \&quot;unavailable\&quot;&#x60;). For settings sub-resources the full object is replaced — GET first, mutate locally, then PUT the whole object.
     # @param id [String] 
+    # @param airbnb_pricing_write_request [AirbnbPricingWriteRequest] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
-    def update_airbnb_listing_pricing_with_http_info(id, opts = {})
+    def update_airbnb_listing_pricing_with_http_info(id, airbnb_pricing_write_request, opts = {})
       if @api_client.config.debugging
         @api_client.config.logger.debug 'Calling API: AirbnbApi.update_airbnb_listing_pricing ...'
       end
       # verify the required parameter 'id' is set
       if @api_client.config.client_side_validation && id.nil?
         fail ArgumentError, "Missing the required parameter 'id' when calling AirbnbApi.update_airbnb_listing_pricing"
+      end
+      # verify the required parameter 'airbnb_pricing_write_request' is set
+      if @api_client.config.client_side_validation && airbnb_pricing_write_request.nil?
+        fail ArgumentError, "Missing the required parameter 'airbnb_pricing_write_request' when calling AirbnbApi.update_airbnb_listing_pricing"
       end
       # resource path
       local_var_path = '/v1/channels/airbnb/listings/{id}/pricing'.sub('{id}', CGI.escape(id.to_s))
@@ -1316,12 +1298,17 @@ module Repull
 
       # header parameters
       header_params = opts[:header_params] || {}
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
 
       # form parameters
       form_params = opts[:form_params] || {}
 
       # http body (model)
-      post_body = opts[:debug_body]
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(airbnb_pricing_write_request)
 
       # return_type
       return_type = opts[:debug_return_type]

@@ -5,7 +5,6 @@ All URIs are relative to *https://api.repull.dev*
 | Method | HTTP request | Description |
 | ------ | ------------ | ----------- |
 | [**create_billing_checkout**](BillingApi.md#create_billing_checkout) | **POST** /v1/billing | Create checkout session |
-| [**get_billing**](BillingApi.md#get_billing) | **GET** /v1/billing | Get plan and usage |
 
 
 ## create_billing_checkout
@@ -75,70 +74,5 @@ nil (empty response body)
 ### HTTP request headers
 
 - **Content-Type**: application/json
-- **Accept**: Not defined
-
-
-## get_billing
-
-> get_billing
-
-Get plan and usage
-
-Fetch the current plan, usage counters, and billing-cycle reset date for this workspace. Use this to surface a \"you have used X / Y\" indicator in your dashboard.
-
-### Examples
-
-```ruby
-require 'time'
-require 'repull'
-# setup authorization
-Repull.configure do |config|
-  # Configure Bearer authorization (API Key): bearerAuth
-  config.access_token = 'YOUR_BEARER_TOKEN'
-end
-
-api_instance = Repull::BillingApi.new
-
-begin
-  # Get plan and usage
-  api_instance.get_billing
-rescue Repull::ApiError => e
-  puts "Error when calling BillingApi->get_billing: #{e}"
-end
-```
-
-#### Using the get_billing_with_http_info variant
-
-This returns an Array which contains the response data (`nil` in this case), status code and headers.
-
-> <Array(nil, Integer, Hash)> get_billing_with_http_info
-
-```ruby
-begin
-  # Get plan and usage
-  data, status_code, headers = api_instance.get_billing_with_http_info
-  p status_code # => 2xx
-  p headers # => { ... }
-  p data # => nil
-rescue Repull::ApiError => e
-  puts "Error when calling BillingApi->get_billing_with_http_info: #{e}"
-end
-```
-
-### Parameters
-
-This endpoint does not need any parameter.
-
-### Return type
-
-nil (empty response body)
-
-### Authorization
-
-[bearerAuth](../README.md#bearerAuth)
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
 - **Accept**: Not defined
 

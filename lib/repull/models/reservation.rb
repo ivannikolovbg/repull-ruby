@@ -62,6 +62,9 @@ module Repull
     # When the reservation row was created in Repull (not the booking-on-channel timestamp).
     attr_accessor :created_at
 
+    # Last time this reservation was modified (dates, status, price, or guest details). Advances on every amendment or cancellation — poll or compare this value to reconcile changes instead of fingerprinting individual fields.
+    attr_accessor :updated_at
+
     # When the booking was made on the source channel (when reported by the channel).
     attr_accessor :booked_at
 
@@ -87,6 +90,7 @@ module Repull
         :'currency' => :'currency',
         :'guest_details' => :'guestDetails',
         :'created_at' => :'createdAt',
+        :'updated_at' => :'updatedAt',
         :'booked_at' => :'bookedAt',
         :'guest_name' => :'guestName'
       }
@@ -121,6 +125,7 @@ module Repull
         :'currency' => :'String',
         :'guest_details' => :'Hash<String, Object>',
         :'created_at' => :'Time',
+        :'updated_at' => :'Time',
         :'booked_at' => :'Time',
         :'guest_name' => :'String'
       }
@@ -232,6 +237,12 @@ module Repull
         self.created_at = nil
       end
 
+      if attributes.key?(:'updated_at')
+        self.updated_at = attributes[:'updated_at']
+      else
+        self.updated_at = nil
+      end
+
       if attributes.key?(:'booked_at')
         self.booked_at = attributes[:'booked_at']
       end
@@ -274,6 +285,10 @@ module Repull
         invalid_properties.push('invalid value for "created_at", created_at cannot be nil.')
       end
 
+      if @updated_at.nil?
+        invalid_properties.push('invalid value for "updated_at", updated_at cannot be nil.')
+      end
+
       invalid_properties
     end
 
@@ -288,6 +303,7 @@ module Repull
       return false if @status.nil?
       return false if @confirmation_code.nil?
       return false if @created_at.nil?
+      return false if @updated_at.nil?
       true
     end
 
@@ -361,6 +377,16 @@ module Repull
       @created_at = created_at
     end
 
+    # Custom attribute writer method with validation
+    # @param [Object] updated_at Value to be assigned
+    def updated_at=(updated_at)
+      if updated_at.nil?
+        fail ArgumentError, 'updated_at cannot be nil'
+      end
+
+      @updated_at = updated_at
+    end
+
     # Checks equality by comparing each attribute.
     # @param [Object] Object to be compared
     def ==(o)
@@ -382,6 +408,7 @@ module Repull
           currency == o.currency &&
           guest_details == o.guest_details &&
           created_at == o.created_at &&
+          updated_at == o.updated_at &&
           booked_at == o.booked_at &&
           guest_name == o.guest_name
     end
@@ -395,7 +422,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, listing_id, guest_id, check_in, check_out, status, source, platform, confirmation_code, primary_guest, occupancy, financials, total_price, currency, guest_details, created_at, booked_at, guest_name].hash
+      [id, listing_id, guest_id, check_in, check_out, status, source, platform, confirmation_code, primary_guest, occupancy, financials, total_price, currency, guest_details, created_at, updated_at, booked_at, guest_name].hash
     end
 
     # Builds the object from hash

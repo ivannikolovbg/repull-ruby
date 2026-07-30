@@ -11,7 +11,7 @@
 | **currency** | **String** |  |  |
 | **single_price** | **Float** |  | [optional] |
 | **occupancy** | **Integer** |  | [optional] |
-| **rooms_to_sell** | **Integer** |  | [optional] |
+| **rooms_to_sell** | **Integer** | Rooms to sell for the date range. Set to &#x60;0&#x60; to stop-sell this room/rate on the rates endpoint (Booking&#39;s dedicated &#x60;&lt;closed&gt;&#x60; stop-sell flag lives on the availability endpoint — see &#x60;BookingAvailabilityUpdate.closed&#x60;). | [optional] |
 | **restrictions** | [**BookingPricingRateUpdateRestrictions**](BookingPricingRateUpdateRestrictions.md) |  | [optional] |
 
 ## Example

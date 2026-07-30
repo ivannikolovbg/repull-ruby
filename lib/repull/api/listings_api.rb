@@ -659,5 +659,79 @@ module Repull
       end
       return data, status_code, headers
     end
+
+    # Update canonical listing content
+    # Write your PMS's canonical listing content — title, description, amenities, address, occupancy, and policies — into a Repull listing, making it the source of truth. This is the flagship \"the PMS owns listing content, Repull distributes it\" enabler.  **Partial update:** every field is optional. Only the fields you send are written; absent fields are left untouched. `amenities` is a FULL replacement of the amenity set (omit to leave untouched, send `[]` to clear).  **Local write only — NOT a channel publish.** This mutates Repull's own copy of the content. It does NOT push to Airbnb / Booking.com; it marks the channels dirty so a later publish knows what changed. Distribution stays a separate explicit step.  **Photos are deferred:** a provided `photos` array is echoed back in the `deferred` field and NOT persisted (media ingestion is a follow-up).  Cross-tenant access (a listing that belongs to a different workspace) returns 404 — never 403. This endpoint is served even when the account is over the plan-listings cap, since editing content on a listing you already own never grows the portfolio.
+    # @param id [Integer] Repull listing id
+    # @param listing_content_update_request [ListingContentUpdateRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [ListingContentUpdateResponse]
+    def update_listing_content(id, listing_content_update_request, opts = {})
+      data, _status_code, _headers = update_listing_content_with_http_info(id, listing_content_update_request, opts)
+      data
+    end
+
+    # Update canonical listing content
+    # Write your PMS&#39;s canonical listing content — title, description, amenities, address, occupancy, and policies — into a Repull listing, making it the source of truth. This is the flagship \&quot;the PMS owns listing content, Repull distributes it\&quot; enabler.  **Partial update:** every field is optional. Only the fields you send are written; absent fields are left untouched. &#x60;amenities&#x60; is a FULL replacement of the amenity set (omit to leave untouched, send &#x60;[]&#x60; to clear).  **Local write only — NOT a channel publish.** This mutates Repull&#39;s own copy of the content. It does NOT push to Airbnb / Booking.com; it marks the channels dirty so a later publish knows what changed. Distribution stays a separate explicit step.  **Photos are deferred:** a provided &#x60;photos&#x60; array is echoed back in the &#x60;deferred&#x60; field and NOT persisted (media ingestion is a follow-up).  Cross-tenant access (a listing that belongs to a different workspace) returns 404 — never 403. This endpoint is served even when the account is over the plan-listings cap, since editing content on a listing you already own never grows the portfolio.
+    # @param id [Integer] Repull listing id
+    # @param listing_content_update_request [ListingContentUpdateRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(ListingContentUpdateResponse, Integer, Hash)>] ListingContentUpdateResponse data, response status code and response headers
+    def update_listing_content_with_http_info(id, listing_content_update_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ListingsApi.update_listing_content ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling ListingsApi.update_listing_content"
+      end
+      # verify the required parameter 'listing_content_update_request' is set
+      if @api_client.config.client_side_validation && listing_content_update_request.nil?
+        fail ArgumentError, "Missing the required parameter 'listing_content_update_request' when calling ListingsApi.update_listing_content"
+      end
+      # resource path
+      local_var_path = '/v1/listings/{id}/content'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(listing_content_update_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'ListingContentUpdateResponse'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"ListingsApi.update_listing_content",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:PUT, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ListingsApi#update_listing_content\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
   end
 end

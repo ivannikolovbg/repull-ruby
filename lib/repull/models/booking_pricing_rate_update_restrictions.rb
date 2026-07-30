@@ -14,15 +14,34 @@ require 'date'
 require 'time'
 
 module Repull
-  # Optional length-of-stay / availability restrictions for one rate update.
+  # Optional length-of-stay / availability restrictions for one rate update. Every field here is forwarded verbatim into Booking.com's rates XML (`minimumstay`, `maximumstay`, `closedonarrival`, `closedondeparture`, …) — omit a field to leave that restriction untouched.
   class BookingPricingRateUpdateRestrictions < ApiModelBase
+    # Minimum length of stay (`minimumstay`).
     attr_accessor :min_stay
 
+    # Maximum length of stay (`maximumstay`).
     attr_accessor :max_stay
 
+    # Closed-to-arrival — guests may not check in on the affected dates (`closedonarrival`).
     attr_accessor :closed_to_arrival
 
+    # Closed-to-departure — guests may not check out on the affected dates (`closedondeparture`).
     attr_accessor :closed_to_departure
+
+    # Arrival-based minimum length of stay (`minimumstay_arrival`).
+    attr_accessor :min_stay_arrival
+
+    # Arrival-based maximum length of stay (`maximumstay_arrival`).
+    attr_accessor :max_stay_arrival
+
+    # Arrival-based exact length of stay (`exactstay_arrival`).
+    attr_accessor :exact_stay_arrival
+
+    # Minimum advance-reservation window, format `XDY` (X days Y hours) — `min_advance_res`.
+    attr_accessor :min_advance_res
+
+    # Maximum advance-reservation window, format `XDY` (X days Y hours) — `max_advance_res`.
+    attr_accessor :max_advance_res
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
@@ -30,7 +49,12 @@ module Repull
         :'min_stay' => :'minStay',
         :'max_stay' => :'maxStay',
         :'closed_to_arrival' => :'closedToArrival',
-        :'closed_to_departure' => :'closedToDeparture'
+        :'closed_to_departure' => :'closedToDeparture',
+        :'min_stay_arrival' => :'minStayArrival',
+        :'max_stay_arrival' => :'maxStayArrival',
+        :'exact_stay_arrival' => :'exactStayArrival',
+        :'min_advance_res' => :'minAdvanceRes',
+        :'max_advance_res' => :'maxAdvanceRes'
       }
     end
 
@@ -50,7 +74,12 @@ module Repull
         :'min_stay' => :'Integer',
         :'max_stay' => :'Integer',
         :'closed_to_arrival' => :'Boolean',
-        :'closed_to_departure' => :'Boolean'
+        :'closed_to_departure' => :'Boolean',
+        :'min_stay_arrival' => :'Integer',
+        :'max_stay_arrival' => :'Integer',
+        :'exact_stay_arrival' => :'Integer',
+        :'min_advance_res' => :'String',
+        :'max_advance_res' => :'String'
       }
     end
 
@@ -60,7 +89,12 @@ module Repull
         :'min_stay',
         :'max_stay',
         :'closed_to_arrival',
-        :'closed_to_departure'
+        :'closed_to_departure',
+        :'min_stay_arrival',
+        :'max_stay_arrival',
+        :'exact_stay_arrival',
+        :'min_advance_res',
+        :'max_advance_res'
       ])
     end
 
@@ -95,6 +129,26 @@ module Repull
       if attributes.key?(:'closed_to_departure')
         self.closed_to_departure = attributes[:'closed_to_departure']
       end
+
+      if attributes.key?(:'min_stay_arrival')
+        self.min_stay_arrival = attributes[:'min_stay_arrival']
+      end
+
+      if attributes.key?(:'max_stay_arrival')
+        self.max_stay_arrival = attributes[:'max_stay_arrival']
+      end
+
+      if attributes.key?(:'exact_stay_arrival')
+        self.exact_stay_arrival = attributes[:'exact_stay_arrival']
+      end
+
+      if attributes.key?(:'min_advance_res')
+        self.min_advance_res = attributes[:'min_advance_res']
+      end
+
+      if attributes.key?(:'max_advance_res')
+        self.max_advance_res = attributes[:'max_advance_res']
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -120,7 +174,12 @@ module Repull
           min_stay == o.min_stay &&
           max_stay == o.max_stay &&
           closed_to_arrival == o.closed_to_arrival &&
-          closed_to_departure == o.closed_to_departure
+          closed_to_departure == o.closed_to_departure &&
+          min_stay_arrival == o.min_stay_arrival &&
+          max_stay_arrival == o.max_stay_arrival &&
+          exact_stay_arrival == o.exact_stay_arrival &&
+          min_advance_res == o.min_advance_res &&
+          max_advance_res == o.max_advance_res
     end
 
     # @see the `==` method
@@ -132,7 +191,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [min_stay, max_stay, closed_to_arrival, closed_to_departure].hash
+      [min_stay, max_stay, closed_to_arrival, closed_to_departure, min_stay_arrival, max_stay_arrival, exact_stay_arrival, min_advance_res, max_advance_res].hash
     end
 
     # Builds the object from hash

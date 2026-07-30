@@ -13,6 +13,7 @@ All URIs are relative to *https://api.repull.dev*
 | [**publish_listing_to_airbnb**](ListingsApi.md#publish_listing_to_airbnb) | **POST** /v1/listings/{id}/publish/airbnb | Publish a listing to Airbnb |
 | [**publish_listing_to_booking**](ListingsApi.md#publish_listing_to_booking) | **POST** /v1/listings/{id}/publish/booking | Publish a listing to Booking.com |
 | [**update_listing_active**](ListingsApi.md#update_listing_active) | **PATCH** /v1/listings/{id} | Deactivate or reactivate a listing |
+| [**update_listing_content**](ListingsApi.md#update_listing_content) | **PUT** /v1/listings/{id}/content | Update canonical listing content |
 
 
 ## create_listing
@@ -657,6 +658,77 @@ end
 ### Return type
 
 [**ListingActiveResponse**](ListingActiveResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## update_listing_content
+
+> <ListingContentUpdateResponse> update_listing_content(id, listing_content_update_request)
+
+Update canonical listing content
+
+Write your PMS's canonical listing content — title, description, amenities, address, occupancy, and policies — into a Repull listing, making it the source of truth. This is the flagship \"the PMS owns listing content, Repull distributes it\" enabler.  **Partial update:** every field is optional. Only the fields you send are written; absent fields are left untouched. `amenities` is a FULL replacement of the amenity set (omit to leave untouched, send `[]` to clear).  **Local write only — NOT a channel publish.** This mutates Repull's own copy of the content. It does NOT push to Airbnb / Booking.com; it marks the channels dirty so a later publish knows what changed. Distribution stays a separate explicit step.  **Photos are deferred:** a provided `photos` array is echoed back in the `deferred` field and NOT persisted (media ingestion is a follow-up).  Cross-tenant access (a listing that belongs to a different workspace) returns 404 — never 403. This endpoint is served even when the account is over the plan-listings cap, since editing content on a listing you already own never grows the portfolio.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ListingsApi.new
+id = 56 # Integer | Repull listing id
+listing_content_update_request = Repull::ListingContentUpdateRequest.new # ListingContentUpdateRequest | 
+
+begin
+  # Update canonical listing content
+  result = api_instance.update_listing_content(id, listing_content_update_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ListingsApi->update_listing_content: #{e}"
+end
+```
+
+#### Using the update_listing_content_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<ListingContentUpdateResponse>, Integer, Hash)> update_listing_content_with_http_info(id, listing_content_update_request)
+
+```ruby
+begin
+  # Update canonical listing content
+  data, status_code, headers = api_instance.update_listing_content_with_http_info(id, listing_content_update_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <ListingContentUpdateResponse>
+rescue Repull::ApiError => e
+  puts "Error when calling ListingsApi->update_listing_content_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **Integer** | Repull listing id |  |
+| **listing_content_update_request** | [**ListingContentUpdateRequest**](ListingContentUpdateRequest.md) |  |  |
+
+### Return type
+
+[**ListingContentUpdateResponse**](ListingContentUpdateResponse.md)
 
 ### Authorization
 

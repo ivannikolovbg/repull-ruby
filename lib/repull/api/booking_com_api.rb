@@ -19,63 +19,6 @@ module Repull
     def initialize(api_client = ApiClient.default)
       @api_client = api_client
     end
-    # Create Booking.com property
-    # Onboard a new Booking.com hotel via the OAuth Connect flow. Returns the hotel id once Stage-1 designation completes in the Extranet.
-    # @param [Hash] opts the optional parameters
-    # @return [BookingProperty]
-    def create_booking_property(opts = {})
-      data, _status_code, _headers = create_booking_property_with_http_info(opts)
-      data
-    end
-
-    # Create Booking.com property
-    # Onboard a new Booking.com hotel via the OAuth Connect flow. Returns the hotel id once Stage-1 designation completes in the Extranet.
-    # @param [Hash] opts the optional parameters
-    # @return [Array<(BookingProperty, Integer, Hash)>] BookingProperty data, response status code and response headers
-    def create_booking_property_with_http_info(opts = {})
-      if @api_client.config.debugging
-        @api_client.config.logger.debug 'Calling API: BookingComApi.create_booking_property ...'
-      end
-      # resource path
-      local_var_path = '/v1/channels/booking/properties'
-
-      # query parameters
-      query_params = opts[:query_params] || {}
-
-      # header parameters
-      header_params = opts[:header_params] || {}
-      # HTTP header 'Accept' (if needed)
-      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
-
-      # form parameters
-      form_params = opts[:form_params] || {}
-
-      # http body (model)
-      post_body = opts[:debug_body]
-
-      # return_type
-      return_type = opts[:debug_return_type] || 'BookingProperty'
-
-      # auth_names
-      auth_names = opts[:debug_auth_names] || ['bearerAuth']
-
-      new_options = opts.merge(
-        :operation => :"BookingComApi.create_booking_property",
-        :header_params => header_params,
-        :query_params => query_params,
-        :form_params => form_params,
-        :body => post_body,
-        :auth_names => auth_names,
-        :return_type => return_type
-      )
-
-      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
-      if @api_client.config.debugging
-        @api_client.config.logger.debug "API called: BookingComApi#create_booking_property\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
-      end
-      return data, status_code, headers
-    end
-
     # Get Booking.com content
     # Fetch the current content (descriptions, amenities, photos) for a Booking.com property. Used to round-trip edits through Repull.
     # @param [Hash] opts the optional parameters
@@ -507,77 +450,28 @@ module Repull
       return data, status_code, headers
     end
 
-    # Bulk sync to Booking.com
-    # Trigger a full bulk sync of properties + availability + rates to Booking.com. Runs async — returns 202 with a job id; poll `/v1/sync/jobs/{id}` for status.
-    # @param [Hash] opts the optional parameters
-    # @return [nil]
-    def sync_booking(opts = {})
-      sync_booking_with_http_info(opts)
-      nil
-    end
-
-    # Bulk sync to Booking.com
-    # Trigger a full bulk sync of properties + availability + rates to Booking.com. Runs async — returns 202 with a job id; poll &#x60;/v1/sync/jobs/{id}&#x60; for status.
-    # @param [Hash] opts the optional parameters
-    # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
-    def sync_booking_with_http_info(opts = {})
-      if @api_client.config.debugging
-        @api_client.config.logger.debug 'Calling API: BookingComApi.sync_booking ...'
-      end
-      # resource path
-      local_var_path = '/v1/channels/booking/sync'
-
-      # query parameters
-      query_params = opts[:query_params] || {}
-
-      # header parameters
-      header_params = opts[:header_params] || {}
-
-      # form parameters
-      form_params = opts[:form_params] || {}
-
-      # http body (model)
-      post_body = opts[:debug_body]
-
-      # return_type
-      return_type = opts[:debug_return_type]
-
-      # auth_names
-      auth_names = opts[:debug_auth_names] || ['bearerAuth']
-
-      new_options = opts.merge(
-        :operation => :"BookingComApi.sync_booking",
-        :header_params => header_params,
-        :query_params => query_params,
-        :form_params => form_params,
-        :body => post_body,
-        :auth_names => auth_names,
-        :return_type => return_type
-      )
-
-      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
-      if @api_client.config.debugging
-        @api_client.config.logger.debug "API called: BookingComApi#sync_booking\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
-      end
-      return data, status_code, headers
-    end
-
     # Update Booking.com rates/availability
-    # Push availability + rate changes to Booking.com's OTA system. Accepts the standard OTA rate message — see Booking's OTA docs for the field shape. Errors from upstream surface as `booking_error`.
+    # Push availability, rates, and the full restriction set to Booking.com. `type` selects the write path:  - `rates` — nightly price + length-of-stay / arrival restrictions (min/max stay, closed-to-arrival, closed-to-departure, advance-reservation window). - `availability` — inventory (`availableRooms`), the dedicated stop-sell flag (`closed`), and the same restriction set. - `derived-pricing` — occupancy-derived pricing rules.  Restrictions never leak across channels — this endpoint writes only to Booking.com. Errors from upstream surface as `booking_error`.
+    # @param booking_availability_update_request [BookingAvailabilityUpdateRequest] 
     # @param [Hash] opts the optional parameters
     # @return [nil]
-    def update_booking_availability(opts = {})
-      update_booking_availability_with_http_info(opts)
+    def update_booking_availability(booking_availability_update_request, opts = {})
+      update_booking_availability_with_http_info(booking_availability_update_request, opts)
       nil
     end
 
     # Update Booking.com rates/availability
-    # Push availability + rate changes to Booking.com&#39;s OTA system. Accepts the standard OTA rate message — see Booking&#39;s OTA docs for the field shape. Errors from upstream surface as &#x60;booking_error&#x60;.
+    # Push availability, rates, and the full restriction set to Booking.com. &#x60;type&#x60; selects the write path:  - &#x60;rates&#x60; — nightly price + length-of-stay / arrival restrictions (min/max stay, closed-to-arrival, closed-to-departure, advance-reservation window). - &#x60;availability&#x60; — inventory (&#x60;availableRooms&#x60;), the dedicated stop-sell flag (&#x60;closed&#x60;), and the same restriction set. - &#x60;derived-pricing&#x60; — occupancy-derived pricing rules.  Restrictions never leak across channels — this endpoint writes only to Booking.com. Errors from upstream surface as &#x60;booking_error&#x60;.
+    # @param booking_availability_update_request [BookingAvailabilityUpdateRequest] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
-    def update_booking_availability_with_http_info(opts = {})
+    def update_booking_availability_with_http_info(booking_availability_update_request, opts = {})
       if @api_client.config.debugging
         @api_client.config.logger.debug 'Calling API: BookingComApi.update_booking_availability ...'
+      end
+      # verify the required parameter 'booking_availability_update_request' is set
+      if @api_client.config.client_side_validation && booking_availability_update_request.nil?
+        fail ArgumentError, "Missing the required parameter 'booking_availability_update_request' when calling BookingComApi.update_booking_availability"
       end
       # resource path
       local_var_path = '/v1/channels/booking/availability'
@@ -587,12 +481,19 @@ module Repull
 
       # header parameters
       header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
 
       # form parameters
       form_params = opts[:form_params] || {}
 
       # http body (model)
-      post_body = opts[:debug_body]
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(booking_availability_update_request)
 
       # return_type
       return_type = opts[:debug_return_type]

@@ -14,65 +14,56 @@ require 'date'
 require 'time'
 
 module Repull
-  # A vacation rental property from a connected PMS
+  # A vacation rental property in your Repull workspace. Backed by the core `listings` row — enriched per-PMS fields (bedrooms, property type, provider id, etc.) live in provider-specific detail tables and are NOT returned here.  Field availability differs by endpoint: - `channels` is returned by the list endpoint (`GET /v1/properties`) only. - `latitude`, `longitude`, `createdAt`, and `amenities` are returned by the detail endpoint (`GET /v1/properties/{id}`) only. `amenities` requires `?include=amenities`.
   class Property < ApiModelBase
-    # Internal Repull property ID
+    # Internal Repull property ID. Equal to the listing id (`listings.id`); the same integer is used as `listingId` on reservations and `propertyId` on availability.
     attr_accessor :id
-
-    # ID in the source PMS
-    attr_accessor :external_id
 
     # Property name
     attr_accessor :name
 
-    # Full address
+    # Street address (from the listing's `street` field).
     attr_accessor :address
 
     attr_accessor :city
 
-    attr_accessor :state
-
-    attr_accessor :country
-
+    # Detail endpoint only.
     attr_accessor :latitude
 
+    # Detail endpoint only.
     attr_accessor :longitude
 
-    attr_accessor :bedrooms
+    # ISO 4217 currency code for this property's pricing.
+    attr_accessor :currency
 
-    attr_accessor :bathrooms
+    # Derived from `listings.active`.
+    attr_accessor :status
 
-    attr_accessor :max_guests
+    # The listing's lifecycle state (e.g. `live`, `draft`, `archived`).
+    attr_accessor :lifecycle_status
 
-    # Primary photo URL
-    attr_accessor :thumbnail
+    # When the property was created. Detail endpoint only.
+    attr_accessor :created_at
 
-    # Source PMS
-    attr_accessor :provider
-
-    # OTAs/channels this property is actively published on (e.g. `airbnb`, `booking`, `vrbo`). Empty array when the property has no active channel links.
+    # OTAs/channels this property is actively published on, as channel-name strings (e.g. `airbnb`, `booking`, `vrbo`). Empty array when the property has no active channel links. List endpoint (`GET /v1/properties`) only.
     attr_accessor :channels
 
-    # Amenity rows for the property. **Only present when the caller passes `?include=amenities`.** Empty array (`[]`) when the property has no amenity rows.
+    # Amenity rows for the property. Detail endpoint only, and **only present when the caller passes `?include=amenities`.** Empty array (`[]`) when the property has no amenity rows.
     attr_accessor :amenities
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
         :'id' => :'id',
-        :'external_id' => :'externalId',
         :'name' => :'name',
         :'address' => :'address',
         :'city' => :'city',
-        :'state' => :'state',
-        :'country' => :'country',
         :'latitude' => :'latitude',
         :'longitude' => :'longitude',
-        :'bedrooms' => :'bedrooms',
-        :'bathrooms' => :'bathrooms',
-        :'max_guests' => :'maxGuests',
-        :'thumbnail' => :'thumbnail',
-        :'provider' => :'provider',
+        :'currency' => :'currency',
+        :'status' => :'status',
+        :'lifecycle_status' => :'lifecycleStatus',
+        :'created_at' => :'createdAt',
         :'channels' => :'channels',
         :'amenities' => :'amenities'
       }
@@ -92,19 +83,15 @@ module Repull
     def self.openapi_types
       {
         :'id' => :'String',
-        :'external_id' => :'String',
         :'name' => :'String',
         :'address' => :'String',
         :'city' => :'String',
-        :'state' => :'String',
-        :'country' => :'String',
         :'latitude' => :'Float',
         :'longitude' => :'Float',
-        :'bedrooms' => :'Integer',
-        :'bathrooms' => :'Float',
-        :'max_guests' => :'Integer',
-        :'thumbnail' => :'String',
-        :'provider' => :'String',
+        :'currency' => :'String',
+        :'status' => :'String',
+        :'lifecycle_status' => :'String',
+        :'created_at' => :'Time',
         :'channels' => :'Array<String>',
         :'amenities' => :'Array<ListingAmenity>'
       }
@@ -113,6 +100,12 @@ module Repull
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'address',
+        :'city',
+        :'latitude',
+        :'longitude',
+        :'currency',
+        :'lifecycle_status',
       ])
     end
 
@@ -136,10 +129,6 @@ module Repull
         self.id = attributes[:'id']
       end
 
-      if attributes.key?(:'external_id')
-        self.external_id = attributes[:'external_id']
-      end
-
       if attributes.key?(:'name')
         self.name = attributes[:'name']
       end
@@ -152,14 +141,6 @@ module Repull
         self.city = attributes[:'city']
       end
 
-      if attributes.key?(:'state')
-        self.state = attributes[:'state']
-      end
-
-      if attributes.key?(:'country')
-        self.country = attributes[:'country']
-      end
-
       if attributes.key?(:'latitude')
         self.latitude = attributes[:'latitude']
       end
@@ -168,24 +149,20 @@ module Repull
         self.longitude = attributes[:'longitude']
       end
 
-      if attributes.key?(:'bedrooms')
-        self.bedrooms = attributes[:'bedrooms']
+      if attributes.key?(:'currency')
+        self.currency = attributes[:'currency']
       end
 
-      if attributes.key?(:'bathrooms')
-        self.bathrooms = attributes[:'bathrooms']
+      if attributes.key?(:'status')
+        self.status = attributes[:'status']
       end
 
-      if attributes.key?(:'max_guests')
-        self.max_guests = attributes[:'max_guests']
+      if attributes.key?(:'lifecycle_status')
+        self.lifecycle_status = attributes[:'lifecycle_status']
       end
 
-      if attributes.key?(:'thumbnail')
-        self.thumbnail = attributes[:'thumbnail']
-      end
-
-      if attributes.key?(:'provider')
-        self.provider = attributes[:'provider']
+      if attributes.key?(:'created_at')
+        self.created_at = attributes[:'created_at']
       end
 
       if attributes.key?(:'channels')
@@ -222,19 +199,15 @@ module Repull
       return true if self.equal?(o)
       self.class == o.class &&
           id == o.id &&
-          external_id == o.external_id &&
           name == o.name &&
           address == o.address &&
           city == o.city &&
-          state == o.state &&
-          country == o.country &&
           latitude == o.latitude &&
           longitude == o.longitude &&
-          bedrooms == o.bedrooms &&
-          bathrooms == o.bathrooms &&
-          max_guests == o.max_guests &&
-          thumbnail == o.thumbnail &&
-          provider == o.provider &&
+          currency == o.currency &&
+          status == o.status &&
+          lifecycle_status == o.lifecycle_status &&
+          created_at == o.created_at &&
           channels == o.channels &&
           amenities == o.amenities
     end
@@ -248,7 +221,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, external_id, name, address, city, state, country, latitude, longitude, bedrooms, bathrooms, max_guests, thumbnail, provider, channels, amenities].hash
+      [id, name, address, city, latitude, longitude, currency, status, lifecycle_status, created_at, channels, amenities].hash
     end
 
     # Builds the object from hash

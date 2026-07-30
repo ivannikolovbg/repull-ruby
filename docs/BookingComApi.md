@@ -4,7 +4,6 @@ All URIs are relative to *https://api.repull.dev*
 
 | Method | HTTP request | Description |
 | ------ | ------------ | ----------- |
-| [**create_booking_property**](BookingComApi.md#create_booking_property) | **POST** /v1/channels/booking/properties | Create Booking.com property |
 | [**get_booking_content**](BookingComApi.md#get_booking_content) | **GET** /v1/channels/booking/content | Get Booking.com content |
 | [**get_booking_listing_pricing**](BookingComApi.md#get_booking_listing_pricing) | **GET** /v1/channels/booking/listings/{id}/pricing | Get Booking.com pricing for a listing |
 | [**list_booking_conversations**](BookingComApi.md#list_booking_conversations) | **GET** /v1/channels/booking/messaging | List Booking.com conversations |
@@ -12,76 +11,9 @@ All URIs are relative to *https://api.repull.dev*
 | [**list_booking_reviews**](BookingComApi.md#list_booking_reviews) | **GET** /v1/channels/booking/reviews | List Booking.com reviews |
 | [**reply_booking_review**](BookingComApi.md#reply_booking_review) | **POST** /v1/channels/booking/reviews | Reply to Booking.com review |
 | [**send_booking_message**](BookingComApi.md#send_booking_message) | **POST** /v1/channels/booking/messaging | Send Booking.com message |
-| [**sync_booking**](BookingComApi.md#sync_booking) | **POST** /v1/channels/booking/sync | Bulk sync to Booking.com |
 | [**update_booking_availability**](BookingComApi.md#update_booking_availability) | **PUT** /v1/channels/booking/availability | Update Booking.com rates/availability |
 | [**update_booking_content**](BookingComApi.md#update_booking_content) | **POST** /v1/channels/booking/content | Update Booking.com content |
 | [**update_booking_listing_pricing**](BookingComApi.md#update_booking_listing_pricing) | **PUT** /v1/channels/booking/listings/{id}/pricing | Update Booking.com pricing for a listing |
-
-
-## create_booking_property
-
-> <BookingProperty> create_booking_property
-
-Create Booking.com property
-
-Onboard a new Booking.com hotel via the OAuth Connect flow. Returns the hotel id once Stage-1 designation completes in the Extranet.
-
-### Examples
-
-```ruby
-require 'time'
-require 'repull'
-# setup authorization
-Repull.configure do |config|
-  # Configure Bearer authorization (API Key): bearerAuth
-  config.access_token = 'YOUR_BEARER_TOKEN'
-end
-
-api_instance = Repull::BookingComApi.new
-
-begin
-  # Create Booking.com property
-  result = api_instance.create_booking_property
-  p result
-rescue Repull::ApiError => e
-  puts "Error when calling BookingComApi->create_booking_property: #{e}"
-end
-```
-
-#### Using the create_booking_property_with_http_info variant
-
-This returns an Array which contains the response data, status code and headers.
-
-> <Array(<BookingProperty>, Integer, Hash)> create_booking_property_with_http_info
-
-```ruby
-begin
-  # Create Booking.com property
-  data, status_code, headers = api_instance.create_booking_property_with_http_info
-  p status_code # => 2xx
-  p headers # => { ... }
-  p data # => <BookingProperty>
-rescue Repull::ApiError => e
-  puts "Error when calling BookingComApi->create_booking_property_with_http_info: #{e}"
-end
-```
-
-### Parameters
-
-This endpoint does not need any parameter.
-
-### Return type
-
-[**BookingProperty**](BookingProperty.md)
-
-### Authorization
-
-[bearerAuth](../README.md#bearerAuth)
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
 
 
 ## get_booking_content
@@ -562,78 +494,13 @@ nil (empty response body)
 - **Accept**: Not defined
 
 
-## sync_booking
-
-> sync_booking
-
-Bulk sync to Booking.com
-
-Trigger a full bulk sync of properties + availability + rates to Booking.com. Runs async — returns 202 with a job id; poll `/v1/sync/jobs/{id}` for status.
-
-### Examples
-
-```ruby
-require 'time'
-require 'repull'
-# setup authorization
-Repull.configure do |config|
-  # Configure Bearer authorization (API Key): bearerAuth
-  config.access_token = 'YOUR_BEARER_TOKEN'
-end
-
-api_instance = Repull::BookingComApi.new
-
-begin
-  # Bulk sync to Booking.com
-  api_instance.sync_booking
-rescue Repull::ApiError => e
-  puts "Error when calling BookingComApi->sync_booking: #{e}"
-end
-```
-
-#### Using the sync_booking_with_http_info variant
-
-This returns an Array which contains the response data (`nil` in this case), status code and headers.
-
-> <Array(nil, Integer, Hash)> sync_booking_with_http_info
-
-```ruby
-begin
-  # Bulk sync to Booking.com
-  data, status_code, headers = api_instance.sync_booking_with_http_info
-  p status_code # => 2xx
-  p headers # => { ... }
-  p data # => nil
-rescue Repull::ApiError => e
-  puts "Error when calling BookingComApi->sync_booking_with_http_info: #{e}"
-end
-```
-
-### Parameters
-
-This endpoint does not need any parameter.
-
-### Return type
-
-nil (empty response body)
-
-### Authorization
-
-[bearerAuth](../README.md#bearerAuth)
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: Not defined
-
-
 ## update_booking_availability
 
-> update_booking_availability
+> update_booking_availability(booking_availability_update_request)
 
 Update Booking.com rates/availability
 
-Push availability + rate changes to Booking.com's OTA system. Accepts the standard OTA rate message — see Booking's OTA docs for the field shape. Errors from upstream surface as `booking_error`.
+Push availability, rates, and the full restriction set to Booking.com. `type` selects the write path:  - `rates` — nightly price + length-of-stay / arrival restrictions (min/max stay, closed-to-arrival, closed-to-departure, advance-reservation window). - `availability` — inventory (`availableRooms`), the dedicated stop-sell flag (`closed`), and the same restriction set. - `derived-pricing` — occupancy-derived pricing rules.  Restrictions never leak across channels — this endpoint writes only to Booking.com. Errors from upstream surface as `booking_error`.
 
 ### Examples
 
@@ -647,10 +514,11 @@ Repull.configure do |config|
 end
 
 api_instance = Repull::BookingComApi.new
+booking_availability_update_request = Repull::BookingAvailabilityUpdateRequest.new({type: 'type_example', property_id: nil, updates: [Repull::BookingAvailabilityUpdate.new({room_id: 'room_id_example', rate_id: 'rate_id_example', date_range: Repull::BookingPricingRateUpdateDateRange.new({start: Date.today, _end: Date.today}), available_rooms: 37})]}) # BookingAvailabilityUpdateRequest | 
 
 begin
   # Update Booking.com rates/availability
-  api_instance.update_booking_availability
+  api_instance.update_booking_availability(booking_availability_update_request)
 rescue Repull::ApiError => e
   puts "Error when calling BookingComApi->update_booking_availability: #{e}"
 end
@@ -660,12 +528,12 @@ end
 
 This returns an Array which contains the response data (`nil` in this case), status code and headers.
 
-> <Array(nil, Integer, Hash)> update_booking_availability_with_http_info
+> <Array(nil, Integer, Hash)> update_booking_availability_with_http_info(booking_availability_update_request)
 
 ```ruby
 begin
   # Update Booking.com rates/availability
-  data, status_code, headers = api_instance.update_booking_availability_with_http_info
+  data, status_code, headers = api_instance.update_booking_availability_with_http_info(booking_availability_update_request)
   p status_code # => 2xx
   p headers # => { ... }
   p data # => nil
@@ -676,7 +544,9 @@ end
 
 ### Parameters
 
-This endpoint does not need any parameter.
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **booking_availability_update_request** | [**BookingAvailabilityUpdateRequest**](BookingAvailabilityUpdateRequest.md) |  |  |
 
 ### Return type
 
@@ -688,8 +558,8 @@ nil (empty response body)
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Content-Type**: application/json
+- **Accept**: application/json
 
 
 ## update_booking_content

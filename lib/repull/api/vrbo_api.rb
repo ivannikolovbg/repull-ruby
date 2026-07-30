@@ -19,69 +19,6 @@ module Repull
     def initialize(api_client = ApiClient.default)
       @api_client = api_client
     end
-    # Get VRBO pricing (501 — agency model)
-    # VRBO uses the agency model — VRBO PULLS rates from `/api/webhooks/vrbo/listings-xml/rates/{listing}/{unit}` rather than accepting a push API. This endpoint is declared for symmetry with the other channel-pricing routes but currently returns **501 Not Implemented** with a pointer at the public rate URL VRBO consumes. Use `GET /v1/listings/{id}/calendar` (once wired) to inspect the underlying source-of-truth.  When the listings-XML rate-builder is ported into this repo, this endpoint will return the parsed rates VRBO sees.
-    # @param id [Integer] Vanio listing ID — resolved to a VRBO listing/unit via the workspace mapping.
-    # @param [Hash] opts the optional parameters
-    # @return [nil]
-    def get_vrbo_listing_pricing(id, opts = {})
-      get_vrbo_listing_pricing_with_http_info(id, opts)
-      nil
-    end
-
-    # Get VRBO pricing (501 — agency model)
-    # VRBO uses the agency model — VRBO PULLS rates from &#x60;/api/webhooks/vrbo/listings-xml/rates/{listing}/{unit}&#x60; rather than accepting a push API. This endpoint is declared for symmetry with the other channel-pricing routes but currently returns **501 Not Implemented** with a pointer at the public rate URL VRBO consumes. Use &#x60;GET /v1/listings/{id}/calendar&#x60; (once wired) to inspect the underlying source-of-truth.  When the listings-XML rate-builder is ported into this repo, this endpoint will return the parsed rates VRBO sees.
-    # @param id [Integer] Vanio listing ID — resolved to a VRBO listing/unit via the workspace mapping.
-    # @param [Hash] opts the optional parameters
-    # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
-    def get_vrbo_listing_pricing_with_http_info(id, opts = {})
-      if @api_client.config.debugging
-        @api_client.config.logger.debug 'Calling API: VRBOApi.get_vrbo_listing_pricing ...'
-      end
-      # verify the required parameter 'id' is set
-      if @api_client.config.client_side_validation && id.nil?
-        fail ArgumentError, "Missing the required parameter 'id' when calling VRBOApi.get_vrbo_listing_pricing"
-      end
-      # resource path
-      local_var_path = '/v1/channels/vrbo/listings/{id}/pricing'.sub('{id}', CGI.escape(id.to_s))
-
-      # query parameters
-      query_params = opts[:query_params] || {}
-
-      # header parameters
-      header_params = opts[:header_params] || {}
-      # HTTP header 'Accept' (if needed)
-      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
-
-      # form parameters
-      form_params = opts[:form_params] || {}
-
-      # http body (model)
-      post_body = opts[:debug_body]
-
-      # return_type
-      return_type = opts[:debug_return_type]
-
-      # auth_names
-      auth_names = opts[:debug_auth_names] || ['bearerAuth']
-
-      new_options = opts.merge(
-        :operation => :"VRBOApi.get_vrbo_listing_pricing",
-        :header_params => header_params,
-        :query_params => query_params,
-        :form_params => form_params,
-        :body => post_body,
-        :auth_names => auth_names,
-        :return_type => return_type
-      )
-
-      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
-      if @api_client.config.debugging
-        @api_client.config.logger.debug "API called: VRBOApi#get_vrbo_listing_pricing\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
-      end
-      return data, status_code, headers
-    end
-
     # List VRBO listings
     # List VRBO listings this workspace owns. VRBO is agency-model — Repull reads listings via the public iCal/HTTP feeds.
     # @param [Hash] opts the optional parameters
@@ -220,69 +157,6 @@ module Repull
       data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: VRBOApi#list_vrbo_reservations\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
-      end
-      return data, status_code, headers
-    end
-
-    # Update VRBO pricing (501 — no push API exists)
-    # VRBO has no rate-push API. To change what VRBO sees, update the underlying Vanio calendar/pricing-settings (e.g. `PUT /v1/listings/{id}/calendar` once wired) — VRBO will pick up the change on its next pull. This endpoint always returns **501** rather than fake-stubbing a successful push the SDK would silently swallow.
-    # @param id [Integer] 
-    # @param [Hash] opts the optional parameters
-    # @return [nil]
-    def update_vrbo_listing_pricing(id, opts = {})
-      update_vrbo_listing_pricing_with_http_info(id, opts)
-      nil
-    end
-
-    # Update VRBO pricing (501 — no push API exists)
-    # VRBO has no rate-push API. To change what VRBO sees, update the underlying Vanio calendar/pricing-settings (e.g. &#x60;PUT /v1/listings/{id}/calendar&#x60; once wired) — VRBO will pick up the change on its next pull. This endpoint always returns **501** rather than fake-stubbing a successful push the SDK would silently swallow.
-    # @param id [Integer] 
-    # @param [Hash] opts the optional parameters
-    # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
-    def update_vrbo_listing_pricing_with_http_info(id, opts = {})
-      if @api_client.config.debugging
-        @api_client.config.logger.debug 'Calling API: VRBOApi.update_vrbo_listing_pricing ...'
-      end
-      # verify the required parameter 'id' is set
-      if @api_client.config.client_side_validation && id.nil?
-        fail ArgumentError, "Missing the required parameter 'id' when calling VRBOApi.update_vrbo_listing_pricing"
-      end
-      # resource path
-      local_var_path = '/v1/channels/vrbo/listings/{id}/pricing'.sub('{id}', CGI.escape(id.to_s))
-
-      # query parameters
-      query_params = opts[:query_params] || {}
-
-      # header parameters
-      header_params = opts[:header_params] || {}
-      # HTTP header 'Accept' (if needed)
-      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
-
-      # form parameters
-      form_params = opts[:form_params] || {}
-
-      # http body (model)
-      post_body = opts[:debug_body]
-
-      # return_type
-      return_type = opts[:debug_return_type]
-
-      # auth_names
-      auth_names = opts[:debug_auth_names] || ['bearerAuth']
-
-      new_options = opts.merge(
-        :operation => :"VRBOApi.update_vrbo_listing_pricing",
-        :header_params => header_params,
-        :query_params => query_params,
-        :form_params => form_params,
-        :body => post_body,
-        :auth_names => auth_names,
-        :return_type => return_type
-      )
-
-      data, status_code, headers = @api_client.call_api(:PUT, local_var_path, new_options)
-      if @api_client.config.debugging
-        @api_client.config.logger.debug "API called: VRBOApi#update_vrbo_listing_pricing\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end

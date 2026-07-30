@@ -128,6 +128,10 @@
       "description": "Health checks and API status"
     },
     {
+      "name": "Sandbox",
+      "description": "Test-mode fixtures for contract testing WITHOUT live provider accounts. A `sk_test_*` key seeds a deterministic set of fake listings, reservations, and connected provider accounts (Airbnb + Booking.com), reads them back through the normal endpoints, and resets them \u2014 all in a data space fully isolated from live inventory."
+    },
+    {
       "name": "schema",
       "description": "Custom field-mapping schemas to reshape response payloads to your app's data model. Built-in schemas (`native`, `calry`, `calry-v1`) ship out of the box; create custom schemas with `POST /v1/schema/custom` and select one per request via the `X-Schema` header."
     },
@@ -150,17 +154,116 @@
       }
     },
     "schemas": {
+      "SandboxFixtureRef": {
+        "type": "object",
+        "description": "A seeded fixture: its stable reference key plus the synthetic id the read endpoints return for it.",
+        "properties": {
+          "ref": {
+            "type": "string",
+            "example": "sbx-listing-oceanview",
+            "description": "Stable reference key \u2014 constant across re-seeds."
+          },
+          "id": {
+            "type": "string",
+            "example": "900000101",
+            "description": "Synthetic id (>= 900,000,000). Reference it against GET /v1/listings, /v1/reservations, /v1/connect."
+          }
+        },
+        "required": [
+          "ref",
+          "id"
+        ]
+      },
+      "SandboxSeedResult": {
+        "type": "object",
+        "description": "Result of provisioning the sandbox fixture set.",
+        "properties": {
+          "customerId": {
+            "type": "string",
+            "example": "1"
+          },
+          "seededAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "listings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SandboxFixtureRef"
+            },
+            "description": "3 sample listings."
+          },
+          "reservations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SandboxFixtureRef"
+            },
+            "description": "5 reservations across the lifecycle: created, modified, cancelled, date-changed, pending."
+          },
+          "connections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SandboxFixtureRef"
+            },
+            "description": "2 fake connected provider accounts: Airbnb + Booking.com."
+          }
+        },
+        "required": [
+          "customerId",
+          "seededAt",
+          "listings",
+          "reservations",
+          "connections"
+        ]
+      },
+      "SandboxResetResult": {
+        "type": "object",
+        "description": "Result of clearing the sandbox fixture set. Only ever deletes rows in the isolated sandbox data space.",
+        "properties": {
+          "customerId": {
+            "type": "string",
+            "example": "1"
+          },
+          "resetAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "deleted": {
+            "type": "object",
+            "properties": {
+              "listings": {
+                "type": "integer",
+                "example": 3
+              },
+              "reservations": {
+                "type": "integer",
+                "example": 5
+              },
+              "connections": {
+                "type": "integer",
+                "example": 2
+              }
+            },
+            "required": [
+              "listings",
+              "reservations",
+              "connections"
+            ]
+          }
+        },
+        "required": [
+          "customerId",
+          "resetAt",
+          "deleted"
+        ]
+      },
       "Property": {
         "type": "object",
-        "description": "A vacation rental property from a connected PMS",
+        "description": "A vacation rental property in your Repull workspace. Backed by the core `listings` row \u2014 enriched per-PMS fields (bedrooms, property type, provider id, etc.) live in provider-specific detail tables and are NOT returned here.\n\nField availability differs by endpoint:\n- `channels` is returned by the list endpoint (`GET /v1/properties`) only.\n- `latitude`, `longitude`, `createdAt`, and `amenities` are returned by the detail endpoint (`GET /v1/properties/{id}`) only. `amenities` requires `?include=amenities`.",
         "properties": {
           "id": {
             "type": "string",
-            "description": "Internal Repull property ID"
-          },
-          "externalId": {
-            "type": "string",
-            "description": "ID in the source PMS"
+            "description": "Internal Repull property ID. Equal to the listing id (`listings.id`); the same integer is used as `listingId` on reservations and `propertyId` on availability."
           },
           "name": {
             "type": "string",
@@ -169,56 +272,52 @@
           },
           "address": {
             "type": "string",
-            "description": "Full address"
+            "nullable": true,
+            "description": "Street address (from the listing's `street` field)."
           },
           "city": {
             "type": "string",
+            "nullable": true,
             "example": "Miami Beach"
-          },
-          "state": {
-            "type": "string",
-            "example": "FL"
-          },
-          "country": {
-            "type": "string",
-            "example": "US"
           },
           "latitude": {
             "type": "number",
+            "nullable": true,
+            "description": "Detail endpoint only.",
             "example": 25.7617
           },
           "longitude": {
             "type": "number",
+            "nullable": true,
+            "description": "Detail endpoint only.",
             "example": -80.1918
           },
-          "bedrooms": {
-            "type": "integer",
-            "example": 2
-          },
-          "bathrooms": {
-            "type": "number",
-            "example": 1.5
-          },
-          "maxGuests": {
-            "type": "integer",
-            "example": 6
-          },
-          "thumbnail": {
+          "currency": {
             "type": "string",
-            "format": "uri",
-            "description": "Primary photo URL"
+            "nullable": true,
+            "description": "ISO 4217 currency code for this property's pricing.",
+            "example": "USD"
           },
-          "provider": {
+          "status": {
             "type": "string",
-            "description": "Source PMS",
-            "example": "hostaway"
+            "description": "Derived from `listings.active`."
+          },
+          "lifecycleStatus": {
+            "type": "string",
+            "nullable": true,
+            "description": "The listing's lifecycle state (e.g. `live`, `draft`, `archived`)."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the property was created. Detail endpoint only."
           },
           "channels": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "OTAs/channels this property is actively published on (e.g. `airbnb`, `booking`, `vrbo`). Empty array when the property has no active channel links.",
+            "description": "OTAs/channels this property is actively published on, as channel-name strings (e.g. `airbnb`, `booking`, `vrbo`). Empty array when the property has no active channel links. List endpoint (`GET /v1/properties`) only.",
             "example": [
               "airbnb",
               "booking"
@@ -229,7 +328,7 @@
             "items": {
               "$ref": "#/components/schemas/ListingAmenity"
             },
-            "description": "Amenity rows for the property. **Only present when the caller passes `?include=amenities`.** Empty array (`[]`) when the property has no amenity rows."
+            "description": "Amenity rows for the property. Detail endpoint only, and **only present when the caller passes `?include=amenities`.** Empty array (`[]`) when the property has no amenity rows."
           }
         }
       },
@@ -414,6 +513,11 @@
             "format": "date-time",
             "description": "When the reservation row was created in Repull (not the booking-on-channel timestamp)."
           },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last time this reservation was modified (dates, status, price, or guest details). Advances on every amendment or cancellation \u2014 poll or compare this value to reconcile changes instead of fingerprinting individual fields."
+          },
           "bookedAt": {
             "type": "string",
             "format": "date-time",
@@ -433,7 +537,8 @@
           "checkOut",
           "status",
           "confirmationCode",
-          "createdAt"
+          "createdAt",
+          "updatedAt"
         ]
       },
       "Guest": {
@@ -3713,6 +3818,266 @@
           }
         }
       },
+      "ListingContentUpdateRequest": {
+        "type": "object",
+        "description": "Canonical PMS-owned listing content. Every field is optional \u2014 this is a partial update, only the fields you send are written; absent fields are left untouched. This is a LOCAL write only: it does NOT push to Airbnb/Booking.com. Distribution is a separate explicit publish step. `photos` are ingested by URL and attached to the listing in order (full-replace by default, or append via `photosMode`).",
+        "properties": {
+          "title": {
+            "type": "string",
+            "nullable": true,
+            "description": "Guest-facing title. Written to the listing name and the `en` description."
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Alias for `title`."
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Long-form listing description."
+          },
+          "summary": {
+            "type": "string",
+            "nullable": true,
+            "description": "Short summary / tagline."
+          },
+          "amenities": {
+            "description": "FULL replacement of the amenity set. Accepts canonical keys as a string[] or structured rows. Omit to leave amenities untouched; send `[]` to clear them.",
+            "oneOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "example": [
+                  "wifi",
+                  "kitchen",
+                  "free_parking"
+                ]
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "amenityKey"
+                  ],
+                  "properties": {
+                    "amenityKey": {
+                      "type": "string"
+                    },
+                    "category": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "isPresent": {
+                      "type": "boolean",
+                      "nullable": true,
+                      "default": true
+                    },
+                    "instruction": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "address": {
+            "type": "object",
+            "description": "Partial address. Only provided sub-fields are written.",
+            "properties": {
+              "street": {
+                "type": "string",
+                "nullable": true
+              },
+              "city": {
+                "type": "string",
+                "nullable": true
+              },
+              "countryCode": {
+                "type": "string",
+                "nullable": true,
+                "description": "ISO-3166 alpha-2 country code."
+              },
+              "lat": {
+                "type": "number",
+                "nullable": true
+              },
+              "lng": {
+                "type": "number",
+                "nullable": true
+              }
+            }
+          },
+          "occupancy": {
+            "type": "object",
+            "properties": {
+              "maxGuests": {
+                "type": "integer",
+                "nullable": true
+              },
+              "bedrooms": {
+                "type": "integer",
+                "nullable": true
+              },
+              "beds": {
+                "type": "integer",
+                "nullable": true
+              },
+              "bathrooms": {
+                "type": "number",
+                "nullable": true,
+                "description": "Decimal, e.g. 1.5."
+              }
+            }
+          },
+          "policies": {
+            "type": "object",
+            "properties": {
+              "checkInTimeStart": {
+                "type": "string",
+                "nullable": true,
+                "description": "e.g. \"15\" (3pm)."
+              },
+              "checkInTimeEnd": {
+                "type": "string",
+                "nullable": true
+              },
+              "checkOutTime": {
+                "type": "string",
+                "nullable": true,
+                "description": "e.g. \"11\" (11am)."
+              },
+              "houseRules": {
+                "type": "string",
+                "nullable": true,
+                "description": "Free-text house rules."
+              },
+              "cancellationPolicy": {
+                "type": "string",
+                "nullable": true,
+                "description": "Cancellation policy slug/label."
+              },
+              "cancellation": {
+                "type": "string",
+                "nullable": true,
+                "description": "Alias for `cancellationPolicy`."
+              },
+              "allowsChildren": {
+                "type": "boolean",
+                "nullable": true
+              },
+              "allowsInfants": {
+                "type": "boolean",
+                "nullable": true
+              },
+              "allowsPets": {
+                "type": "boolean",
+                "nullable": true
+              },
+              "allowsSmoking": {
+                "type": "boolean",
+                "nullable": true
+              },
+              "allowsEvents": {
+                "type": "boolean",
+                "nullable": true
+              }
+            }
+          },
+          "photos": {
+            "type": "array",
+            "description": "Photo set \u2014 full replacement by default (pass `photosMode: \"append\"` to add after existing photos, or `[]` to clear; omit to leave untouched). Each entry is a hosted image URL (string) or a structured ref. URL-ingest only: the URL is persisted and attached to the listing in order \u2014 the OTA push downloads it at publish time. Binary/multipart upload is a follow-up. A non-empty array with no valid http(s) URL is reported in `deferred` (existing photos left untouched).",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "format": "uri",
+                  "description": "Hosted image URL (http/https).",
+                  "example": "https://cdn.example.com/photos/living-room.jpg"
+                },
+                {
+                  "type": "object",
+                  "required": [
+                    "url"
+                  ],
+                  "properties": {
+                    "url": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "Hosted image URL (http/https)."
+                    },
+                    "thumbnailUrl": {
+                      "type": "string",
+                      "format": "uri",
+                      "nullable": true
+                    },
+                    "caption": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "category": {
+                      "type": "string",
+                      "nullable": true,
+                      "default": "property"
+                    },
+                    "width": {
+                      "type": "integer",
+                      "nullable": true
+                    },
+                    "height": {
+                      "type": "integer",
+                      "nullable": true
+                    },
+                    "sortOrder": {
+                      "type": "integer",
+                      "nullable": true,
+                      "description": "Explicit position; defaults to the array index."
+                    },
+                    "sourceUrl": {
+                      "type": "string",
+                      "format": "uri",
+                      "nullable": true,
+                      "description": "Provenance URL; defaults to `url`."
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "photosMode": {
+            "type": "string",
+            "default": "replace",
+            "description": "How `photos` is applied: `replace` (full replacement of the photo set) or `append` (add after the existing photos). Ignored when `photos` is absent."
+          }
+        }
+      },
+      "ListingContentUpdateResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The listing id (serialized as a string to preserve precision)."
+          },
+          "changed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Content slabs that were actually written, e.g. [\"title\",\"occupancy\",\"amenities\"]."
+          },
+          "deferred": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Provided-but-not-applied fields \u2014 e.g. \"photos\" when a non-empty photos array carried no valid http(s) URL."
+          }
+        }
+      },
       "ListingGenerateContentRequest": {
         "type": "object",
         "properties": {
@@ -4895,23 +5260,52 @@
       },
       "BookingPricingRateUpdateRestrictions": {
         "type": "object",
-        "description": "Optional length-of-stay / availability restrictions for one rate update.",
+        "description": "Optional length-of-stay / availability restrictions for one rate update. Every field here is forwarded verbatim into Booking.com's rates XML (`minimumstay`, `maximumstay`, `closedonarrival`, `closedondeparture`, \u2026) \u2014 omit a field to leave that restriction untouched.",
         "properties": {
           "minStay": {
             "type": "integer",
-            "nullable": true
+            "nullable": true,
+            "description": "Minimum length of stay (`minimumstay`)."
           },
           "maxStay": {
             "type": "integer",
-            "nullable": true
+            "nullable": true,
+            "description": "Maximum length of stay (`maximumstay`)."
           },
           "closedToArrival": {
             "type": "boolean",
-            "nullable": true
+            "nullable": true,
+            "description": "Closed-to-arrival \u2014 guests may not check in on the affected dates (`closedonarrival`)."
           },
           "closedToDeparture": {
             "type": "boolean",
-            "nullable": true
+            "nullable": true,
+            "description": "Closed-to-departure \u2014 guests may not check out on the affected dates (`closedondeparture`)."
+          },
+          "minStayArrival": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Arrival-based minimum length of stay (`minimumstay_arrival`)."
+          },
+          "maxStayArrival": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Arrival-based maximum length of stay (`maximumstay_arrival`)."
+          },
+          "exactStayArrival": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Arrival-based exact length of stay (`exactstay_arrival`)."
+          },
+          "minAdvanceRes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Minimum advance-reservation window, format `XDY` (X days Y hours) \u2014 `min_advance_res`."
+          },
+          "maxAdvanceRes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Maximum advance-reservation window, format `XDY` (X days Y hours) \u2014 `max_advance_res`."
           }
         }
       },
@@ -4968,7 +5362,8 @@
           },
           "roomsToSell": {
             "type": "integer",
-            "nullable": true
+            "nullable": true,
+            "description": "Rooms to sell for the date range. Set to `0` to stop-sell this room/rate on the rates endpoint (Booking's dedicated `<closed>` stop-sell flag lives on the availability endpoint \u2014 see `BookingAvailabilityUpdate.closed`)."
           },
           "restrictions": {
             "$ref": "#/components/schemas/BookingPricingRateUpdateRestrictions"
@@ -5034,6 +5429,234 @@
           }
         },
         "additionalProperties": true
+      },
+      "BookingAvailabilityUpdate": {
+        "type": "object",
+        "required": [
+          "roomId",
+          "rateId",
+          "dateRange",
+          "availableRooms"
+        ],
+        "description": "One (room, rate-plan, date-range) availability update. Carries inventory (`availableRooms`), the dedicated stop-sell flag (`closed`), and the same length-of-stay / arrival restrictions as a rate update.",
+        "properties": {
+          "roomId": {
+            "type": "string",
+            "description": "Booking.com room id."
+          },
+          "rateId": {
+            "type": "string",
+            "description": "Booking.com rate-plan id."
+          },
+          "dateRange": {
+            "type": "object",
+            "required": [
+              "start",
+              "end"
+            ],
+            "properties": {
+              "start": {
+                "type": "string",
+                "format": "date"
+              },
+              "end": {
+                "type": "string",
+                "format": "date"
+              }
+            }
+          },
+          "availableRooms": {
+            "type": "integer",
+            "description": "Rooms to sell (`roomstosell`). `0` blocks the room for the range."
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "closed": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Dedicated stop-sell flag (`<closed>` in Booking's XML). `true` fully stops sale for the room/date-range regardless of `availableRooms`."
+          },
+          "restrictions": {
+            "$ref": "#/components/schemas/BookingPricingRateUpdateRestrictions"
+          }
+        }
+      },
+      "BookingAvailabilityUpdateRequest": {
+        "type": "object",
+        "required": [
+          "type",
+          "property_id",
+          "updates"
+        ],
+        "description": "Body for `PUT /v1/channels/booking/availability`. Selects one of Booking's three ARI write paths via `type` and forwards `updates` verbatim to the connector.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "`rates` \u2192 price + restrictions (`updateRates`); `availability` \u2192 inventory + stop-sell + restrictions (`updateAvailability`); `derived-pricing` \u2192 occupancy-derived pricing rules (`updateDerivedPricing`)."
+          },
+          "property_id": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Booking.com hotel/property id (numeric; accepted as int or numeric string)."
+          },
+          "updates": {
+            "type": "array",
+            "minItems": 1,
+            "description": "For `type: \"rates\"` each item is a `BookingPricingRateUpdate`; for `type: \"availability\"` a `BookingAvailabilityUpdate`; for `type: \"derived-pricing\"` a derived-price rule set.",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/BookingPricingRateUpdate"
+                },
+                {
+                  "$ref": "#/components/schemas/BookingAvailabilityUpdate"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "AirbnbCalendarOperation": {
+        "type": "object",
+        "description": "One calendar operation. Supply either `start_date` + `end_date` OR a `dates` array. Every restriction here is forwarded verbatim to Airbnb's batch calendar API.",
+        "properties": {
+          "start_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Inclusive range start (pair with `end_date`)."
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Inclusive range end (pair with `start_date`)."
+          },
+          "dates": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true,
+            "description": "Explicit date or `start:end` range strings, as an alternative to `start_date`/`end_date`."
+          },
+          "daily_price": {
+            "type": "number",
+            "nullable": true,
+            "description": "Nightly price override."
+          },
+          "availability": {
+            "type": "string",
+            "nullable": true,
+            "description": "Stop-sell is expressed here: `unavailable` blocks the date(s); `available` re-opens; `default` reverts to rule-based availability."
+          },
+          "min_nights": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Minimum length of stay for the date(s)."
+          },
+          "max_nights": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Maximum length of stay for the date(s)."
+          },
+          "closed_to_arrival": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Closed-to-arrival \u2014 no check-ins on the affected date(s)."
+          },
+          "closed_to_departure": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Closed-to-departure \u2014 no check-outs on the affected date(s)."
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "AirbnbAvailabilityWriteRequest": {
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "description": "Body for `PUT /v1/channels/airbnb/listings/{id}/availability`. `type: \"calendar\"` carries per-date restrictions (min/max nights, closed-to-arrival/departure, stop-sell); `type: \"rules\"` carries listing-level availability rules (default min/max nights, booking lead time, turnover days).",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "operations": {
+            "type": "array",
+            "description": "Required when `type: \"calendar\"`. Batch of per-date restriction operations.",
+            "items": {
+              "$ref": "#/components/schemas/AirbnbCalendarOperation"
+            }
+          },
+          "rules": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Required when `type: \"rules\"`. Airbnb availability-rules object \u2014 `default_min_nights`, `default_max_nights`, `booking_lead_time`, `turnover_days`, `day_of_week_min_nights`, `seasonal_min_nights`, etc."
+          }
+        }
+      },
+      "AirbnbPricingWriteRequest": {
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "description": "Body for `PUT /v1/channels/airbnb/listings/{id}/pricing`. The `type` discriminator selects the pricing sub-resource. `type: \"calendar\"` shares the same per-date restriction shape as the availability endpoint (min/max nights, closed-to-arrival/departure, stop-sell via `availability: \"unavailable\"`).",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "operations": {
+            "type": "array",
+            "description": "Required when `type: \"calendar\"`. Batch of per-date price + restriction operations.",
+            "items": {
+              "$ref": "#/components/schemas/AirbnbCalendarOperation"
+            }
+          },
+          "modelType": {
+            "type": "string",
+            "nullable": true,
+            "description": "Required when `type: \"model\"` \u2014 the pricing-availability model to switch the listing to."
+          },
+          "settings": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true,
+            "description": "Required for `type: \"standard\" | \"rate-plan\" | \"fees\"` \u2014 the pricing-settings object to PUT."
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "nullable": true,
+            "description": "Required for `type: \"los\"` \u2014 length-of-stay records."
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true,
+            "description": "Required for `type: \"currency\"` \u2014 ISO 4217 code."
+          },
+          "rule": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true,
+            "description": "Required for `type: \"rule\"` \u2014 a single pricing rule appended to the listing."
+          }
+        }
       },
       "MarketSummary": {
         "type": "object",
@@ -5868,6 +6491,103 @@
           "connectionId"
         ]
       },
+      "MapAirbnbListingRequest": {
+        "type": "object",
+        "required": [
+          "airbnbId",
+          "listingId"
+        ],
+        "description": "Body for `POST /v1/channels/airbnb/listings/map`.",
+        "properties": {
+          "airbnbId": {
+            "type": "string",
+            "description": "The Airbnb listing id to map. Discover it via `GET /v1/channels/airbnb/listings`."
+          },
+          "listingId": {
+            "type": "integer",
+            "description": "Canonical Repull listing id to link the Airbnb listing to. Must belong to your workspace. A numeric string is also accepted."
+          },
+          "hostId": {
+            "type": "string",
+            "description": "Optional. When present, must match the Airbnb listing's host id \u2014 guards against mapping the wrong host's listing."
+          },
+          "syncEnabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether the resulting platform link has sync enabled."
+          }
+        }
+      },
+      "MapAirbnbListingResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "alreadyMapped",
+          "airbnbId",
+          "listingId",
+          "hostId",
+          "listingAirbnbId",
+          "platformLinkId"
+        ],
+        "description": "Id fields are strings (API-wide convention \u2014 bigint ids are stringified to avoid 53-bit JS-number precision loss).",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "alreadyMapped": {
+            "type": "boolean",
+            "description": "True when the Airbnb listing was already mapped to this listing (no-op)."
+          },
+          "airbnbId": {
+            "type": "string"
+          },
+          "listingId": {
+            "type": "string"
+          },
+          "previousListingId": {
+            "type": "string",
+            "description": "The listing the Airbnb record pointed at before this call. Omitted on a no-op."
+          },
+          "hostId": {
+            "type": "string"
+          },
+          "listingAirbnbId": {
+            "type": "string",
+            "description": "Internal id of the `listings_airbnb` record."
+          },
+          "platformLinkId": {
+            "type": "string",
+            "description": "Internal id of the resulting `listing_platform_links` row."
+          }
+        }
+      },
+      "AirbnbListingActionRequest": {
+        "type": "object",
+        "required": [
+          "action"
+        ],
+        "description": "Body for `POST /v1/channels/airbnb/listings/{id}`.",
+        "properties": {
+          "action": {
+            "type": "string",
+            "description": "`delete` deactivates the Repull record. `push`/`publish` push content to Airbnb."
+          },
+          "airbnbConnectionId": {
+            "type": "string",
+            "description": "For `push`/`publish`: the Airbnb connection to update (from `GET /v1/channels/airbnb/listings/{id}`). Pass this OR `hostId`."
+          },
+          "hostId": {
+            "type": "string",
+            "description": "For `push`/`publish`: create + publish a new Airbnb listing under this host. Pass this OR `airbnbConnectionId`."
+          },
+          "force": {
+            "type": "boolean",
+            "default": false,
+            "description": "For `push`/`publish`: re-push every field, ignoring dirty-field tracking."
+          }
+        }
+      },
       "StudioError": {
         "type": "object",
         "description": "Repull-style structured error envelope. Surface the `fix` and `docs_url` to your end users so they can self-serve.",
@@ -6455,6 +7175,76 @@
         }
       }
     },
+    "/v1/sandbox/seed": {
+      "post": {
+        "operationId": "seed_sandbox",
+        "summary": "Seed sandbox fixtures",
+        "description": "Provision a deterministic set of test fixtures for contract testing WITHOUT live provider accounts. **Requires a test key (`sk_test_*`)** \u2014 live or legacy keys are rejected with 403.\n\nSeeds, scoped to the authenticated test customer: 3 sample listings, 5 reservations across the lifecycle (created / modified / cancelled / date-changed / pending), and 2 fake connected provider accounts (Airbnb + Booking.com) so the pairing + connection-status flows are testable without real OAuth.\n\nIdempotent \u2014 re-seeding upserts the same rows and returns the same ids. The seeded rows are visible ONLY under a test key, via the normal read endpoints (`GET /v1/listings`, `/v1/reservations`, `/v1/connect`, `/v1/channels/airbnb/listings`, `/v1/channels/airbnb/connection`). They live in a data space fully isolated from live inventory.",
+        "tags": [
+          "Sandbox"
+        ],
+        "responses": {
+          "200": {
+            "description": "Fixtures seeded \u2014 returns the ref\u2192id map",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SandboxSeedResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "Not a test key \u2014 the sandbox is only reachable with `sk_test_*`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/sandbox/reset": {
+      "post": {
+        "operationId": "reset_sandbox",
+        "summary": "Reset sandbox fixtures",
+        "description": "Clear the authenticated test customer's sandbox fixtures. **Requires a test key (`sk_test_*`)** \u2014 live or legacy keys are rejected with 403.\n\nDeletes ONLY the customer's rows in the isolated sandbox data space \u2014 it can never touch real inventory (`listings`, `reservations`, connections). Idempotent: resetting an empty sandbox returns zero counts (still 200). Returns per-resource deletion counts.",
+        "tags": [
+          "Sandbox"
+        ],
+        "responses": {
+          "200": {
+            "description": "Fixtures cleared \u2014 returns per-resource deletion counts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SandboxResetResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "Not a test key \u2014 the sandbox is only reachable with `sk_test_*`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/properties": {
       "get": {
         "operationId": "list_properties",
@@ -6794,77 +7584,6 @@
             "$ref": "#/components/responses/UnprocessableEntity"
           }
         }
-      },
-      "post": {
-        "operationId": "create_reservation",
-        "description": "Create a reservation in the source PMS. Required fields depend on the connected provider (e.g. Airbnb requires guest email; Booking.com requires hotel id). Validation errors return 422 with the offending `field` populated.",
-        "summary": "Create a reservation",
-        "tags": [
-          "Reservations"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "propertyId",
-                  "checkIn",
-                  "checkOut",
-                  "guestFirstName",
-                  "guestLastName"
-                ],
-                "properties": {
-                  "propertyId": {
-                    "type": "string"
-                  },
-                  "checkIn": {
-                    "type": "string",
-                    "format": "date"
-                  },
-                  "checkOut": {
-                    "type": "string",
-                    "format": "date"
-                  },
-                  "guestFirstName": {
-                    "type": "string"
-                  },
-                  "guestLastName": {
-                    "type": "string"
-                  },
-                  "guestEmail": {
-                    "type": "string"
-                  },
-                  "guestPhone": {
-                    "type": "string"
-                  },
-                  "guestCount": {
-                    "type": "integer"
-                  },
-                  "totalPrice": {
-                    "type": "number"
-                  },
-                  "currency": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Reservation created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Reservation"
-                }
-              }
-            }
-          }
-        }
       }
     },
     "/v1/reservations/{id}": {
@@ -6911,167 +7630,6 @@
           },
           "500": {
             "$ref": "#/components/responses/InternalError"
-          }
-        }
-      },
-      "patch": {
-        "operationId": "update_reservation",
-        "summary": "Update reservation",
-        "description": "Patch reservation fields (dates, status, special requests). Only fields included in the body are modified. Use the cancel endpoint for cancellations \u2014 DELETE handles cancellation but not partial updates.",
-        "tags": [
-          "Reservations"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "checkIn": {
-                    "type": "string",
-                    "format": "date"
-                  },
-                  "checkOut": {
-                    "type": "string",
-                    "format": "date"
-                  },
-                  "status": {
-                    "type": "string"
-                  },
-                  "totalPrice": {
-                    "type": "number"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Updated"
-          }
-        }
-      },
-      "delete": {
-        "operationId": "cancel_reservation",
-        "summary": "Cancel reservation",
-        "description": "Cancel an existing reservation. Cancellation rules vary by provider \u2014 Airbnb host-cancellations carry penalties; Booking.com cancellations apply the per-rate-plan policy. Once 200 is returned, the upstream PMS state is committed.",
-        "tags": [
-          "Reservations"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Cancelled"
-          }
-        }
-      }
-    },
-    "/v1/availability/{propertyId}": {
-      "get": {
-        "operationId": "get_availability",
-        "summary": "Get availability calendar",
-        "description": "Returns day-by-day availability, pricing, and minimum stay for a property.",
-        "tags": [
-          "Availability"
-        ],
-        "parameters": [
-          {
-            "name": "propertyId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          },
-          {
-            "name": "startDate",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "date"
-            }
-          },
-          {
-            "name": "endDate",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "date"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Calendar days",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CalendarResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "operationId": "update_availability",
-        "summary": "Update availability",
-        "description": "Update pricing, availability, and minimum stay for specific dates.",
-        "tags": [
-          "Availability"
-        ],
-        "parameters": [
-          {
-            "name": "propertyId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "dates": {
-                    "type": "array",
-                    "items": {
-                      "$ref": "#/components/schemas/CalendarDay"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Updated"
           }
         }
       }
@@ -8657,26 +9215,6 @@
             }
           }
         }
-      },
-      "post": {
-        "operationId": "create_airbnb_listing",
-        "summary": "Create/push Airbnb listing",
-        "description": "Create a new Airbnb listing or push an existing Repull listing to Airbnb. Requires a connected Airbnb account. Returns the created listing id; publishing happens via the listing-action endpoint.",
-        "tags": [
-          "Airbnb"
-        ],
-        "responses": {
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AirbnbListing"
-                }
-              }
-            }
-          }
-        }
       }
     },
     "/v1/channels/airbnb/listings/{id}": {
@@ -8721,8 +9259,8 @@
       },
       "post": {
         "operationId": "airbnb_listing_action",
-        "summary": "Listing action (delete/push/publish/unlist)",
-        "description": "Apply a state action to a listing by id.\n\n`delete` is implemented as a **deactivate of the Repull record only** \u2014 it sets the listing inactive and KEEPS the row; it does NOT touch the upstream Airbnb listing (Repull never deletes or deactivates on Airbnb's side). Use it to exclude a listing / trim back under the plan-listings cap; reactivate via `PATCH /v1/listings/{id}` with `{ \"active\": true }`. Idempotent.\n\n`push` (sync local changes upstream), `publish` (make publicly bookable), and `unlist` (hide) depend on the host-side sync orchestrator and currently return 501.",
+        "summary": "Listing action (delete/push/publish)",
+        "description": "Apply a state action to a listing by id. The path `id` is the canonical Repull listing id.\n\n`delete` is a **deactivate of the Repull record only** \u2014 it sets the listing inactive and KEEPS the row; it does NOT touch the upstream Airbnb listing (Repull never deletes or deactivates on Airbnb's side). Use it to exclude a listing / trim back under the plan-listings cap; reactivate via `PATCH /v1/listings/{id}` with `{ \"active\": true }`. Idempotent.\n\n`push` / `publish` push the listing's content to Airbnb via the same host-side sync orchestrator as `POST /v1/listings/{id}/publish/airbnb` \u2014 pass `airbnbConnectionId` to update an already-mapped Airbnb listing, or `hostId` to create + publish a new one under that host. `force` re-pushes every field, ignoring dirty-field tracking.\n\nAny other action (e.g. `pull`, `unlist`) returns a structured 422 naming the supported actions.",
         "tags": [
           "Airbnb"
         ],
@@ -8736,9 +9274,62 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AirbnbListingActionRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Action completed"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          }
+        }
+      }
+    },
+    "/v1/channels/airbnb/listings/map": {
+      "post": {
+        "operationId": "map_airbnb_listing",
+        "summary": "Map an Airbnb listing to a Repull listing",
+        "description": "Link an existing Airbnb listing to a canonical Repull listing/property. **API-key-scoped** (unlike the Booking room mapping, which is Connect-session-scoped).\n\nDiscover the `airbnbId` (+ `hostId`) via `GET /v1/channels/airbnb/listings`, then re-point it at the `listingId` of your choice \u2014 the dedup / consolidation case where the Airbnb sync auto-created its own listing but you want the inventory under an existing property.\n\nRepoints both the Airbnb record and its platform link to the target listing in one transaction. Idempotent \u2014 re-mapping to the same listing is a 200 no-op (`alreadyMapped: true`). Scope is enforced against your workspace on both the target listing and the existing Airbnb record; a listing that already links a different Airbnb listing returns 409.",
+        "tags": [
+          "Airbnb"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MapAirbnbListingRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Mapped",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MapAirbnbListingResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
           }
         }
       }
@@ -8770,7 +9361,7 @@
       "put": {
         "operationId": "update_airbnb_listing_pricing",
         "summary": "Update Airbnb pricing",
-        "description": "Push pricing changes to Airbnb. The full pricing object is replaced \u2014 to patch a single field, GET first, mutate locally, then PUT the whole object.",
+        "description": "Push pricing changes to Airbnb. The `type` discriminator selects the sub-resource (model, standard settings, LOS, rate-plan, fees, currency, rule, or per-date `calendar`). `type: \"calendar\"` carries the full per-date restriction set \u2014 nightly price, min/max nights, closed-to-arrival, closed-to-departure, and stop-sell (`availability: \"unavailable\"`). For settings sub-resources the full object is replaced \u2014 GET first, mutate locally, then PUT the whole object.",
         "tags": [
           "Airbnb"
         ],
@@ -8784,6 +9375,16 @@
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AirbnbPricingWriteRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Updated"
@@ -8818,7 +9419,7 @@
       "put": {
         "operationId": "update_airbnb_listing_availability",
         "summary": "Update Airbnb availability",
-        "description": "Push per-day availability + pricing overrides to Airbnb. Accepts a sparse map (date \u2192 fields) \u2014 only included dates are updated.",
+        "description": "Push availability + restrictions to Airbnb. `type: \"calendar\"` writes per-date restrictions \u2014 min/max nights, closed-to-arrival, closed-to-departure, and stop-sell (`availability: \"unavailable\"`) \u2014 via a batch of operations that each target either a date range or an explicit date list. `type: \"rules\"` writes listing-level availability rules (default min/max nights, booking lead time, turnover days, seasonal/day-of-week min nights). Restrictions never leak across channels \u2014 this endpoint writes only to Airbnb.",
         "tags": [
           "Airbnb"
         ],
@@ -8832,6 +9433,16 @@
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AirbnbAvailabilityWriteRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Updated"
@@ -9276,21 +9887,6 @@
         }
       }
     },
-    "/v1/channels/airbnb/sync": {
-      "post": {
-        "operationId": "sync_airbnb",
-        "summary": "Bulk sync to Airbnb",
-        "description": "Push all property data to Airbnb in one call.",
-        "tags": [
-          "Airbnb"
-        ],
-        "responses": {
-          "200": {
-            "description": "Sync started"
-          }
-        }
-      }
-    },
     "/v1/listings": {
       "get": {
         "operationId": "listListings",
@@ -9570,6 +10166,58 @@
         }
       }
     },
+    "/v1/listings/{id}/content": {
+      "put": {
+        "operationId": "updateListingContent",
+        "summary": "Update canonical listing content",
+        "description": "Write your PMS's canonical listing content \u2014 title, description, amenities, address, occupancy, and policies \u2014 into a Repull listing, making it the source of truth. This is the flagship \"the PMS owns listing content, Repull distributes it\" enabler.\n\n**Partial update:** every field is optional. Only the fields you send are written; absent fields are left untouched. `amenities` is a FULL replacement of the amenity set (omit to leave untouched, send `[]` to clear).\n\n**Local write only \u2014 NOT a channel publish.** This mutates Repull's own copy of the content. It does NOT push to Airbnb / Booking.com; it marks the channels dirty so a later publish knows what changed. Distribution stays a separate explicit step.\n\n**Photos are deferred:** a provided `photos` array is echoed back in the `deferred` field and NOT persisted (media ingestion is a follow-up).\n\nCross-tenant access (a listing that belongs to a different workspace) returns 404 \u2014 never 403. This endpoint is served even when the account is over the plan-listings cap, since editing content on a listing you already own never grows the portfolio.",
+        "tags": [
+          "Listings"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Repull listing id"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListingContentUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Content updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListingContentUpdateResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          }
+        }
+      }
+    },
     "/v1/listings/{id}/generate-content": {
       "post": {
         "operationId": "generateListingContent",
@@ -9754,39 +10402,41 @@
             }
           }
         }
-      },
-      "post": {
-        "operationId": "create_booking_property",
-        "summary": "Create Booking.com property",
-        "description": "Onboard a new Booking.com hotel via the OAuth Connect flow. Returns the hotel id once Stage-1 designation completes in the Extranet.",
-        "tags": [
-          "Booking.com"
-        ],
-        "responses": {
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BookingProperty"
-                }
-              }
-            }
-          }
-        }
       }
     },
     "/v1/channels/booking/availability": {
       "put": {
         "operationId": "update_booking_availability",
         "summary": "Update Booking.com rates/availability",
-        "description": "Push availability + rate changes to Booking.com's OTA system. Accepts the standard OTA rate message \u2014 see Booking's OTA docs for the field shape. Errors from upstream surface as `booking_error`.",
+        "description": "Push availability, rates, and the full restriction set to Booking.com. `type` selects the write path:\n\n- `rates` \u2014 nightly price + length-of-stay / arrival restrictions (min/max stay, closed-to-arrival, closed-to-departure, advance-reservation window).\n- `availability` \u2014 inventory (`availableRooms`), the dedicated stop-sell flag (`closed`), and the same restriction set.\n- `derived-pricing` \u2014 occupancy-derived pricing rules.\n\nRestrictions never leak across channels \u2014 this endpoint writes only to Booking.com. Errors from upstream surface as `booking_error`.",
         "tags": [
           "Booking.com"
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BookingAvailabilityUpdateRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Updated"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         }
       }
@@ -9850,21 +10500,6 @@
         "responses": {
           "200": {
             "description": "Sent"
-          }
-        }
-      }
-    },
-    "/v1/channels/booking/sync": {
-      "post": {
-        "operationId": "sync_booking",
-        "summary": "Bulk sync to Booking.com",
-        "description": "Trigger a full bulk sync of properties + availability + rates to Booking.com. Runs async \u2014 returns 202 with a job id; poll `/v1/sync/jobs/{id}` for status.",
-        "tags": [
-          "Booking.com"
-        ],
-        "responses": {
-          "200": {
-            "description": "Sync started"
           }
         }
       }
@@ -10120,81 +10755,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/VrboListingListResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/channels/vrbo/listings/{id}/pricing": {
-      "get": {
-        "operationId": "getVrboListingPricing",
-        "summary": "Get VRBO pricing (501 \u2014 agency model)",
-        "description": "VRBO uses the agency model \u2014 VRBO PULLS rates from `/api/webhooks/vrbo/listings-xml/rates/{listing}/{unit}` rather than accepting a push API. This endpoint is declared for symmetry with the other channel-pricing routes but currently returns **501 Not Implemented** with a pointer at the public rate URL VRBO consumes. Use `GET /v1/listings/{id}/calendar` (once wired) to inspect the underlying source-of-truth.\n\nWhen the listings-XML rate-builder is ported into this repo, this endpoint will return the parsed rates VRBO sees.",
-        "tags": [
-          "VRBO"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            },
-            "description": "Vanio listing ID \u2014 resolved to a VRBO listing/unit via the workspace mapping."
-          }
-        ],
-        "responses": {
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          },
-          "501": {
-            "description": "Not implemented \u2014 VRBO is agency-model. Response includes the public rate URL VRBO fetches.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "operationId": "updateVrboListingPricing",
-        "summary": "Update VRBO pricing (501 \u2014 no push API exists)",
-        "description": "VRBO has no rate-push API. To change what VRBO sees, update the underlying Vanio calendar/pricing-settings (e.g. `PUT /v1/listings/{id}/calendar` once wired) \u2014 VRBO will pick up the change on its next pull. This endpoint always returns **501** rather than fake-stubbing a successful push the SDK would silently swallow.",
-        "tags": [
-          "VRBO"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          },
-          "501": {
-            "description": "Not implemented \u2014 VRBO accepts no rate pushes. Update the calendar instead.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -11084,59 +11644,7 @@
         }
       }
     },
-    "/v1/ai": {
-      "post": {
-        "operationId": "create_ai_operation",
-        "summary": "AI operation",
-        "description": "Perform an AI-powered operation.\n\nOperations:\n- `respond-to-guest` \u2014 Generate a contextual guest response\n- `classify-intent` \u2014 Classify the intent of a guest message\n- `generate-listing` \u2014 Generate optimized listing description\n- `review-response` \u2014 Generate a review response\n- `price-suggestion` \u2014 Get AI pricing suggestions",
-        "tags": [
-          "AI"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AIOperation"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "AI response (may be streaming)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "result": {
-                      "type": "string"
-                    },
-                    "confidence": {
-                      "type": "number"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/v1/billing": {
-      "get": {
-        "operationId": "get_billing",
-        "summary": "Get plan and usage",
-        "description": "Fetch the current plan, usage counters, and billing-cycle reset date for this workspace. Use this to surface a \"you have used X / Y\" indicator in your dashboard.",
-        "tags": [
-          "Billing"
-        ],
-        "responses": {
-          "200": {
-            "description": "Plan info and current usage"
-          }
-        }
-      },
       "post": {
         "operationId": "create_billing_checkout",
         "summary": "Create checkout session",
@@ -11375,1377 +11883,6 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
-          }
-        }
-      }
-    },
-    "/api/studio/projects": {
-      "get": {
-        "summary": "List Studio projects",
-        "description": "Returns every Studio project owned by the authenticated account, excluding soft-deleted ones. Use this to populate a project picker or dashboard.",
-        "operationId": "listStudioProjects",
-        "tags": [
-          "Studio"
-        ],
-        "responses": {
-          "200": {
-            "description": "Project list",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/StudioProject"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "summary": "Create a Studio project",
-        "description": "Spins up a new Studio project from a name + prompt. Repull AI uses the prompt to materialize the initial template; the returned project starts in `draft` status.",
-        "operationId": "createStudioProject",
-        "tags": [
-          "Studio"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "name",
-                  "prompt"
-                ],
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "description": "Human-readable project name. Used to derive the slug."
-                  },
-                  "prompt": {
-                    "type": "string",
-                    "description": "Initial prompt that seeds the project. Repull AI scaffolds the first generation from this."
-                  },
-                  "template_id": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Optional template to start from (e.g. `next-saas`). Omit to generate from prompt only."
-                  }
-                }
-              },
-              "examples": {
-                "default": {
-                  "value": {
-                    "name": "Booking Pulse",
-                    "prompt": "A dashboard that surfaces booking velocity by source.",
-                    "template_id": "next-saas"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Project created (draft state)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "slug": {
-                          "type": "string"
-                        },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "draft",
-                            "building",
-                            "live",
-                            "archived"
-                          ]
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request body",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/studio/projects/{id}": {
-      "get": {
-        "summary": "Get a Studio project",
-        "description": "Fetches a single Studio project by ID, including its current status and timestamps.",
-        "operationId": "getStudioProject",
-        "tags": [
-          "Studio"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "Project UUID."
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Project",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "$ref": "#/components/schemas/StudioProject"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Project not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "patch": {
-        "summary": "Update a Studio project",
-        "description": "Updates project metadata. Only the included fields are touched; omit a field to leave it unchanged.",
-        "operationId": "updateStudioProject",
-        "tags": [
-          "Studio"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string"
-                  },
-                  "status": {
-                    "type": "string",
-                    "enum": [
-                      "draft",
-                      "building",
-                      "live",
-                      "archived"
-                    ]
-                  }
-                }
-              },
-              "examples": {
-                "rename": {
-                  "value": {
-                    "name": "Booking Pulse v2"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Updated project",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "$ref": "#/components/schemas/StudioProject"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request body",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Project not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "summary": "Delete a Studio project",
-        "description": "Soft-deletes a project. The project is archived and removed from the listing endpoint, but its files and deployments are retained for recovery.",
-        "operationId": "deleteStudioProject",
-        "tags": [
-          "Studio"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Project deleted",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "deleted": {
-                          "type": "boolean"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Project not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/studio/projects/{id}/files": {
-      "get": {
-        "summary": "List Studio project files",
-        "description": "Returns every file in the project tree with its content, sha256, and size. Use the digests to detect drift before writing.",
-        "operationId": "listStudioProjectFiles",
-        "tags": [
-          "Studio"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "File list",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/StudioFile"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Project not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/studio/projects/{id}/files/{path}": {
-      "put": {
-        "summary": "Upsert a Studio project file",
-        "description": "Creates or replaces a file at the given path. Returns the new sha256 so subsequent writes can use optimistic concurrency.",
-        "operationId": "upsertStudioProjectFile",
-        "tags": [
-          "Studio"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "path",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "URL-encoded project-relative path, e.g. `src%2Fapp%2Fpage.tsx`."
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "content"
-                ],
-                "properties": {
-                  "content": {
-                    "type": "string",
-                    "description": "Full UTF-8 file contents \u2014 partial updates are not supported."
-                  }
-                }
-              },
-              "examples": {
-                "default": {
-                  "value": {
-                    "content": "export default function Page() { return <div>Hello</div> }"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "File upserted",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "sha256": {
-                          "type": "string"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request body",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Project not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "summary": "Delete a Studio project file",
-        "description": "Removes a single file from the project tree. The deployment is not redeployed automatically \u2014 trigger a new deployment to apply the change.",
-        "operationId": "deleteStudioProjectFile",
-        "tags": [
-          "Studio"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "path",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "URL-encoded project-relative path."
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "File deleted",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "path": {
-                          "type": "string"
-                        },
-                        "deleted": {
-                          "type": "boolean"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Project or file not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/studio/projects/{id}/generations": {
-      "post": {
-        "summary": "Run a Studio generation",
-        "description": "Records a generation run scoped to a single project \u2014 Repull AI takes the prompt, generates the response, and stores it on the project timeline. Use this when you want generation history; for one-shot completions without persistence use `POST /api/studio/generate`.",
-        "operationId": "createStudioProjectGeneration",
-        "tags": [
-          "Studio"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "prompt"
-                ],
-                "properties": {
-                  "prompt": {
-                    "type": "string",
-                    "description": "Prompt to send to Repull AI."
-                  }
-                }
-              },
-              "examples": {
-                "default": {
-                  "value": {
-                    "prompt": "Add a dark-mode toggle to the header."
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Generation recorded",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "generation_id": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "response": {
-                          "type": "string"
-                        },
-                        "tokens_out": {
-                          "type": "integer"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request body",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Project not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            },
-            "headers": {
-              "Retry-After": {
-                "schema": {
-                  "type": "integer"
-                },
-                "description": "Seconds to wait before retrying."
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/studio/generate": {
-      "post": {
-        "summary": "Generate text with Repull AI",
-        "description": "Sends a prompt to Repull AI and returns the completion synchronously. This is the single LLM endpoint used by the Studio UI; programmatic clients can use it to drive their own vibe-coding flows. Responses include token accounting, cost-in-micros, and cache/fallback flags. 429s include a `Retry-After` header.",
-        "operationId": "generateStudioCompletion",
-        "tags": [
-          "Studio"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "project_id",
-                  "prompt"
-                ],
-                "properties": {
-                  "project_id": {
-                    "oneOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "integer"
-                      }
-                    ],
-                    "description": "Project the generation belongs to (used for billing + rate limits)."
-                  },
-                  "prompt": {
-                    "type": "string",
-                    "maxLength": 32000,
-                    "description": "User prompt. Up to 32,000 characters."
-                  },
-                  "system_prompt": {
-                    "type": "string",
-                    "maxLength": 32000,
-                    "description": "Optional system prompt to steer the response."
-                  },
-                  "temperature": {
-                    "type": "number",
-                    "minimum": 0,
-                    "maximum": 2,
-                    "description": "Sampling temperature. Defaults to model preset."
-                  },
-                  "max_tokens": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "maximum": 16384,
-                    "description": "Maximum completion tokens."
-                  }
-                }
-              },
-              "examples": {
-                "default": {
-                  "value": {
-                    "project_id": "a1b2c3d4-e5f6-7890-abcd-ef0123456789",
-                    "prompt": "Refactor the header to use a sticky position."
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Generation result",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "text": {
-                          "type": "string",
-                          "description": "Generated completion text."
-                        },
-                        "generation_id": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "model": {
-                          "type": "string",
-                          "description": "Model identifier that produced the response."
-                        },
-                        "tokens_in": {
-                          "type": "integer"
-                        },
-                        "tokens_out": {
-                          "type": "integer"
-                        },
-                        "latency_ms": {
-                          "type": "integer"
-                        },
-                        "cost_usd_micro": {
-                          "type": "integer",
-                          "description": "Cost in millionths of a USD."
-                        },
-                        "cached": {
-                          "type": "boolean",
-                          "description": "True if the response was served from cache."
-                        },
-                        "fallback": {
-                          "type": "boolean",
-                          "description": "True if the primary model failed and Repull AI fell back to the secondary."
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request body",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            },
-            "headers": {
-              "Retry-After": {
-                "schema": {
-                  "type": "integer"
-                },
-                "description": "Seconds to wait before retrying."
-              },
-              "X-RateLimit-Limit": {
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-RateLimit-Remaining": {
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-RateLimit-Reset": {
-                "schema": {
-                  "type": "integer"
-                },
-                "description": "Unix timestamp when the quota resets."
-              }
-            }
-          },
-          "500": {
-            "description": "Server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/studio/deployments": {
-      "get": {
-        "summary": "List Studio deployments",
-        "description": "Returns every deployment across all projects in your account, newest first. Filter by project with `project_id`.",
-        "operationId": "listStudioDeployments",
-        "tags": [
-          "Studio"
-        ],
-        "parameters": [
-          {
-            "name": "project_id",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "Optional \u2014 restrict the list to a single project."
-          },
-          {
-            "name": "status",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "provisioning",
-                "building",
-                "live",
-                "suspended",
-                "failed"
-              ]
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "default": 50
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "default": 0
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Deployment list",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/StudioDeployment"
-                      }
-                    },
-                    "pagination": {
-                      "$ref": "#/components/schemas/Pagination"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "summary": "Trigger a Studio deployment",
-        "description": "Kicks off a new deployment for a project \u2014 Repull provisions a Fly.io machine, writes the subdomain DNS record, and builds the project. The response returns immediately with `provisioning` status; poll `GET /api/studio/deployments/{id}` until `live`.",
-        "operationId": "createStudioDeployment",
-        "tags": [
-          "Studio"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "project_id"
-                ],
-                "properties": {
-                  "project_id": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Project to deploy."
-                  }
-                }
-              },
-              "examples": {
-                "default": {
-                  "value": {
-                    "project_id": "a1b2c3d4-e5f6-7890-abcd-ef0123456789"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Deployment queued",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "deployment_id": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "subdomain": {
-                          "type": "string"
-                        },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "provisioning"
-                          ]
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request body",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Project not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/studio/deployments/{id}": {
-      "get": {
-        "summary": "Get a Studio deployment",
-        "description": "Fetches a single deployment, including its current status and live URL. Poll this endpoint after `POST /api/studio/deployments` until `status` is `live`.",
-        "operationId": "getStudioDeployment",
-        "tags": [
-          "Studio"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Deployment",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "$ref": "#/components/schemas/StudioDeployment"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Deployment not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "summary": "Delete a Studio deployment",
-        "description": "Tears down a deployment \u2014 releases the Fly.io machine, removes the DNS record, and marks the deployment as deleted. The underlying project is unaffected.",
-        "operationId": "deleteStudioDeployment",
-        "tags": [
-          "Studio"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Deployment deleted",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "deployment_id": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "deleted": {
-                          "type": "boolean"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Deployment not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/studio/deployments/{id}/suspend": {
-      "post": {
-        "summary": "Suspend a Studio deployment",
-        "description": "Pauses a deployment without deleting it \u2014 the Fly.io machine is stopped and the URL returns 503 until the deployment is woken. Suspended deployments do not accrue runtime charges.",
-        "operationId": "suspendStudioDeployment",
-        "tags": [
-          "Studio"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Deployment suspended",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "$ref": "#/components/schemas/StudioDeployment"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Deployment not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Deployment is already suspended or in a non-suspendable state",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/studio/deployments/{id}/wake": {
-      "post": {
-        "summary": "Wake a suspended Studio deployment",
-        "description": "Resumes a previously suspended deployment \u2014 Repull restarts the Fly.io machine and the URL becomes reachable again once `status` returns to `live`.",
-        "operationId": "wakeStudioDeployment",
-        "tags": [
-          "Studio"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Deployment waking",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "$ref": "#/components/schemas/StudioDeployment"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Deployment not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Deployment is not in a suspended state",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudioError"
-                }
-              }
-            }
           }
         }
       }

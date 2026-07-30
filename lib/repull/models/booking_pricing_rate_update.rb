@@ -32,6 +32,7 @@ module Repull
 
     attr_accessor :occupancy
 
+    # Rooms to sell for the date range. Set to `0` to stop-sell this room/rate on the rates endpoint (Booking's dedicated `<closed>` stop-sell flag lives on the availability endpoint — see `BookingAvailabilityUpdate.closed`).
     attr_accessor :rooms_to_sell
 
     attr_accessor :restrictions

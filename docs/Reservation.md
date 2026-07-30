@@ -20,6 +20,7 @@
 | **currency** | **String** | DEPRECATED — use &#x60;financials.currency&#x60;. ISO 4217 currency code. | [optional] |
 | **guest_details** | **Hash&lt;String, Object&gt;** | DEPRECATED — use &#x60;occupancy&#x60; for normalized counts and &#x60;primaryGuest&#x60; for guest identity. Raw guest details from the source channel; shape varies by platform. | [optional] |
 | **created_at** | **Time** | When the reservation row was created in Repull (not the booking-on-channel timestamp). |  |
+| **updated_at** | **Time** | Last time this reservation was modified (dates, status, price, or guest details). Advances on every amendment or cancellation — poll or compare this value to reconcile changes instead of fingerprinting individual fields. |  |
 | **booked_at** | **Time** | When the booking was made on the source channel (when reported by the channel). | [optional] |
 | **guest_name** | **String** | Pre-resolved display name (&#x60;firstName lastName&#x60;) from the joined guest row. Undefined when no first name is available. | [optional] |
 
@@ -45,6 +46,7 @@ instance = Repull::Reservation.new(
   currency: USD,
   guest_details: null,
   created_at: null,
+  updated_at: null,
   booked_at: null,
   guest_name: null
 )
