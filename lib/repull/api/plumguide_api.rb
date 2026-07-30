@@ -19,6 +19,63 @@ module Repull
     def initialize(api_client = ApiClient.default)
       @api_client = api_client
     end
+    # Remove Plumguide webhook config
+    # Delete the Plumguide webhook configuration for this workspace. Plumguide stops delivering webhooks until a new config is set.
+    # @param [Hash] opts the optional parameters
+    # @return [nil]
+    def delete_plumguide_webhooks(opts = {})
+      delete_plumguide_webhooks_with_http_info(opts)
+      nil
+    end
+
+    # Remove Plumguide webhook config
+    # Delete the Plumguide webhook configuration for this workspace. Plumguide stops delivering webhooks until a new config is set.
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
+    def delete_plumguide_webhooks_with_http_info(opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: PlumguideApi.delete_plumguide_webhooks ...'
+      end
+      # resource path
+      local_var_path = '/v1/channels/plumguide/webhooks'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type]
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"PlumguideApi.delete_plumguide_webhooks",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:DELETE, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: PlumguideApi#delete_plumguide_webhooks\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # Get Plumguide availability
     # Read the per-day availability calendar for a Plumguide listing. Returns the same row shape as Airbnb availability for SDK convenience.
     # @param [Hash] opts the optional parameters
@@ -125,6 +182,126 @@ module Repull
       data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: PlumguideApi#get_plumguide_pricing\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Get Plumguide webhook config
+    # Read the current Plumguide webhook configuration for this workspace.
+    # @param [Hash] opts the optional parameters
+    # @return [nil]
+    def get_plumguide_webhooks(opts = {})
+      get_plumguide_webhooks_with_http_info(opts)
+      nil
+    end
+
+    # Get Plumguide webhook config
+    # Read the current Plumguide webhook configuration for this workspace.
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
+    def get_plumguide_webhooks_with_http_info(opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: PlumguideApi.get_plumguide_webhooks ...'
+      end
+      # resource path
+      local_var_path = '/v1/channels/plumguide/webhooks'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type]
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"PlumguideApi.get_plumguide_webhooks",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: PlumguideApi#get_plumguide_webhooks\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # List Plumguide bookings
+    # List Plumguide bookings. Default returns all bookings; pass `listing_id` to filter to one listing, or `booking_code` to fetch a single booking.
+    # @param [Hash] opts the optional parameters
+    # @option opts [Integer] :listing_id Filter to a single Plumguide listing.
+    # @option opts [String] :booking_code Fetch a single booking by its Plumguide booking code.
+    # @return [nil]
+    def list_plumguide_bookings(opts = {})
+      list_plumguide_bookings_with_http_info(opts)
+      nil
+    end
+
+    # List Plumguide bookings
+    # List Plumguide bookings. Default returns all bookings; pass &#x60;listing_id&#x60; to filter to one listing, or &#x60;booking_code&#x60; to fetch a single booking.
+    # @param [Hash] opts the optional parameters
+    # @option opts [Integer] :listing_id Filter to a single Plumguide listing.
+    # @option opts [String] :booking_code Fetch a single booking by its Plumguide booking code.
+    # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
+    def list_plumguide_bookings_with_http_info(opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: PlumguideApi.list_plumguide_bookings ...'
+      end
+      # resource path
+      local_var_path = '/v1/channels/plumguide/bookings'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+      query_params[:'listing_id'] = opts[:'listing_id'] if !opts[:'listing_id'].nil?
+      query_params[:'booking_code'] = opts[:'booking_code'] if !opts[:'booking_code'].nil?
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type]
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"PlumguideApi.list_plumguide_bookings",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: PlumguideApi#list_plumguide_bookings\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end
@@ -292,6 +469,74 @@ module Repull
       data, status_code, headers = @api_client.call_api(:PUT, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: PlumguideApi#update_plumguide_pricing\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Replace Plumguide webhook config
+    # Replace the Plumguide webhook configuration. The body carries the full webhook config payload — this is a full replacement, not a patch.
+    # @param request_body [Hash<String, Object>] 
+    # @param [Hash] opts the optional parameters
+    # @return [nil]
+    def update_plumguide_webhooks(request_body, opts = {})
+      update_plumguide_webhooks_with_http_info(request_body, opts)
+      nil
+    end
+
+    # Replace Plumguide webhook config
+    # Replace the Plumguide webhook configuration. The body carries the full webhook config payload — this is a full replacement, not a patch.
+    # @param request_body [Hash<String, Object>] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
+    def update_plumguide_webhooks_with_http_info(request_body, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: PlumguideApi.update_plumguide_webhooks ...'
+      end
+      # verify the required parameter 'request_body' is set
+      if @api_client.config.client_side_validation && request_body.nil?
+        fail ArgumentError, "Missing the required parameter 'request_body' when calling PlumguideApi.update_plumguide_webhooks"
+      end
+      # resource path
+      local_var_path = '/v1/channels/plumguide/webhooks'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(request_body)
+
+      # return_type
+      return_type = opts[:debug_return_type]
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"PlumguideApi.update_plumguide_webhooks",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:PUT, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: PlumguideApi#update_plumguide_webhooks\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end

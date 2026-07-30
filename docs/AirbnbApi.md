@@ -6,25 +6,44 @@ All URIs are relative to *https://api.repull.dev*
 | ------ | ------------ | ----------- |
 | [**airbnb_listing_action**](AirbnbApi.md#airbnb_listing_action) | **POST** /v1/channels/airbnb/listings/{id} | Listing action (delete/push/publish) |
 | [**airbnb_reservation_action**](AirbnbApi.md#airbnb_reservation_action) | **POST** /v1/channels/airbnb/reservations/{code} | Accept/decline/cancel Airbnb reservation |
+| [**create_airbnb_alteration**](AirbnbApi.md#create_airbnb_alteration) | **POST** /v1/channels/airbnb/alterations | Create Airbnb alteration |
+| [**create_airbnb_listing_room**](AirbnbApi.md#create_airbnb_listing_room) | **POST** /v1/channels/airbnb/listings/{id}/rooms | Create an Airbnb room |
+| [**create_airbnb_offer**](AirbnbApi.md#create_airbnb_offer) | **POST** /v1/channels/airbnb/offers | Create Airbnb special offer or pre-approval |
+| [**delete_airbnb_listing_photo**](AirbnbApi.md#delete_airbnb_listing_photo) | **DELETE** /v1/channels/airbnb/listings/{id}/photos | Delete an Airbnb photo |
+| [**delete_airbnb_listing_room**](AirbnbApi.md#delete_airbnb_listing_room) | **DELETE** /v1/channels/airbnb/listings/{id}/rooms | Delete an Airbnb room |
 | [**edit_airbnb_review**](AirbnbApi.md#edit_airbnb_review) | **PUT** /v1/channels/airbnb/reviews/{id} | Edit Airbnb host review |
+| [**get_airbnb_alteration**](AirbnbApi.md#get_airbnb_alteration) | **GET** /v1/channels/airbnb/alterations/{id} | Get Airbnb alteration |
+| [**get_airbnb_checkin_guide**](AirbnbApi.md#get_airbnb_checkin_guide) | **GET** /v1/channels/airbnb/listings/{id}/checkin-guide | Get Airbnb check-in guide |
+| [**get_airbnb_checkout_guide**](AirbnbApi.md#get_airbnb_checkout_guide) | **GET** /v1/channels/airbnb/listings/{id}/checkout-guide | Get Airbnb checkout guide |
 | [**get_airbnb_connection**](AirbnbApi.md#get_airbnb_connection) | **GET** /v1/channels/airbnb/connection | Get Airbnb connection state |
 | [**get_airbnb_listing**](AirbnbApi.md#get_airbnb_listing) | **GET** /v1/channels/airbnb/listings/{id} | Get Airbnb listing |
 | [**get_airbnb_listing_availability**](AirbnbApi.md#get_airbnb_listing_availability) | **GET** /v1/channels/airbnb/listings/{id}/availability | Get Airbnb availability |
 | [**get_airbnb_listing_pricing**](AirbnbApi.md#get_airbnb_listing_pricing) | **GET** /v1/channels/airbnb/listings/{id}/pricing | Get Airbnb pricing |
+| [**get_airbnb_listing_quality**](AirbnbApi.md#get_airbnb_listing_quality) | **GET** /v1/channels/airbnb/listings/{id}/quality | Get Airbnb listing quality |
+| [**get_airbnb_listing_settings**](AirbnbApi.md#get_airbnb_listing_settings) | **GET** /v1/channels/airbnb/listings/{id}/settings | Get Airbnb listing settings |
 | [**get_airbnb_reservation**](AirbnbApi.md#get_airbnb_reservation) | **GET** /v1/channels/airbnb/reservations/{code} | Get Airbnb reservation |
+| [**get_airbnb_thread**](AirbnbApi.md#get_airbnb_thread) | **GET** /v1/channels/airbnb/messaging/{threadId} | Get Airbnb thread |
+| [**list_airbnb_alterations**](AirbnbApi.md#list_airbnb_alterations) | **GET** /v1/channels/airbnb/alterations | List Airbnb alterations |
+| [**list_airbnb_listing_amenities**](AirbnbApi.md#list_airbnb_listing_amenities) | **GET** /v1/channels/airbnb/listings/{id}/amenities | List Airbnb amenities |
+| [**list_airbnb_listing_descriptions**](AirbnbApi.md#list_airbnb_listing_descriptions) | **GET** /v1/channels/airbnb/listings/{id}/descriptions | List Airbnb descriptions |
 | [**list_airbnb_listing_photos**](AirbnbApi.md#list_airbnb_listing_photos) | **GET** /v1/channels/airbnb/listings/{id}/photos | List Airbnb photos |
+| [**list_airbnb_listing_rooms**](AirbnbApi.md#list_airbnb_listing_rooms) | **GET** /v1/channels/airbnb/listings/{id}/rooms | List Airbnb rooms |
 | [**list_airbnb_listings**](AirbnbApi.md#list_airbnb_listings) | **GET** /v1/channels/airbnb/listings | List Airbnb listings |
 | [**list_airbnb_reservations**](AirbnbApi.md#list_airbnb_reservations) | **GET** /v1/channels/airbnb/reservations | List Airbnb reservations |
 | [**list_airbnb_reviews**](AirbnbApi.md#list_airbnb_reviews) | **GET** /v1/channels/airbnb/reviews | List Airbnb reviews |
 | [**list_airbnb_thread_messages**](AirbnbApi.md#list_airbnb_thread_messages) | **GET** /v1/channels/airbnb/messaging/{threadId}/messages | Get Airbnb messages |
 | [**list_airbnb_threads**](AirbnbApi.md#list_airbnb_threads) | **GET** /v1/channels/airbnb/messaging | List Airbnb message threads |
+| [**list_airbnb_transactions**](AirbnbApi.md#list_airbnb_transactions) | **GET** /v1/channels/airbnb/transactions | List Airbnb transactions |
 | [**map_airbnb_listing**](AirbnbApi.md#map_airbnb_listing) | **POST** /v1/channels/airbnb/listings/map | Map an Airbnb listing to a Repull listing |
 | [**respond_airbnb_review**](AirbnbApi.md#respond_airbnb_review) | **POST** /v1/channels/airbnb/reviews/{id}/respond | Respond to Airbnb review |
 | [**respond_airbnb_review_legacy**](AirbnbApi.md#respond_airbnb_review_legacy) | **POST** /v1/channels/airbnb/reviews | Respond to / submit Airbnb review (legacy) |
 | [**send_airbnb_message**](AirbnbApi.md#send_airbnb_message) | **POST** /v1/channels/airbnb/messaging/{threadId}/messages | Send Airbnb message |
+| [**update_airbnb_checkin_guide**](AirbnbApi.md#update_airbnb_checkin_guide) | **PUT** /v1/channels/airbnb/listings/{id}/checkin-guide | Upsert Airbnb check-in guide |
 | [**update_airbnb_listing_availability**](AirbnbApi.md#update_airbnb_listing_availability) | **PUT** /v1/channels/airbnb/listings/{id}/availability | Update Airbnb availability |
 | [**update_airbnb_listing_pricing**](AirbnbApi.md#update_airbnb_listing_pricing) | **PUT** /v1/channels/airbnb/listings/{id}/pricing | Update Airbnb pricing |
+| [**update_airbnb_message**](AirbnbApi.md#update_airbnb_message) | **PATCH** /v1/channels/airbnb/messaging/{threadId}/messages/{messageId} | Edit / react to / mark an Airbnb message |
 | [**upload_airbnb_listing_photos**](AirbnbApi.md#upload_airbnb_listing_photos) | **POST** /v1/channels/airbnb/listings/{id}/photos | Upload photos to Airbnb |
+| [**withdraw_airbnb_offer**](AirbnbApi.md#withdraw_airbnb_offer) | **DELETE** /v1/channels/airbnb/offers | Withdraw Airbnb special offer |
 
 
 ## airbnb_listing_action
@@ -167,6 +186,354 @@ nil (empty response body)
 - **Accept**: Not defined
 
 
+## create_airbnb_alteration
+
+> create_airbnb_alteration(create_airbnb_alteration_request)
+
+Create Airbnb alteration
+
+Create a reservation alteration request (change dates, guest count, or price) on Airbnb. **Write-side** — calls Airbnb upstream. Requires a connected Airbnb host for the workspace, else `404 no_connection`.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::AirbnbApi.new
+create_airbnb_alteration_request = Repull::CreateAirbnbAlterationRequest.new({confirmation_code: 'confirmation_code_example'}) # CreateAirbnbAlterationRequest | 
+
+begin
+  # Create Airbnb alteration
+  api_instance.create_airbnb_alteration(create_airbnb_alteration_request)
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->create_airbnb_alteration: #{e}"
+end
+```
+
+#### Using the create_airbnb_alteration_with_http_info variant
+
+This returns an Array which contains the response data (`nil` in this case), status code and headers.
+
+> <Array(nil, Integer, Hash)> create_airbnb_alteration_with_http_info(create_airbnb_alteration_request)
+
+```ruby
+begin
+  # Create Airbnb alteration
+  data, status_code, headers = api_instance.create_airbnb_alteration_with_http_info(create_airbnb_alteration_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => nil
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->create_airbnb_alteration_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **create_airbnb_alteration_request** | [**CreateAirbnbAlterationRequest**](CreateAirbnbAlterationRequest.md) |  |  |
+
+### Return type
+
+nil (empty response body)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## create_airbnb_listing_room
+
+> create_airbnb_listing_room(id, request_body)
+
+Create an Airbnb room
+
+Create a new room on an Airbnb listing. **Write-side** — calls Airbnb upstream. Body is the full room object minus `room_id`. Requires a connected Airbnb host, else `404 no_connection`.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::AirbnbApi.new
+id = 'id_example' # String | Repull listing id (numeric string).
+request_body = { key: 3.56} # Hash<String, Object> | 
+
+begin
+  # Create an Airbnb room
+  api_instance.create_airbnb_listing_room(id, request_body)
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->create_airbnb_listing_room: #{e}"
+end
+```
+
+#### Using the create_airbnb_listing_room_with_http_info variant
+
+This returns an Array which contains the response data (`nil` in this case), status code and headers.
+
+> <Array(nil, Integer, Hash)> create_airbnb_listing_room_with_http_info(id, request_body)
+
+```ruby
+begin
+  # Create an Airbnb room
+  data, status_code, headers = api_instance.create_airbnb_listing_room_with_http_info(id, request_body)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => nil
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->create_airbnb_listing_room_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string). |  |
+| **request_body** | [**Hash&lt;String, Object&gt;**](Object.md) |  |  |
+
+### Return type
+
+nil (empty response body)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## create_airbnb_offer
+
+> create_airbnb_offer(create_airbnb_offer_request)
+
+Create Airbnb special offer or pre-approval
+
+Create a special offer or a pre-approval on Airbnb. **Write-side** — calls Airbnb upstream. The `type` discriminator selects the flavour:  - `offer` — a special offer with custom terms (the remaining body fields are the offer params). - `preapproval` — pre-approve an inquiry thread (requires `threadId`; optional `blockInstantBooking`).  Requires a connected Airbnb host, else `404 no_connection`.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::AirbnbApi.new
+create_airbnb_offer_request = Repull::CreateAirbnbOfferRequest.new({type: 'offer'}) # CreateAirbnbOfferRequest | 
+
+begin
+  # Create Airbnb special offer or pre-approval
+  api_instance.create_airbnb_offer(create_airbnb_offer_request)
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->create_airbnb_offer: #{e}"
+end
+```
+
+#### Using the create_airbnb_offer_with_http_info variant
+
+This returns an Array which contains the response data (`nil` in this case), status code and headers.
+
+> <Array(nil, Integer, Hash)> create_airbnb_offer_with_http_info(create_airbnb_offer_request)
+
+```ruby
+begin
+  # Create Airbnb special offer or pre-approval
+  data, status_code, headers = api_instance.create_airbnb_offer_with_http_info(create_airbnb_offer_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => nil
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->create_airbnb_offer_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **create_airbnb_offer_request** | [**CreateAirbnbOfferRequest**](CreateAirbnbOfferRequest.md) |  |  |
+
+### Return type
+
+nil (empty response body)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## delete_airbnb_listing_photo
+
+> <DeleteAirbnbListingPhoto200Response> delete_airbnb_listing_photo(id, photo_id)
+
+Delete an Airbnb photo
+
+Remove a single photo from an Airbnb listing. Pass the Airbnb-side photo id as `?photoId=`. Write-side — calls Airbnb upstream; the local photo cache is reconciled by the sync worker afterwards.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::AirbnbApi.new
+id = 'id_example' # String | 
+photo_id = 'photo_id_example' # String | Airbnb-side photo id to delete.
+
+begin
+  # Delete an Airbnb photo
+  result = api_instance.delete_airbnb_listing_photo(id, photo_id)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->delete_airbnb_listing_photo: #{e}"
+end
+```
+
+#### Using the delete_airbnb_listing_photo_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<DeleteAirbnbListingPhoto200Response>, Integer, Hash)> delete_airbnb_listing_photo_with_http_info(id, photo_id)
+
+```ruby
+begin
+  # Delete an Airbnb photo
+  data, status_code, headers = api_instance.delete_airbnb_listing_photo_with_http_info(id, photo_id)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <DeleteAirbnbListingPhoto200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->delete_airbnb_listing_photo_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** |  |  |
+| **photo_id** | **String** | Airbnb-side photo id to delete. |  |
+
+### Return type
+
+[**DeleteAirbnbListingPhoto200Response**](DeleteAirbnbListingPhoto200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## delete_airbnb_listing_room
+
+> <DeleteAirbnbListingPhoto200Response> delete_airbnb_listing_room(id, room_id)
+
+Delete an Airbnb room
+
+Delete a room from an Airbnb listing. **Write-side** — calls Airbnb upstream. Pass the Airbnb-side room id as `?roomId=`. Requires a connected Airbnb host, else `404 no_connection`.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::AirbnbApi.new
+id = 'id_example' # String | Repull listing id (numeric string).
+room_id = 'room_id_example' # String | Airbnb-side room id to delete.
+
+begin
+  # Delete an Airbnb room
+  result = api_instance.delete_airbnb_listing_room(id, room_id)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->delete_airbnb_listing_room: #{e}"
+end
+```
+
+#### Using the delete_airbnb_listing_room_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<DeleteAirbnbListingPhoto200Response>, Integer, Hash)> delete_airbnb_listing_room_with_http_info(id, room_id)
+
+```ruby
+begin
+  # Delete an Airbnb room
+  data, status_code, headers = api_instance.delete_airbnb_listing_room_with_http_info(id, room_id)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <DeleteAirbnbListingPhoto200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->delete_airbnb_listing_room_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string). |  |
+| **room_id** | **String** | Airbnb-side room id to delete. |  |
+
+### Return type
+
+[**DeleteAirbnbListingPhoto200Response**](DeleteAirbnbListingPhoto200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
 ## edit_airbnb_review
 
 > <AirbnbReview> edit_airbnb_review(id, airbnb_review)
@@ -235,6 +602,217 @@ end
 ### HTTP request headers
 
 - **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## get_airbnb_alteration
+
+> <GetAirbnbAlteration200Response> get_airbnb_alteration(id)
+
+Get Airbnb alteration
+
+Fetch a single Airbnb reservation alteration by its Airbnb alteration id. **Pure DB read**, workspace-scoped via the reservations join. Returns `404 not_found` when no alteration matches the id in your workspace.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::AirbnbApi.new
+id = 'id_example' # String | Airbnb alteration id.
+
+begin
+  # Get Airbnb alteration
+  result = api_instance.get_airbnb_alteration(id)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->get_airbnb_alteration: #{e}"
+end
+```
+
+#### Using the get_airbnb_alteration_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<GetAirbnbAlteration200Response>, Integer, Hash)> get_airbnb_alteration_with_http_info(id)
+
+```ruby
+begin
+  # Get Airbnb alteration
+  data, status_code, headers = api_instance.get_airbnb_alteration_with_http_info(id)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <GetAirbnbAlteration200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->get_airbnb_alteration_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Airbnb alteration id. |  |
+
+### Return type
+
+[**GetAirbnbAlteration200Response**](GetAirbnbAlteration200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## get_airbnb_checkin_guide
+
+> <ListAirbnbTransactions200Response> get_airbnb_checkin_guide(id, opts)
+
+Get Airbnb check-in guide
+
+Return every published locale variant of an Airbnb listing's check-in guide. **Pure DB read** from `listings_airbnb_check_in_guides`. Pass `?locale=en` to filter to one locale (prefix match). Returns `404` when the listing has no Airbnb connection in this workspace.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::AirbnbApi.new
+id = 'id_example' # String | Repull listing id (numeric string).
+opts = {
+  locale: 'en' # String | Filter to a single locale (prefix match, case-insensitive).
+}
+
+begin
+  # Get Airbnb check-in guide
+  result = api_instance.get_airbnb_checkin_guide(id, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->get_airbnb_checkin_guide: #{e}"
+end
+```
+
+#### Using the get_airbnb_checkin_guide_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<ListAirbnbTransactions200Response>, Integer, Hash)> get_airbnb_checkin_guide_with_http_info(id, opts)
+
+```ruby
+begin
+  # Get Airbnb check-in guide
+  data, status_code, headers = api_instance.get_airbnb_checkin_guide_with_http_info(id, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <ListAirbnbTransactions200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->get_airbnb_checkin_guide_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string). |  |
+| **locale** | **String** | Filter to a single locale (prefix match, case-insensitive). | [optional] |
+
+### Return type
+
+[**ListAirbnbTransactions200Response**](ListAirbnbTransactions200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## get_airbnb_checkout_guide
+
+> <ListAirbnbTransactions200Response> get_airbnb_checkout_guide(id)
+
+Get Airbnb checkout guide
+
+Return the checkout tasks an Airbnb listing shows guests at departure. **Pure DB read** from `listings_airbnb_checkout_tasks`. Returns `404` when the listing has no Airbnb connection in this workspace.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::AirbnbApi.new
+id = 'id_example' # String | Repull listing id (numeric string).
+
+begin
+  # Get Airbnb checkout guide
+  result = api_instance.get_airbnb_checkout_guide(id)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->get_airbnb_checkout_guide: #{e}"
+end
+```
+
+#### Using the get_airbnb_checkout_guide_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<ListAirbnbTransactions200Response>, Integer, Hash)> get_airbnb_checkout_guide_with_http_info(id)
+
+```ruby
+begin
+  # Get Airbnb checkout guide
+  data, status_code, headers = api_instance.get_airbnb_checkout_guide_with_http_info(id)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <ListAirbnbTransactions200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->get_airbnb_checkout_guide_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string). |  |
+
+### Return type
+
+[**ListAirbnbTransactions200Response**](ListAirbnbTransactions200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 
@@ -513,6 +1091,152 @@ nil (empty response body)
 - **Accept**: Not defined
 
 
+## get_airbnb_listing_quality
+
+> <GetAirbnbListingQuality200Response> get_airbnb_listing_quality(id, opts)
+
+Get Airbnb listing quality
+
+Return an Airbnb listing's quality signals — standards, reservation issues, and monthly quality stats. **Pure DB read** from the local quality mirrors. Scope the response with `?type=all|standards|issues|stats` (default `all`, which returns `{ standards, issues }`). Returns `404` when the listing has no Airbnb connection in this workspace.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::AirbnbApi.new
+id = 'id_example' # String | Repull listing id (numeric string).
+opts = {
+  type: 'all' # String | Which quality slice to return. `all` returns `{ standards, issues }`.
+}
+
+begin
+  # Get Airbnb listing quality
+  result = api_instance.get_airbnb_listing_quality(id, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->get_airbnb_listing_quality: #{e}"
+end
+```
+
+#### Using the get_airbnb_listing_quality_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<GetAirbnbListingQuality200Response>, Integer, Hash)> get_airbnb_listing_quality_with_http_info(id, opts)
+
+```ruby
+begin
+  # Get Airbnb listing quality
+  data, status_code, headers = api_instance.get_airbnb_listing_quality_with_http_info(id, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <GetAirbnbListingQuality200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->get_airbnb_listing_quality_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string). |  |
+| **type** | **String** | Which quality slice to return. &#x60;all&#x60; returns &#x60;{ standards, issues }&#x60;. | [optional][default to &#39;all&#39;] |
+
+### Return type
+
+[**GetAirbnbListingQuality200Response**](GetAirbnbListingQuality200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## get_airbnb_listing_settings
+
+> <GetAirbnbListingSettings200Response> get_airbnb_listing_settings(id, opts)
+
+Get Airbnb listing settings
+
+Return an Airbnb listing's host roles, published locales, and regulatory permits. **Pure DB read** — host roles from `listings_airbnb_details.host_roles`, locales from distinct `listings_airbnb_descriptions.locale`, permits from `listings_airbnb_permits`. Scope with `?type=all|hosts|permits|locales` (default `all`, which returns `{ hosts, locales }`). Returns `404` when the listing has no Airbnb connection in this workspace.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::AirbnbApi.new
+id = 'id_example' # String | Repull listing id (numeric string).
+opts = {
+  type: 'all' # String | Which settings slice to return. `all` returns `{ hosts, locales }`.
+}
+
+begin
+  # Get Airbnb listing settings
+  result = api_instance.get_airbnb_listing_settings(id, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->get_airbnb_listing_settings: #{e}"
+end
+```
+
+#### Using the get_airbnb_listing_settings_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<GetAirbnbListingSettings200Response>, Integer, Hash)> get_airbnb_listing_settings_with_http_info(id, opts)
+
+```ruby
+begin
+  # Get Airbnb listing settings
+  data, status_code, headers = api_instance.get_airbnb_listing_settings_with_http_info(id, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <GetAirbnbListingSettings200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->get_airbnb_listing_settings_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string). |  |
+| **type** | **String** | Which settings slice to return. &#x60;all&#x60; returns &#x60;{ hosts, locales }&#x60;. | [optional][default to &#39;all&#39;] |
+
+### Return type
+
+[**GetAirbnbListingSettings200Response**](GetAirbnbListingSettings200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
 ## get_airbnb_reservation
 
 > <AirbnbReservation> get_airbnb_reservation(code)
@@ -571,6 +1295,292 @@ end
 ### Return type
 
 [**AirbnbReservation**](AirbnbReservation.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## get_airbnb_thread
+
+> <GetAirbnbThread200Response> get_airbnb_thread(thread_id)
+
+Get Airbnb thread
+
+Fetch a single Airbnb message thread by its Airbnb thread id. **Pure DB read** from the local `message_threads` mirror, workspace-scoped. Returns `404 not_found` when no thread matches. For the messages within a thread use `GET /v1/channels/airbnb/messaging/{threadId}/messages`.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::AirbnbApi.new
+thread_id = 'thread_id_example' # String | Airbnb thread id (matches the external thread id).
+
+begin
+  # Get Airbnb thread
+  result = api_instance.get_airbnb_thread(thread_id)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->get_airbnb_thread: #{e}"
+end
+```
+
+#### Using the get_airbnb_thread_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<GetAirbnbThread200Response>, Integer, Hash)> get_airbnb_thread_with_http_info(thread_id)
+
+```ruby
+begin
+  # Get Airbnb thread
+  data, status_code, headers = api_instance.get_airbnb_thread_with_http_info(thread_id)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <GetAirbnbThread200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->get_airbnb_thread_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **thread_id** | **String** | Airbnb thread id (matches the external thread id). |  |
+
+### Return type
+
+[**GetAirbnbThread200Response**](GetAirbnbThread200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## list_airbnb_alterations
+
+> <ListAirbnbAlterations200Response> list_airbnb_alterations(opts)
+
+List Airbnb alterations
+
+List reservation alteration requests for Airbnb reservations in this workspace. **Pure DB read** from the local `reservation_alterations` mirror — never calls Airbnb upstream — scoped to your workspace via the reservations join.  Default returns only pending alterations; pass `?type=all` for the full history. Filter to a single reservation with `?reservation_code=<confirmation code>`. Every response carries the `data_freshness` envelope.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::AirbnbApi.new
+opts = {
+  type: 'pending', # String | Scope: `pending` (default) returns only alterations awaiting a decision; `all` returns every alteration.
+  reservation_code: 'reservation_code_example' # String | Airbnb confirmation code — restricts results to a single reservation. Returns an empty array when no reservation matches within your workspace.
+}
+
+begin
+  # List Airbnb alterations
+  result = api_instance.list_airbnb_alterations(opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->list_airbnb_alterations: #{e}"
+end
+```
+
+#### Using the list_airbnb_alterations_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<ListAirbnbAlterations200Response>, Integer, Hash)> list_airbnb_alterations_with_http_info(opts)
+
+```ruby
+begin
+  # List Airbnb alterations
+  data, status_code, headers = api_instance.list_airbnb_alterations_with_http_info(opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <ListAirbnbAlterations200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->list_airbnb_alterations_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **type** | **String** | Scope: &#x60;pending&#x60; (default) returns only alterations awaiting a decision; &#x60;all&#x60; returns every alteration. | [optional][default to &#39;pending&#39;] |
+| **reservation_code** | **String** | Airbnb confirmation code — restricts results to a single reservation. Returns an empty array when no reservation matches within your workspace. | [optional] |
+
+### Return type
+
+[**ListAirbnbAlterations200Response**](ListAirbnbAlterations200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## list_airbnb_listing_amenities
+
+> <ListAirbnbListingAmenities200Response> list_airbnb_listing_amenities(id)
+
+List Airbnb amenities
+
+List an Airbnb listing's amenities. **Pure DB read** from the local `listings_airbnb_amenities` cache — never calls Airbnb upstream. The response splits amenities into `amenities` (regular) and `accessibility_amenities` (step-free access, wide doorways, grab rails, disabled parking, wheelchair, accessible-height fixtures, hoists, etc). Both are arrays (`[]` when none). Consult `data_freshness` to disambiguate \"never synced\" from \"fresh and genuinely empty\". Returns `404` when the listing has no Airbnb connection in this workspace.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::AirbnbApi.new
+id = 'id_example' # String | Repull listing id (numeric string).
+
+begin
+  # List Airbnb amenities
+  result = api_instance.list_airbnb_listing_amenities(id)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->list_airbnb_listing_amenities: #{e}"
+end
+```
+
+#### Using the list_airbnb_listing_amenities_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<ListAirbnbListingAmenities200Response>, Integer, Hash)> list_airbnb_listing_amenities_with_http_info(id)
+
+```ruby
+begin
+  # List Airbnb amenities
+  data, status_code, headers = api_instance.list_airbnb_listing_amenities_with_http_info(id)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <ListAirbnbListingAmenities200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->list_airbnb_listing_amenities_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string). |  |
+
+### Return type
+
+[**ListAirbnbListingAmenities200Response**](ListAirbnbListingAmenities200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## list_airbnb_listing_descriptions
+
+> <ListAirbnbTransactions200Response> list_airbnb_listing_descriptions(id, opts)
+
+List Airbnb descriptions
+
+List an Airbnb listing's per-locale content (name, summary, house rules, etc). **Pure DB read** from `listings_airbnb_descriptions`. Filter to one locale with `?locale=en` (the legacy `?country=` param is accepted as a soft alias). Returns `404` when the listing has no Airbnb connection in this workspace.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::AirbnbApi.new
+id = 'id_example' # String | Repull listing id (numeric string).
+opts = {
+  locale: 'en', # String | Filter to a single locale (prefix match, case-insensitive).
+  country: 'country_example' # String | Legacy alias for `locale`. Prefer `locale`.
+}
+
+begin
+  # List Airbnb descriptions
+  result = api_instance.list_airbnb_listing_descriptions(id, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->list_airbnb_listing_descriptions: #{e}"
+end
+```
+
+#### Using the list_airbnb_listing_descriptions_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<ListAirbnbTransactions200Response>, Integer, Hash)> list_airbnb_listing_descriptions_with_http_info(id, opts)
+
+```ruby
+begin
+  # List Airbnb descriptions
+  data, status_code, headers = api_instance.list_airbnb_listing_descriptions_with_http_info(id, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <ListAirbnbTransactions200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->list_airbnb_listing_descriptions_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string). |  |
+| **locale** | **String** | Filter to a single locale (prefix match, case-insensitive). | [optional] |
+| **country** | **String** | Legacy alias for &#x60;locale&#x60;. Prefer &#x60;locale&#x60;. | [optional] |
+
+### Return type
+
+[**ListAirbnbTransactions200Response**](ListAirbnbTransactions200Response.md)
 
 ### Authorization
 
@@ -648,6 +1658,75 @@ nil (empty response body)
 
 - **Content-Type**: Not defined
 - **Accept**: Not defined
+
+
+## list_airbnb_listing_rooms
+
+> <ListAirbnbTransactions200Response> list_airbnb_listing_rooms(id)
+
+List Airbnb rooms
+
+List the rooms configured on an Airbnb listing, ordered by room number. **Pure DB read** from `listings_airbnb_rooms`. Returns `404` when the listing has no Airbnb connection in this workspace.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::AirbnbApi.new
+id = 'id_example' # String | Repull listing id (numeric string).
+
+begin
+  # List Airbnb rooms
+  result = api_instance.list_airbnb_listing_rooms(id)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->list_airbnb_listing_rooms: #{e}"
+end
+```
+
+#### Using the list_airbnb_listing_rooms_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<ListAirbnbTransactions200Response>, Integer, Hash)> list_airbnb_listing_rooms_with_http_info(id)
+
+```ruby
+begin
+  # List Airbnb rooms
+  data, status_code, headers = api_instance.list_airbnb_listing_rooms_with_http_info(id)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <ListAirbnbTransactions200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->list_airbnb_listing_rooms_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string). |  |
+
+### Return type
+
+[**ListAirbnbTransactions200Response**](ListAirbnbTransactions200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
 
 
 ## list_airbnb_listings
@@ -1007,6 +2086,72 @@ This endpoint does not need any parameter.
 - **Accept**: application/json
 
 
+## list_airbnb_transactions
+
+> <ListAirbnbTransactions200Response> list_airbnb_transactions
+
+List Airbnb transactions
+
+List Airbnb host transactions (payouts, adjustments, resolutions) for this workspace. **Pure DB read** — customer-facing reads never call Airbnb upstream. The transactions mirror is not yet synced into this surface, so today this endpoint returns an empty array with `data_freshness.stale = true` and `reason: \"never_synced\"`. Shape and contract are stable; the array populates once the sync worker lands.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::AirbnbApi.new
+
+begin
+  # List Airbnb transactions
+  result = api_instance.list_airbnb_transactions
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->list_airbnb_transactions: #{e}"
+end
+```
+
+#### Using the list_airbnb_transactions_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<ListAirbnbTransactions200Response>, Integer, Hash)> list_airbnb_transactions_with_http_info
+
+```ruby
+begin
+  # List Airbnb transactions
+  data, status_code, headers = api_instance.list_airbnb_transactions_with_http_info
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <ListAirbnbTransactions200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->list_airbnb_transactions_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+[**ListAirbnbTransactions200Response**](ListAirbnbTransactions200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
 ## map_airbnb_listing
 
 > <MapAirbnbListingResponse> map_airbnb_listing(map_airbnb_listing_request)
@@ -1280,6 +2425,78 @@ nil (empty response body)
 - **Accept**: Not defined
 
 
+## update_airbnb_checkin_guide
+
+> update_airbnb_checkin_guide(id, opts)
+
+Upsert Airbnb check-in guide
+
+Upsert the check-in guide for one locale on an Airbnb listing. **Write-side** — calls Airbnb upstream; the DB mirror is reconciled by the sync worker once the upstream call returns. Target the locale with `?locale=en` (defaults to `en`). Requires a connected Airbnb host, else `404 no_connection`.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::AirbnbApi.new
+id = 'id_example' # String | Repull listing id (numeric string).
+opts = {
+  locale: 'locale_example' # String | Locale to upsert. Defaults to `en`.
+}
+
+begin
+  # Upsert Airbnb check-in guide
+  api_instance.update_airbnb_checkin_guide(id, opts)
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->update_airbnb_checkin_guide: #{e}"
+end
+```
+
+#### Using the update_airbnb_checkin_guide_with_http_info variant
+
+This returns an Array which contains the response data (`nil` in this case), status code and headers.
+
+> <Array(nil, Integer, Hash)> update_airbnb_checkin_guide_with_http_info(id, opts)
+
+```ruby
+begin
+  # Upsert Airbnb check-in guide
+  data, status_code, headers = api_instance.update_airbnb_checkin_guide_with_http_info(id, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => nil
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->update_airbnb_checkin_guide_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string). |  |
+| **locale** | **String** | Locale to upsert. Defaults to &#x60;en&#x60;. | [optional][default to &#39;en&#39;] |
+
+### Return type
+
+nil (empty response body)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
 ## update_airbnb_listing_availability
 
 > update_airbnb_listing_availability(id, airbnb_availability_write_request)
@@ -1420,6 +2637,78 @@ nil (empty response body)
 - **Accept**: Not defined
 
 
+## update_airbnb_message
+
+> update_airbnb_message(thread_id, message_id, update_airbnb_message_request)
+
+Edit / react to / mark an Airbnb message
+
+Act on a single message in an Airbnb thread. **Write-side** — calls Airbnb upstream. The `action` discriminator selects the operation:  - `edit` — replace message text (requires `message`). - `unsend` — retract the message. - `read` — mark the message as read. - `react` — add a reaction (requires `reaction`).  Requires a connected Airbnb host, else `404 no_connection`.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::AirbnbApi.new
+thread_id = 'thread_id_example' # String | Airbnb thread id.
+message_id = 'message_id_example' # String | Airbnb message id within the thread.
+update_airbnb_message_request = Repull::UpdateAirbnbMessageRequest.new({action: 'edit'}) # UpdateAirbnbMessageRequest | 
+
+begin
+  # Edit / react to / mark an Airbnb message
+  api_instance.update_airbnb_message(thread_id, message_id, update_airbnb_message_request)
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->update_airbnb_message: #{e}"
+end
+```
+
+#### Using the update_airbnb_message_with_http_info variant
+
+This returns an Array which contains the response data (`nil` in this case), status code and headers.
+
+> <Array(nil, Integer, Hash)> update_airbnb_message_with_http_info(thread_id, message_id, update_airbnb_message_request)
+
+```ruby
+begin
+  # Edit / react to / mark an Airbnb message
+  data, status_code, headers = api_instance.update_airbnb_message_with_http_info(thread_id, message_id, update_airbnb_message_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => nil
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->update_airbnb_message_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **thread_id** | **String** | Airbnb thread id. |  |
+| **message_id** | **String** | Airbnb message id within the thread. |  |
+| **update_airbnb_message_request** | [**UpdateAirbnbMessageRequest**](UpdateAirbnbMessageRequest.md) |  |  |
+
+### Return type
+
+nil (empty response body)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
 ## upload_airbnb_listing_photos
 
 > upload_airbnb_listing_photos(id)
@@ -1486,4 +2775,72 @@ nil (empty response body)
 
 - **Content-Type**: Not defined
 - **Accept**: Not defined
+
+
+## withdraw_airbnb_offer
+
+> withdraw_airbnb_offer(offer_id)
+
+Withdraw Airbnb special offer
+
+Withdraw a previously-created Airbnb special offer. **Write-side** — calls Airbnb upstream. Pass the offer id as `?offerId=`. Requires a connected Airbnb host, else `404 no_connection`.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::AirbnbApi.new
+offer_id = 'offer_id_example' # String | Airbnb special-offer id to withdraw.
+
+begin
+  # Withdraw Airbnb special offer
+  api_instance.withdraw_airbnb_offer(offer_id)
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->withdraw_airbnb_offer: #{e}"
+end
+```
+
+#### Using the withdraw_airbnb_offer_with_http_info variant
+
+This returns an Array which contains the response data (`nil` in this case), status code and headers.
+
+> <Array(nil, Integer, Hash)> withdraw_airbnb_offer_with_http_info(offer_id)
+
+```ruby
+begin
+  # Withdraw Airbnb special offer
+  data, status_code, headers = api_instance.withdraw_airbnb_offer_with_http_info(offer_id)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => nil
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->withdraw_airbnb_offer_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **offer_id** | **String** | Airbnb special-offer id to withdraw. |  |
+
+### Return type
+
+nil (empty response body)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
 

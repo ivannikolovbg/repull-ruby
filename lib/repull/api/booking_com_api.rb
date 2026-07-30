@@ -19,6 +19,338 @@ module Repull
     def initialize(api_client = ApiClient.default)
       @api_client = api_client
     end
+    # Acknowledge Booking.com reservations
+    # Acknowledge one or more reservations so Booking.com removes them from the `new` queue. The body carries `reservation_ids` (non-empty array). Acknowledge only after you have durably persisted each reservation.
+    # @param acknowledge_booking_reservations_request [AcknowledgeBookingReservationsRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [nil]
+    def acknowledge_booking_reservations(acknowledge_booking_reservations_request, opts = {})
+      acknowledge_booking_reservations_with_http_info(acknowledge_booking_reservations_request, opts)
+      nil
+    end
+
+    # Acknowledge Booking.com reservations
+    # Acknowledge one or more reservations so Booking.com removes them from the &#x60;new&#x60; queue. The body carries &#x60;reservation_ids&#x60; (non-empty array). Acknowledge only after you have durably persisted each reservation.
+    # @param acknowledge_booking_reservations_request [AcknowledgeBookingReservationsRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
+    def acknowledge_booking_reservations_with_http_info(acknowledge_booking_reservations_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: BookingComApi.acknowledge_booking_reservations ...'
+      end
+      # verify the required parameter 'acknowledge_booking_reservations_request' is set
+      if @api_client.config.client_side_validation && acknowledge_booking_reservations_request.nil?
+        fail ArgumentError, "Missing the required parameter 'acknowledge_booking_reservations_request' when calling BookingComApi.acknowledge_booking_reservations"
+      end
+      # resource path
+      local_var_path = '/v1/channels/booking/reservations'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(acknowledge_booking_reservations_request)
+
+      # return_type
+      return_type = opts[:debug_return_type]
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"BookingComApi.acknowledge_booking_reservations",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: BookingComApi#acknowledge_booking_reservations\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Booking.com property setup actions
+    # Action-router for onboarding a property onto Booking.com. Select the step with `action`:  - `create-legal-entity` — register the legal entity (returns 201). - `check-legal-status` — poll legal-entity status by `leid`. - `check-readiness` — check whether a property is ready to open (`property_id`). - `open-property` — open the property for sale (`property_id`). - `set-contacts` — set property contacts (`property_id`, `contacts`). - `set-policies` — set property policies (`property_id`, plus policy fields).  Missing required fields per action return a validation error; upstream failures surface as `booking_error`.
+    # @param booking_setup_request [BookingSetupRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [nil]
+    def booking_setup(booking_setup_request, opts = {})
+      booking_setup_with_http_info(booking_setup_request, opts)
+      nil
+    end
+
+    # Booking.com property setup actions
+    # Action-router for onboarding a property onto Booking.com. Select the step with &#x60;action&#x60;:  - &#x60;create-legal-entity&#x60; — register the legal entity (returns 201). - &#x60;check-legal-status&#x60; — poll legal-entity status by &#x60;leid&#x60;. - &#x60;check-readiness&#x60; — check whether a property is ready to open (&#x60;property_id&#x60;). - &#x60;open-property&#x60; — open the property for sale (&#x60;property_id&#x60;). - &#x60;set-contacts&#x60; — set property contacts (&#x60;property_id&#x60;, &#x60;contacts&#x60;). - &#x60;set-policies&#x60; — set property policies (&#x60;property_id&#x60;, plus policy fields).  Missing required fields per action return a validation error; upstream failures surface as &#x60;booking_error&#x60;.
+    # @param booking_setup_request [BookingSetupRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
+    def booking_setup_with_http_info(booking_setup_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: BookingComApi.booking_setup ...'
+      end
+      # verify the required parameter 'booking_setup_request' is set
+      if @api_client.config.client_side_validation && booking_setup_request.nil?
+        fail ArgumentError, "Missing the required parameter 'booking_setup_request' when calling BookingComApi.booking_setup"
+      end
+      # resource path
+      local_var_path = '/v1/channels/booking/setup'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(booking_setup_request)
+
+      # return_type
+      return_type = opts[:debug_return_type]
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"BookingComApi.booking_setup",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: BookingComApi#booking_setup\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Subscribe to a Booking.com notification
+    # Subscribe to a Booking.com CNS notification type, delivered to `callback_url`. Returns 201 on success.
+    # @param create_booking_webhook_request [CreateBookingWebhookRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [nil]
+    def create_booking_webhook(create_booking_webhook_request, opts = {})
+      create_booking_webhook_with_http_info(create_booking_webhook_request, opts)
+      nil
+    end
+
+    # Subscribe to a Booking.com notification
+    # Subscribe to a Booking.com CNS notification type, delivered to &#x60;callback_url&#x60;. Returns 201 on success.
+    # @param create_booking_webhook_request [CreateBookingWebhookRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
+    def create_booking_webhook_with_http_info(create_booking_webhook_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: BookingComApi.create_booking_webhook ...'
+      end
+      # verify the required parameter 'create_booking_webhook_request' is set
+      if @api_client.config.client_side_validation && create_booking_webhook_request.nil?
+        fail ArgumentError, "Missing the required parameter 'create_booking_webhook_request' when calling BookingComApi.create_booking_webhook"
+      end
+      # resource path
+      local_var_path = '/v1/channels/booking/webhooks'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(create_booking_webhook_request)
+
+      # return_type
+      return_type = opts[:debug_return_type]
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"BookingComApi.create_booking_webhook",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: BookingComApi#create_booking_webhook\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Unsubscribe from a Booking.com notification
+    # Remove a Booking.com CNS subscription. Pass the `notification_type` to unsubscribe as a query param — required.
+    # @param notification_type [String] Booking.com CNS notification type to unsubscribe.
+    # @param [Hash] opts the optional parameters
+    # @return [nil]
+    def delete_booking_webhook(notification_type, opts = {})
+      delete_booking_webhook_with_http_info(notification_type, opts)
+      nil
+    end
+
+    # Unsubscribe from a Booking.com notification
+    # Remove a Booking.com CNS subscription. Pass the &#x60;notification_type&#x60; to unsubscribe as a query param — required.
+    # @param notification_type [String] Booking.com CNS notification type to unsubscribe.
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
+    def delete_booking_webhook_with_http_info(notification_type, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: BookingComApi.delete_booking_webhook ...'
+      end
+      # verify the required parameter 'notification_type' is set
+      if @api_client.config.client_side_validation && notification_type.nil?
+        fail ArgumentError, "Missing the required parameter 'notification_type' when calling BookingComApi.delete_booking_webhook"
+      end
+      # resource path
+      local_var_path = '/v1/channels/booking/webhooks'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+      query_params[:'notification_type'] = notification_type
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type]
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"BookingComApi.delete_booking_webhook",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:DELETE, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: BookingComApi#delete_booking_webhook\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Get Booking.com charges
+    # Fetch the extra-charge set (cleaning fee, resort fee, city tax, etc.) configured for a Booking.com property. Pass the Booking.com `property_id` as a query param — required.
+    # @param property_id [String] Booking.com hotel/property id.
+    # @param [Hash] opts the optional parameters
+    # @return [nil]
+    def get_booking_charges(property_id, opts = {})
+      get_booking_charges_with_http_info(property_id, opts)
+      nil
+    end
+
+    # Get Booking.com charges
+    # Fetch the extra-charge set (cleaning fee, resort fee, city tax, etc.) configured for a Booking.com property. Pass the Booking.com &#x60;property_id&#x60; as a query param — required.
+    # @param property_id [String] Booking.com hotel/property id.
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
+    def get_booking_charges_with_http_info(property_id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: BookingComApi.get_booking_charges ...'
+      end
+      # verify the required parameter 'property_id' is set
+      if @api_client.config.client_side_validation && property_id.nil?
+        fail ArgumentError, "Missing the required parameter 'property_id' when calling BookingComApi.get_booking_charges"
+      end
+      # resource path
+      local_var_path = '/v1/channels/booking/charges'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+      query_params[:'property_id'] = property_id
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type]
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"BookingComApi.get_booking_charges",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: BookingComApi#get_booking_charges\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # Get Booking.com content
     # Fetch the current content (descriptions, amenities, photos) for a Booking.com property. Used to round-trip edits through Repull.
     # @param [Hash] opts the optional parameters
@@ -149,6 +481,69 @@ module Repull
       return data, status_code, headers
     end
 
+    # Get Booking.com connection for a listing
+    # Return the Booking.com connection record(s) for a Vanio listing — the linked Booking hotel id, sync flags, markup, sync category, and suspension state. Scoped to the authenticated workspace; a listing with no Booking.com connection returns 404.
+    # @param id [Integer] Vanio listing ID.
+    # @param [Hash] opts the optional parameters
+    # @return [nil]
+    def get_booking_property(id, opts = {})
+      get_booking_property_with_http_info(id, opts)
+      nil
+    end
+
+    # Get Booking.com connection for a listing
+    # Return the Booking.com connection record(s) for a Vanio listing — the linked Booking hotel id, sync flags, markup, sync category, and suspension state. Scoped to the authenticated workspace; a listing with no Booking.com connection returns 404.
+    # @param id [Integer] Vanio listing ID.
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
+    def get_booking_property_with_http_info(id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: BookingComApi.get_booking_property ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling BookingComApi.get_booking_property"
+      end
+      # resource path
+      local_var_path = '/v1/channels/booking/properties/{id}'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type]
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"BookingComApi.get_booking_property",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: BookingComApi#get_booking_property\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # List Booking.com conversations
     # List Booking.com guest conversations. Cursor-paginated. Use the messaging POST to send a reply.
     # @param [Hash] opts the optional parameters
@@ -263,6 +658,76 @@ module Repull
       return data, status_code, headers
     end
 
+    # List Booking.com reservations
+    # Pull reservations from Booking.com. `type=new` (default) returns un-acknowledged bookings; `type=modified` returns changed bookings. Pass both `reservation_id` and `hotel_id` to fetch a single reservation's full details. Acknowledge processed reservations with the POST so Booking stops re-serving them in the `new` queue.
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :type Which set to pull. &#x60;details&#x60; requires &#x60;reservation_id&#x60; + &#x60;hotel_id&#x60;. (default to 'new')
+    # @option opts [String] :hotel_id Booking.com hotel id — filters &#x60;new&#x60;/&#x60;modified&#x60;, and is required with &#x60;reservation_id&#x60; for details.
+    # @option opts [String] :reservation_id Booking.com reservation id — with &#x60;hotel_id&#x60;, returns that reservation&#39;s details.
+    # @return [nil]
+    def list_booking_reservations(opts = {})
+      list_booking_reservations_with_http_info(opts)
+      nil
+    end
+
+    # List Booking.com reservations
+    # Pull reservations from Booking.com. &#x60;type&#x3D;new&#x60; (default) returns un-acknowledged bookings; &#x60;type&#x3D;modified&#x60; returns changed bookings. Pass both &#x60;reservation_id&#x60; and &#x60;hotel_id&#x60; to fetch a single reservation&#39;s full details. Acknowledge processed reservations with the POST so Booking stops re-serving them in the &#x60;new&#x60; queue.
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :type Which set to pull. &#x60;details&#x60; requires &#x60;reservation_id&#x60; + &#x60;hotel_id&#x60;. (default to 'new')
+    # @option opts [String] :hotel_id Booking.com hotel id — filters &#x60;new&#x60;/&#x60;modified&#x60;, and is required with &#x60;reservation_id&#x60; for details.
+    # @option opts [String] :reservation_id Booking.com reservation id — with &#x60;hotel_id&#x60;, returns that reservation&#39;s details.
+    # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
+    def list_booking_reservations_with_http_info(opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: BookingComApi.list_booking_reservations ...'
+      end
+      allowable_values = ["new", "modified", "details"]
+      if @api_client.config.client_side_validation && opts[:'type'] && !allowable_values.include?(opts[:'type'])
+        fail ArgumentError, "invalid value for \"type\", must be one of #{allowable_values}"
+      end
+      # resource path
+      local_var_path = '/v1/channels/booking/reservations'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+      query_params[:'type'] = opts[:'type'] if !opts[:'type'].nil?
+      query_params[:'hotel_id'] = opts[:'hotel_id'] if !opts[:'hotel_id'].nil?
+      query_params[:'reservation_id'] = opts[:'reservation_id'] if !opts[:'reservation_id'].nil?
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type]
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"BookingComApi.list_booking_reservations",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: BookingComApi#list_booking_reservations\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # List Booking.com reviews
     # List guest reviews for a Booking.com property. Pass `property_id` (the Booking.com hotel id) as a query param — required.
     # @param property_id [String] Booking.com hotel/property id.
@@ -323,6 +788,63 @@ module Repull
       data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: BookingComApi#list_booking_reviews\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # List Booking.com webhook subscriptions
+    # List the workspace's Booking.com Content Notification Service (CNS) subscriptions — the notification types Booking pushes to your callback URLs.
+    # @param [Hash] opts the optional parameters
+    # @return [nil]
+    def list_booking_webhooks(opts = {})
+      list_booking_webhooks_with_http_info(opts)
+      nil
+    end
+
+    # List Booking.com webhook subscriptions
+    # List the workspace&#39;s Booking.com Content Notification Service (CNS) subscriptions — the notification types Booking pushes to your callback URLs.
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
+    def list_booking_webhooks_with_http_info(opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: BookingComApi.list_booking_webhooks ...'
+      end
+      # resource path
+      local_var_path = '/v1/channels/booking/webhooks'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type]
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"BookingComApi.list_booking_webhooks",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: BookingComApi#list_booking_webhooks\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end
@@ -514,6 +1036,74 @@ module Repull
       data, status_code, headers = @api_client.call_api(:PUT, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: BookingComApi#update_booking_availability\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Set Booking.com charges
+    # Replace the extra-charge set for a Booking.com property. The body carries the target `property_id` and the full `charges` array — Booking treats the write as a full replacement, so include every charge you want to keep.
+    # @param update_booking_charges_request [UpdateBookingChargesRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [nil]
+    def update_booking_charges(update_booking_charges_request, opts = {})
+      update_booking_charges_with_http_info(update_booking_charges_request, opts)
+      nil
+    end
+
+    # Set Booking.com charges
+    # Replace the extra-charge set for a Booking.com property. The body carries the target &#x60;property_id&#x60; and the full &#x60;charges&#x60; array — Booking treats the write as a full replacement, so include every charge you want to keep.
+    # @param update_booking_charges_request [UpdateBookingChargesRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
+    def update_booking_charges_with_http_info(update_booking_charges_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: BookingComApi.update_booking_charges ...'
+      end
+      # verify the required parameter 'update_booking_charges_request' is set
+      if @api_client.config.client_side_validation && update_booking_charges_request.nil?
+        fail ArgumentError, "Missing the required parameter 'update_booking_charges_request' when calling BookingComApi.update_booking_charges"
+      end
+      # resource path
+      local_var_path = '/v1/channels/booking/charges'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(update_booking_charges_request)
+
+      # return_type
+      return_type = opts[:debug_return_type]
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"BookingComApi.update_booking_charges",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:PUT, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: BookingComApi#update_booking_charges\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end

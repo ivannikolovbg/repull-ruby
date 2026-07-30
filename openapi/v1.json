@@ -332,6 +332,66 @@
           }
         }
       },
+      "PropertyAvailabilityDay": {
+        "type": "object",
+        "description": "One calendar day in the availability window.",
+        "required": [
+          "date",
+          "available",
+          "price",
+          "minNights"
+        ],
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "description": "The calendar date, ISO `YYYY-MM-DD`.",
+            "example": "2026-09-01"
+          },
+          "available": {
+            "type": "boolean",
+            "description": "Whether the property is bookable on this date. `false` when the channel calendar marks the date unavailable (stop-sell / blocked)."
+          },
+          "price": {
+            "type": "number",
+            "description": "Nightly price for this date in the property currency. Falls back to the property's default nightly price for dates with no explicit calendar override.",
+            "example": 245
+          },
+          "minNights": {
+            "type": "integer",
+            "description": "Minimum-stay requirement for a stay starting on this date.",
+            "example": 2
+          }
+        }
+      },
+      "PropertyAvailability": {
+        "type": "object",
+        "description": "Channel-agnostic availability calendar for a property over the requested window. Every date in `[from, to]` (inclusive) is present in `days`; dates with no explicit calendar row fall back to available at the default price.",
+        "required": [
+          "propertyId",
+          "currency",
+          "days"
+        ],
+        "properties": {
+          "propertyId": {
+            "type": "string",
+            "description": "Repull property id (equal to `listings.id`), emitted as a string like every other id in the API.",
+            "example": "4118"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code for the nightly prices in `days`.",
+            "example": "USD"
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PropertyAvailabilityDay"
+            },
+            "description": "Dense per-date calendar for the requested window (capped at 366 days), ordered ascending by date."
+          }
+        }
+      },
       "ReservationPrimaryGuest": {
         "type": "object",
         "description": "Inline guest summary resolved by JOIN-ing the `guests` table. Populated for every reservation that has a linked guest row; OMITTED entirely (not null) for owner-blocks / pre-arrival rows / partial-sync gaps. Always optional-chain in SDK consumers.",
@@ -2905,6 +2965,57 @@
           "unreadCount": {
             "type": "integer",
             "nullable": true
+          }
+        }
+      },
+      "AirbnbAlteration": {
+        "type": "object",
+        "description": "An Airbnb reservation alteration request (date change, guest-count change, or price change), mirrored locally in `reservation_alterations`. Additional Airbnb-side fields may be present.",
+        "properties": {
+          "alterationId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Airbnb alteration id."
+          },
+          "reservationId": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Repull reservation id the alteration belongs to."
+          },
+          "platform": {
+            "type": "string",
+            "example": "airbnb"
+          },
+          "status": {
+            "type": "string",
+            "nullable": true,
+            "description": "Alteration status (e.g. `pending`)."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": true
+      },
+      "AirbnbAmenity": {
+        "type": "object",
+        "description": "A single Airbnb amenity from the local cache.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Airbnb amenity id (e.g. `wifi`, `bathroom_step_free_access`)."
+          },
+          "is_present": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether the amenity is present on the listing."
+          },
+          "instruction": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional host-supplied instruction for the amenity."
           }
         }
       },
@@ -7395,6 +7506,65 @@
         }
       }
     },
+    "/v1/availability/{propertyId}": {
+      "get": {
+        "operationId": "get_availability",
+        "summary": "Get property availability",
+        "description": "Channel-agnostic day-by-day availability calendar for a property over a date window. Returns a thin per-date shape \u2014 `{ date, available, price, minNights }` \u2014 projected from the connected channel calendar (currently Airbnb).\n\nThe `from` and `to` query params are **required** (ISO `YYYY-MM-DD`, inclusive) \u2014 omitting or malforming either returns 422. The window is capped at 366 days; longer ranges are truncated to the first 366 days.\n\nEvery date in the window is present in `days`: dates with no explicit calendar row fall back to `available: true` at the property's default nightly price. A property with no channel calendar still returns a real 200 (a fully-default calendar), never a 404 \u2014 404 means the property id does not exist or belongs to a different workspace.\n\nThis endpoint is read-only. Availability **writes** stay per-channel: `PUT /v1/channels/airbnb/listings/{id}/availability` (Airbnb) or `PUT /v1/channels/booking/availability` (Booking.com).",
+        "tags": [
+          "Availability"
+        ],
+        "parameters": [
+          {
+            "name": "propertyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Repull property id (equal to `listings.id`; the same integer used as `propertyId` on availability and `listingId` on reservations)."
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Start of the window (inclusive), ISO `YYYY-MM-DD`. Required \u2014 missing/malformed returns 422. `startDate` is accepted as an alias."
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "End of the window (inclusive), ISO `YYYY-MM-DD`. Required \u2014 missing/malformed returns 422. `endDate` is accepted as an alias."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Availability calendar",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropertyAvailability"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          }
+        }
+      }
+    },
     "/v1/reservations": {
       "get": {
         "operationId": "list_reservations",
@@ -9496,6 +9666,60 @@
             "description": "Uploaded"
           }
         }
+      },
+      "delete": {
+        "operationId": "delete_airbnb_listing_photo",
+        "summary": "Delete an Airbnb photo",
+        "description": "Remove a single photo from an Airbnb listing. Pass the Airbnb-side photo id as `?photoId=`. Write-side \u2014 calls Airbnb upstream; the local photo cache is reconciled by the sync worker afterwards.",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "photoId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Airbnb-side photo id to delete."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "deleted": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
       }
     },
     "/v1/channels/airbnb/messaging": {
@@ -9871,6 +10095,1094 @@
                 }
               }
             }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/channels/airbnb/alterations": {
+      "get": {
+        "operationId": "list_airbnb_alterations",
+        "summary": "List Airbnb alterations",
+        "description": "List reservation alteration requests for Airbnb reservations in this workspace. **Pure DB read** from the local `reservation_alterations` mirror \u2014 never calls Airbnb upstream \u2014 scoped to your workspace via the reservations join.\n\nDefault returns only pending alterations; pass `?type=all` for the full history. Filter to a single reservation with `?reservation_code=<confirmation code>`. Every response carries the `data_freshness` envelope.",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "all"
+              ],
+              "default": "pending"
+            },
+            "description": "Scope: `pending` (default) returns only alterations awaiting a decision; `all` returns every alteration."
+          },
+          {
+            "name": "reservation_code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Airbnb confirmation code \u2014 restricts results to a single reservation. Returns an empty array when no reservation matches within your workspace."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Alterations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "data_freshness"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AirbnbAlteration"
+                      }
+                    },
+                    "data_freshness": {
+                      "$ref": "#/components/schemas/AirbnbDataFreshness"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "create_airbnb_alteration",
+        "summary": "Create Airbnb alteration",
+        "description": "Create a reservation alteration request (change dates, guest count, or price) on Airbnb. **Write-side** \u2014 calls Airbnb upstream. Requires a connected Airbnb host for the workspace, else `404 no_connection`.",
+        "tags": [
+          "Airbnb"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "confirmation_code"
+                ],
+                "properties": {
+                  "confirmation_code": {
+                    "type": "string",
+                    "description": "Airbnb confirmation code of the reservation to alter."
+                  },
+                  "check_in": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "New check-in date (YYYY-MM-DD)."
+                  },
+                  "check_out": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "New check-out date (YYYY-MM-DD)."
+                  },
+                  "number_of_guests": {
+                    "type": "integer",
+                    "description": "New guest count."
+                  }
+                },
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Alteration created"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/channels/airbnb/alterations/{id}": {
+      "get": {
+        "operationId": "get_airbnb_alteration",
+        "summary": "Get Airbnb alteration",
+        "description": "Fetch a single Airbnb reservation alteration by its Airbnb alteration id. **Pure DB read**, workspace-scoped via the reservations join. Returns `404 not_found` when no alteration matches the id in your workspace.",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Airbnb alteration id."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Alteration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "data_freshness"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AirbnbAlteration"
+                    },
+                    "data_freshness": {
+                      "$ref": "#/components/schemas/AirbnbDataFreshness"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/channels/airbnb/transactions": {
+      "get": {
+        "operationId": "list_airbnb_transactions",
+        "summary": "List Airbnb transactions",
+        "description": "List Airbnb host transactions (payouts, adjustments, resolutions) for this workspace. **Pure DB read** \u2014 customer-facing reads never call Airbnb upstream. The transactions mirror is not yet synced into this surface, so today this endpoint returns an empty array with `data_freshness.stale = true` and `reason: \"never_synced\"`. Shape and contract are stable; the array populates once the sync worker lands.",
+        "tags": [
+          "Airbnb"
+        ],
+        "responses": {
+          "200": {
+            "description": "Transactions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "data_freshness"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    },
+                    "data_freshness": {
+                      "$ref": "#/components/schemas/AirbnbDataFreshness"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/channels/airbnb/messaging/{threadId}": {
+      "get": {
+        "operationId": "get_airbnb_thread",
+        "summary": "Get Airbnb thread",
+        "description": "Fetch a single Airbnb message thread by its Airbnb thread id. **Pure DB read** from the local `message_threads` mirror, workspace-scoped. Returns `404 not_found` when no thread matches. For the messages within a thread use `GET /v1/channels/airbnb/messaging/{threadId}/messages`.",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Airbnb thread id (matches the external thread id)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thread",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "data_freshness"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AirbnbThread"
+                    },
+                    "data_freshness": {
+                      "$ref": "#/components/schemas/AirbnbDataFreshness"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/channels/airbnb/messaging/{threadId}/messages/{messageId}": {
+      "patch": {
+        "operationId": "update_airbnb_message",
+        "summary": "Edit / react to / mark an Airbnb message",
+        "description": "Act on a single message in an Airbnb thread. **Write-side** \u2014 calls Airbnb upstream. The `action` discriminator selects the operation:\n\n- `edit` \u2014 replace message text (requires `message`).\n- `unsend` \u2014 retract the message.\n- `read` \u2014 mark the message as read.\n- `react` \u2014 add a reaction (requires `reaction`).\n\nRequires a connected Airbnb host, else `404 no_connection`.",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Airbnb thread id."
+          },
+          {
+            "name": "messageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Airbnb message id within the thread."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "action"
+                ],
+                "properties": {
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "edit",
+                      "unsend",
+                      "read",
+                      "react"
+                    ],
+                    "description": "Operation to perform on the message."
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "New message text. Required when `action` is `edit`."
+                  },
+                  "reaction": {
+                    "type": "string",
+                    "description": "Reaction to add. Required when `action` is `react`."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Message updated"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/channels/airbnb/listings/{id}/amenities": {
+      "get": {
+        "operationId": "list_airbnb_listing_amenities",
+        "summary": "List Airbnb amenities",
+        "description": "List an Airbnb listing's amenities. **Pure DB read** from the local `listings_airbnb_amenities` cache \u2014 never calls Airbnb upstream. The response splits amenities into `amenities` (regular) and `accessibility_amenities` (step-free access, wide doorways, grab rails, disabled parking, wheelchair, accessible-height fixtures, hoists, etc). Both are arrays (`[]` when none). Consult `data_freshness` to disambiguate \"never synced\" from \"fresh and genuinely empty\". Returns `404` when the listing has no Airbnb connection in this workspace.",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Repull listing id (numeric string)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Amenities",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "data_freshness"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "amenities": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/AirbnbAmenity"
+                          }
+                        },
+                        "accessibility_amenities": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/AirbnbAmenity"
+                          }
+                        }
+                      }
+                    },
+                    "data_freshness": {
+                      "$ref": "#/components/schemas/AirbnbDataFreshness"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/channels/airbnb/listings/{id}/checkin-guide": {
+      "get": {
+        "operationId": "get_airbnb_checkin_guide",
+        "summary": "Get Airbnb check-in guide",
+        "description": "Return every published locale variant of an Airbnb listing's check-in guide. **Pure DB read** from `listings_airbnb_check_in_guides`. Pass `?locale=en` to filter to one locale (prefix match). Returns `404` when the listing has no Airbnb connection in this workspace.",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Repull listing id (numeric string)."
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "en"
+            },
+            "description": "Filter to a single locale (prefix match, case-insensitive)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Check-in guides",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "data_freshness"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    },
+                    "data_freshness": {
+                      "$ref": "#/components/schemas/AirbnbDataFreshness"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      },
+      "put": {
+        "operationId": "update_airbnb_checkin_guide",
+        "summary": "Upsert Airbnb check-in guide",
+        "description": "Upsert the check-in guide for one locale on an Airbnb listing. **Write-side** \u2014 calls Airbnb upstream; the DB mirror is reconciled by the sync worker once the upstream call returns. Target the locale with `?locale=en` (defaults to `en`). Requires a connected Airbnb host, else `404 no_connection`.",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Repull listing id (numeric string)."
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "en"
+            },
+            "description": "Locale to upsert. Defaults to `en`."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Check-in guide upserted"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/channels/airbnb/listings/{id}/checkout-guide": {
+      "get": {
+        "operationId": "get_airbnb_checkout_guide",
+        "summary": "Get Airbnb checkout guide",
+        "description": "Return the checkout tasks an Airbnb listing shows guests at departure. **Pure DB read** from `listings_airbnb_checkout_tasks`. Returns `404` when the listing has no Airbnb connection in this workspace.",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Repull listing id (numeric string)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Checkout tasks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "data_freshness"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    },
+                    "data_freshness": {
+                      "$ref": "#/components/schemas/AirbnbDataFreshness"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/channels/airbnb/listings/{id}/descriptions": {
+      "get": {
+        "operationId": "list_airbnb_listing_descriptions",
+        "summary": "List Airbnb descriptions",
+        "description": "List an Airbnb listing's per-locale content (name, summary, house rules, etc). **Pure DB read** from `listings_airbnb_descriptions`. Filter to one locale with `?locale=en` (the legacy `?country=` param is accepted as a soft alias). Returns `404` when the listing has no Airbnb connection in this workspace.",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Repull listing id (numeric string)."
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "en"
+            },
+            "description": "Filter to a single locale (prefix match, case-insensitive)."
+          },
+          {
+            "name": "country",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Legacy alias for `locale`. Prefer `locale`."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Descriptions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "data_freshness"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    },
+                    "data_freshness": {
+                      "$ref": "#/components/schemas/AirbnbDataFreshness"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/channels/airbnb/listings/{id}/quality": {
+      "get": {
+        "operationId": "get_airbnb_listing_quality",
+        "summary": "Get Airbnb listing quality",
+        "description": "Return an Airbnb listing's quality signals \u2014 standards, reservation issues, and monthly quality stats. **Pure DB read** from the local quality mirrors. Scope the response with `?type=all|standards|issues|stats` (default `all`, which returns `{ standards, issues }`). Returns `404` when the listing has no Airbnb connection in this workspace.",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Repull listing id (numeric string)."
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "standards",
+                "issues",
+                "stats"
+              ],
+              "default": "all"
+            },
+            "description": "Which quality slice to return. `all` returns `{ standards, issues }`."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Quality data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "data_freshness"
+                  ],
+                  "properties": {
+                    "data": {
+                      "description": "Shape depends on `type`: an object `{ standards, issues }` for `all`/`standards`, or an array for `issues`/`stats`."
+                    },
+                    "data_freshness": {
+                      "$ref": "#/components/schemas/AirbnbDataFreshness"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/channels/airbnb/listings/{id}/rooms": {
+      "get": {
+        "operationId": "list_airbnb_listing_rooms",
+        "summary": "List Airbnb rooms",
+        "description": "List the rooms configured on an Airbnb listing, ordered by room number. **Pure DB read** from `listings_airbnb_rooms`. Returns `404` when the listing has no Airbnb connection in this workspace.",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Repull listing id (numeric string)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rooms",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "data_freshness"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    },
+                    "data_freshness": {
+                      "$ref": "#/components/schemas/AirbnbDataFreshness"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "create_airbnb_listing_room",
+        "summary": "Create an Airbnb room",
+        "description": "Create a new room on an Airbnb listing. **Write-side** \u2014 calls Airbnb upstream. Body is the full room object minus `room_id`. Requires a connected Airbnb host, else `404 no_connection`.",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Repull listing id (numeric string)."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "description": "Full Airbnb room object minus `room_id`."
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Room created"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "delete_airbnb_listing_room",
+        "summary": "Delete an Airbnb room",
+        "description": "Delete a room from an Airbnb listing. **Write-side** \u2014 calls Airbnb upstream. Pass the Airbnb-side room id as `?roomId=`. Requires a connected Airbnb host, else `404 no_connection`.",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Repull listing id (numeric string)."
+          },
+          {
+            "name": "roomId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Airbnb-side room id to delete."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "deleted": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/channels/airbnb/listings/{id}/settings": {
+      "get": {
+        "operationId": "get_airbnb_listing_settings",
+        "summary": "Get Airbnb listing settings",
+        "description": "Return an Airbnb listing's host roles, published locales, and regulatory permits. **Pure DB read** \u2014 host roles from `listings_airbnb_details.host_roles`, locales from distinct `listings_airbnb_descriptions.locale`, permits from `listings_airbnb_permits`. Scope with `?type=all|hosts|permits|locales` (default `all`, which returns `{ hosts, locales }`). Returns `404` when the listing has no Airbnb connection in this workspace.",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Repull listing id (numeric string)."
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "hosts",
+                "permits",
+                "locales"
+              ],
+              "default": "all"
+            },
+            "description": "Which settings slice to return. `all` returns `{ hosts, locales }`."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "data_freshness"
+                  ],
+                  "properties": {
+                    "data": {
+                      "description": "Shape depends on `type`: `{ hosts, locales }` for `all`, or an array for `hosts`/`permits`/`locales`."
+                    },
+                    "data_freshness": {
+                      "$ref": "#/components/schemas/AirbnbDataFreshness"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/channels/airbnb/offers": {
+      "post": {
+        "operationId": "create_airbnb_offer",
+        "summary": "Create Airbnb special offer or pre-approval",
+        "description": "Create a special offer or a pre-approval on Airbnb. **Write-side** \u2014 calls Airbnb upstream. The `type` discriminator selects the flavour:\n\n- `offer` \u2014 a special offer with custom terms (the remaining body fields are the offer params).\n- `preapproval` \u2014 pre-approve an inquiry thread (requires `threadId`; optional `blockInstantBooking`).\n\nRequires a connected Airbnb host, else `404 no_connection`.",
+        "tags": [
+          "Airbnb"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "type"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "offer",
+                      "preapproval"
+                    ],
+                    "description": "Which kind of offer to create."
+                  },
+                  "threadId": {
+                    "type": "string",
+                    "description": "Airbnb thread id. Required when `type` is `preapproval`."
+                  },
+                  "blockInstantBooking": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "For `preapproval` \u2014 whether to block instant booking."
+                  }
+                },
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Offer created"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "withdraw_airbnb_offer",
+        "summary": "Withdraw Airbnb special offer",
+        "description": "Withdraw a previously-created Airbnb special offer. **Write-side** \u2014 calls Airbnb upstream. Pass the offer id as `?offerId=`. Requires a connected Airbnb host, else `404 no_connection`.",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "offerId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Airbnb special-offer id to withdraw."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Offer withdrawn"
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
@@ -10740,6 +12052,428 @@
         }
       }
     },
+    "/v1/channels/booking/charges": {
+      "get": {
+        "operationId": "get_booking_charges",
+        "summary": "Get Booking.com charges",
+        "description": "Fetch the extra-charge set (cleaning fee, resort fee, city tax, etc.) configured for a Booking.com property. Pass the Booking.com `property_id` as a query param \u2014 required.",
+        "tags": [
+          "Booking.com"
+        ],
+        "parameters": [
+          {
+            "name": "property_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Booking.com hotel/property id."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Charges"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      },
+      "put": {
+        "operationId": "update_booking_charges",
+        "summary": "Set Booking.com charges",
+        "description": "Replace the extra-charge set for a Booking.com property. The body carries the target `property_id` and the full `charges` array \u2014 Booking treats the write as a full replacement, so include every charge you want to keep.",
+        "tags": [
+          "Booking.com"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "property_id",
+                  "charges"
+                ],
+                "properties": {
+                  "property_id": {
+                    "type": "string",
+                    "description": "Booking.com hotel/property id."
+                  },
+                  "charges": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": true
+                    },
+                    "description": "Full charge set to apply."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Charges updated"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/channels/booking/properties/{id}": {
+      "get": {
+        "operationId": "get_booking_property",
+        "summary": "Get Booking.com connection for a listing",
+        "description": "Return the Booking.com connection record(s) for a Vanio listing \u2014 the linked Booking hotel id, sync flags, markup, sync category, and suspension state. Scoped to the authenticated workspace; a listing with no Booking.com connection returns 404.",
+        "tags": [
+          "Booking.com"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Vanio listing ID."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Booking.com connection rows"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/channels/booking/reservations": {
+      "get": {
+        "operationId": "list_booking_reservations",
+        "summary": "List Booking.com reservations",
+        "description": "Pull reservations from Booking.com. `type=new` (default) returns un-acknowledged bookings; `type=modified` returns changed bookings. Pass both `reservation_id` and `hotel_id` to fetch a single reservation's full details. Acknowledge processed reservations with the POST so Booking stops re-serving them in the `new` queue.",
+        "tags": [
+          "Booking.com"
+        ],
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "new",
+                "modified",
+                "details"
+              ],
+              "default": "new"
+            },
+            "description": "Which set to pull. `details` requires `reservation_id` + `hotel_id`."
+          },
+          {
+            "name": "hotel_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Booking.com hotel id \u2014 filters `new`/`modified`, and is required with `reservation_id` for details."
+          },
+          {
+            "name": "reservation_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Booking.com reservation id \u2014 with `hotel_id`, returns that reservation's details."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reservations"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "acknowledge_booking_reservations",
+        "summary": "Acknowledge Booking.com reservations",
+        "description": "Acknowledge one or more reservations so Booking.com removes them from the `new` queue. The body carries `reservation_ids` (non-empty array). Acknowledge only after you have durably persisted each reservation.",
+        "tags": [
+          "Booking.com"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "reservation_ids"
+                ],
+                "properties": {
+                  "reservation_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "minItems": 1,
+                    "description": "Booking.com reservation ids to acknowledge."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Acknowledged"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/channels/booking/setup": {
+      "post": {
+        "operationId": "booking_setup",
+        "summary": "Booking.com property setup actions",
+        "description": "Action-router for onboarding a property onto Booking.com. Select the step with `action`:\n\n- `create-legal-entity` \u2014 register the legal entity (returns 201).\n- `check-legal-status` \u2014 poll legal-entity status by `leid`.\n- `check-readiness` \u2014 check whether a property is ready to open (`property_id`).\n- `open-property` \u2014 open the property for sale (`property_id`).\n- `set-contacts` \u2014 set property contacts (`property_id`, `contacts`).\n- `set-policies` \u2014 set property policies (`property_id`, plus policy fields).\n\nMissing required fields per action return a validation error; upstream failures surface as `booking_error`.",
+        "tags": [
+          "Booking.com"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "action"
+                ],
+                "properties": {
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "create-legal-entity",
+                      "check-legal-status",
+                      "check-readiness",
+                      "open-property",
+                      "set-contacts",
+                      "set-policies"
+                    ]
+                  },
+                  "property_id": {
+                    "type": "string",
+                    "description": "Booking.com property id \u2014 required for readiness/open/contacts/policies actions."
+                  },
+                  "leid": {
+                    "type": "integer",
+                    "description": "Legal entity id \u2014 required for `check-legal-status`."
+                  },
+                  "contacts": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": true
+                    },
+                    "description": "Contacts payload for `set-contacts`."
+                  }
+                },
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Action result"
+          },
+          "201": {
+            "description": "Legal entity created (for `create-legal-entity`)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/channels/booking/webhooks": {
+      "get": {
+        "operationId": "list_booking_webhooks",
+        "summary": "List Booking.com webhook subscriptions",
+        "description": "List the workspace's Booking.com Content Notification Service (CNS) subscriptions \u2014 the notification types Booking pushes to your callback URLs.",
+        "tags": [
+          "Booking.com"
+        ],
+        "responses": {
+          "200": {
+            "description": "Subscriptions"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "create_booking_webhook",
+        "summary": "Subscribe to a Booking.com notification",
+        "description": "Subscribe to a Booking.com CNS notification type, delivered to `callback_url`. Returns 201 on success.",
+        "tags": [
+          "Booking.com"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "notification_type",
+                  "callback_url"
+                ],
+                "properties": {
+                  "notification_type": {
+                    "type": "string",
+                    "description": "Booking.com CNS notification type."
+                  },
+                  "callback_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "HTTPS endpoint Booking.com pushes notifications to."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Subscribed"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "delete_booking_webhook",
+        "summary": "Unsubscribe from a Booking.com notification",
+        "description": "Remove a Booking.com CNS subscription. Pass the `notification_type` to unsubscribe as a query param \u2014 required.",
+        "tags": [
+          "Booking.com"
+        ],
+        "parameters": [
+          {
+            "name": "notification_type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Booking.com CNS notification type to unsubscribe."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Unsubscribed"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
     "/v1/channels/vrbo/listings": {
       "get": {
         "operationId": "list_vrbo_listings",
@@ -10886,6 +12620,133 @@
         "responses": {
           "200": {
             "description": "Pushed"
+          }
+        }
+      }
+    },
+    "/v1/channels/plumguide/bookings": {
+      "get": {
+        "operationId": "list_plumguide_bookings",
+        "summary": "List Plumguide bookings",
+        "description": "List Plumguide bookings. Default returns all bookings; pass `listing_id` to filter to one listing, or `booking_code` to fetch a single booking.",
+        "tags": [
+          "Plumguide"
+        ],
+        "parameters": [
+          {
+            "name": "listing_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Filter to a single Plumguide listing."
+          },
+          {
+            "name": "booking_code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Fetch a single booking by its Plumguide booking code."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bookings"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/channels/plumguide/webhooks": {
+      "get": {
+        "operationId": "get_plumguide_webhooks",
+        "summary": "Get Plumguide webhook config",
+        "description": "Read the current Plumguide webhook configuration for this workspace.",
+        "tags": [
+          "Plumguide"
+        ],
+        "responses": {
+          "200": {
+            "description": "Webhook config"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      },
+      "put": {
+        "operationId": "update_plumguide_webhooks",
+        "summary": "Replace Plumguide webhook config",
+        "description": "Replace the Plumguide webhook configuration. The body carries the full webhook config payload \u2014 this is a full replacement, not a patch.",
+        "tags": [
+          "Plumguide"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "description": "Full Plumguide webhook config payload."
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "delete_plumguide_webhooks",
+        "summary": "Remove Plumguide webhook config",
+        "description": "Delete the Plumguide webhook configuration for this workspace. Plumguide stops delivering webhooks until a new config is set.",
+        "tags": [
+          "Plumguide"
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         }
       }
@@ -11674,6 +13535,442 @@
         "responses": {
           "200": {
             "description": "Checkout URL"
+          }
+        }
+      }
+    },
+    "/v1/usage/logs": {
+      "get": {
+        "operationId": "get_usage_logs",
+        "summary": "List API request logs",
+        "description": "Cursor-paginated raw API request log for the authenticated workspace, newest first. Filter by time `range`, `operation` id(s), status class, or free-text `q`. Walk pages with `cursor` from `pagination.next_cursor` until `pagination.has_more` is `false`; `offset` is accepted as a shallow alias (deep walks must use `cursor`).",
+        "tags": [
+          "Billing"
+        ],
+        "parameters": [
+          {
+            "name": "range",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "1h",
+                "24h",
+                "7d",
+                "30d"
+              ],
+              "default": "24h"
+            },
+            "description": "Time window ending now."
+          },
+          {
+            "name": "operation",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Comma-separated `operation_id` filter."
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "2xx",
+                "3xx",
+                "4xx",
+                "5xx"
+              ]
+            },
+            "description": "Status-class filter."
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Free-text match on path / operation / request id."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "minimum": 1,
+              "maximum": 200
+            },
+            "description": "Page size (max 200)."
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Opaque cursor from the previous response's `pagination.next_cursor`."
+          },
+          {
+            "$ref": "#/components/parameters/Offset"
+          },
+          {
+            "$ref": "#/components/parameters/IncludeTotal"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Log rows + pagination envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "requestId": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "method": {
+                            "type": "string"
+                          },
+                          "path": {
+                            "type": "string"
+                          },
+                          "operationId": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "statusCode": {
+                            "type": "integer",
+                            "nullable": true
+                          },
+                          "latencyMs": {
+                            "type": "integer",
+                            "nullable": true
+                          },
+                          "requestBytes": {
+                            "type": "integer",
+                            "nullable": true
+                          },
+                          "responseBytes": {
+                            "type": "integer",
+                            "nullable": true
+                          },
+                          "ipAddress": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "userAgent": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "errorCode": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        }
+                      }
+                    },
+                    "pagination": {
+                      "type": "object",
+                      "properties": {
+                        "next_cursor": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "has_more": {
+                          "type": "boolean"
+                        },
+                        "total": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "range": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/usage/summary": {
+      "get": {
+        "operationId": "get_usage_summary",
+        "summary": "Get usage summary",
+        "description": "Aggregated usage over the requested `range` \u2014 tier + plan limits, quota used/remaining, next reset, a per-operation breakdown (request/error counts, error rate, avg latency), a daily timeline, status-class distribution, and range totals.",
+        "tags": [
+          "Billing"
+        ],
+        "parameters": [
+          {
+            "name": "range",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "7d",
+                "30d",
+                "90d"
+              ],
+              "default": "30d"
+            },
+            "description": "Aggregation window ending now."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Usage summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tier": {
+                      "type": "string"
+                    },
+                    "limits": {
+                      "type": "object",
+                      "properties": {
+                        "monthly_requests": {
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "daily_ai_requests": {
+                          "type": "integer",
+                          "nullable": true
+                        }
+                      }
+                    },
+                    "used": {
+                      "type": "object",
+                      "properties": {
+                        "monthly": {
+                          "type": "integer"
+                        },
+                        "daily_ai": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "remaining": {
+                      "type": "object",
+                      "properties": {
+                        "monthly": {
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "daily_ai": {
+                          "type": "integer",
+                          "nullable": true
+                        }
+                      }
+                    },
+                    "resets_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "breakdown": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "operationId": {
+                            "type": "string"
+                          },
+                          "requestCount": {
+                            "type": "integer"
+                          },
+                          "errorCount": {
+                            "type": "integer"
+                          },
+                          "errorRate": {
+                            "type": "number"
+                          },
+                          "avgLatencyMs": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    },
+                    "timeline": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "day": {
+                            "type": "string"
+                          },
+                          "requestCount": {
+                            "type": "integer"
+                          },
+                          "errorCount": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    },
+                    "statusDistribution": {
+                      "type": "object",
+                      "properties": {
+                        "2xx": {
+                          "type": "integer"
+                        },
+                        "3xx": {
+                          "type": "integer"
+                        },
+                        "4xx": {
+                          "type": "integer"
+                        },
+                        "5xx": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "totals": {
+                      "type": "object",
+                      "properties": {
+                        "requests": {
+                          "type": "integer"
+                        },
+                        "errors": {
+                          "type": "integer"
+                        },
+                        "avgLatencyMs": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "range": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/usage/tier": {
+      "get": {
+        "operationId": "get_usage_tier",
+        "summary": "Get tier and quota",
+        "description": "Lightweight current-tier snapshot for status badges and quota meters \u2014 plan limits (monthly requests, daily AI requests, dynamic-pricing listings), the amount used, the amount remaining, and the next reset. `null` limits mean unlimited on that dimension.",
+        "tags": [
+          "Billing"
+        ],
+        "responses": {
+          "200": {
+            "description": "Tier + quota",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tier": {
+                      "type": "string"
+                    },
+                    "limits": {
+                      "type": "object",
+                      "properties": {
+                        "monthly_requests": {
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "daily_ai_requests": {
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "dynamic_pricing_listings": {
+                          "type": "integer",
+                          "nullable": true
+                        }
+                      }
+                    },
+                    "used": {
+                      "type": "object",
+                      "properties": {
+                        "monthly": {
+                          "type": "integer"
+                        },
+                        "daily_ai": {
+                          "type": "integer"
+                        },
+                        "dynamic_pricing_listings": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "remaining": {
+                      "type": "object",
+                      "properties": {
+                        "monthly": {
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "daily_ai": {
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "dynamic_pricing_listings": {
+                          "type": "integer",
+                          "nullable": true
+                        }
+                      }
+                    },
+                    "resets_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         }
       }

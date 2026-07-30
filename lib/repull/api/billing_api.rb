@@ -80,5 +80,231 @@ module Repull
       end
       return data, status_code, headers
     end
+
+    # List API request logs
+    # Cursor-paginated raw API request log for the authenticated workspace, newest first. Filter by time `range`, `operation` id(s), status class, or free-text `q`. Walk pages with `cursor` from `pagination.next_cursor` until `pagination.has_more` is `false`; `offset` is accepted as a shallow alias (deep walks must use `cursor`).
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :range Time window ending now. (default to '24h')
+    # @option opts [String] :operation Comma-separated &#x60;operation_id&#x60; filter.
+    # @option opts [String] :status Status-class filter.
+    # @option opts [String] :q Free-text match on path / operation / request id.
+    # @option opts [Integer] :limit Page size (max 200). (default to 50)
+    # @option opts [String] :cursor Opaque cursor from the previous response&#39;s &#x60;pagination.next_cursor&#x60;.
+    # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.next_cursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
+    # @option opts [Boolean] :include_total When &#x60;true&#x60; (default), the response&#39;s &#x60;pagination.total&#x60; carries the count of rows matching the current filter, across all pages. Pass &#x60;false&#x60; to skip the count for very large workspaces where the per-page COUNT(*) cost matters. (default to true)
+    # @return [GetUsageLogs200Response]
+    def get_usage_logs(opts = {})
+      data, _status_code, _headers = get_usage_logs_with_http_info(opts)
+      data
+    end
+
+    # List API request logs
+    # Cursor-paginated raw API request log for the authenticated workspace, newest first. Filter by time &#x60;range&#x60;, &#x60;operation&#x60; id(s), status class, or free-text &#x60;q&#x60;. Walk pages with &#x60;cursor&#x60; from &#x60;pagination.next_cursor&#x60; until &#x60;pagination.has_more&#x60; is &#x60;false&#x60;; &#x60;offset&#x60; is accepted as a shallow alias (deep walks must use &#x60;cursor&#x60;).
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :range Time window ending now. (default to '24h')
+    # @option opts [String] :operation Comma-separated &#x60;operation_id&#x60; filter.
+    # @option opts [String] :status Status-class filter.
+    # @option opts [String] :q Free-text match on path / operation / request id.
+    # @option opts [Integer] :limit Page size (max 200). (default to 50)
+    # @option opts [String] :cursor Opaque cursor from the previous response&#39;s &#x60;pagination.next_cursor&#x60;.
+    # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.next_cursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
+    # @option opts [Boolean] :include_total When &#x60;true&#x60; (default), the response&#39;s &#x60;pagination.total&#x60; carries the count of rows matching the current filter, across all pages. Pass &#x60;false&#x60; to skip the count for very large workspaces where the per-page COUNT(*) cost matters. (default to true)
+    # @return [Array<(GetUsageLogs200Response, Integer, Hash)>] GetUsageLogs200Response data, response status code and response headers
+    def get_usage_logs_with_http_info(opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: BillingApi.get_usage_logs ...'
+      end
+      allowable_values = ["1h", "24h", "7d", "30d"]
+      if @api_client.config.client_side_validation && opts[:'range'] && !allowable_values.include?(opts[:'range'])
+        fail ArgumentError, "invalid value for \"range\", must be one of #{allowable_values}"
+      end
+      allowable_values = ["2xx", "3xx", "4xx", "5xx"]
+      if @api_client.config.client_side_validation && opts[:'status'] && !allowable_values.include?(opts[:'status'])
+        fail ArgumentError, "invalid value for \"status\", must be one of #{allowable_values}"
+      end
+      if @api_client.config.client_side_validation && !opts[:'limit'].nil? && opts[:'limit'] > 200
+        fail ArgumentError, 'invalid value for "opts[:"limit"]" when calling BillingApi.get_usage_logs, must be smaller than or equal to 200.'
+      end
+
+      if @api_client.config.client_side_validation && !opts[:'limit'].nil? && opts[:'limit'] < 1
+        fail ArgumentError, 'invalid value for "opts[:"limit"]" when calling BillingApi.get_usage_logs, must be greater than or equal to 1.'
+      end
+
+      if @api_client.config.client_side_validation && !opts[:'offset'].nil? && opts[:'offset'] > 10000
+        fail ArgumentError, 'invalid value for "opts[:"offset"]" when calling BillingApi.get_usage_logs, must be smaller than or equal to 10000.'
+      end
+
+      if @api_client.config.client_side_validation && !opts[:'offset'].nil? && opts[:'offset'] < 0
+        fail ArgumentError, 'invalid value for "opts[:"offset"]" when calling BillingApi.get_usage_logs, must be greater than or equal to 0.'
+      end
+
+      # resource path
+      local_var_path = '/v1/usage/logs'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+      query_params[:'range'] = opts[:'range'] if !opts[:'range'].nil?
+      query_params[:'operation'] = opts[:'operation'] if !opts[:'operation'].nil?
+      query_params[:'status'] = opts[:'status'] if !opts[:'status'].nil?
+      query_params[:'q'] = opts[:'q'] if !opts[:'q'].nil?
+      query_params[:'limit'] = opts[:'limit'] if !opts[:'limit'].nil?
+      query_params[:'cursor'] = opts[:'cursor'] if !opts[:'cursor'].nil?
+      query_params[:'offset'] = opts[:'offset'] if !opts[:'offset'].nil?
+      query_params[:'include_total'] = opts[:'include_total'] if !opts[:'include_total'].nil?
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'GetUsageLogs200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"BillingApi.get_usage_logs",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: BillingApi#get_usage_logs\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Get usage summary
+    # Aggregated usage over the requested `range` — tier + plan limits, quota used/remaining, next reset, a per-operation breakdown (request/error counts, error rate, avg latency), a daily timeline, status-class distribution, and range totals.
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :range Aggregation window ending now. (default to '30d')
+    # @return [GetUsageSummary200Response]
+    def get_usage_summary(opts = {})
+      data, _status_code, _headers = get_usage_summary_with_http_info(opts)
+      data
+    end
+
+    # Get usage summary
+    # Aggregated usage over the requested &#x60;range&#x60; — tier + plan limits, quota used/remaining, next reset, a per-operation breakdown (request/error counts, error rate, avg latency), a daily timeline, status-class distribution, and range totals.
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :range Aggregation window ending now. (default to '30d')
+    # @return [Array<(GetUsageSummary200Response, Integer, Hash)>] GetUsageSummary200Response data, response status code and response headers
+    def get_usage_summary_with_http_info(opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: BillingApi.get_usage_summary ...'
+      end
+      allowable_values = ["7d", "30d", "90d"]
+      if @api_client.config.client_side_validation && opts[:'range'] && !allowable_values.include?(opts[:'range'])
+        fail ArgumentError, "invalid value for \"range\", must be one of #{allowable_values}"
+      end
+      # resource path
+      local_var_path = '/v1/usage/summary'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+      query_params[:'range'] = opts[:'range'] if !opts[:'range'].nil?
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'GetUsageSummary200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"BillingApi.get_usage_summary",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: BillingApi#get_usage_summary\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Get tier and quota
+    # Lightweight current-tier snapshot for status badges and quota meters — plan limits (monthly requests, daily AI requests, dynamic-pricing listings), the amount used, the amount remaining, and the next reset. `null` limits mean unlimited on that dimension.
+    # @param [Hash] opts the optional parameters
+    # @return [GetUsageTier200Response]
+    def get_usage_tier(opts = {})
+      data, _status_code, _headers = get_usage_tier_with_http_info(opts)
+      data
+    end
+
+    # Get tier and quota
+    # Lightweight current-tier snapshot for status badges and quota meters — plan limits (monthly requests, daily AI requests, dynamic-pricing listings), the amount used, the amount remaining, and the next reset. &#x60;null&#x60; limits mean unlimited on that dimension.
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(GetUsageTier200Response, Integer, Hash)>] GetUsageTier200Response data, response status code and response headers
+    def get_usage_tier_with_http_info(opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: BillingApi.get_usage_tier ...'
+      end
+      # resource path
+      local_var_path = '/v1/usage/tier'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'GetUsageTier200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"BillingApi.get_usage_tier",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: BillingApi#get_usage_tier\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
   end
 end
