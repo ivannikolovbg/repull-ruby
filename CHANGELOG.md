@@ -2,6 +2,21 @@
 
 All notable changes to the `repull` gem are documented here.
 
+## [0.2.12] - 2026-09-11
+
+### Added
+
+Four new write operations, present in `lib/repull/`:
+
+- `GuestsApi#create_guest` (`POST /v1/guests`)
+- `ReservationsApi#create_reservation` (`POST /v1/reservations`)
+- `ReservationsApi#update_reservation` (`PATCH /v1/reservations/{id}`)
+- `ConversationsApi#send_conversation_message` (`POST /v1/conversations/{id}/messages`)
+
+### Notes
+
+- Operation-set parity with the live spec verified programmatically post-regen: 174 = 174, zero diff (path count unchanged at 124 — these are new methods on existing paths).
+
 ## [0.2.11] - 2026-09-11
 
 ### Fixed

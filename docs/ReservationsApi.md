@@ -4,8 +4,83 @@ All URIs are relative to *https://api.repull.dev*
 
 | Method | HTTP request | Description |
 | ------ | ------------ | ----------- |
+| [**create_reservation**](ReservationsApi.md#create_reservation) | **POST** /v1/reservations | Create a reservation |
 | [**get_reservation**](ReservationsApi.md#get_reservation) | **GET** /v1/reservations/{id} | Get reservation details |
 | [**list_reservations**](ReservationsApi.md#list_reservations) | **GET** /v1/reservations | List reservations |
+| [**update_reservation**](ReservationsApi.md#update_reservation) | **PATCH** /v1/reservations/{id} | Update a reservation |
+
+
+## create_reservation
+
+> <ReservationCreateResponse> create_reservation(reservation_create_request, opts)
+
+Create a reservation
+
+Creates a reservation and everything that hangs off one: the guest, the conversation thread, the dashboard item, the calendar block, and the `reservation.created` fan-out that issues the door code and starts the messaging automations.  **Platform is restricted to `direct`, `website` and `owner`.** Reservations on Airbnb, Booking.com and Vrbo are owned by the channel and arrive through sync — creating one here would mint a local booking the channel has never heard of, which then fights the next sync. Create those on the channel.  **Dates are validated** (`YYYY-MM-DD`, and `checkOut` must be after `checkIn`), and an unrecognised field is rejected by name rather than silently ignored.  **This endpoint does not set the price.** There is no `totalPrice` field: the reservation pipeline derives the price breakdown from the property's own rates and overwrites anything supplied, so accepting a total would be taking a value and discarding it. A reservation created here is priced by that engine (`0` when the property has no rates for the range). `currency` IS honoured. Quote a stay with `GET /v1/quotes` before booking if you need the figure up front.  **Availability is NOT checked.** This creates the reservation you asked for even if the dates overlap an existing booking. Call `GET /v1/availability/{propertyId}` first if that matters.  Send `Idempotency-Key` — a network timeout here is exactly the case it exists for: without it, a retry books the guest twice.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ReservationsApi.new
+reservation_create_request = Repull::ReservationCreateRequest.new({listing_id: 4118, check_in: Date.parse('Thu Oct 01 00:00:00 UTC 2026'), check_out: Date.parse('Mon Oct 05 00:00:00 UTC 2026'), guest: Repull::ReservationGuestInput.new({first_name: 'Ada'})}) # ReservationCreateRequest | 
+opts = {
+  idempotency_key: '9f1c2f7e-4a3b-4f2e-9c8d-1b6a0e5d7c31' # String | Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged `Idempotency-Status: cached` — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → `409 idempotency_key_in_use`. - Same key with a DIFFERENT payload → `422 idempotency_key_reused`. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status >= 500 are deliberately not stored, so a server error stays retryable.
+}
+
+begin
+  # Create a reservation
+  result = api_instance.create_reservation(reservation_create_request, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ReservationsApi->create_reservation: #{e}"
+end
+```
+
+#### Using the create_reservation_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<ReservationCreateResponse>, Integer, Hash)> create_reservation_with_http_info(reservation_create_request, opts)
+
+```ruby
+begin
+  # Create a reservation
+  data, status_code, headers = api_instance.create_reservation_with_http_info(reservation_create_request, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <ReservationCreateResponse>
+rescue Repull::ApiError => e
+  puts "Error when calling ReservationsApi->create_reservation_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **reservation_create_request** | [**ReservationCreateRequest**](ReservationCreateRequest.md) |  |  |
+| **idempotency_key** | **String** | Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable. | [optional] |
+
+### Return type
+
+[**ReservationCreateResponse**](ReservationCreateResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
 
 
 ## get_reservation
@@ -185,5 +260,80 @@ end
 ### HTTP request headers
 
 - **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## update_reservation
+
+> <ReservationUpdateResponse> update_reservation(id, reservation_update_request, opts)
+
+Update a reservation
+
+Changes the dates, the occupancy, or the unit. Drives the same command path the dashboard does, so the side effects come with it: the change audit is appended, bound task due dates re-sync, the old calendar dates unblock and the new ones block, the conversation's cached listing is invalidated, and `reservation.updated` fires — which is what revokes and re-issues the door code.  Supply at least one field; an empty body returns 422 rather than a 200 that changed nothing.  **Moving and re-dating in one call is one operation.** Send `listingId` together with `checkIn`/`checkOut` and it is applied as a single move, so the access code is re-issued once rather than twice.  ### Fields this endpoint deliberately does NOT accept  Each is rejected by name with the reason, never accepted and ignored:  | Field | Why | |---|---| | `guest` / `guestDetails` | Guest name, email and phone live on the guest record. The underlying command has no branch for them, so accepting them would return a success that changed nothing. | | `pricing` / `totalPrice` / `currency` | Repricing writes the price breakdown, the pricing row and a pricing-history entry. It belongs to its own endpoint. | | `status` | Not a field. Cancelling, confirming and checking out are separate operations with materially different side effects — cancellation issues a credit refund and revokes access codes. | | `platform` | Immutable: it records where the booking actually originated. | | `notes` | `internal_notes` is an append-only audit trail the system writes on every change. |  **Availability is NOT checked.** A date change that overlaps another booking will be written. Call `GET /v1/availability/{propertyId}` first if that matters.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ReservationsApi.new
+id = 56 # Integer | Internal Repull reservation ID.
+reservation_update_request = Repull::ReservationUpdateRequest.new # ReservationUpdateRequest | 
+opts = {
+  idempotency_key: '9f1c2f7e-4a3b-4f2e-9c8d-1b6a0e5d7c31' # String | Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged `Idempotency-Status: cached` — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → `409 idempotency_key_in_use`. - Same key with a DIFFERENT payload → `422 idempotency_key_reused`. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status >= 500 are deliberately not stored, so a server error stays retryable.
+}
+
+begin
+  # Update a reservation
+  result = api_instance.update_reservation(id, reservation_update_request, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ReservationsApi->update_reservation: #{e}"
+end
+```
+
+#### Using the update_reservation_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<ReservationUpdateResponse>, Integer, Hash)> update_reservation_with_http_info(id, reservation_update_request, opts)
+
+```ruby
+begin
+  # Update a reservation
+  data, status_code, headers = api_instance.update_reservation_with_http_info(id, reservation_update_request, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <ReservationUpdateResponse>
+rescue Repull::ApiError => e
+  puts "Error when calling ReservationsApi->update_reservation_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **Integer** | Internal Repull reservation ID. |  |
+| **reservation_update_request** | [**ReservationUpdateRequest**](ReservationUpdateRequest.md) |  |  |
+| **idempotency_key** | **String** | Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable. | [optional] |
+
+### Return type
+
+[**ReservationUpdateResponse**](ReservationUpdateResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
 - **Accept**: application/json
 

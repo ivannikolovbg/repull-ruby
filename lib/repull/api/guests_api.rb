@@ -19,6 +19,81 @@ module Repull
     def initialize(api_client = ApiClient.default)
       @api_client = api_client
     end
+    # Create a guest
+    # Creates a guest in the workspace, with contact normalisation applied (phone digits, email lowercased) and each contact stored as its own record.  **This is find-or-create, and the response tells you which happened.** A guest already on file matching on email — then phone — AND name is returned instead of a duplicate being created. Read the `created` flag rather than inferring from the status: `201` with `created: true` means a new record was written, `200` with `created: false` means an existing guest matched. Quietly handing back an existing record as though it were new is exactly the ambiguity this flag removes.  Field names are camelCase, and an unrecognised field is rejected by name rather than silently dropped.  Send `Idempotency-Key` to make a retry safe.
+    # @param guest_create_request [GuestCreateRequest] 
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable.
+    # @return [GuestCreateResponse]
+    def create_guest(guest_create_request, opts = {})
+      data, _status_code, _headers = create_guest_with_http_info(guest_create_request, opts)
+      data
+    end
+
+    # Create a guest
+    # Creates a guest in the workspace, with contact normalisation applied (phone digits, email lowercased) and each contact stored as its own record.  **This is find-or-create, and the response tells you which happened.** A guest already on file matching on email — then phone — AND name is returned instead of a duplicate being created. Read the &#x60;created&#x60; flag rather than inferring from the status: &#x60;201&#x60; with &#x60;created: true&#x60; means a new record was written, &#x60;200&#x60; with &#x60;created: false&#x60; means an existing guest matched. Quietly handing back an existing record as though it were new is exactly the ambiguity this flag removes.  Field names are camelCase, and an unrecognised field is rejected by name rather than silently dropped.  Send &#x60;Idempotency-Key&#x60; to make a retry safe.
+    # @param guest_create_request [GuestCreateRequest] 
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable.
+    # @return [Array<(GuestCreateResponse, Integer, Hash)>] GuestCreateResponse data, response status code and response headers
+    def create_guest_with_http_info(guest_create_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: GuestsApi.create_guest ...'
+      end
+      # verify the required parameter 'guest_create_request' is set
+      if @api_client.config.client_side_validation && guest_create_request.nil?
+        fail ArgumentError, "Missing the required parameter 'guest_create_request' when calling GuestsApi.create_guest"
+      end
+      if @api_client.config.client_side_validation && !opts[:'idempotency_key'].nil? && opts[:'idempotency_key'].to_s.length > 255
+        fail ArgumentError, 'invalid value for "opts[:"idempotency_key"]" when calling GuestsApi.create_guest, the character length must be smaller than or equal to 255.'
+      end
+
+      # resource path
+      local_var_path = '/v1/guests'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+      header_params[:'Idempotency-Key'] = opts[:'idempotency_key'] if !opts[:'idempotency_key'].nil?
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(guest_create_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'GuestCreateResponse'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"GuestsApi.create_guest",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: GuestsApi#create_guest\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # Get guest profile
     # Returns the full guest profile — base list-row fields plus contacts, flags, notes, risk metadata, and reservation aggregates. Aggregates main vanio's `GuestService.getGuestProfile()` into the public Repull shape so SDK consumers don't have to learn the internal schema.
     # @param id [Integer] 

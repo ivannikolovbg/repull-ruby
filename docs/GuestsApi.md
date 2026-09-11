@@ -4,8 +4,82 @@ All URIs are relative to *https://api.repull.dev*
 
 | Method | HTTP request | Description |
 | ------ | ------------ | ----------- |
+| [**create_guest**](GuestsApi.md#create_guest) | **POST** /v1/guests | Create a guest |
 | [**get_guest**](GuestsApi.md#get_guest) | **GET** /v1/guests/{id} | Get guest profile |
 | [**list_guests**](GuestsApi.md#list_guests) | **GET** /v1/guests | List guests |
+
+
+## create_guest
+
+> <GuestCreateResponse> create_guest(guest_create_request, opts)
+
+Create a guest
+
+Creates a guest in the workspace, with contact normalisation applied (phone digits, email lowercased) and each contact stored as its own record.  **This is find-or-create, and the response tells you which happened.** A guest already on file matching on email — then phone — AND name is returned instead of a duplicate being created. Read the `created` flag rather than inferring from the status: `201` with `created: true` means a new record was written, `200` with `created: false` means an existing guest matched. Quietly handing back an existing record as though it were new is exactly the ambiguity this flag removes.  Field names are camelCase, and an unrecognised field is rejected by name rather than silently dropped.  Send `Idempotency-Key` to make a retry safe.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::GuestsApi.new
+guest_create_request = Repull::GuestCreateRequest.new({first_name: 'Ada'}) # GuestCreateRequest | 
+opts = {
+  idempotency_key: '9f1c2f7e-4a3b-4f2e-9c8d-1b6a0e5d7c31' # String | Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged `Idempotency-Status: cached` — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → `409 idempotency_key_in_use`. - Same key with a DIFFERENT payload → `422 idempotency_key_reused`. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status >= 500 are deliberately not stored, so a server error stays retryable.
+}
+
+begin
+  # Create a guest
+  result = api_instance.create_guest(guest_create_request, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling GuestsApi->create_guest: #{e}"
+end
+```
+
+#### Using the create_guest_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<GuestCreateResponse>, Integer, Hash)> create_guest_with_http_info(guest_create_request, opts)
+
+```ruby
+begin
+  # Create a guest
+  data, status_code, headers = api_instance.create_guest_with_http_info(guest_create_request, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <GuestCreateResponse>
+rescue Repull::ApiError => e
+  puts "Error when calling GuestsApi->create_guest_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **guest_create_request** | [**GuestCreateRequest**](GuestCreateRequest.md) |  |  |
+| **idempotency_key** | **String** | Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable. | [optional] |
+
+### Return type
+
+[**GuestCreateResponse**](GuestCreateResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
 
 
 ## get_guest

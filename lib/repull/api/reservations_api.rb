@@ -19,6 +19,81 @@ module Repull
     def initialize(api_client = ApiClient.default)
       @api_client = api_client
     end
+    # Create a reservation
+    # Creates a reservation and everything that hangs off one: the guest, the conversation thread, the dashboard item, the calendar block, and the `reservation.created` fan-out that issues the door code and starts the messaging automations.  **Platform is restricted to `direct`, `website` and `owner`.** Reservations on Airbnb, Booking.com and Vrbo are owned by the channel and arrive through sync — creating one here would mint a local booking the channel has never heard of, which then fights the next sync. Create those on the channel.  **Dates are validated** (`YYYY-MM-DD`, and `checkOut` must be after `checkIn`), and an unrecognised field is rejected by name rather than silently ignored.  **This endpoint does not set the price.** There is no `totalPrice` field: the reservation pipeline derives the price breakdown from the property's own rates and overwrites anything supplied, so accepting a total would be taking a value and discarding it. A reservation created here is priced by that engine (`0` when the property has no rates for the range). `currency` IS honoured. Quote a stay with `GET /v1/quotes` before booking if you need the figure up front.  **Availability is NOT checked.** This creates the reservation you asked for even if the dates overlap an existing booking. Call `GET /v1/availability/{propertyId}` first if that matters.  Send `Idempotency-Key` — a network timeout here is exactly the case it exists for: without it, a retry books the guest twice.
+    # @param reservation_create_request [ReservationCreateRequest] 
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable.
+    # @return [ReservationCreateResponse]
+    def create_reservation(reservation_create_request, opts = {})
+      data, _status_code, _headers = create_reservation_with_http_info(reservation_create_request, opts)
+      data
+    end
+
+    # Create a reservation
+    # Creates a reservation and everything that hangs off one: the guest, the conversation thread, the dashboard item, the calendar block, and the &#x60;reservation.created&#x60; fan-out that issues the door code and starts the messaging automations.  **Platform is restricted to &#x60;direct&#x60;, &#x60;website&#x60; and &#x60;owner&#x60;.** Reservations on Airbnb, Booking.com and Vrbo are owned by the channel and arrive through sync — creating one here would mint a local booking the channel has never heard of, which then fights the next sync. Create those on the channel.  **Dates are validated** (&#x60;YYYY-MM-DD&#x60;, and &#x60;checkOut&#x60; must be after &#x60;checkIn&#x60;), and an unrecognised field is rejected by name rather than silently ignored.  **This endpoint does not set the price.** There is no &#x60;totalPrice&#x60; field: the reservation pipeline derives the price breakdown from the property&#39;s own rates and overwrites anything supplied, so accepting a total would be taking a value and discarding it. A reservation created here is priced by that engine (&#x60;0&#x60; when the property has no rates for the range). &#x60;currency&#x60; IS honoured. Quote a stay with &#x60;GET /v1/quotes&#x60; before booking if you need the figure up front.  **Availability is NOT checked.** This creates the reservation you asked for even if the dates overlap an existing booking. Call &#x60;GET /v1/availability/{propertyId}&#x60; first if that matters.  Send &#x60;Idempotency-Key&#x60; — a network timeout here is exactly the case it exists for: without it, a retry books the guest twice.
+    # @param reservation_create_request [ReservationCreateRequest] 
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable.
+    # @return [Array<(ReservationCreateResponse, Integer, Hash)>] ReservationCreateResponse data, response status code and response headers
+    def create_reservation_with_http_info(reservation_create_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ReservationsApi.create_reservation ...'
+      end
+      # verify the required parameter 'reservation_create_request' is set
+      if @api_client.config.client_side_validation && reservation_create_request.nil?
+        fail ArgumentError, "Missing the required parameter 'reservation_create_request' when calling ReservationsApi.create_reservation"
+      end
+      if @api_client.config.client_side_validation && !opts[:'idempotency_key'].nil? && opts[:'idempotency_key'].to_s.length > 255
+        fail ArgumentError, 'invalid value for "opts[:"idempotency_key"]" when calling ReservationsApi.create_reservation, the character length must be smaller than or equal to 255.'
+      end
+
+      # resource path
+      local_var_path = '/v1/reservations'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+      header_params[:'Idempotency-Key'] = opts[:'idempotency_key'] if !opts[:'idempotency_key'].nil?
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(reservation_create_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'ReservationCreateResponse'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"ReservationsApi.create_reservation",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ReservationsApi#create_reservation\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # Get reservation details
     # Returns the full record for a single reservation, scoped to the authenticated workspace. Response shape is identical to a single row in `GET /v1/reservations` so SDK consumers can use the same type for both. Returns **404** if the id does not exist OR belongs to a different workspace — the API never differentiates the two so caller can't enumerate other workspaces' ids.
     # @param id [Integer] Internal Repull reservation ID.
@@ -215,6 +290,87 @@ module Repull
       data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: ReservationsApi#list_reservations\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Update a reservation
+    # Changes the dates, the occupancy, or the unit. Drives the same command path the dashboard does, so the side effects come with it: the change audit is appended, bound task due dates re-sync, the old calendar dates unblock and the new ones block, the conversation's cached listing is invalidated, and `reservation.updated` fires — which is what revokes and re-issues the door code.  Supply at least one field; an empty body returns 422 rather than a 200 that changed nothing.  **Moving and re-dating in one call is one operation.** Send `listingId` together with `checkIn`/`checkOut` and it is applied as a single move, so the access code is re-issued once rather than twice.  ### Fields this endpoint deliberately does NOT accept  Each is rejected by name with the reason, never accepted and ignored:  | Field | Why | |---|---| | `guest` / `guestDetails` | Guest name, email and phone live on the guest record. The underlying command has no branch for them, so accepting them would return a success that changed nothing. | | `pricing` / `totalPrice` / `currency` | Repricing writes the price breakdown, the pricing row and a pricing-history entry. It belongs to its own endpoint. | | `status` | Not a field. Cancelling, confirming and checking out are separate operations with materially different side effects — cancellation issues a credit refund and revokes access codes. | | `platform` | Immutable: it records where the booking actually originated. | | `notes` | `internal_notes` is an append-only audit trail the system writes on every change. |  **Availability is NOT checked.** A date change that overlaps another booking will be written. Call `GET /v1/availability/{propertyId}` first if that matters.
+    # @param id [Integer] Internal Repull reservation ID.
+    # @param reservation_update_request [ReservationUpdateRequest] 
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable.
+    # @return [ReservationUpdateResponse]
+    def update_reservation(id, reservation_update_request, opts = {})
+      data, _status_code, _headers = update_reservation_with_http_info(id, reservation_update_request, opts)
+      data
+    end
+
+    # Update a reservation
+    # Changes the dates, the occupancy, or the unit. Drives the same command path the dashboard does, so the side effects come with it: the change audit is appended, bound task due dates re-sync, the old calendar dates unblock and the new ones block, the conversation&#39;s cached listing is invalidated, and &#x60;reservation.updated&#x60; fires — which is what revokes and re-issues the door code.  Supply at least one field; an empty body returns 422 rather than a 200 that changed nothing.  **Moving and re-dating in one call is one operation.** Send &#x60;listingId&#x60; together with &#x60;checkIn&#x60;/&#x60;checkOut&#x60; and it is applied as a single move, so the access code is re-issued once rather than twice.  ### Fields this endpoint deliberately does NOT accept  Each is rejected by name with the reason, never accepted and ignored:  | Field | Why | |---|---| | &#x60;guest&#x60; / &#x60;guestDetails&#x60; | Guest name, email and phone live on the guest record. The underlying command has no branch for them, so accepting them would return a success that changed nothing. | | &#x60;pricing&#x60; / &#x60;totalPrice&#x60; / &#x60;currency&#x60; | Repricing writes the price breakdown, the pricing row and a pricing-history entry. It belongs to its own endpoint. | | &#x60;status&#x60; | Not a field. Cancelling, confirming and checking out are separate operations with materially different side effects — cancellation issues a credit refund and revokes access codes. | | &#x60;platform&#x60; | Immutable: it records where the booking actually originated. | | &#x60;notes&#x60; | &#x60;internal_notes&#x60; is an append-only audit trail the system writes on every change. |  **Availability is NOT checked.** A date change that overlaps another booking will be written. Call &#x60;GET /v1/availability/{propertyId}&#x60; first if that matters.
+    # @param id [Integer] Internal Repull reservation ID.
+    # @param reservation_update_request [ReservationUpdateRequest] 
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable.
+    # @return [Array<(ReservationUpdateResponse, Integer, Hash)>] ReservationUpdateResponse data, response status code and response headers
+    def update_reservation_with_http_info(id, reservation_update_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ReservationsApi.update_reservation ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling ReservationsApi.update_reservation"
+      end
+      # verify the required parameter 'reservation_update_request' is set
+      if @api_client.config.client_side_validation && reservation_update_request.nil?
+        fail ArgumentError, "Missing the required parameter 'reservation_update_request' when calling ReservationsApi.update_reservation"
+      end
+      if @api_client.config.client_side_validation && !opts[:'idempotency_key'].nil? && opts[:'idempotency_key'].to_s.length > 255
+        fail ArgumentError, 'invalid value for "opts[:"idempotency_key"]" when calling ReservationsApi.update_reservation, the character length must be smaller than or equal to 255.'
+      end
+
+      # resource path
+      local_var_path = '/v1/reservations/{id}'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+      header_params[:'Idempotency-Key'] = opts[:'idempotency_key'] if !opts[:'idempotency_key'].nil?
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(reservation_update_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'ReservationUpdateResponse'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"ReservationsApi.update_reservation",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:PATCH, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ReservationsApi#update_reservation\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end
