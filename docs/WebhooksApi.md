@@ -860,7 +860,7 @@ nil (empty response body)
 
 Update webhook subscription
 
-Update url, description, events, or status (active|paused). Re-enabling clears `consecutive_failures` and `disabled_at`.
+Update url, description, events, or status (active|paused). Re-enabling clears `consecutiveFailures` and `disabledAt`.
 
 ### Examples
 

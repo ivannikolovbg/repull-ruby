@@ -660,7 +660,7 @@ nil (empty response body)
 
 ## list_booking_conversations
 
-> <BookingConversationListResponse> list_booking_conversations
+> <Array<BookingConversation>> list_booking_conversations
 
 List Booking.com conversations
 
@@ -692,7 +692,7 @@ end
 
 This returns an Array which contains the response data, status code and headers.
 
-> <Array(<BookingConversationListResponse>, Integer, Hash)> list_booking_conversations_with_http_info
+> <Array(<Array<BookingConversation>>, Integer, Hash)> list_booking_conversations_with_http_info
 
 ```ruby
 begin
@@ -700,7 +700,7 @@ begin
   data, status_code, headers = api_instance.list_booking_conversations_with_http_info
   p status_code # => 2xx
   p headers # => { ... }
-  p data # => <BookingConversationListResponse>
+  p data # => <Array<BookingConversation>>
 rescue Repull::ApiError => e
   puts "Error when calling BookingComApi->list_booking_conversations_with_http_info: #{e}"
 end
@@ -712,7 +712,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**BookingConversationListResponse**](BookingConversationListResponse.md)
+[**Array&lt;BookingConversation&gt;**](BookingConversation.md)
 
 ### Authorization
 
@@ -726,7 +726,7 @@ This endpoint does not need any parameter.
 
 ## list_booking_properties
 
-> <BookingPropertyListResponse> list_booking_properties
+> <Array<BookingProperty>> list_booking_properties
 
 List Booking.com properties
 
@@ -758,7 +758,7 @@ end
 
 This returns an Array which contains the response data, status code and headers.
 
-> <Array(<BookingPropertyListResponse>, Integer, Hash)> list_booking_properties_with_http_info
+> <Array(<Array<BookingProperty>>, Integer, Hash)> list_booking_properties_with_http_info
 
 ```ruby
 begin
@@ -766,7 +766,7 @@ begin
   data, status_code, headers = api_instance.list_booking_properties_with_http_info
   p status_code # => 2xx
   p headers # => { ... }
-  p data # => <BookingPropertyListResponse>
+  p data # => <Array<BookingProperty>>
 rescue Repull::ApiError => e
   puts "Error when calling BookingComApi->list_booking_properties_with_http_info: #{e}"
 end
@@ -778,7 +778,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**BookingPropertyListResponse**](BookingPropertyListResponse.md)
+[**Array&lt;BookingProperty&gt;**](BookingProperty.md)
 
 ### Authorization
 

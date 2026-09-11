@@ -2,6 +2,20 @@
 
 All notable changes to the `repull` gem are documented here.
 
+## [0.2.13] - 2026-09-11
+
+### Fixed
+
+- **Regenerated against 19 schema corrections merged into the live spec.** Path/operation inventory is unchanged (124 paths / 174 operations) — only shapes changed:
+  - 10 fields renamed snake_case → camelCase on the wire (`data_freshness`→`dataFreshness`, `last_synced_at`→`lastSyncedAt`, `fix_url`→`fixUrl`, `next_cursor`→`nextCursor`, `has_more`→`hasMore`, `monthly_requests`→`monthlyRequests`, `daily_ai_requests`→`dailyAiRequests`, `daily_ai`→`dailyAi`, `dynamic_pricing_listings`→`dynamicPricingListings`, `resets_at`→`resetsAt`). The Ruby attribute names stay snake_case (Ruby convention); `attribute_map` now maps each to the correct camelCase JSON key.
+  - 3 list responses changed from `{data, pagination}` envelopes to bare arrays: `BookingComApi#list_booking_properties` now returns `Array<BookingProperty>`, `BookingComApi#list_booking_conversations` now returns `Array<BookingConversation>`, `VrboApi#vrbo_listings_get` now returns `Array<VrboListing>`. The now-unused wrapper models (`BookingPropertyListResponse`, `BookingConversationListResponse`, `VrboListingListResponse`) were dropped.
+  - 4 id fields changed integer → string: `AirbnbAlteration.id`, `AirbnbAlteration.reservationId`, `AirbnbConnection.id`, `AirbnbListing.listingId`.
+  - `Property.latitude` / `Property.longitude` changed number → string.
+
+### Notes
+
+- `scripts/check-spec-freshness.py` now compares schema shapes (not just operation counts) and confirms zero drift post-regen.
+
 ## [0.2.12] - 2026-09-11
 
 ### Added
