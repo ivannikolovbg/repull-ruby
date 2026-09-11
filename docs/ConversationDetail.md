@@ -6,6 +6,7 @@
 | ---- | ---- | ----------- | ----- |
 | **id** | **String** |  | [optional] |
 | **platform** | **String** |  | [optional] |
+| **external_thread_id** | **String** | The source channel&#39;s own thread id (Airbnb thread id, Booking conversation id, …). Pass this as the &#x60;{threadId}&#x60; path param on &#x60;POST /v1/channels/airbnb/messaging/{threadId}/messages&#x60; to reply — it is the bridge from a unified conversation straight to the provider-specific send call. &#x60;null&#x60; when the thread has no external id yet (e.g. a website/email thread). | [optional] |
 | **guest_id** | **String** |  | [optional] |
 | **listing_id** | **String** |  | [optional] |
 | **reservation_id** | **String** |  | [optional] |
@@ -27,6 +28,7 @@ require 'repull'
 instance = Repull::ConversationDetail.new(
   id: null,
   platform: airbnb,
+  external_thread_id: null,
   guest_id: null,
   listing_id: null,
   reservation_id: null,

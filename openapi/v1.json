@@ -3,7 +3,7 @@
   "info": {
     "title": "Repull API",
     "version": "1.0.0",
-    "description": "The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.\n\n## Designed for AI agents\nEvery error response on this API includes machine-parseable fields so an LLM (Claude in MCP, Cursor, Cline, GPT, etc.) can self-recover without escalating to a human:\n- `error.code` \u2014 stable string identifier (e.g. `invalid_params`, `rate_limit_exceeded`)\n- `error.message` \u2014 human-readable cause\n- `error.fix` \u2014 exact recovery steps (e.g. \"Pass `check_in_after` as ISO 8601: `?check_in_after=2026-01-15`\")\n- `error.docs_url` \u2014 link to the canonical write-up at `https://repull.dev/docs/errors/{code}`\n- `error.request_id` \u2014 id to correlate with server-side logs\n- `error.field` / `error.value_received` / `error.valid_values` / `error.did_you_mean` \u2014 when the error is parameter-specific\n- `error.retry_after` \u2014 seconds to wait before retrying (rate-limit + transient upstream)\n\n`Access-Control-Expose-Headers` lists `x-request-id` and the `X-RateLimit-*` family so browsers can read them on cross-origin responses.\n\n## Quick Start\n1. Get an API key at https://repull.dev/dashboard\n2. Connect a PMS: `POST /v1/connect/{provider}`\n3. List properties: `GET /v1/properties`\n4. Get reservations: `GET /v1/reservations`\n\n## Authentication\nAll requests require a Bearer token:\n```\nAuthorization: Bearer sk_test_YOUR_API_KEY\n```\n\nSandbox keys start with `sk_test_`, production with `sk_live_`.\n\n## Request Correlation (X-Request-ID)\nEvery response carries an `X-Request-ID` header, e.g. `X-Request-ID: req_01HXY...`. Include this id in support tickets and bug reports \u2014 we can trace the full request lifecycle (auth, rate limit, handler, downstream calls, log row) from a single id.\n\nYou may set the header on the inbound request to forward your own trace id; we will echo it back instead of generating a new one. Accepted format: `^[\\\\w.-]{1,128}$`.\n\nThe id is also embedded in error envelopes as `request_id` so server-side log diffs work even when the response headers are stripped by an intermediate proxy.\n\n## Rate Limits\nThe public API enforces a per-API-key sliding-window rate limit on top of the per-tier monthly + daily-AI quotas.\n\n**Default policy:** 600 requests per 60 seconds, per API key. Sliding window \u2014 there is no fixed-minute boundary you can burst across.\n\nEvery response includes:\n\n| Header | Meaning |\n|---|---|\n| `X-RateLimit-Limit` | Requests permitted in the current window. |\n| `X-RateLimit-Remaining` | Requests left in the current window after this call. |\n| `X-RateLimit-Reset` | Unix epoch (seconds) when the next slot opens. |\n| `X-RateLimit-Policy` | Machine-readable policy descriptor, e.g. `600;w=60`. |\n| `Retry-After` | Seconds to wait before retrying. **Only present on 429 responses.** |\n\n**On 429 (rate_limit_exceeded):** the response body matches the standard error envelope with `code: \"rate_limit_exceeded\"`, plus `limit`, `window_seconds`, `retry_after`, and `request_id` fields. SDKs MUST honor `Retry-After` and use exponential backoff with jitter on subsequent retries \u2014 never a tight loop.\n\nRecommended backoff:\n```\nsleep_ms = (Retry-After * 1000) + random(0..250)\n```\n\nMonthly + daily-AI tier quotas (`free`, `starter`, `custom`) are enforced separately and also surface as 429s; they include `tier`, `scope`, and `resets_at` fields.\n\n## Plan Limits (402 \u2014 `listings_limit_exceeded`)\nThe Repull API also enforces a per-tier cap on **active listings**:\n\n| Tier | Active listings cap |\n|---|---|\n| `free` | 3 |\n| `starter` | 50 |\n| `custom` | unlimited |\n\nWhen a customer's active-listing count is above their tier cap, the API returns **`402 Payment Required`** with `error.code = \"listings_limit_exceeded\"` on every route EXCEPT:\n\n- `/v1/health` \u2014 uptime probes are never gated.\n- `/v1/usage/*` \u2014 so dashboards can render the over-cap state.\n- Any `DELETE` \u2014 so the customer can trim listings to get back under the cap without paying.\n\nUnlike 429, 402 is NOT a \"wait and retry\" condition \u2014 `Retry-After` is not set. The only paths back to 200 are:\n  1. `DELETE` enough listings to come back under the cap, or\n  2. Upgrade at `https://repull.dev/dashboard/billing`. The server-side usage cache is 60s, so the first 200 after an upgrade may take up to a minute.\n\nThe envelope mirrors `rate_limit_exceeded` for SDK ergonomics: `tier`, `limit`, `active_listings`, `upgrade_url`, plus the standard `code` / `message` / `fix` / `docs_url` / `request_id`.",
+    "description": "The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.\n\n## Designed for AI agents\nEvery error response on this API includes machine-parseable fields so an LLM (Claude in MCP, Cursor, Cline, GPT, etc.) can self-recover without escalating to a human:\n- `error.code` \u2014 stable string identifier (e.g. `invalid_params`, `rate_limit_exceeded`)\n- `error.message` \u2014 human-readable cause\n- `error.fix` \u2014 exact recovery steps (e.g. \"Pass `check_in_after` as ISO 8601: `?check_in_after=2026-01-15`\")\n- `error.docs_url` \u2014 link to the canonical write-up at `https://repull.dev/docs/errors/{code}`\n- `error.request_id` \u2014 id to correlate with server-side logs\n- `error.field` / `error.value_received` / `error.valid_values` / `error.did_you_mean` \u2014 when the error is parameter-specific\n- `error.retry_after` \u2014 seconds to wait before retrying (rate-limit + transient upstream)\n\n`Access-Control-Expose-Headers` lists `x-request-id` and the `X-RateLimit-*` family so browsers can read them on cross-origin responses.\n\n## Quick Start\n1. Get an API key at https://repull.dev/dashboard\n2. Connect a PMS: `POST /v1/connect/{provider}`\n3. List properties: `GET /v1/properties`\n4. Get reservations: `GET /v1/reservations`\n\n## Authentication\nAll requests require a Bearer token:\n```\nAuthorization: Bearer sk_live_YOUR_API_KEY\n```\n\n## Request Correlation (X-Request-ID)\nEvery response carries an `X-Request-ID` header, e.g. `X-Request-ID: req_01HXY...`. Include this id in support tickets and bug reports \u2014 we can trace the full request lifecycle (auth, rate limit, handler, downstream calls, log row) from a single id.\n\nYou may set the header on the inbound request to forward your own trace id; we will echo it back instead of generating a new one. Accepted format: `^[\\\\w.-]{1,128}$`.\n\nThe id is also embedded in error envelopes as `request_id` so server-side log diffs work even when the response headers are stripped by an intermediate proxy.\n\n## Rate Limits\nThe public API enforces a per-API-key sliding-window rate limit on top of the per-tier monthly + daily-AI quotas.\n\n**Default policy:** 600 requests per 60 seconds, per API key. Sliding window \u2014 there is no fixed-minute boundary you can burst across.\n\nEvery response includes:\n\n| Header | Meaning |\n|---|---|\n| `X-RateLimit-Limit` | Requests permitted in the current window. |\n| `X-RateLimit-Remaining` | Requests left in the current window after this call. |\n| `X-RateLimit-Reset` | Unix epoch (seconds) when the next slot opens. |\n| `X-RateLimit-Policy` | Machine-readable policy descriptor, e.g. `600;w=60`. |\n| `Retry-After` | Seconds to wait before retrying. **Only present on 429 responses.** |\n\n**On 429 (rate_limit_exceeded):** the response body matches the standard error envelope with `code: \"rate_limit_exceeded\"`, plus `limit`, `window_seconds`, `retry_after`, and `request_id` fields. SDKs MUST honor `Retry-After` and use exponential backoff with jitter on subsequent retries \u2014 never a tight loop.\n\nRecommended backoff:\n```\nsleep_ms = (Retry-After * 1000) + random(0..250)\n```\n\nMonthly + daily-AI tier quotas (`free`, `starter`, `custom`) are enforced separately and also surface as 429s; they include `tier`, `scope`, and `resets_at` fields.\n\n## Plan Limits (402 \u2014 `listings_limit_exceeded`)\nThe Repull API also enforces a per-tier cap on **active listings**:\n\n| Tier | Active listings cap |\n|---|---|\n| `free` | 3 |\n| `starter` | 50 |\n| `custom` | unlimited |\n\nWhen a customer's active-listing count is above their tier cap, the API returns **`402 Payment Required`** with `error.code = \"listings_limit_exceeded\"` on every route EXCEPT:\n\n- `/v1/health` \u2014 uptime probes are never gated.\n- `/v1/usage/*` \u2014 so dashboards can render the over-cap state.\n- Any `DELETE` \u2014 so the customer can trim listings to get back under the cap without paying.\n\nUnlike 429, 402 is NOT a \"wait and retry\" condition \u2014 `Retry-After` is not set. The only paths back to 200 are:\n  1. `DELETE` enough listings to come back under the cap, or\n  2. Upgrade at `https://repull.dev/dashboard/billing`. The server-side usage cache is 60s, so the first 200 after an upgrade may take up to a minute.\n\nThe envelope mirrors `rate_limit_exceeded` for SDK ergonomics: `tier`, `limit`, `active_listings`, `upgrade_url`, plus the standard `code` / `message` / `fix` / `docs_url` / `request_id`.",
     "contact": {
       "email": "ivan@vanio.ai",
       "url": "https://repull.dev"
@@ -128,10 +128,6 @@
       "description": "Health checks and API status"
     },
     {
-      "name": "Sandbox",
-      "description": "Test-mode fixtures for contract testing WITHOUT live provider accounts. A `sk_test_*` key seeds a deterministic set of fake listings, reservations, and connected provider accounts (Airbnb + Booking.com), reads them back through the normal endpoints, and resets them \u2014 all in a data space fully isolated from live inventory."
-    },
-    {
       "name": "schema",
       "description": "Custom field-mapping schemas to reshape response payloads to your app's data model. Built-in schemas (`native`, `calry`, `calry-v1`) ship out of the box; create custom schemas with `POST /v1/schema/custom` and select one per request via the `X-Schema` header."
     },
@@ -149,114 +145,11 @@
       "bearerAuth": {
         "type": "http",
         "scheme": "bearer",
-        "description": "API key \u2014 `sk_test_*` for sandbox, `sk_live_*` for production",
+        "description": "API key \u2014 `sk_live_*`",
         "bearerFormat": "API Key"
       }
     },
     "schemas": {
-      "SandboxFixtureRef": {
-        "type": "object",
-        "description": "A seeded fixture: its stable reference key plus the synthetic id the read endpoints return for it.",
-        "properties": {
-          "ref": {
-            "type": "string",
-            "example": "sbx-listing-oceanview",
-            "description": "Stable reference key \u2014 constant across re-seeds."
-          },
-          "id": {
-            "type": "string",
-            "example": "900000101",
-            "description": "Synthetic id (>= 900,000,000). Reference it against GET /v1/listings, /v1/reservations, /v1/connect."
-          }
-        },
-        "required": [
-          "ref",
-          "id"
-        ]
-      },
-      "SandboxSeedResult": {
-        "type": "object",
-        "description": "Result of provisioning the sandbox fixture set.",
-        "properties": {
-          "customerId": {
-            "type": "string",
-            "example": "1"
-          },
-          "seededAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "listings": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SandboxFixtureRef"
-            },
-            "description": "3 sample listings."
-          },
-          "reservations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SandboxFixtureRef"
-            },
-            "description": "5 reservations across the lifecycle: created, modified, cancelled, date-changed, pending."
-          },
-          "connections": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SandboxFixtureRef"
-            },
-            "description": "2 fake connected provider accounts: Airbnb + Booking.com."
-          }
-        },
-        "required": [
-          "customerId",
-          "seededAt",
-          "listings",
-          "reservations",
-          "connections"
-        ]
-      },
-      "SandboxResetResult": {
-        "type": "object",
-        "description": "Result of clearing the sandbox fixture set. Only ever deletes rows in the isolated sandbox data space.",
-        "properties": {
-          "customerId": {
-            "type": "string",
-            "example": "1"
-          },
-          "resetAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "deleted": {
-            "type": "object",
-            "properties": {
-              "listings": {
-                "type": "integer",
-                "example": 3
-              },
-              "reservations": {
-                "type": "integer",
-                "example": 5
-              },
-              "connections": {
-                "type": "integer",
-                "example": 2
-              }
-            },
-            "required": [
-              "listings",
-              "reservations",
-              "connections"
-            ]
-          }
-        },
-        "required": [
-          "customerId",
-          "resetAt",
-          "deleted"
-        ]
-      },
       "Property": {
         "type": "object",
         "description": "A vacation rental property in your Repull workspace. Backed by the core `listings` row \u2014 enriched per-PMS fields (bedrooms, property type, provider id, etc.) live in provider-specific detail tables and are NOT returned here.\n\nField availability differs by endpoint:\n- `channels` is returned by the list endpoint (`GET /v1/properties`) only.\n- `latitude`, `longitude`, `createdAt`, and `amenities` are returned by the detail endpoint (`GET /v1/properties/{id}`) only. `amenities` requires `?include=amenities`.",
@@ -312,6 +205,11 @@
             "format": "date-time",
             "description": "When the property was created. Detail endpoint only."
           },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last time this property record changed. Feed the newest value you have seen back as `?updated_since=` to poll for changes only. List endpoint (`GET /v1/properties`) only."
+          },
           "channels": {
             "type": "array",
             "items": {
@@ -350,27 +248,58 @@
           },
           "available": {
             "type": "boolean",
-            "description": "Whether the property is bookable on this date. `false` when the channel calendar marks the date unavailable (stop-sell / blocked)."
+            "description": "Whether the property is bookable on this date. `false` when the calendar marks the date booked or blocked. Only dates we actually hold a calendar row for appear in `days`, so this is never a guess \u2014 a date with no data is listed in `coverage.missingDates` instead."
           },
           "price": {
             "type": "number",
-            "description": "Nightly price for this date in the property currency. Falls back to the property's default nightly price for dates with no explicit calendar override.",
+            "description": "Nightly price for this date in the property currency. Falls back to the property's default nightly price when the calendar row itself carries no price.",
             "example": 245
           },
           "minNights": {
             "type": "integer",
-            "description": "Minimum-stay requirement for a stay starting on this date.",
+            "description": "Minimum-stay requirement for a stay starting on this date. Falls back to the listing-level default min-nights when the calendar row carries none.",
             "example": 2
+          }
+        }
+      },
+      "PropertyAvailabilityCoverage": {
+        "type": "object",
+        "description": "How much of the requested window we actually hold calendar data for. Read this before treating an absent date as bookable \u2014 absence means \"no data\", not \"available\".",
+        "required": [
+          "requestedDays",
+          "coveredDays",
+          "missingDates"
+        ],
+        "properties": {
+          "requestedDays": {
+            "type": "integer",
+            "description": "Number of dates in the requested `[from, to]` window, after the 366-day cap.",
+            "example": 30
+          },
+          "coveredDays": {
+            "type": "integer",
+            "description": "Number of those dates present in `days`.",
+            "example": 30
+          },
+          "missingDates": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Requested dates with no calendar row, ascending. Availability for these dates is UNKNOWN \u2014 do not treat them as bookable.",
+            "example": []
           }
         }
       },
       "PropertyAvailability": {
         "type": "object",
-        "description": "Channel-agnostic availability calendar for a property over the requested window. Every date in `[from, to]` (inclusive) is present in `days`; dates with no explicit calendar row fall back to available at the default price.",
+        "description": "Channel-agnostic availability calendar for a property over the requested window. `days` carries only the dates backed by a real calendar row; anything the calendar does not cover is reported in `coverage.missingDates` rather than synthesised as available.",
         "required": [
           "propertyId",
           "currency",
-          "days"
+          "days",
+          "coverage"
         ],
         "properties": {
           "propertyId": {
@@ -388,7 +317,10 @@
             "items": {
               "$ref": "#/components/schemas/PropertyAvailabilityDay"
             },
-            "description": "Dense per-date calendar for the requested window (capped at 366 days), ordered ascending by date."
+            "description": "Per-date calendar for the requested window (capped at 366 days), ordered ascending by date. Contains only dates we hold data for \u2014 it may be shorter than the window, or empty."
+          },
+          "coverage": {
+            "$ref": "#/components/schemas/PropertyAvailabilityCoverage"
           }
         }
       },
@@ -453,14 +385,122 @@
           }
         }
       },
+      "ReservationMoneyLine": {
+        "type": "object",
+        "required": [
+          "amount"
+        ],
+        "description": "One line inside a fee / tax / discount collection. `amount` is always a `number` in the reservation `currency` \u2014 the underlying channel data stores some amounts as decimal strings and the API coerces them. Every other property is passed through only when the source channel supplied it.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Label as the channel reported it.",
+            "example": "Cleaning Fee"
+          },
+          "type": {
+            "type": "string",
+            "description": "Channel-reported classifier. NOT an enum \u2014 new channels introduce new values. Observed on fees: `cleaning`, `extra_guest`, `service`, `guest_service`, `pet`, `fixed`, `add_on`, `host_service`, `platform`, `processing`. Observed on taxes: `airbnb_collected` (channel collected AND remitted it), `pass_through` (reaches the host to remit), `tax`, `custom`.",
+            "example": "cleaning"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Amount in the reservation `currency`.",
+            "example": 126
+          },
+          "description": {
+            "type": "string",
+            "description": "Longer channel-supplied description. Only present when it differs from `name`.",
+            "example": "Extra guest fee for 1 additional guest(s)"
+          },
+          "quantity": {
+            "type": "number",
+            "description": "Units billed, when the channel reports a quantity (Booking.com add-ons).",
+            "example": 1
+          },
+          "vat": {
+            "type": "number",
+            "description": "VAT charged on top of this line, when the channel splits it out separately.",
+            "example": 0
+          }
+        }
+      },
+      "ReservationHostFinancials": {
+        "type": "object",
+        "description": "HOST-side view of the stay \u2014 what it looks like on the host ledger. Projected from the reservation's own stored price breakdown, so it is available on every channel (Airbnb, Booking.com, VRBO, direct, owner), not just Airbnb.\n\n**Nothing here is synthesised.** A property is present only when the source breakdown genuinely carries it; a component the channel never reported is OMITTED rather than returned as `0`. An empty array means the channel reported an empty collection.",
+        "properties": {
+          "accommodation": {
+            "type": "number",
+            "description": "Accommodation subtotal before fees, taxes and discounts.",
+            "example": 485
+          },
+          "discounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReservationMoneyLine"
+            },
+            "description": "Discounts applied to the stay (length-of-stay, non-refundable, promotional). Amounts are positive magnitudes of the reduction."
+          },
+          "guestFees": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReservationMoneyLine"
+            },
+            "description": "The guest-side platform service fee as it appears on the host statement. Present only on channels that report it (Airbnb)."
+          },
+          "hostFees": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReservationMoneyLine"
+            },
+            "description": "Fees the channel charged the HOST \u2014 host service fee / commission (with `vat` split out where the channel provides it), platform fee, payment processing fee."
+          },
+          "taxes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReservationMoneyLine"
+            },
+            "description": "Taxes on the stay. Same collection as `financials.guest.taxes` \u2014 each line's `type` says who remits (`airbnb_collected` = the channel already collected and remitted it, `pass_through` = it reaches the host). The API deliberately does not split the list by remitter, so no classification of ours is baked into the payload."
+          },
+          "revenue": {
+            "type": "number",
+            "description": "Expected host payout for the stay, in `currency`.",
+            "example": 566.72
+          }
+        }
+      },
+      "ReservationGuestFinancials": {
+        "type": "object",
+        "description": "GUEST-side view of the stay \u2014 what the guest was actually charged. Same non-fabrication rule as `ReservationHostFinancials`: absent components are omitted, never zero-filled.",
+        "properties": {
+          "totalPrice": {
+            "type": "number",
+            "description": "Stay total the guest paid, in `currency`. Taken from the stored breakdown; falls back to the reservation total when the breakdown carries no total of its own.",
+            "example": 739.32
+          },
+          "fees": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReservationMoneyLine"
+            },
+            "description": "Every fee line the guest was charged \u2014 cleaning, extra guest, pass-through host fees, platform guest service fee, channel add-ons. Deduplicated: channels that report a fee both as an array line and as a scalar (e.g. `cleaning`) yield ONE line."
+          },
+          "taxes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReservationMoneyLine"
+            },
+            "description": "Every tax line the guest was charged. Same collection as `financials.host.taxes`."
+          }
+        }
+      },
       "ReservationFinancials": {
         "type": "object",
-        "description": "Normalized money block. `totalPrice` is a `number` (NOT a decimal-as-string) \u2014 the legacy top-level `totalPrice` string field is kept on the parent for back-compat but is deprecated.",
+        "description": "Normalized money block. `totalPrice` is a `number` (NOT a decimal-as-string) \u2014 the legacy top-level `totalPrice` string field is kept on the parent for back-compat but is deprecated. `totalPrice` is the GUEST-side stay total (what the guest paid), NOT the host payout.\n\nThe full host/guest breakdown \u2014 accommodation subtotal, discounts, cleaning and other guest fees, channel service fees split host/guest, tax lines, and the expected host payout \u2014 is served inline under `host` and `guest` for EVERY channel. (Earlier versions of this spec sent you to `GET /v1/channels/airbnb/transactions` for the host payout; that endpoint is Airbnb-only and is no longer the place to look for a reservation's financials. It remains useful for settlement-level detail \u2014 actual payout dates and settlement status \u2014 which the reservation record does not carry.)\n\nNot yet served here: individual guest **payment records** (charges, refunds, schedules) and post-booking **adjustments** \u2014 neither is stored on the reservation breakdown.",
         "properties": {
           "totalPrice": {
             "type": "number",
             "nullable": true,
-            "description": "Stay total in `currency`. Number, not string.",
+            "description": "GUEST-side stay total in `currency` \u2014 what the guest paid, not the host payout. Number, not string. For the host payout see `financials.host.revenue`.",
             "example": 1250
           },
           "currency": {
@@ -473,6 +513,17 @@
             "type": "string",
             "nullable": true,
             "description": "Payment lifecycle status (e.g. `pending`, `paid`, `refunded`)."
+          },
+          "cancellationPolicy": {
+            "type": "string",
+            "description": "Channel cancellation policy code, verbatim from the reservation. Airbnb codes look like `strict_14_with_grace_period`, `moderate`, `flexible`, `tiered_pricing_non_refundable`; Booking.com reports a numeric policy id. Omitted when the channel did not supply one.",
+            "example": "strict_14_with_grace_period"
+          },
+          "host": {
+            "$ref": "#/components/schemas/ReservationHostFinancials"
+          },
+          "guest": {
+            "$ref": "#/components/schemas/ReservationGuestFinancials"
           }
         }
       },
@@ -884,6 +935,11 @@
             "nullable": true,
             "example": "airbnb"
           },
+          "externalThreadId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The source channel's own thread id (Airbnb thread id, Booking conversation id, \u2026). Pass this as the `{threadId}` path param on `POST /v1/channels/airbnb/messaging/{threadId}/messages` to reply \u2014 it is the bridge from a unified conversation straight to the provider-specific send call. `null` when the thread has no external id yet (e.g. a website/email thread)."
+          },
           "guestId": {
             "type": "string",
             "nullable": true
@@ -1157,7 +1213,7 @@
           },
           "externalId": {
             "type": "string",
-            "description": "ID in the source channel (Airbnb review id, Booking review id, etc.)."
+            "description": "ID in the source channel (Airbnb review id, Booking review id, etc.). Pass as `review_id` to the provider reply endpoint."
           },
           "platform": {
             "type": "string",
@@ -1167,6 +1223,11 @@
             "type": "string",
             "nullable": true,
             "description": "Internal Repull listing id the review is attached to."
+          },
+          "providerPropertyId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The source channel's own listing/property id for this review (Booking.com hotel/property id, Airbnb listing id, \u2026). Pass this as `property_id` to `POST /v1/channels/booking/reviews` to post a host reply \u2014 it is the bridge from a unified review straight to the provider-specific reply call. `null` when the source listing id has not been mirrored yet."
           },
           "reservationId": {
             "type": "string",
@@ -1747,12 +1808,16 @@
           "reservation.updated",
           "reservation.cancelled",
           "reservation.message.received",
+          "reservation.alteration.created",
+          "reservation.alteration.responded",
           "listing.created",
           "listing.updated",
           "listing.deleted",
           "calendar.updated",
           "account.created",
           "account.disconnected",
+          "review.created",
+          "review.responded",
           "ai.operation.completed",
           "ai.operation.failed",
           "payment.completed",
@@ -1914,6 +1979,115 @@
             "type": "string",
             "format": "date-time",
             "example": "2026-05-01T15:00:00.000Z"
+          }
+        }
+      },
+      "AlterationWebhookObject": {
+        "type": "object",
+        "description": "Lightweight alteration snapshot delivered as `data.object` on `reservation.alteration.*` events. Currently Airbnb only. Fetch full state (original vs new dates/guests/price) via `GET /v1/channels/airbnb/alterations` filtered by `reservation_code`.",
+        "required": [
+          "id",
+          "channel",
+          "reservationId",
+          "customerId",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Repull-internal alteration id (`reservation_alterations.id`).",
+            "example": 4471
+          },
+          "alterationId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Provider-side alteration/resolution id.",
+            "example": "RAX9K2M4C1"
+          },
+          "channel": {
+            "type": "string",
+            "description": "Source channel. Currently always `airbnb`.",
+            "example": "airbnb"
+          },
+          "reservationId": {
+            "type": "integer",
+            "description": "Repull reservation id the alteration targets. Pass to `GET /v1/reservations/{id}`.",
+            "example": 215906
+          },
+          "customerId": {
+            "type": "integer",
+            "description": "Workspace (customer) id.",
+            "example": 1
+          },
+          "status": {
+            "type": "string",
+            "description": "Alteration lifecycle status.",
+            "example": "pending"
+          },
+          "initiator": {
+            "type": "string",
+            "nullable": true,
+            "description": "Who requested the alteration.",
+            "example": "guest"
+          }
+        }
+      },
+      "AlterationChange": {
+        "type": "object",
+        "description": "A single requested field delta on an alteration: prior value (`from`) vs proposed value (`to`).",
+        "properties": {
+          "from": {
+            "description": "Prior value (string date, integer count, or decimal price string)."
+          },
+          "to": {
+            "description": "Proposed value (string date, integer count, or decimal price string)."
+          }
+        }
+      },
+      "ReservationAlterationCreatedPayload": {
+        "type": "object",
+        "description": "Payload for `reservation.alteration.created`. A new reservation alteration was requested (Airbnb). `data.object` carries the snapshot; `data.changes` lists the requested field deltas.",
+        "required": [
+          "object"
+        ],
+        "properties": {
+          "object": {
+            "$ref": "#/components/schemas/AlterationWebhookObject"
+          },
+          "changes": {
+            "type": "object",
+            "description": "Requested deltas keyed by field name (`checkIn`, `checkOut`, `guestCount`, `totalPrice`). Only changed fields appear.",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/AlterationChange"
+            },
+            "example": {
+              "checkOut": {
+                "from": "2026-06-16",
+                "to": "2026-06-18"
+              },
+              "totalPrice": {
+                "from": "1320.00",
+                "to": "1760.00"
+              }
+            }
+          }
+        }
+      },
+      "ReservationAlterationRespondedPayload": {
+        "type": "object",
+        "description": "Payload for `reservation.alteration.responded`. A pending alteration was accepted, declined, or cancelled. `data.object.status` reflects the new state.",
+        "required": [
+          "object"
+        ],
+        "properties": {
+          "object": {
+            "$ref": "#/components/schemas/AlterationWebhookObject"
+          },
+          "respondedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the response was recorded.",
+            "example": "2026-05-01T16:30:00.000Z"
           }
         }
       },
@@ -2108,6 +2282,94 @@
             "type": "string",
             "example": "refresh_token_rejected",
             "description": "Why the connection was lost. `refresh_token_rejected` \u2014 upstream OAuth refresh endpoint returned a hard rejection. `manual_disconnect` \u2014 host/admin disconnected via the dashboard. `auth_expired` \u2014 credentials aged out without ever being used. `revoked_upstream` \u2014 provider notified us the user revoked access."
+          }
+        }
+      },
+      "ReviewWebhookObject": {
+        "type": "object",
+        "description": "Lightweight review snapshot delivered as `data.object` on `review.*` events. Fetch the full review (category ratings, public text, private feedback, response body) via `GET /v1/reviews/{id}`.",
+        "required": [
+          "id",
+          "channel",
+          "customerId",
+          "reviewerRole"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Repull-internal review id. Pass to `GET /v1/reviews/{id}`.",
+            "example": 90210
+          },
+          "channel": {
+            "type": "string",
+            "nullable": true,
+            "description": "Source channel the review came from.",
+            "example": "airbnb"
+          },
+          "listingId": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Repull listing id the review is about.",
+            "example": 5668
+          },
+          "reservationId": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Repull reservation id the review is attached to, if known.",
+            "example": 215906
+          },
+          "customerId": {
+            "type": "integer",
+            "description": "Workspace (customer) id.",
+            "example": 1
+          },
+          "reviewerRole": {
+            "type": "string",
+            "description": "Who wrote the review \u2014 `guest` (about the host/property) or `host` (about the guest).",
+            "example": "guest"
+          },
+          "rating": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Overall star rating, if present.",
+            "example": 5
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the review was submitted on the source channel.",
+            "example": "2026-05-01T09:00:00.000Z"
+          }
+        }
+      },
+      "ReviewCreatedPayload": {
+        "type": "object",
+        "description": "Payload for `review.created`. A new review was received on a reservation. `data.object.reviewerRole` disambiguates guest vs host authorship.",
+        "required": [
+          "object"
+        ],
+        "properties": {
+          "object": {
+            "$ref": "#/components/schemas/ReviewWebhookObject"
+          }
+        }
+      },
+      "ReviewRespondedPayload": {
+        "type": "object",
+        "description": "Payload for `review.responded`. A public host response to a review was recorded. Fetch the response body via `GET /v1/reviews/{id}`.",
+        "required": [
+          "object"
+        ],
+        "properties": {
+          "object": {
+            "$ref": "#/components/schemas/ReviewWebhookObject"
+          },
+          "respondedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the host response was recorded.",
+            "example": "2026-05-02T11:00:00.000Z"
           }
         }
       },
@@ -2357,6 +2619,58 @@
           }
         }
       },
+      "ReservationAlterationCreatedEvent": {
+        "type": "object",
+        "required": [
+          "type",
+          "data"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "apiVersion": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ReservationAlterationCreatedPayload"
+          }
+        }
+      },
+      "ReservationAlterationRespondedEvent": {
+        "type": "object",
+        "required": [
+          "type",
+          "data"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "apiVersion": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ReservationAlterationRespondedPayload"
+          }
+        }
+      },
       "ListingCreatedEvent": {
         "type": "object",
         "required": [
@@ -2513,6 +2827,58 @@
           }
         }
       },
+      "ReviewCreatedEvent": {
+        "type": "object",
+        "required": [
+          "type",
+          "data"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "apiVersion": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ReviewCreatedPayload"
+          }
+        }
+      },
+      "ReviewRespondedEvent": {
+        "type": "object",
+        "required": [
+          "type",
+          "data"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "apiVersion": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ReviewRespondedPayload"
+          }
+        }
+      },
       "AiOperationCompletedEvent": {
         "type": "object",
         "required": [
@@ -2658,6 +3024,12 @@
             "$ref": "#/components/schemas/ReservationMessageReceivedEvent"
           },
           {
+            "$ref": "#/components/schemas/ReservationAlterationCreatedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/ReservationAlterationRespondedEvent"
+          },
+          {
             "$ref": "#/components/schemas/ListingCreatedEvent"
           },
           {
@@ -2674,6 +3046,12 @@
           },
           {
             "$ref": "#/components/schemas/AccountDisconnectedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/ReviewCreatedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/ReviewRespondedEvent"
           },
           {
             "$ref": "#/components/schemas/AiOperationCompletedEvent"
@@ -2698,12 +3076,16 @@
             "reservation.updated": "#/components/schemas/ReservationUpdatedEvent",
             "reservation.cancelled": "#/components/schemas/ReservationCancelledEvent",
             "reservation.message.received": "#/components/schemas/ReservationMessageReceivedEvent",
+            "reservation.alteration.created": "#/components/schemas/ReservationAlterationCreatedEvent",
+            "reservation.alteration.responded": "#/components/schemas/ReservationAlterationRespondedEvent",
             "listing.created": "#/components/schemas/ListingCreatedEvent",
             "listing.updated": "#/components/schemas/ListingUpdatedEvent",
             "listing.deleted": "#/components/schemas/ListingDeletedEvent",
             "calendar.updated": "#/components/schemas/CalendarUpdatedEvent",
             "account.created": "#/components/schemas/AccountCreatedEvent",
             "account.disconnected": "#/components/schemas/AccountDisconnectedEvent",
+            "review.created": "#/components/schemas/ReviewCreatedEvent",
+            "review.responded": "#/components/schemas/ReviewRespondedEvent",
             "ai.operation.completed": "#/components/schemas/AiOperationCompletedEvent",
             "ai.operation.failed": "#/components/schemas/AiOperationFailedEvent",
             "payment.completed": "#/components/schemas/PaymentCompletedEvent",
@@ -2970,12 +3352,16 @@
       },
       "AirbnbAlteration": {
         "type": "object",
-        "description": "An Airbnb reservation alteration request (date change, guest-count change, or price change), mirrored locally in `reservation_alterations`. Additional Airbnb-side fields may be present.",
+        "description": "An Airbnb reservation alteration request (date change, guest-count change, or price change), mirrored locally in `reservation_alterations`. Fields prefixed `original*` describe the reservation as it stands today; `new*` fields describe the proposed change. Compare them to render a diff and decide whether to accept (`POST .../{id}/accept`) or decline (`POST .../{id}/decline`).",
         "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Internal Repull mirror-row id (not the Airbnb alteration id \u2014 use `alterationId` for the `{id}` path param on the get / accept / decline routes)."
+          },
           "alterationId": {
             "type": "string",
             "nullable": true,
-            "description": "Airbnb alteration id."
+            "description": "Airbnb alteration id. This is the `{id}` you pass to `GET/POST /v1/channels/airbnb/alterations/{id}` and the accept / decline sub-routes."
           },
           "reservationId": {
             "type": "integer",
@@ -2984,17 +3370,84 @@
           },
           "platform": {
             "type": "string",
-            "example": "airbnb"
+            "example": "airbnb",
+            "description": "Always `airbnb` on this surface."
           },
           "status": {
             "type": "string",
             "nullable": true,
-            "description": "Alteration status (e.g. `pending`)."
+            "description": "Alteration lifecycle status \u2014 e.g. `pending` (awaiting a decision), `accepted`, `declined`, `canceled`."
+          },
+          "initiator": {
+            "type": "string",
+            "nullable": true,
+            "description": "Who proposed the alteration \u2014 e.g. `host` or `guest`."
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Free-text reason supplied with the alteration request."
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Additional notes attached to the alteration."
+          },
+          "originalCheckIn": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Check-in on the reservation BEFORE the proposed change."
+          },
+          "originalCheckOut": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Check-out on the reservation BEFORE the proposed change."
+          },
+          "originalGuestCount": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Guest count BEFORE the proposed change."
+          },
+          "originalTotalPrice": {
+            "type": "string",
+            "nullable": true,
+            "description": "Total price (decimal string) BEFORE the proposed change."
+          },
+          "newCheckIn": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Proposed new check-in."
+          },
+          "newCheckOut": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Proposed new check-out."
+          },
+          "newGuestCount": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Proposed new guest count."
+          },
+          "newTotalPrice": {
+            "type": "string",
+            "nullable": true,
+            "description": "Proposed new total price (decimal string)."
           },
           "createdAt": {
             "type": "string",
             "format": "date-time",
-            "nullable": true
+            "nullable": true,
+            "description": "When the alteration was first mirrored locally."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the alteration mirror row was last updated."
           }
         },
         "additionalProperties": true
@@ -3072,6 +3525,136 @@
             "nullable": true
           }
         }
+      },
+      "BookingReservationRoom": {
+        "type": "object",
+        "description": "A single reserved room within a Booking.com reservation. Raw Booking OTA shape \u2014 passed through unmodified from the connector.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Room id."
+          },
+          "roomreservation_id": {
+            "type": "string",
+            "description": "Per-room reservation id."
+          },
+          "arrival_date": {
+            "type": "string",
+            "description": "Room arrival date (YYYY-MM-DD)."
+          },
+          "departure_date": {
+            "type": "string",
+            "description": "Room departure date (YYYY-MM-DD)."
+          },
+          "guest_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "numberofguests": {
+            "type": "integer",
+            "nullable": true
+          },
+          "adults": {
+            "type": "integer",
+            "nullable": true
+          },
+          "children": {
+            "type": "integer",
+            "nullable": true
+          },
+          "meal_plan": {
+            "type": "string",
+            "nullable": true
+          },
+          "totalprice": {
+            "type": "number",
+            "nullable": true
+          },
+          "currencycode": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "special_requests": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": true
+      },
+      "BookingReservation": {
+        "type": "object",
+        "description": "A Booking.com reservation as returned by `GET /v1/channels/booking/reservations`.\n\n**This is the RAW Booking.com OTA payload**, passed through from the connector unmodified \u2014 it is NOT renormalised to the unified Repull reservation shape (`GET /v1/reservations`). Field names, casing, and nesting follow Booking's OTA format (nested `room[]`, `customer`, snake_case keys). Additional Booking-side fields not enumerated here may be present, and any field may be absent depending on the reservation `type` (`new` / `modified` / `details`). For a channel-agnostic, stable reservation contract, use `GET /v1/reservations` instead.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Booking.com reservation id."
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "date": {
+            "type": "string",
+            "nullable": true,
+            "description": "Booking date (YYYY-MM-DD)."
+          },
+          "time": {
+            "type": "string",
+            "nullable": true,
+            "description": "Booking time."
+          },
+          "customer": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Guest / customer block (name, contact, address) in Booking's OTA shape."
+          },
+          "room": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BookingReservationRoom"
+            },
+            "description": "Reserved rooms."
+          },
+          "total_price": {
+            "type": "number",
+            "nullable": true
+          },
+          "currency_code": {
+            "type": "string",
+            "nullable": true
+          },
+          "payment_status": {
+            "type": "string",
+            "nullable": true
+          },
+          "commission_amount": {
+            "type": "number",
+            "nullable": true
+          },
+          "cancellation_deadline": {
+            "type": "string",
+            "nullable": true
+          },
+          "special_requests": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "company_name": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": true
       },
       "AIOperation": {
         "type": "object",
@@ -3599,6 +4182,230 @@
           }
         }
       },
+      "AirbnbTransaction": {
+        "type": "object",
+        "description": "One Airbnb host transaction \u2014 a reservation earning, a settled payout, or a resolution adjustment \u2014 with the genuine host- and guest-side financial breakdown Airbnb exposes. All money is in host currency; fees and withholding are negative (deductions). Two owner-statement concepts are NOT available from Airbnb and are listed in `unavailable_fields` rather than fabricated: property-management fee and itemised nightly discounts (the latter are already netted into `host_breakdown.accommodation_subtotal`).",
+        "required": [
+          "transaction_id",
+          "host_breakdown",
+          "guest_breakdown",
+          "payout",
+          "unavailable_fields"
+        ],
+        "properties": {
+          "transaction_id": {
+            "type": "string",
+            "description": "Upstream Airbnb transaction id."
+          },
+          "type": {
+            "type": "string",
+            "nullable": true,
+            "description": "Transaction kind."
+          },
+          "reference": {
+            "type": "string",
+            "nullable": true
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Transaction date."
+          },
+          "confirmation_code": {
+            "type": "string",
+            "nullable": true,
+            "description": "Airbnb confirmation code \u2014 links this transaction to a reservation."
+          },
+          "reservation_id": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Resolved Vanio reservation id when the confirmation code matched a reservation in this workspace; null otherwise."
+          },
+          "listing_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "Airbnb listing id."
+          },
+          "thread_id": {
+            "type": "string",
+            "nullable": true
+          },
+          "nights": {
+            "type": "integer",
+            "nullable": true
+          },
+          "reservation_start_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "booked_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "check_in": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "check_out": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "time_zone": {
+            "type": "string",
+            "nullable": true
+          },
+          "guest_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true,
+            "description": "Payout status signal: COMPLETED (settled) vs UPCOMING (expected)."
+          },
+          "status_type": {
+            "type": "string",
+            "nullable": true
+          },
+          "payout": {
+            "type": "object",
+            "required": [
+              "payout_id",
+              "payout_date",
+              "paid_out_amount"
+            ],
+            "properties": {
+              "payout_id": {
+                "type": "string",
+                "nullable": true
+              },
+              "payout_date": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "description": "Settlement date (populated on Payout-type rows)."
+              },
+              "paid_out_amount": {
+                "type": "number",
+                "nullable": true
+              }
+            }
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true
+          },
+          "host_currency": {
+            "type": "string",
+            "nullable": true
+          },
+          "amount": {
+            "type": "number",
+            "nullable": true,
+            "description": "Top-level transaction amount."
+          },
+          "host_breakdown": {
+            "type": "object",
+            "description": "Host-side breakdown (all host currency).",
+            "required": [
+              "host_payout"
+            ],
+            "properties": {
+              "accommodation_subtotal": {
+                "type": "number",
+                "nullable": true,
+                "description": "Nightly rate \u00d7 nights, net of stay-level discounts already applied by Airbnb."
+              },
+              "cleaning_fee": {
+                "type": "number",
+                "nullable": true
+              },
+              "host_service_fee_base": {
+                "type": "number",
+                "nullable": true,
+                "description": "Airbnb host service fee, base component (negative = deduction)."
+              },
+              "host_service_fee_vat": {
+                "type": "number",
+                "nullable": true,
+                "description": "Airbnb host service fee, VAT component (negative = deduction)."
+              },
+              "host_service_fee_total": {
+                "type": "number",
+                "nullable": true,
+                "description": "Convenience sum of base + VAT."
+              },
+              "airbnb_collected_tax": {
+                "type": "number",
+                "nullable": true
+              },
+              "pass_through_tax": {
+                "type": "number",
+                "nullable": true
+              },
+              "occupancy_tax": {
+                "type": "number",
+                "nullable": true
+              },
+              "tax_withholding": {
+                "type": "number",
+                "nullable": true
+              },
+              "host_payout": {
+                "type": "number",
+                "nullable": true,
+                "description": "Expected/actual net payout to the host."
+              }
+            }
+          },
+          "guest_breakdown": {
+            "type": "object",
+            "description": "Guest-side breakdown (what the guest paid).",
+            "required": [
+              "total_paid"
+            ],
+            "properties": {
+              "total_paid": {
+                "type": "number",
+                "nullable": true
+              },
+              "service_fee_base": {
+                "type": "number",
+                "nullable": true
+              },
+              "service_fee_vat": {
+                "type": "number",
+                "nullable": true
+              }
+            }
+          },
+          "unavailable_fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Fields Airbnb does not expose (never fabricated), e.g. `management_fee`, `itemized_discounts`."
+          },
+          "standard_fees": {
+            "nullable": true,
+            "description": "Raw Airbnb standard-fees array."
+          },
+          "tax_details": {
+            "nullable": true,
+            "description": "Raw Airbnb tax-details object."
+          },
+          "synced_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
       "AirbnbConnectionHost": {
         "type": "object",
         "description": "One Airbnb host record under the workspace, decorated with its most recent disconnect reason from `airbnb_host_events` (backfill events excluded).",
@@ -3912,7 +4719,7 @@
         "properties": {
           "active": {
             "type": "boolean",
-            "description": "Target active state. `false` deactivates (excludes) the listing; `true` reactivates it (subject to the plan-listings cap)."
+            "description": "Target active state. `false` deactivates the listing and removes it from your billable listing count; `true` reactivates it. Free-tier workspaces are still subject to their listing cap."
           }
         }
       },
@@ -4396,6 +5203,120 @@
           },
           "content": {
             "$ref": "#/components/schemas/ListingContent"
+          }
+        }
+      },
+      "ListingPhotoUploadUrlRequest": {
+        "type": "object",
+        "required": [
+          "fileName",
+          "fileType"
+        ],
+        "properties": {
+          "fileName": {
+            "type": "string",
+            "description": "Original file name, e.g. \"living-room.jpg\".",
+            "example": "living-room.jpg"
+          },
+          "fileType": {
+            "type": "string",
+            "description": "Image MIME type. Must start with \"image/\".",
+            "example": "image/jpeg"
+          },
+          "fileSize": {
+            "type": "integer",
+            "nullable": true,
+            "description": "File size in bytes, when known. Must be positive if provided."
+          }
+        }
+      },
+      "ListingPhotoUploadUrlResponse": {
+        "type": "object",
+        "description": "A short-lived signed upload target. PUT the raw file bytes to `uploadUrl` \u2014 the bytes never pass through the Repull API.",
+        "properties": {
+          "listingId": {
+            "type": "string"
+          },
+          "uploadUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "PUT the raw file bytes here directly from the client. Not a Repull or vanio API endpoint \u2014 a signed storage URL."
+          },
+          "token": {
+            "type": "string",
+            "description": "Opaque upload token bound to this signed URL."
+          },
+          "path": {
+            "type": "string",
+            "description": "Storage path the photo will live at once uploaded. Pass this to `DELETE /v1/listings/{id}/photos` to remove it later."
+          },
+          "publicUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "Durable public URL for the photo once the upload completes. Attach it to the listing via `PUT /v1/listings/{id}/content` (`photos` field)."
+          },
+          "expiresIn": {
+            "type": "integer",
+            "description": "Seconds until `uploadUrl` expires. Mint a new one via a fresh POST if the upload did not happen in time."
+          }
+        }
+      },
+      "ListingPhoto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Public URL for the photo."
+          },
+          "path": {
+            "type": "string",
+            "description": "Storage path \u2014 pass to `DELETE /v1/listings/{id}/photos` to remove this photo."
+          },
+          "size": {
+            "type": "integer",
+            "description": "File size in bytes."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ListingPhotosResponse": {
+        "type": "object",
+        "properties": {
+          "listingId": {
+            "type": "string"
+          },
+          "photos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ListingPhoto"
+            }
+          }
+        }
+      },
+      "ListingPhotoDeleteRequest": {
+        "type": "object",
+        "required": [
+          "path"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Storage path of the photo to delete, as returned by `GET /v1/listings/{id}/photos` or the `upload-url` response."
+          }
+        }
+      },
+      "ListingPhotoDeleteResponse": {
+        "type": "object",
+        "properties": {
+          "listingId": {
+            "type": "string"
+          },
+          "deleted": {
+            "type": "boolean"
           }
         }
       },
@@ -5541,6 +6462,88 @@
         },
         "additionalProperties": true
       },
+      "BookingRoomsRatesResponse": {
+        "type": "object",
+        "description": "Returned by `GET /v1/channels/booking/properties/{id}/rooms`. Exposes the Booking.com room + rate-plan mapping ids for a listing so a caller can assemble a `PUT /v1/channels/booking/availability` restriction write (which requires `roomId` + `rateId` on every update). Sourced from Booking's B.XML roomrates feed.",
+        "properties": {
+          "hotel_id": {
+            "type": "string",
+            "description": "Booking.com hotel/property id the rooms belong to."
+          },
+          "listing_id": {
+            "type": "integer",
+            "description": "Vanio listing id echoed back."
+          },
+          "rooms": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "roomId": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Booking.com room id \u2014 use as `roomId` in an ARI update."
+                },
+                "roomName": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "rates": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "rateId": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Booking.com rate-plan id \u2014 use as `rateId` in an ARI update."
+                      },
+                      "rateName": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "policy": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Cancellation policy name."
+                      },
+                      "policyId": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "maxPersons": {
+                        "type": "integer",
+                        "nullable": true
+                      },
+                      "pricingType": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Pricing model: `Standard`, `RLO`, `OBP`, or `LOS`."
+                      },
+                      "isChildRate": {
+                        "type": "boolean",
+                        "nullable": true,
+                        "description": "Whether this rate plan is a derived child rate."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "BookingAvailabilityStateResponse": {
+        "type": "object",
+        "description": "Returned by `GET /v1/channels/booking/availability`. Proxies Booking's `getRoomRateAvailability` \u2014 current rate / availability / restriction state per room + rate plan for the requested window, keyed by `property_id`. Field set is whatever Booking.com emits (parsed from their XML), so the object is open-ended.",
+        "properties": {
+          "property_id": {
+            "type": "string",
+            "description": "Booking.com hotel/property id echoed back."
+          }
+        },
+        "additionalProperties": true
+      },
       "BookingAvailabilityUpdate": {
         "type": "object",
         "required": [
@@ -6384,6 +7387,189 @@
           }
         }
       },
+      "AvailabilityWriteSettings": {
+        "type": "object",
+        "description": "At least one field is required. An empty object is rejected rather than silently no-ops \u2014 the upstream treats every field as optional, so a typo would otherwise return 200 and change nothing.",
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "description": "Block or unblock the dates."
+          },
+          "price": {
+            "type": "number",
+            "description": "Nightly base price."
+          },
+          "minNights": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "maxNights": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+      "AvailabilityWriteRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AvailabilityWriteSettings"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "dates": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "maxItems": 731,
+                "description": "ISO dates. Capped at 731 \u2014 Airbnb refuses calendar writes spanning more."
+              }
+            },
+            "required": [
+              "dates"
+            ]
+          }
+        ]
+      },
+      "AvailabilityBatchWriteRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AvailabilityWriteRequest"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "propertyIds": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                },
+                "maxItems": 500
+              }
+            },
+            "required": [
+              "propertyIds"
+            ]
+          }
+        ]
+      },
+      "AvailabilityWriteResult": {
+        "type": "object",
+        "properties": {
+          "listingIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dates": {
+            "type": "integer",
+            "description": "How many dates were written."
+          },
+          "synced": {
+            "type": "object",
+            "description": "Per-channel push outcome. A partial failure is surfaced, not swallowed: \"saved locally but the channel rejected it\" is precisely the state a caller must know about.",
+            "properties": {
+              "attempted": {
+                "type": "integer"
+              },
+              "succeeded": {
+                "type": "integer"
+              },
+              "failed": {
+                "type": "integer"
+              },
+              "authErrors": {
+                "type": "integer",
+                "description": "Channels whose token has expired \u2014 these need reconnecting, not retrying."
+              }
+            }
+          },
+          "warning": {
+            "type": "string",
+            "description": "Present only when one or more channel pushes failed."
+          }
+        }
+      },
+      "Quote": {
+        "type": "object",
+        "properties": {
+          "listingId": {
+            "type": "string"
+          },
+          "websiteId": {
+            "type": "string"
+          },
+          "checkIn": {
+            "type": "string",
+            "format": "date"
+          },
+          "checkOut": {
+            "type": "string",
+            "format": "date"
+          },
+          "guests": {
+            "type": "integer"
+          },
+          "nights": {
+            "type": "integer"
+          },
+          "available": {
+            "type": "boolean",
+            "description": "False when the listing is unavailable for the range or outside its min/max stay. That is an answer, not an error."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why it is unavailable. Present only when `available` is false."
+          },
+          "currency": {
+            "type": "string"
+          },
+          "availableUnits": {
+            "type": "number",
+            "nullable": true
+          },
+          "pricing": {
+            "type": "object",
+            "properties": {
+              "nightlyTotal": {
+                "type": "number",
+                "nullable": true
+              },
+              "lengthOfStayDiscount": {
+                "type": "number",
+                "nullable": true
+              },
+              "lengthOfStayDiscountPercent": {
+                "type": "number",
+                "nullable": true
+              },
+              "cleaningFee": {
+                "type": "number",
+                "nullable": true
+              },
+              "petFee": {
+                "type": "number",
+                "nullable": true
+              },
+              "otherFees": {
+                "type": "number",
+                "nullable": true
+              },
+              "taxes": {
+                "type": "number",
+                "nullable": true
+              },
+              "total": {
+                "type": "number",
+                "nullable": true
+              }
+            }
+          }
+        }
+      },
       "BookingVerifyHotelRequest": {
         "type": "object",
         "required": [
@@ -6932,6 +8118,17 @@
           "default": true
         }
       },
+      "UpdatedSince": {
+        "name": "updated_since",
+        "in": "query",
+        "required": false,
+        "description": "Incremental sync: return only records whose `updatedAt` is at or after this instant. This is the only filter on record **mutation** time \u2014 every `check_*` filter targets guest **stay** dates.\n\n**Accepted formats.** ISO 8601, with `Z` or a numeric offset \u2014 both work:\n- `2026-08-01T00:00:00Z`\n- `2026-08-01T00:00:00.123Z`\n- `2026-08-01T00:00:00+00:00`\n- `2026-08-01T02:30:00-07:00` (offset colon optional: `-0700`)\n- `2026-08-01T00:00` (seconds optional)\n- `2026-08-01T00:00:00` \u2014 no zone designator, interpreted as **UTC**\n- `2026-08-01` \u2014 date only, means midnight UTC\n\nAnything else returns 422 `invalid_params` naming the field; the value is never silently ignored.\n\n**Ordering changes when you pass this.** Results are ordered `updatedAt ASC, id ASC` (instead of the endpoint default) and the cursor keys on the same pair. That is required for correctness: under the default ordering a record amended mid-walk can move behind the cursor and never be emitted \u2014 which is exactly the event you are polling for. Ascending mutation time is monotonic with the cursor, so anything touched during a walk resurfaces later in it or on the next poll.\n\n**Cursors are not interchangeable between the two orderings.** Keep `updated_since` on every page of an incremental walk; replaying a cursor from the other ordering returns 422 rather than a page that silently skips rows.\n\n**Watermark.** The bound is inclusive (`updatedAt >= value`), so the last row of the final page is the watermark for the next poll \u2014 re-polling with it re-emits that row. Delivery is at-least-once; upsert by `id`.",
+        "schema": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2026-08-01T00:00:00Z"
+        }
+      },
       "Offset": {
         "name": "offset",
         "in": "query",
@@ -6984,7 +8181,7 @@
                   "error": {
                     "code": "unauthorized",
                     "message": "No API key on the request. Pass it via the `Authorization: Bearer <key>` header (or the `x-api-key` header).",
-                    "fix": "Add `Authorization: Bearer sk_test_<your-key>` to the request. Sandbox keys start with `sk_test_`, production with `sk_live_`. Get a key at https://repull.dev/dashboard/api-keys.",
+                    "fix": "Add `Authorization: Bearer sk_live_<your-key>` to the request. Get a key at https://repull.dev/dashboard/keys.",
                     "docs_url": "https://repull.dev/docs/errors/unauthorized",
                     "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
                   }
@@ -6996,7 +8193,7 @@
                   "error": {
                     "code": "invalid_api_key",
                     "message": "The API key on this request is unknown or has been revoked.",
-                    "fix": "Confirm the key is copied exactly from https://repull.dev/dashboard/api-keys (no leading/trailing whitespace) and that the prefix matches the environment you intend to hit (`sk_test_` for sandbox, `sk_live_` for production). If the key was rotated, update the consumer with the new value.",
+                    "fix": "Confirm the key is copied exactly from https://repull.dev/dashboard/keys (no leading/trailing whitespace). If the key was rotated, update the consumer with the new value.",
                     "docs_url": "https://repull.dev/docs/errors/invalid_api_key",
                     "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
                   }
@@ -7286,81 +8483,11 @@
         }
       }
     },
-    "/v1/sandbox/seed": {
-      "post": {
-        "operationId": "seed_sandbox",
-        "summary": "Seed sandbox fixtures",
-        "description": "Provision a deterministic set of test fixtures for contract testing WITHOUT live provider accounts. **Requires a test key (`sk_test_*`)** \u2014 live or legacy keys are rejected with 403.\n\nSeeds, scoped to the authenticated test customer: 3 sample listings, 5 reservations across the lifecycle (created / modified / cancelled / date-changed / pending), and 2 fake connected provider accounts (Airbnb + Booking.com) so the pairing + connection-status flows are testable without real OAuth.\n\nIdempotent \u2014 re-seeding upserts the same rows and returns the same ids. The seeded rows are visible ONLY under a test key, via the normal read endpoints (`GET /v1/listings`, `/v1/reservations`, `/v1/connect`, `/v1/channels/airbnb/listings`, `/v1/channels/airbnb/connection`). They live in a data space fully isolated from live inventory.",
-        "tags": [
-          "Sandbox"
-        ],
-        "responses": {
-          "200": {
-            "description": "Fixtures seeded \u2014 returns the ref\u2192id map",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SandboxSeedResult"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "403": {
-            "description": "Not a test key \u2014 the sandbox is only reachable with `sk_test_*`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/sandbox/reset": {
-      "post": {
-        "operationId": "reset_sandbox",
-        "summary": "Reset sandbox fixtures",
-        "description": "Clear the authenticated test customer's sandbox fixtures. **Requires a test key (`sk_test_*`)** \u2014 live or legacy keys are rejected with 403.\n\nDeletes ONLY the customer's rows in the isolated sandbox data space \u2014 it can never touch real inventory (`listings`, `reservations`, connections). Idempotent: resetting an empty sandbox returns zero counts (still 200). Returns per-resource deletion counts.",
-        "tags": [
-          "Sandbox"
-        ],
-        "responses": {
-          "200": {
-            "description": "Fixtures cleared \u2014 returns per-resource deletion counts",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SandboxResetResult"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "403": {
-            "description": "Not a test key \u2014 the sandbox is only reachable with `sk_test_*`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/v1/properties": {
       "get": {
         "operationId": "list_properties",
         "summary": "List properties",
-        "description": "Cursor-paginated list of properties for the authenticated workspace. Walk pages with `?cursor=<pagination.nextCursor>`; stop when `pagination.hasMore` is `false`. Cursor is opaque base64 \u2014 do not parse it.\n\n`?offset=` is also accepted as a first-class alias for shallow paging (0..10000) \u2014 see the `offset` parameter below. Mutually exclusive with `cursor`.\n\nFilters: `q` (substring on name/street/city), `status` (active|inactive|all), `lifecycle_status` (exact match on the listing's lifecycle state). Other unknown params (e.g. `?search=` or `?propertyId=`) are rejected with 422 \u2014 no silent unfiltered results.",
+        "description": "Cursor-paginated list of properties for the authenticated workspace. Walk pages with `?cursor=<pagination.nextCursor>`; stop when `pagination.hasMore` is `false`. Cursor is opaque base64 \u2014 do not parse it.\n\n`?offset=` is also accepted as a first-class alias for shallow paging (0..10000) \u2014 see the `offset` parameter below. Mutually exclusive with `cursor`.\n\nFilters: `q` (substring on name/street/city), `status` (active|inactive|all), `lifecycle_status` (exact match on the listing's lifecycle state). Other unknown params (e.g. `?search=` or `?propertyId=`) are rejected with 422 \u2014 no silent unfiltered results.\n\n**Incremental sync (only changes since last poll):** pass `?updated_since=<ISO8601>` to receive only properties changed at or after that instant. Each property carries `updatedAt` \u2014 the last row of the final page is your next watermark. `updated_since` changes the page ordering to `updatedAt ASC, id ASC` (and the cursor with it); see the parameter description. `GET /v1/listings` does NOT yet accept `updated_since` \u2014 use this endpoint for property-side incremental sync.",
         "tags": [
           "Properties"
         ],
@@ -7431,6 +8558,9 @@
               "example": "airbnb"
             },
             "description": "Filter to properties with an active link on the given OTA/channel (airbnb, booking, vrbo). Omit to include every channel. Each property also returns a `channels` array listing the OTAs it is published on."
+          },
+          {
+            "$ref": "#/components/parameters/UpdatedSince"
           },
           {
             "$ref": "#/components/parameters/IncludeTotal"
@@ -7507,10 +8637,59 @@
       }
     },
     "/v1/availability/{propertyId}": {
+      "put": {
+        "operationId": "updateAvailability",
+        "summary": "Set prices, block or unblock dates",
+        "description": "Writes the calendar for one property AND pushes to every connected channel in the same step. A write that only changed our copy would leave the OTA calendars stale and eventually double-book a guest.",
+        "tags": [
+          "Availability"
+        ],
+        "parameters": [
+          {
+            "name": "propertyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AvailabilityWriteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Calendar updated and pushed to channels",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvailabilityWriteResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      },
       "get": {
         "operationId": "get_availability",
         "summary": "Get property availability",
-        "description": "Channel-agnostic day-by-day availability calendar for a property over a date window. Returns a thin per-date shape \u2014 `{ date, available, price, minNights }` \u2014 projected from the connected channel calendar (currently Airbnb).\n\nThe `from` and `to` query params are **required** (ISO `YYYY-MM-DD`, inclusive) \u2014 omitting or malforming either returns 422. The window is capped at 366 days; longer ranges are truncated to the first 366 days.\n\nEvery date in the window is present in `days`: dates with no explicit calendar row fall back to `available: true` at the property's default nightly price. A property with no channel calendar still returns a real 200 (a fully-default calendar), never a 404 \u2014 404 means the property id does not exist or belongs to a different workspace.\n\nThis endpoint is read-only. Availability **writes** stay per-channel: `PUT /v1/channels/airbnb/listings/{id}/availability` (Airbnb) or `PUT /v1/channels/booking/availability` (Booking.com).",
+        "description": "Channel-agnostic day-by-day availability calendar for a property over a date window. Returns a thin per-date shape \u2014 `{ date, available, price, minNights }` \u2014 projected from the property calendar.\n\nThe `from` and `to` query params are **required** (ISO `YYYY-MM-DD`, inclusive) \u2014 omitting or malforming either returns 422. The window is capped at 366 days; longer ranges are truncated to the first 366 days.\n\n**`days` contains only the dates we actually hold calendar data for.** Requested dates with no calendar row are listed in `coverage.missingDates` \u2014 their availability is unknown. Never treat a missing date as bookable: this endpoint deliberately does not synthesise availability, because a fabricated open date can be double-booked. A property with no calendar still returns a real 200 (`days: []`, every date in `coverage.missingDates`), never a 404 \u2014 404 means the property id does not exist or belongs to a different workspace.\n\nThis endpoint is read-only, and the projected per-date shape carries **availability, price, and min-nights only** \u2014 it does NOT expose max-stay, closed-to-arrival (CTA), closed-to-departure (CTD), or the dedicated stop-sell flag. To read or write that full restriction set on Booking.com use the channel routes: `GET`/`PUT /v1/channels/booking/availability` (with the room + rate ids from `GET /v1/channels/booking/properties/{id}/rooms`). Availability **writes** always stay per-channel: `PUT /v1/channels/airbnb/listings/{id}/availability` (Airbnb) or `PUT /v1/channels/booking/availability` (Booking.com).",
         "tags": [
           "Availability"
         ],
@@ -7569,7 +8748,7 @@
       "get": {
         "operationId": "list_reservations",
         "summary": "List reservations",
-        "description": "Cursor-paginated list of reservations across all connected PMS platforms. Filter by platform, status, listing, or check-in date range.\n\n**Pagination:** Walk pages with `?cursor=` \u2014 pass `pagination.nextCursor` from one response back as `?cursor=` on the next request. Stop when `pagination.hasMore` is `false`. `limit` defaults to 50, max 100; requesting more returns 422 (no silent truncation).\n\n`?offset=` is also accepted as a first-class alias for shallow paging (0..10000) \u2014 see the `offset` parameter below. Mutually exclusive with `cursor`. For deep pagination cursor remains O(1) per page; offset > 10000 returns 422 with a docs link.",
+        "description": "Cursor-paginated list of reservations across all connected PMS platforms. Filter by platform, status, listing, or check-in date range.\n\n**Pagination:** Walk pages with `?cursor=` \u2014 pass `pagination.nextCursor` from one response back as `?cursor=` on the next request. Stop when `pagination.hasMore` is `false`. `limit` defaults to 50, max 100; requesting more returns 422 (no silent truncation).\n\n`?offset=` is also accepted as a first-class alias for shallow paging (0..10000) \u2014 see the `offset` parameter below. Mutually exclusive with `cursor`. For deep pagination cursor remains O(1) per page; offset > 10000 returns 422 with a docs link.\n\n**Incremental sync (only changes since last poll):** pass `?updated_since=<ISO8601>` to receive only reservations amended, cancelled, or created at or after that instant \u2014 no full re-walk. Each row carries `updatedAt`; the last row of the final page is your next watermark. Note that `updated_since` changes the page ordering to `updatedAt ASC, id ASC` (and the cursor with it) so mid-walk amendments cannot be skipped \u2014 see the parameter description for the full contract.",
         "tags": [
           "Reservations"
         ],
@@ -7734,6 +8913,9 @@
             "deprecated": true,
             "description": "Use `check_out_before` (snake_case) instead.",
             "x-go-name": "CheckOutBeforeCamel"
+          },
+          {
+            "$ref": "#/components/parameters/UpdatedSince"
           },
           {
             "$ref": "#/components/parameters/IncludeTotal"
@@ -8587,7 +9769,7 @@
       "delete": {
         "operationId": "delete_connection",
         "summary": "Disconnect provider",
-        "description": "Disconnect a PMS or OTA from this workspace. Revokes the OAuth token (where applicable), purges credentials, and stops all sync jobs. Resources synced from the provider remain queryable but become read-only and stop receiving updates.",
+        "description": "Disconnect a PMS or OTA from this workspace.\n\nCurrently supported for `booking` only: drops the stored connection and stops syncing the mapped rooms. Resources already synced remain queryable but become read-only and stop receiving updates.\n\nEvery other provider returns `501 not_implemented` with instructions for disconnecting on the provider's side \u2014 Airbnb in particular has to be revoked by the host (Account \u2192 Privacy & sharing \u2192 Connected apps), because the OAuth grant lives outside this service. The endpoint used to report `200 { disconnected: true }` for every provider while doing nothing; it now tells you the truth.",
         "tags": [
           "Connect"
         ],
@@ -8599,8 +9781,1057 @@
         "responses": {
           "200": {
             "description": "Disconnected"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "501": {
+            "description": "Disconnecting this provider over the API is not supported \u2014 the `fix` field explains how to disconnect it at the source",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
+      }
+    },
+    "/v1/connect/beds24/credentials": {
+      "post": {
+        "operationId": "submitBeds24Credentials",
+        "summary": "Submit Beds24 credentials for a Connect session",
+        "description": "Completes a credentials-pattern connection for Beds24. API key + prop key from Beds24 \u2192 Settings \u2192 Apps & Integrations.\n\nThe credentials are validated against Beds24 before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.\n\nNo API key required when called with a `sessionId` \u2014 the session is the capability token.",
+        "tags": [
+          "Connect"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sessionId": {
+                    "type": "string",
+                    "description": "Connect session id from `POST /v1/connect/beds24`."
+                  },
+                  "credentials": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "API key + prop key from Beds24 \u2192 Settings \u2192 Apps & Integrations."
+                  }
+                },
+                "required": [
+                  "credentials"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Credentials accepted and the connection created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "accountInfo": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/v1/connect/bookingsync/credentials": {
+      "post": {
+        "operationId": "submitBookingsyncCredentials",
+        "summary": "Submit BookingSync credentials for a Connect session",
+        "description": "Completes a credentials-pattern connection for BookingSync. OAuth client credentials issued by BookingSync.\n\nThe credentials are validated against BookingSync before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.\n\nNo API key required when called with a `sessionId` \u2014 the session is the capability token.",
+        "tags": [
+          "Connect"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sessionId": {
+                    "type": "string",
+                    "description": "Connect session id from `POST /v1/connect/bookingsync`."
+                  },
+                  "credentials": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "OAuth client credentials issued by BookingSync."
+                  }
+                },
+                "required": [
+                  "credentials"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Credentials accepted and the connection created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "accountInfo": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/v1/connect/guesty/credentials": {
+      "post": {
+        "operationId": "submitGuestyCredentials",
+        "summary": "Submit Guesty credentials for a Connect session",
+        "description": "Completes a credentials-pattern connection for Guesty. Client ID + secret from Guesty \u2192 Integrations \u2192 Open API.\n\nThe credentials are validated against Guesty before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.\n\nNo API key required when called with a `sessionId` \u2014 the session is the capability token.",
+        "tags": [
+          "Connect"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sessionId": {
+                    "type": "string",
+                    "description": "Connect session id from `POST /v1/connect/guesty`."
+                  },
+                  "credentials": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Client ID + secret from Guesty \u2192 Integrations \u2192 Open API."
+                  }
+                },
+                "required": [
+                  "credentials"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Credentials accepted and the connection created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "accountInfo": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/v1/connect/hospitable/credentials": {
+      "post": {
+        "operationId": "submitHospitableCredentials",
+        "summary": "Submit Hospitable credentials for a Connect session",
+        "description": "Completes a credentials-pattern connection for Hospitable. Personal access token from Hospitable \u2192 Settings \u2192 API.\n\nThe credentials are validated against Hospitable before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.\n\nNo API key required when called with a `sessionId` \u2014 the session is the capability token.",
+        "tags": [
+          "Connect"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sessionId": {
+                    "type": "string",
+                    "description": "Connect session id from `POST /v1/connect/hospitable`."
+                  },
+                  "credentials": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Personal access token from Hospitable \u2192 Settings \u2192 API."
+                  }
+                },
+                "required": [
+                  "credentials"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Credentials accepted and the connection created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "accountInfo": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/v1/connect/hostaway/credentials": {
+      "post": {
+        "operationId": "submitHostawayCredentials",
+        "summary": "Submit Hostaway credentials for a Connect session",
+        "description": "Completes a credentials-pattern connection for Hostaway. Account ID + API key from Hostaway \u2192 Settings \u2192 Public API.\n\nThe credentials are validated against Hostaway before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.\n\nNo API key required when called with a `sessionId` \u2014 the session is the capability token.",
+        "tags": [
+          "Connect"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sessionId": {
+                    "type": "string",
+                    "description": "Connect session id from `POST /v1/connect/hostaway`."
+                  },
+                  "credentials": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Account ID + API key from Hostaway \u2192 Settings \u2192 Public API."
+                  }
+                },
+                "required": [
+                  "credentials"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Credentials accepted and the connection created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "accountInfo": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/v1/connect/igms/credentials": {
+      "post": {
+        "operationId": "submitIgmsCredentials",
+        "summary": "Submit iGMS credentials for a Connect session",
+        "description": "Completes a credentials-pattern connection for iGMS. API token from iGMS \u2192 Settings \u2192 Integrations.\n\nThe credentials are validated against iGMS before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.\n\nNo API key required when called with a `sessionId` \u2014 the session is the capability token.",
+        "tags": [
+          "Connect"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sessionId": {
+                    "type": "string",
+                    "description": "Connect session id from `POST /v1/connect/igms`."
+                  },
+                  "credentials": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "API token from iGMS \u2192 Settings \u2192 Integrations."
+                  }
+                },
+                "required": [
+                  "credentials"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Credentials accepted and the connection created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "accountInfo": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/v1/connect/lodgify/credentials": {
+      "post": {
+        "operationId": "submitLodgifyCredentials",
+        "summary": "Submit Lodgify credentials for a Connect session",
+        "description": "Completes a credentials-pattern connection for Lodgify. API key from Lodgify \u2192 Settings \u2192 Public API.\n\nThe credentials are validated against Lodgify before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.\n\nNo API key required when called with a `sessionId` \u2014 the session is the capability token.",
+        "tags": [
+          "Connect"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sessionId": {
+                    "type": "string",
+                    "description": "Connect session id from `POST /v1/connect/lodgify`."
+                  },
+                  "credentials": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "API key from Lodgify \u2192 Settings \u2192 Public API."
+                  }
+                },
+                "required": [
+                  "credentials"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Credentials accepted and the connection created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "accountInfo": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/v1/connect/ownerrez/credentials": {
+      "post": {
+        "operationId": "submitOwnerrezCredentials",
+        "summary": "Submit OwnerRez credentials for a Connect session",
+        "description": "Completes a credentials-pattern connection for OwnerRez. Username + API token from OwnerRez \u2192 Settings \u2192 API.\n\nThe credentials are validated against OwnerRez before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.\n\nNo API key required when called with a `sessionId` \u2014 the session is the capability token.",
+        "tags": [
+          "Connect"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sessionId": {
+                    "type": "string",
+                    "description": "Connect session id from `POST /v1/connect/ownerrez`."
+                  },
+                  "credentials": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Username + API token from OwnerRez \u2192 Settings \u2192 API."
+                  }
+                },
+                "required": [
+                  "credentials"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Credentials accepted and the connection created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "accountInfo": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/v1/connect/smoobu/credentials": {
+      "post": {
+        "operationId": "submitSmoobuCredentials",
+        "summary": "Submit Smoobu credentials for a Connect session",
+        "description": "Completes a credentials-pattern connection for Smoobu. API key from Smoobu \u2192 Settings \u2192 For developers.\n\nThe credentials are validated against Smoobu before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.\n\nNo API key required when called with a `sessionId` \u2014 the session is the capability token.",
+        "tags": [
+          "Connect"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sessionId": {
+                    "type": "string",
+                    "description": "Connect session id from `POST /v1/connect/smoobu`."
+                  },
+                  "credentials": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "API key from Smoobu \u2192 Settings \u2192 For developers."
+                  }
+                },
+                "required": [
+                  "credentials"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Credentials accepted and the connection created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "accountInfo": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/v1/connect/vrbo/credentials": {
+      "post": {
+        "operationId": "submitVrboCredentials",
+        "summary": "Submit Vrbo credentials for a Connect session",
+        "description": "Completes a credentials-pattern connection for Vrbo. Activation handshake \u2014 Repull mints the Basic-Auth pair the host pastes into Vrbo Partner Central.\n\nThe credentials are validated against Vrbo before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.\n\nNo API key required when called with a `sessionId` \u2014 the session is the capability token.",
+        "tags": [
+          "Connect"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sessionId": {
+                    "type": "string",
+                    "description": "Connect session id from `POST /v1/connect/vrbo`."
+                  },
+                  "credentials": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Activation handshake \u2014 Repull mints the Basic-Auth pair the host pastes into Vrbo Partner Central."
+                  }
+                },
+                "required": [
+                  "credentials"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Credentials accepted and the connection created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "accountInfo": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/v1/health/atlas": {
+      "get": {
+        "operationId": "getAtlasHealth",
+        "summary": "Atlas market-intelligence backend health",
+        "description": "Component-level probe. `GET /v1/health` reports the API as a whole; this reports one dependency so an incident can be localised without guessing.",
+        "tags": [
+          "Health"
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Component status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/health/auth": {
+      "get": {
+        "operationId": "getAuthHealth",
+        "summary": "API-key authentication path health",
+        "description": "Component-level probe. `GET /v1/health` reports the API as a whole; this reports one dependency so an incident can be localised without guessing.",
+        "tags": [
+          "Health"
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Component status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/health/mcp": {
+      "get": {
+        "operationId": "getMcpHealth",
+        "summary": "MCP server reachability",
+        "description": "Component-level probe. `GET /v1/health` reports the API as a whole; this reports one dependency so an incident can be localised without guessing.",
+        "tags": [
+          "Health"
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Component status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/health/webhooks": {
+      "get": {
+        "operationId": "getWebhooksHealth",
+        "summary": "Webhook delivery pipeline health",
+        "description": "Component-level probe. `GET /v1/health` reports the API as a whole; this reports one dependency so an incident can be localised without guessing.",
+        "tags": [
+          "Health"
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Component status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/health/channels/{channel}": {
+      "get": {
+        "operationId": "getChannelHealth",
+        "summary": "Per-channel connectivity health",
+        "description": "Reports reachability and auth state for one channel (`airbnb`, `booking`, `vrbo`, `plumguide`). Use it to tell \"the channel is down\" apart from \"this workspace's connection expired\".",
+        "tags": [
+          "Health"
+        ],
+        "security": [],
+        "parameters": [
+          {
+            "name": "channel",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "airbnb",
+                "booking",
+                "vrbo",
+                "plumguide"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Channel status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/connect/booking/callback": {
+      "post": {
+        "operationId": "bookingConnectCallback",
+        "summary": "Booking.com connectivity callback",
+        "description": "Receives Booking.com's asynchronous confirmation that a property has designated Repull as its connectivity provider, and advances the Connect session. Called by Booking.com, not by integrators.",
+        "tags": [
+          "Connect"
+        ],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Callback accepted"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          }
+        }
+      }
+    },
+    "/v1/availability/batch": {
+      "patch": {
+        "operationId": "batchUpdateAvailability",
+        "summary": "Update availability across many properties",
+        "description": "Applies ONE settings object across up to 500 properties and pushes the result to every connected channel.\n\nOwnership is checked before anything is written: a batch containing a property from another workspace is refused as a whole and names the offending ids, rather than being partially applied.\n\nPer-property *different* values are separate calls \u2014 presenting them as one request would be a false claim about atomicity.",
+        "tags": [
+          "Availability"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AvailabilityBatchWriteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Calendar updated and pushed to channels",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvailabilityWriteResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/v1/quotes": {
+      "get": {
+        "operationId": "getQuote",
+        "summary": "Price a stay",
+        "description": "Returns the full price breakdown for a stay \u2014 nightly total, length-of-stay discount, cleaning fee, pet and other fees, taxes, and the total.\n\nA quote is priced against a booking website, because the markup, custom fees and tax overrides that decide what a guest is actually charged live there. A workspace with no booking site receives `422 quote_unavailable` rather than a number computed from different rules than the ones applied at checkout.",
+        "tags": [
+          "Quotes"
+        ],
+        "parameters": [
+          {
+            "name": "property_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Repull property id \u2014 discover via `GET /v1/properties`."
+          },
+          {
+            "name": "check_in",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "check_out",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "guests",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "pets",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "website_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Which booking site to price against. Defaults to the workspace's only site."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Quote, or `available: false` when the listing is not bookable for the range",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Quote"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/v1/reviews/{id}/reply": {
+      "post": {
+        "operationId": "replyToReview",
+        "summary": "Reply to a review on any channel",
+        "description": "Resolves the review, reads its channel and dispatches the reply. Channel-neutral: you do not need to know where the review came from.\n\nReplies are available on Airbnb today; a review from a channel without a reply API returns `422 unsupported_channel` naming the channels that do work.",
+        "tags": [
+          "Reviews"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "message": {
+                    "type": "string",
+                    "description": "Reply text. `response` is accepted as an alias."
+                  }
+                },
+                "required": [
+                  "message"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Reply posted to the channel",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "platform": {
+                      "type": "string"
+                    },
+                    "response": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Resource id from the path."
+          }
+        ]
       }
     },
     "/v1/connect/booking/verify": {
@@ -9778,7 +12009,7 @@
       "post": {
         "operationId": "send_airbnb_message",
         "summary": "Send Airbnb message",
-        "description": "Send a message in an Airbnb thread as the host. Airbnb enforces content rules (no off-platform contact info, no external URLs) \u2014 violating messages are rejected upstream and surface as `airbnb_error`.",
+        "description": "Send a message in an Airbnb thread as the host. Airbnb enforces content rules (no off-platform contact info, no external URLs) \u2014 violating messages are rejected upstream and surface as `airbnb_error`.\n\nThe `{threadId}` is the Airbnb thread id \u2014 the `externalThreadId` field on a unified `Conversation` (`GET /v1/conversations`).",
         "tags": [
           "Airbnb"
         ],
@@ -9789,12 +12020,52 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "Airbnb thread id (the `externalThreadId` on a unified `Conversation`)."
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "message"
+                ],
+                "properties": {
+                  "message": {
+                    "type": "string",
+                    "description": "Message body to send to the guest."
+                  },
+                  "mediaUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "nullable": true,
+                    "description": "Optional URL of an image/media attachment to send with the message."
+                  },
+                  "mediaType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional MIME/media type hint for `mediaUrl` (e.g. `image/jpeg`)."
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
-          "200": {
+          "201": {
             "description": "Sent"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         }
       }
@@ -10289,11 +12560,105 @@
         }
       }
     },
+    "/v1/channels/airbnb/alterations/{id}/accept": {
+      "post": {
+        "operationId": "accept_airbnb_alteration",
+        "summary": "Accept Airbnb alteration",
+        "description": "Accept a pending Airbnb reservation alteration. **Write-side** \u2014 calls Airbnb upstream (`respondToAlteration`) to approve the proposed date / guest-count / price change. Requires a connected Airbnb host for the workspace (else `404 no_connection`) and that the alteration id belongs to a reservation in your workspace (else `404 not_found`). No request body is required.",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Airbnb alteration id (the `alterationId` from a `GET /v1/channels/airbnb/alterations` row)."
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "No fields required. An empty body is accepted.",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Alteration accepted"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/channels/airbnb/alterations/{id}/decline": {
+      "post": {
+        "operationId": "decline_airbnb_alteration",
+        "summary": "Decline Airbnb alteration",
+        "description": "Decline a pending Airbnb reservation alteration. **Write-side** \u2014 calls Airbnb upstream (`respondToAlteration`) to reject the proposed change. Requires a connected Airbnb host for the workspace (else `404 no_connection`) and that the alteration id belongs to a reservation in your workspace (else `404 not_found`). No request body is required.",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Airbnb alteration id (the `alterationId` from a `GET /v1/channels/airbnb/alterations` row)."
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "No fields required. An empty body is accepted.",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Alteration declined"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
     "/v1/channels/airbnb/transactions": {
       "get": {
         "operationId": "list_airbnb_transactions",
         "summary": "List Airbnb transactions",
-        "description": "List Airbnb host transactions (payouts, adjustments, resolutions) for this workspace. **Pure DB read** \u2014 customer-facing reads never call Airbnb upstream. The transactions mirror is not yet synced into this surface, so today this endpoint returns an empty array with `data_freshness.stale = true` and `reason: \"never_synced\"`. Shape and contract are stable; the array populates once the sync worker lands.",
+        "description": "List Airbnb host transactions (reservation earnings, payouts, resolution adjustments) for this workspace, newest first. **Pure DB read** \u2014 customer-facing reads never call Airbnb upstream; they serve the `airbnb_transactions` mirror. Each row carries the genuine host- and guest-side financial breakdown (accommodation subtotal, cleaning fee, host + guest service fees split base/VAT, tax buckets, expected/actual host payout with settlement status). Trigger a refresh with `POST` on this path. When the mirror is empty or the host disconnected, `data_freshness.stale = true` with a `reason` (`never_synced`, `host_disconnected_<iso>`, `sync_lag_>_24h`).",
         "tags": [
           "Airbnb"
         ],
@@ -10312,8 +12677,7 @@
                     "data": {
                       "type": "array",
                       "items": {
-                        "type": "object",
-                        "additionalProperties": true
+                        "$ref": "#/components/schemas/AirbnbTransaction"
                       }
                     },
                     "data_freshness": {
@@ -10326,6 +12690,84 @@
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "sync_airbnb_transactions",
+        "summary": "Sync Airbnb transactions",
+        "description": "Refresh the Airbnb transactions mirror for this workspace by pulling from Airbnb upstream and upserting the breakdown that `GET` serves. Optional JSON body `{ start_date, end_date, transaction_type }` (`transaction_type` is `COMPLETED` or `UPCOMING`; both are synced when omitted). Returns `{ synced, count }`.",
+        "tags": [
+          "Airbnb"
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "start_date": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Inclusive lower bound on transaction date."
+                  },
+                  "end_date": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Inclusive upper bound on transaction date."
+                  },
+                  "transaction_type": {
+                    "type": "string",
+                    "enum": [
+                      "COMPLETED",
+                      "UPCOMING"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sync result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "synced",
+                    "count"
+                  ],
+                  "properties": {
+                    "synced": {
+                      "type": "boolean"
+                    },
+                    "count": {
+                      "type": "integer",
+                      "description": "Number of transactions upserted."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "409": {
+            "description": "No connected Airbnb account for this workspace.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "500": {
             "$ref": "#/components/responses/InternalError"
@@ -11694,6 +14136,147 @@
         }
       }
     },
+    "/v1/listings/{id}/photos/upload-url": {
+      "post": {
+        "operationId": "createListingPhotoUploadUrl",
+        "summary": "Mint a direct-to-storage photo upload URL",
+        "description": "Mints a short-lived signed upload URL + token for a listing photo. **The client PUTs the raw file bytes directly to the returned `uploadUrl` \u2014 the file bytes never pass through the Repull API or main vanio.** This endpoint only mints the URL; do not POST the file itself here, it will not be accepted.\n\nFlow: (1) POST here with `fileName`/`fileType`/optional `fileSize` to get `{ uploadUrl, token, path, publicUrl, expiresIn }`; (2) PUT the raw file bytes to `uploadUrl` from the client; (3) `publicUrl` is the durable URL for the uploaded photo \u2014 attach it to the listing via `PUT /v1/listings/{id}/content` (`photos` field) or list it back via `GET /v1/listings/{id}/photos`.",
+        "tags": [
+          "Listings"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Repull listing id"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListingPhotoUploadUrlRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Signed upload URL minted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListingPhotoUploadUrlResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          }
+        }
+      }
+    },
+    "/v1/listings/{id}/photos": {
+      "get": {
+        "operationId": "listListingPhotos",
+        "summary": "List a listing's stored photos",
+        "description": "Returns the photo set currently stored for this listing.",
+        "tags": [
+          "Listings"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Repull listing id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Photos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListingPhotosResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteListingPhoto",
+        "summary": "Delete a stored listing photo",
+        "description": "Deletes a single stored photo by its storage `path` (as returned by `GET /v1/listings/{id}/photos` or `POST /v1/listings/{id}/photos/upload-url`).",
+        "tags": [
+          "Listings"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Repull listing id"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListingPhotoDeleteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Photo deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListingPhotoDeleteResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          }
+        }
+      }
+    },
     "/v1/channels/booking/properties": {
       "get": {
         "operationId": "list_booking_properties",
@@ -11717,6 +14300,86 @@
       }
     },
     "/v1/channels/booking/availability": {
+      "get": {
+        "operationId": "get_booking_availability",
+        "summary": "Read current Booking.com rates/availability/restrictions",
+        "description": "Read the current rate, availability, and restriction state for a Booking.com property so you can reconcile before writing with the PUT on this path. Keyed by `property_id` (the Booking hotel id), symmetric with the PUT.\n\nProxies Booking's `getRoomRateAvailability` \u2014 the returned fields (price, rooms-to-sell, min/max stay, closed-to-arrival/departure, stop-sell) are whatever Booking.com emits for the window. A listing-id-keyed equivalent is available at `GET /v1/channels/booking/listings/{id}/pricing`.",
+        "tags": [
+          "Booking.com"
+        ],
+        "parameters": [
+          {
+            "name": "property_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Booking.com hotel/property id."
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Window start (ISO YYYY-MM-DD)."
+          },
+          {
+            "name": "number_of_days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Window length in days."
+          },
+          {
+            "name": "room_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Restrict to a single Booking.com room id."
+          },
+          {
+            "name": "room_level",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "When true, returns room-level (vs rate-plan-level) state."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current ARI state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingAvailabilityStateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      },
       "put": {
         "operationId": "update_booking_availability",
         "summary": "Update Booking.com rates/availability",
@@ -11809,9 +14472,50 @@
         "tags": [
           "Booking.com"
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "property_id",
+                  "conversation_id",
+                  "message"
+                ],
+                "properties": {
+                  "property_id": {
+                    "type": "integer",
+                    "description": "Booking.com property (hotel) id the conversation belongs to."
+                  },
+                  "conversation_id": {
+                    "type": "string",
+                    "description": "Booking.com conversation id to reply in."
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "Message body to send to the guest."
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
-          "200": {
+          "201": {
             "description": "Sent"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         }
       }
@@ -12143,6 +14847,51 @@
         }
       }
     },
+    "/v1/channels/booking/properties/{id}/rooms": {
+      "get": {
+        "operationId": "list_booking_property_rooms",
+        "summary": "List Booking.com rooms + rate-plan ids for a listing",
+        "description": "Return every Booking.com room and its rate plans for a listing, each with the `roomId` / `rateId` needed to assemble a restriction write via `PUT /v1/channels/booking/availability`.\n\n`id` is a Vanio listing id \u2014 resolved to the Booking `hotel_id` via the workspace mapping (a listing with no active Booking.com mapping returns 404). Sourced from Booking's B.XML roomrates feed, which returns rooms and rate plans together (the rooms-unit feed alone omits rate-plan ids). This is the API-key surface for the room/rate ids that were previously only reachable inside the hosted Connect room-mapping flow.",
+        "tags": [
+          "Booking.com"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Vanio listing id \u2014 resolved to a Booking.com hotel id via the workspace mapping."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rooms with their rate-plan ids",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingRoomsRatesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
     "/v1/channels/booking/properties/{id}": {
       "get": {
         "operationId": "get_booking_property",
@@ -12226,7 +14975,23 @@
         ],
         "responses": {
           "200": {
-            "description": "Reservations"
+            "description": "Raw Booking.com reservation payload \u2014 passed through from the connector unmodified (NOT the unified `/v1/reservations` shape). With `type=details` (plus `reservation_id` + `hotel_id`) the body is a single `BookingReservation`; with `type=new`/`type=modified` it is the raw Booking OTA collection wrapper whose reservations are `BookingReservation` objects. See the `BookingReservation` schema for the per-reservation field set and caveats.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/BookingReservation"
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Raw Booking.com OTA collection wrapper (`new`/`modified` list types) \u2014 reservations are nested under the connector's XML-derived collection shape as `BookingReservation` objects."
+                    }
+                  ]
+                }
+              }
+            }
           },
           "400": {
             "$ref": "#/components/responses/BadRequest"

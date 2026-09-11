@@ -5,9 +5,10 @@
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **id** | **String** | Internal Repull review id — pass back to &#x60;/v1/reviews/{id}&#x60;. | [optional] |
-| **external_id** | **String** | ID in the source channel (Airbnb review id, Booking review id, etc.). | [optional] |
+| **external_id** | **String** | ID in the source channel (Airbnb review id, Booking review id, etc.). Pass as &#x60;review_id&#x60; to the provider reply endpoint. | [optional] |
 | **platform** | **String** |  | [optional] |
 | **listing_id** | **String** | Internal Repull listing id the review is attached to. | [optional] |
+| **provider_property_id** | **String** | The source channel&#39;s own listing/property id for this review (Booking.com hotel/property id, Airbnb listing id, …). Pass this as &#x60;property_id&#x60; to &#x60;POST /v1/channels/booking/reviews&#x60; to post a host reply — it is the bridge from a unified review straight to the provider-specific reply call. &#x60;null&#x60; when the source listing id has not been mirrored yet. | [optional] |
 | **reservation_id** | **String** |  | [optional] |
 | **reservation_confirmation_code** | **String** | Channel-side confirmation code for the reservation being reviewed. | [optional] |
 | **guest_id** | **String** |  | [optional] |
@@ -36,6 +37,7 @@ instance = Repull::Review.new(
   external_id: null,
   platform: null,
   listing_id: null,
+  provider_property_id: null,
   reservation_id: null,
   reservation_confirmation_code: null,
   guest_id: null,

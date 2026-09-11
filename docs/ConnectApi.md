@@ -4,6 +4,7 @@ All URIs are relative to *https://api.repull.dev*
 
 | Method | HTTP request | Description |
 | ------ | ------------ | ----------- |
+| [**booking_connect_callback**](ConnectApi.md#booking_connect_callback) | **POST** /v1/connect/booking/callback | Booking.com connectivity callback |
 | [**create_connect_session**](ConnectApi.md#create_connect_session) | **POST** /v1/connect | Create a multi-channel Connect picker session |
 | [**create_connection**](ConnectApi.md#create_connection) | **POST** /v1/connect/{provider} | Connect to PMS/OTA provider |
 | [**delete_connection**](ConnectApi.md#delete_connection) | **DELETE** /v1/connect/{provider} | Disconnect provider |
@@ -13,7 +14,80 @@ All URIs are relative to *https://api.repull.dev*
 | [**list_connections**](ConnectApi.md#list_connections) | **GET** /v1/connect | List PMS/OTA connections |
 | [**map_connect_booking_rooms**](ConnectApi.md#map_connect_booking_rooms) | **POST** /v1/connect/booking/map-rooms | Submit room→listing mappings for a Booking.com Connect session |
 | [**select_connect_provider**](ConnectApi.md#select_connect_provider) | **POST** /v1/connect/sessions/{sessionId}/select-provider | Bind a picker session to a provider |
+| [**submit_beds24_credentials**](ConnectApi.md#submit_beds24_credentials) | **POST** /v1/connect/beds24/credentials | Submit Beds24 credentials for a Connect session |
+| [**submit_bookingsync_credentials**](ConnectApi.md#submit_bookingsync_credentials) | **POST** /v1/connect/bookingsync/credentials | Submit BookingSync credentials for a Connect session |
+| [**submit_guesty_credentials**](ConnectApi.md#submit_guesty_credentials) | **POST** /v1/connect/guesty/credentials | Submit Guesty credentials for a Connect session |
+| [**submit_hospitable_credentials**](ConnectApi.md#submit_hospitable_credentials) | **POST** /v1/connect/hospitable/credentials | Submit Hospitable credentials for a Connect session |
+| [**submit_hostaway_credentials**](ConnectApi.md#submit_hostaway_credentials) | **POST** /v1/connect/hostaway/credentials | Submit Hostaway credentials for a Connect session |
+| [**submit_igms_credentials**](ConnectApi.md#submit_igms_credentials) | **POST** /v1/connect/igms/credentials | Submit iGMS credentials for a Connect session |
+| [**submit_lodgify_credentials**](ConnectApi.md#submit_lodgify_credentials) | **POST** /v1/connect/lodgify/credentials | Submit Lodgify credentials for a Connect session |
+| [**submit_ownerrez_credentials**](ConnectApi.md#submit_ownerrez_credentials) | **POST** /v1/connect/ownerrez/credentials | Submit OwnerRez credentials for a Connect session |
+| [**submit_smoobu_credentials**](ConnectApi.md#submit_smoobu_credentials) | **POST** /v1/connect/smoobu/credentials | Submit Smoobu credentials for a Connect session |
+| [**submit_vrbo_credentials**](ConnectApi.md#submit_vrbo_credentials) | **POST** /v1/connect/vrbo/credentials | Submit Vrbo credentials for a Connect session |
 | [**verify_booking_hotel**](ConnectApi.md#verify_booking_hotel) | **POST** /v1/connect/booking/verify | Verify a Booking.com hotel ID for a Connect session |
+
+
+## booking_connect_callback
+
+> booking_connect_callback(request_body)
+
+Booking.com connectivity callback
+
+Receives Booking.com's asynchronous confirmation that a property has designated Repull as its connectivity provider, and advances the Connect session. Called by Booking.com, not by integrators.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+
+api_instance = Repull::ConnectApi.new
+request_body = { key: 3.56} # Hash<String, Object> | 
+
+begin
+  # Booking.com connectivity callback
+  api_instance.booking_connect_callback(request_body)
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->booking_connect_callback: #{e}"
+end
+```
+
+#### Using the booking_connect_callback_with_http_info variant
+
+This returns an Array which contains the response data (`nil` in this case), status code and headers.
+
+> <Array(nil, Integer, Hash)> booking_connect_callback_with_http_info(request_body)
+
+```ruby
+begin
+  # Booking.com connectivity callback
+  data, status_code, headers = api_instance.booking_connect_callback_with_http_info(request_body)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => nil
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->booking_connect_callback_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **request_body** | [**Hash&lt;String, Object&gt;**](Object.md) |  |  |
+
+### Return type
+
+nil (empty response body)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
 
 
 ## create_connect_session
@@ -164,7 +238,7 @@ end
 
 Disconnect provider
 
-Disconnect a PMS or OTA from this workspace. Revokes the OAuth token (where applicable), purges credentials, and stops all sync jobs. Resources synced from the provider remain queryable but become read-only and stop receiving updates.
+Disconnect a PMS or OTA from this workspace.  Currently supported for `booking` only: drops the stored connection and stops syncing the mapped rooms. Resources already synced remain queryable but become read-only and stop receiving updates.  Every other provider returns `501 not_implemented` with instructions for disconnecting on the provider's side — Airbnb in particular has to be revoked by the host (Account → Privacy & sharing → Connected apps), because the OAuth grant lives outside this service. The endpoint used to report `200 { disconnected: true }` for every provider while doing nothing; it now tells you the truth.
 
 ### Examples
 
@@ -223,7 +297,7 @@ nil (empty response body)
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 
 ## get_connect_status
@@ -609,6 +683,696 @@ end
 ### Authorization
 
 No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## submit_beds24_credentials
+
+> <SubmitBeds24Credentials200Response> submit_beds24_credentials(submit_beds24_credentials_request)
+
+Submit Beds24 credentials for a Connect session
+
+Completes a credentials-pattern connection for Beds24. API key + prop key from Beds24 → Settings → Apps & Integrations.  The credentials are validated against Beds24 before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.  No API key required when called with a `sessionId` — the session is the capability token.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ConnectApi.new
+submit_beds24_credentials_request = Repull::SubmitBeds24CredentialsRequest.new({credentials: { key: 3.56}}) # SubmitBeds24CredentialsRequest | 
+
+begin
+  # Submit Beds24 credentials for a Connect session
+  result = api_instance.submit_beds24_credentials(submit_beds24_credentials_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->submit_beds24_credentials: #{e}"
+end
+```
+
+#### Using the submit_beds24_credentials_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<SubmitBeds24Credentials200Response>, Integer, Hash)> submit_beds24_credentials_with_http_info(submit_beds24_credentials_request)
+
+```ruby
+begin
+  # Submit Beds24 credentials for a Connect session
+  data, status_code, headers = api_instance.submit_beds24_credentials_with_http_info(submit_beds24_credentials_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <SubmitBeds24Credentials200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->submit_beds24_credentials_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **submit_beds24_credentials_request** | [**SubmitBeds24CredentialsRequest**](SubmitBeds24CredentialsRequest.md) |  |  |
+
+### Return type
+
+[**SubmitBeds24Credentials200Response**](SubmitBeds24Credentials200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## submit_bookingsync_credentials
+
+> <SubmitBeds24Credentials200Response> submit_bookingsync_credentials(submit_bookingsync_credentials_request)
+
+Submit BookingSync credentials for a Connect session
+
+Completes a credentials-pattern connection for BookingSync. OAuth client credentials issued by BookingSync.  The credentials are validated against BookingSync before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.  No API key required when called with a `sessionId` — the session is the capability token.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ConnectApi.new
+submit_bookingsync_credentials_request = Repull::SubmitBookingsyncCredentialsRequest.new({credentials: { key: 3.56}}) # SubmitBookingsyncCredentialsRequest | 
+
+begin
+  # Submit BookingSync credentials for a Connect session
+  result = api_instance.submit_bookingsync_credentials(submit_bookingsync_credentials_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->submit_bookingsync_credentials: #{e}"
+end
+```
+
+#### Using the submit_bookingsync_credentials_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<SubmitBeds24Credentials200Response>, Integer, Hash)> submit_bookingsync_credentials_with_http_info(submit_bookingsync_credentials_request)
+
+```ruby
+begin
+  # Submit BookingSync credentials for a Connect session
+  data, status_code, headers = api_instance.submit_bookingsync_credentials_with_http_info(submit_bookingsync_credentials_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <SubmitBeds24Credentials200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->submit_bookingsync_credentials_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **submit_bookingsync_credentials_request** | [**SubmitBookingsyncCredentialsRequest**](SubmitBookingsyncCredentialsRequest.md) |  |  |
+
+### Return type
+
+[**SubmitBeds24Credentials200Response**](SubmitBeds24Credentials200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## submit_guesty_credentials
+
+> <SubmitBeds24Credentials200Response> submit_guesty_credentials(submit_guesty_credentials_request)
+
+Submit Guesty credentials for a Connect session
+
+Completes a credentials-pattern connection for Guesty. Client ID + secret from Guesty → Integrations → Open API.  The credentials are validated against Guesty before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.  No API key required when called with a `sessionId` — the session is the capability token.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ConnectApi.new
+submit_guesty_credentials_request = Repull::SubmitGuestyCredentialsRequest.new({credentials: { key: 3.56}}) # SubmitGuestyCredentialsRequest | 
+
+begin
+  # Submit Guesty credentials for a Connect session
+  result = api_instance.submit_guesty_credentials(submit_guesty_credentials_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->submit_guesty_credentials: #{e}"
+end
+```
+
+#### Using the submit_guesty_credentials_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<SubmitBeds24Credentials200Response>, Integer, Hash)> submit_guesty_credentials_with_http_info(submit_guesty_credentials_request)
+
+```ruby
+begin
+  # Submit Guesty credentials for a Connect session
+  data, status_code, headers = api_instance.submit_guesty_credentials_with_http_info(submit_guesty_credentials_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <SubmitBeds24Credentials200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->submit_guesty_credentials_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **submit_guesty_credentials_request** | [**SubmitGuestyCredentialsRequest**](SubmitGuestyCredentialsRequest.md) |  |  |
+
+### Return type
+
+[**SubmitBeds24Credentials200Response**](SubmitBeds24Credentials200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## submit_hospitable_credentials
+
+> <SubmitBeds24Credentials200Response> submit_hospitable_credentials(submit_hospitable_credentials_request)
+
+Submit Hospitable credentials for a Connect session
+
+Completes a credentials-pattern connection for Hospitable. Personal access token from Hospitable → Settings → API.  The credentials are validated against Hospitable before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.  No API key required when called with a `sessionId` — the session is the capability token.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ConnectApi.new
+submit_hospitable_credentials_request = Repull::SubmitHospitableCredentialsRequest.new({credentials: { key: 3.56}}) # SubmitHospitableCredentialsRequest | 
+
+begin
+  # Submit Hospitable credentials for a Connect session
+  result = api_instance.submit_hospitable_credentials(submit_hospitable_credentials_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->submit_hospitable_credentials: #{e}"
+end
+```
+
+#### Using the submit_hospitable_credentials_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<SubmitBeds24Credentials200Response>, Integer, Hash)> submit_hospitable_credentials_with_http_info(submit_hospitable_credentials_request)
+
+```ruby
+begin
+  # Submit Hospitable credentials for a Connect session
+  data, status_code, headers = api_instance.submit_hospitable_credentials_with_http_info(submit_hospitable_credentials_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <SubmitBeds24Credentials200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->submit_hospitable_credentials_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **submit_hospitable_credentials_request** | [**SubmitHospitableCredentialsRequest**](SubmitHospitableCredentialsRequest.md) |  |  |
+
+### Return type
+
+[**SubmitBeds24Credentials200Response**](SubmitBeds24Credentials200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## submit_hostaway_credentials
+
+> <SubmitBeds24Credentials200Response> submit_hostaway_credentials(submit_hostaway_credentials_request)
+
+Submit Hostaway credentials for a Connect session
+
+Completes a credentials-pattern connection for Hostaway. Account ID + API key from Hostaway → Settings → Public API.  The credentials are validated against Hostaway before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.  No API key required when called with a `sessionId` — the session is the capability token.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ConnectApi.new
+submit_hostaway_credentials_request = Repull::SubmitHostawayCredentialsRequest.new({credentials: { key: 3.56}}) # SubmitHostawayCredentialsRequest | 
+
+begin
+  # Submit Hostaway credentials for a Connect session
+  result = api_instance.submit_hostaway_credentials(submit_hostaway_credentials_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->submit_hostaway_credentials: #{e}"
+end
+```
+
+#### Using the submit_hostaway_credentials_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<SubmitBeds24Credentials200Response>, Integer, Hash)> submit_hostaway_credentials_with_http_info(submit_hostaway_credentials_request)
+
+```ruby
+begin
+  # Submit Hostaway credentials for a Connect session
+  data, status_code, headers = api_instance.submit_hostaway_credentials_with_http_info(submit_hostaway_credentials_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <SubmitBeds24Credentials200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->submit_hostaway_credentials_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **submit_hostaway_credentials_request** | [**SubmitHostawayCredentialsRequest**](SubmitHostawayCredentialsRequest.md) |  |  |
+
+### Return type
+
+[**SubmitBeds24Credentials200Response**](SubmitBeds24Credentials200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## submit_igms_credentials
+
+> <SubmitBeds24Credentials200Response> submit_igms_credentials(submit_igms_credentials_request)
+
+Submit iGMS credentials for a Connect session
+
+Completes a credentials-pattern connection for iGMS. API token from iGMS → Settings → Integrations.  The credentials are validated against iGMS before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.  No API key required when called with a `sessionId` — the session is the capability token.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ConnectApi.new
+submit_igms_credentials_request = Repull::SubmitIgmsCredentialsRequest.new({credentials: { key: 3.56}}) # SubmitIgmsCredentialsRequest | 
+
+begin
+  # Submit iGMS credentials for a Connect session
+  result = api_instance.submit_igms_credentials(submit_igms_credentials_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->submit_igms_credentials: #{e}"
+end
+```
+
+#### Using the submit_igms_credentials_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<SubmitBeds24Credentials200Response>, Integer, Hash)> submit_igms_credentials_with_http_info(submit_igms_credentials_request)
+
+```ruby
+begin
+  # Submit iGMS credentials for a Connect session
+  data, status_code, headers = api_instance.submit_igms_credentials_with_http_info(submit_igms_credentials_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <SubmitBeds24Credentials200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->submit_igms_credentials_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **submit_igms_credentials_request** | [**SubmitIgmsCredentialsRequest**](SubmitIgmsCredentialsRequest.md) |  |  |
+
+### Return type
+
+[**SubmitBeds24Credentials200Response**](SubmitBeds24Credentials200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## submit_lodgify_credentials
+
+> <SubmitBeds24Credentials200Response> submit_lodgify_credentials(submit_lodgify_credentials_request)
+
+Submit Lodgify credentials for a Connect session
+
+Completes a credentials-pattern connection for Lodgify. API key from Lodgify → Settings → Public API.  The credentials are validated against Lodgify before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.  No API key required when called with a `sessionId` — the session is the capability token.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ConnectApi.new
+submit_lodgify_credentials_request = Repull::SubmitLodgifyCredentialsRequest.new({credentials: { key: 3.56}}) # SubmitLodgifyCredentialsRequest | 
+
+begin
+  # Submit Lodgify credentials for a Connect session
+  result = api_instance.submit_lodgify_credentials(submit_lodgify_credentials_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->submit_lodgify_credentials: #{e}"
+end
+```
+
+#### Using the submit_lodgify_credentials_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<SubmitBeds24Credentials200Response>, Integer, Hash)> submit_lodgify_credentials_with_http_info(submit_lodgify_credentials_request)
+
+```ruby
+begin
+  # Submit Lodgify credentials for a Connect session
+  data, status_code, headers = api_instance.submit_lodgify_credentials_with_http_info(submit_lodgify_credentials_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <SubmitBeds24Credentials200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->submit_lodgify_credentials_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **submit_lodgify_credentials_request** | [**SubmitLodgifyCredentialsRequest**](SubmitLodgifyCredentialsRequest.md) |  |  |
+
+### Return type
+
+[**SubmitBeds24Credentials200Response**](SubmitBeds24Credentials200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## submit_ownerrez_credentials
+
+> <SubmitBeds24Credentials200Response> submit_ownerrez_credentials(submit_ownerrez_credentials_request)
+
+Submit OwnerRez credentials for a Connect session
+
+Completes a credentials-pattern connection for OwnerRez. Username + API token from OwnerRez → Settings → API.  The credentials are validated against OwnerRez before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.  No API key required when called with a `sessionId` — the session is the capability token.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ConnectApi.new
+submit_ownerrez_credentials_request = Repull::SubmitOwnerrezCredentialsRequest.new({credentials: { key: 3.56}}) # SubmitOwnerrezCredentialsRequest | 
+
+begin
+  # Submit OwnerRez credentials for a Connect session
+  result = api_instance.submit_ownerrez_credentials(submit_ownerrez_credentials_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->submit_ownerrez_credentials: #{e}"
+end
+```
+
+#### Using the submit_ownerrez_credentials_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<SubmitBeds24Credentials200Response>, Integer, Hash)> submit_ownerrez_credentials_with_http_info(submit_ownerrez_credentials_request)
+
+```ruby
+begin
+  # Submit OwnerRez credentials for a Connect session
+  data, status_code, headers = api_instance.submit_ownerrez_credentials_with_http_info(submit_ownerrez_credentials_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <SubmitBeds24Credentials200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->submit_ownerrez_credentials_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **submit_ownerrez_credentials_request** | [**SubmitOwnerrezCredentialsRequest**](SubmitOwnerrezCredentialsRequest.md) |  |  |
+
+### Return type
+
+[**SubmitBeds24Credentials200Response**](SubmitBeds24Credentials200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## submit_smoobu_credentials
+
+> <SubmitBeds24Credentials200Response> submit_smoobu_credentials(submit_smoobu_credentials_request)
+
+Submit Smoobu credentials for a Connect session
+
+Completes a credentials-pattern connection for Smoobu. API key from Smoobu → Settings → For developers.  The credentials are validated against Smoobu before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.  No API key required when called with a `sessionId` — the session is the capability token.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ConnectApi.new
+submit_smoobu_credentials_request = Repull::SubmitSmoobuCredentialsRequest.new({credentials: { key: 3.56}}) # SubmitSmoobuCredentialsRequest | 
+
+begin
+  # Submit Smoobu credentials for a Connect session
+  result = api_instance.submit_smoobu_credentials(submit_smoobu_credentials_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->submit_smoobu_credentials: #{e}"
+end
+```
+
+#### Using the submit_smoobu_credentials_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<SubmitBeds24Credentials200Response>, Integer, Hash)> submit_smoobu_credentials_with_http_info(submit_smoobu_credentials_request)
+
+```ruby
+begin
+  # Submit Smoobu credentials for a Connect session
+  data, status_code, headers = api_instance.submit_smoobu_credentials_with_http_info(submit_smoobu_credentials_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <SubmitBeds24Credentials200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->submit_smoobu_credentials_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **submit_smoobu_credentials_request** | [**SubmitSmoobuCredentialsRequest**](SubmitSmoobuCredentialsRequest.md) |  |  |
+
+### Return type
+
+[**SubmitBeds24Credentials200Response**](SubmitBeds24Credentials200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## submit_vrbo_credentials
+
+> <SubmitBeds24Credentials200Response> submit_vrbo_credentials(submit_vrbo_credentials_request)
+
+Submit Vrbo credentials for a Connect session
+
+Completes a credentials-pattern connection for Vrbo. Activation handshake — Repull mints the Basic-Auth pair the host pastes into Vrbo Partner Central.  The credentials are validated against Vrbo before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.  No API key required when called with a `sessionId` — the session is the capability token.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ConnectApi.new
+submit_vrbo_credentials_request = Repull::SubmitVrboCredentialsRequest.new({credentials: { key: 3.56}}) # SubmitVrboCredentialsRequest | 
+
+begin
+  # Submit Vrbo credentials for a Connect session
+  result = api_instance.submit_vrbo_credentials(submit_vrbo_credentials_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->submit_vrbo_credentials: #{e}"
+end
+```
+
+#### Using the submit_vrbo_credentials_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<SubmitBeds24Credentials200Response>, Integer, Hash)> submit_vrbo_credentials_with_http_info(submit_vrbo_credentials_request)
+
+```ruby
+begin
+  # Submit Vrbo credentials for a Connect session
+  data, status_code, headers = api_instance.submit_vrbo_credentials_with_http_info(submit_vrbo_credentials_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <SubmitBeds24Credentials200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->submit_vrbo_credentials_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **submit_vrbo_credentials_request** | [**SubmitVrboCredentialsRequest**](SubmitVrboCredentialsRequest.md) |  |  |
+
+### Return type
+
+[**SubmitBeds24Credentials200Response**](SubmitBeds24Credentials200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
 
 ### HTTP request headers
 
