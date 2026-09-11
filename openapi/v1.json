@@ -3,7 +3,7 @@
   "info": {
     "title": "Repull API",
     "version": "1.0.0",
-    "description": "The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.\n\n## Designed for AI agents\nEvery error response on this API includes machine-parseable fields so an LLM (Claude in MCP, Cursor, Cline, GPT, etc.) can self-recover without escalating to a human:\n- `error.code` \u2014 stable string identifier (e.g. `invalid_params`, `rate_limit_exceeded`)\n- `error.message` \u2014 human-readable cause\n- `error.fix` \u2014 exact recovery steps (e.g. \"Pass `check_in_after` as ISO 8601: `?check_in_after=2026-01-15`\")\n- `error.docs_url` \u2014 link to the canonical write-up at `https://repull.dev/docs/errors/{code}`\n- `error.request_id` \u2014 id to correlate with server-side logs\n- `error.field` / `error.value_received` / `error.valid_values` / `error.did_you_mean` \u2014 when the error is parameter-specific\n- `error.retry_after` \u2014 seconds to wait before retrying (rate-limit + transient upstream)\n\n`Access-Control-Expose-Headers` lists `x-request-id` and the `X-RateLimit-*` family so browsers can read them on cross-origin responses.\n\n## Quick Start\n1. Get an API key at https://repull.dev/dashboard\n2. Connect a PMS: `POST /v1/connect/{provider}`\n3. List properties: `GET /v1/properties`\n4. Get reservations: `GET /v1/reservations`\n\n## Authentication\nAll requests require a Bearer token:\n```\nAuthorization: Bearer sk_live_YOUR_API_KEY\n```\n\n## Request Correlation (X-Request-ID)\nEvery response carries an `X-Request-ID` header, e.g. `X-Request-ID: req_01HXY...`. Include this id in support tickets and bug reports \u2014 we can trace the full request lifecycle (auth, rate limit, handler, downstream calls, log row) from a single id.\n\nYou may set the header on the inbound request to forward your own trace id; we will echo it back instead of generating a new one. Accepted format: `^[\\\\w.-]{1,128}$`.\n\nThe id is also embedded in error envelopes as `request_id` so server-side log diffs work even when the response headers are stripped by an intermediate proxy.\n\n## Rate Limits\nThe public API enforces a per-API-key sliding-window rate limit on top of the per-tier monthly + daily-AI quotas.\n\n**Default policy:** 600 requests per 60 seconds, per API key. Sliding window \u2014 there is no fixed-minute boundary you can burst across.\n\nEvery response includes:\n\n| Header | Meaning |\n|---|---|\n| `X-RateLimit-Limit` | Requests permitted in the current window. |\n| `X-RateLimit-Remaining` | Requests left in the current window after this call. |\n| `X-RateLimit-Reset` | Unix epoch (seconds) when the next slot opens. |\n| `X-RateLimit-Policy` | Machine-readable policy descriptor, e.g. `600;w=60`. |\n| `Retry-After` | Seconds to wait before retrying. **Only present on 429 responses.** |\n\n**On 429 (rate_limit_exceeded):** the response body matches the standard error envelope with `code: \"rate_limit_exceeded\"`, plus `limit`, `window_seconds`, `retry_after`, and `request_id` fields. SDKs MUST honor `Retry-After` and use exponential backoff with jitter on subsequent retries \u2014 never a tight loop.\n\nRecommended backoff:\n```\nsleep_ms = (Retry-After * 1000) + random(0..250)\n```\n\nMonthly + daily-AI tier quotas (`free`, `starter`, `custom`) are enforced separately and also surface as 429s; they include `tier`, `scope`, and `resets_at` fields.\n\n## Plan Limits (402 \u2014 `listings_limit_exceeded`)\nThe Repull API also enforces a per-tier cap on **active listings**:\n\n| Tier | Active listings cap |\n|---|---|\n| `free` | 3 |\n| `starter` | 50 |\n| `custom` | unlimited |\n\nWhen a customer's active-listing count is above their tier cap, the API returns **`402 Payment Required`** with `error.code = \"listings_limit_exceeded\"` on every route EXCEPT:\n\n- `/v1/health` \u2014 uptime probes are never gated.\n- `/v1/usage/*` \u2014 so dashboards can render the over-cap state.\n- Any `DELETE` \u2014 so the customer can trim listings to get back under the cap without paying.\n\nUnlike 429, 402 is NOT a \"wait and retry\" condition \u2014 `Retry-After` is not set. The only paths back to 200 are:\n  1. `DELETE` enough listings to come back under the cap, or\n  2. Upgrade at `https://repull.dev/dashboard/billing`. The server-side usage cache is 60s, so the first 200 after an upgrade may take up to a minute.\n\nThe envelope mirrors `rate_limit_exceeded` for SDK ergonomics: `tier`, `limit`, `active_listings`, `upgrade_url`, plus the standard `code` / `message` / `fix` / `docs_url` / `request_id`.",
+    "description": "The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.\n\n## Designed for AI agents\nEvery error response on this API includes machine-parseable fields so an LLM (Claude in MCP, Cursor, Cline, GPT, etc.) can self-recover without escalating to a human:\n- `error.code` \u2014 stable string identifier (e.g. `invalid_params`, `rate_limit_exceeded`)\n- `error.message` \u2014 human-readable cause\n- `error.fix` \u2014 exact recovery steps (e.g. \"Pass `check_in_after` as ISO 8601: `?check_in_after=2026-01-15`\")\n- `error.docs_url` \u2014 link to the canonical write-up at `https://repull.dev/docs/errors/{code}`\n- `error.request_id` \u2014 id to correlate with server-side logs\n- `error.field` / `error.value_received` / `error.valid_values` / `error.did_you_mean` \u2014 when the error is parameter-specific\n- `error.retry_after` \u2014 seconds to wait before retrying (rate-limit + transient upstream)\n\n`Access-Control-Expose-Headers` lists `x-request-id` and the `X-RateLimit-*` family so browsers can read them on cross-origin responses.\n\n## Quick Start\n1. Get an API key at https://repull.dev/dashboard\n2. Connect a PMS: `POST /v1/connect/{provider}`\n3. List properties: `GET /v1/properties`\n4. Get reservations: `GET /v1/reservations`\n\n## Authentication\nAll requests require a Bearer token:\n```\nAuthorization: Bearer sk_live_YOUR_API_KEY\n```\n\n## Request Correlation (X-Request-ID)\nEvery response carries an `X-Request-ID` header, e.g. `X-Request-ID: req_01HXY...`. Include this id in support tickets and bug reports \u2014 we can trace the full request lifecycle (auth, rate limit, handler, downstream calls, log row) from a single id.\n\nYou may set the header on the inbound request to forward your own trace id; we will echo it back instead of generating a new one. Accepted format: `^[\\\\w.-]{1,128}$`.\n\nThe id is also embedded in error envelopes as `request_id` so server-side log diffs work even when the response headers are stripped by an intermediate proxy.\n\n## Rate Limits\nThe public API enforces a per-API-key sliding-window rate limit on top of the per-tier monthly + daily-AI quotas.\n\n**Default policy:** 600 requests per 60 seconds, per API key. Sliding window \u2014 there is no fixed-minute boundary you can burst across.\n\nEvery response includes:\n\n| Header | Meaning |\n|---|---|\n| `X-RateLimit-Limit` | Requests permitted in the current window. |\n| `X-RateLimit-Remaining` | Requests left in the current window after this call. |\n| `X-RateLimit-Reset` | Unix epoch (seconds) when the next slot opens. |\n| `X-RateLimit-Policy` | Machine-readable policy descriptor, e.g. `600;w=60`. |\n| `Retry-After` | Seconds to wait before retrying. **Only present on 429 responses.** |\n\n**On 429 (rate_limit_exceeded):** the response body matches the standard error envelope with `code: \"rate_limit_exceeded\"`, plus `limit`, `window_seconds`, `retry_after`, and `request_id` fields. SDKs MUST honor `Retry-After` and use exponential backoff with jitter on subsequent retries \u2014 never a tight loop.\n\nRecommended backoff:\n```\nsleep_ms = (Retry-After * 1000) + random(0..250)\n```\n\nMonthly + daily-AI tier quotas (`free`, `starter`, `custom`) are enforced separately and also surface as 429s; they include `tier`, `scope`, and `resetsAt` fields.\n\n## Plan Limits (402 \u2014 `listings_limit_exceeded`)\nThe Repull API also enforces a per-tier cap on **active listings**:\n\n| Tier | Active listings cap |\n|---|---|\n| `free` | 3 |\n| `starter` | 50 |\n| `custom` | unlimited |\n\nWhen a customer's active-listing count is above their tier cap, the API returns **`402 Payment Required`** with `error.code = \"listings_limit_exceeded\"` on every route EXCEPT:\n\n- `/v1/health` \u2014 uptime probes are never gated.\n- `/v1/usage/*` \u2014 so dashboards can render the over-cap state.\n- Any `DELETE` \u2014 so the customer can trim listings to get back under the cap without paying.\n\nUnlike 429, 402 is NOT a \"wait and retry\" condition \u2014 `Retry-After` is not set. The only paths back to 200 are:\n  1. `DELETE` enough listings to come back under the cap, or\n  2. Upgrade at `https://repull.dev/dashboard/billing`. The server-side usage cache is 60s, so the first 200 after an upgrade may take up to a minute.\n\nThe envelope mirrors `rate_limit_exceeded` for SDK ergonomics: `tier`, `limit`, `active_listings`, `upgrade_url`, plus the standard `code` / `message` / `fix` / `docs_url` / `request_id`.",
     "contact": {
       "email": "ivan@vanio.ai",
       "url": "https://repull.dev"
@@ -170,16 +170,16 @@
             "example": "Miami Beach"
           },
           "latitude": {
-            "type": "number",
+            "type": "string",
             "nullable": true,
-            "description": "Detail endpoint only.",
-            "example": 25.7617
+            "description": "Detail endpoint only. Decimal degrees, as a string.",
+            "example": "25.7617"
           },
           "longitude": {
-            "type": "number",
+            "type": "string",
             "nullable": true,
-            "description": "Detail endpoint only.",
-            "example": -80.1918
+            "description": "Detail endpoint only. Decimal degrees, as a string.",
+            "example": "-80.1918"
           },
           "currency": {
             "type": "string",
@@ -3096,9 +3096,9 @@
         "description": "A Vanio listing paired with its Airbnb connection rows. The list endpoint groups every `listings_airbnb` row that points at the same Vanio `listingId` under a single `connections[]` array.",
         "properties": {
           "listingId": {
-            "type": "integer",
+            "type": "string",
             "description": "Vanio (Repull) listing id",
-            "example": 6248
+            "example": "6248"
           },
           "name": {
             "type": "string",
@@ -3123,7 +3123,7 @@
         "description": "An Airbnb-side connection record for a Vanio listing. The same property may appear under multiple connections if it has been linked from multiple Airbnb host accounts.",
         "properties": {
           "id": {
-            "type": "integer",
+            "type": "string",
             "description": "Connection row id"
           },
           "airbnbId": {
@@ -3156,7 +3156,7 @@
           "amenities": {
             "type": "array",
             "nullable": true,
-            "description": "Present only when `?include=amenities` is passed. Sourced from the local `listings_airbnb_amenities` cache (populated by the Airbnb sync worker). Returns `null` when the cache is empty for this connection \u2014 see the top-level `data_freshness` envelope to disambiguate \"never synced\" vs \"host disconnected\" vs \"fresh and genuinely empty\".",
+            "description": "Present only when `?include=amenities` is passed. Sourced from the local `listings_airbnb_amenities` cache (populated by the Airbnb sync worker). Returns `null` when the cache is empty for this connection \u2014 see the top-level `dataFreshness` envelope to disambiguate \"never synced\" vs \"host disconnected\" vs \"fresh and genuinely empty\".",
             "items": {
               "type": "object",
               "properties": {
@@ -3178,7 +3178,7 @@
           "accessibility_amenities": {
             "type": "array",
             "nullable": true,
-            "description": "Present only when `?include=amenities` is passed. Accessibility-tagged subset of the local amenity cache (step-free access, wide doorways, grab rails, disabled parking, wheelchair, accessible-height fixtures, hoists, etc). Returns an empty array when amenities synced but none qualify as accessibility; returns `null` when the cache is empty for this connection (use `data_freshness` to disambiguate \"never synced\" from \"fresh and genuinely empty\").",
+            "description": "Present only when `?include=amenities` is passed. Accessibility-tagged subset of the local amenity cache (step-free access, wide doorways, grab rails, disabled parking, wheelchair, accessible-height fixtures, hoists, etc). Returns an empty array when amenities synced but none qualify as accessibility; returns `null` when the cache is empty for this connection (use `dataFreshness` to disambiguate \"never synced\" from \"fresh and genuinely empty\").",
             "items": {
               "type": "object",
               "properties": {
@@ -3351,7 +3351,7 @@
         "description": "An Airbnb reservation alteration request (date change, guest-count change, or price change), mirrored locally in `reservation_alterations`. Fields prefixed `original*` describe the reservation as it stands today; `new*` fields describe the proposed change. Compare them to render a diff and decide whether to accept (`POST .../{id}/accept`) or decline (`POST .../{id}/decline`).",
         "properties": {
           "id": {
-            "type": "integer",
+            "type": "string",
             "description": "Internal Repull mirror-row id (not the Airbnb alteration id \u2014 use `alterationId` for the `{id}` path param on the get / accept / decline routes)."
           },
           "alterationId": {
@@ -3360,7 +3360,7 @@
             "description": "Airbnb alteration id. This is the `{id}` you pass to `GET/POST /v1/channels/airbnb/alterations/{id}` and the accept / decline sub-routes."
           },
           "reservationId": {
-            "type": "integer",
+            "type": "string",
             "nullable": true,
             "description": "Repull reservation id the alteration belongs to."
           },
@@ -4129,11 +4129,11 @@
         "type": "object",
         "description": "Top-level freshness indicator for any DB-backed Airbnb read. Tells consumers WHY a column may be `null` or stale without sprinkling per-row error envelopes through the response. The endpoint always returns 200 + DB data; this field is the single signal for \"should I prompt the user to reconnect / wait for sync?\".",
         "required": [
-          "last_synced_at",
+          "lastSyncedAt",
           "stale"
         ],
         "properties": {
-          "last_synced_at": {
+          "lastSyncedAt": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
@@ -4148,7 +4148,7 @@
             "nullable": true,
             "description": "Why the data is stale. One of `host_disconnected_since_<iso>`, `sync_lag_>_24h`, `never_synced`. Omitted when `stale` is `false`."
           },
-          "fix_url": {
+          "fixUrl": {
             "type": "string",
             "format": "uri",
             "nullable": true,
@@ -4161,7 +4161,7 @@
         "required": [
           "data",
           "pagination",
-          "data_freshness"
+          "dataFreshness"
         ],
         "properties": {
           "data": {
@@ -4173,7 +4173,7 @@
           "pagination": {
             "$ref": "#/components/schemas/Pagination"
           },
-          "data_freshness": {
+          "dataFreshness": {
             "$ref": "#/components/schemas/AirbnbDataFreshness"
           }
         }
@@ -4536,45 +4536,21 @@
         }
       },
       "BookingPropertyListResponse": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/BookingProperty"
-            }
-          },
-          "pagination": {
-            "$ref": "#/components/schemas/Pagination"
-          }
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/BookingProperty"
         }
       },
       "BookingConversationListResponse": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/BookingConversation"
-            }
-          },
-          "pagination": {
-            "$ref": "#/components/schemas/Pagination"
-          }
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/BookingConversation"
         }
       },
       "VrboListingListResponse": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/VrboListing"
-            }
-          },
-          "pagination": {
-            "$ref": "#/components/schemas/Pagination"
-          }
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/VrboListing"
         }
       },
       "VrboReservationListResponse": {
@@ -5984,7 +5960,7 @@
           "appliedRate": {
             "type": "number",
             "nullable": true,
-            "description": "Price actually written to the calendar. `null` when status is `pending` or `declined`. For now, when `status=applied` this equals `recommended_rate` because the apply path writes the recommendation verbatim."
+            "description": "Price actually written to the calendar. `null` when status is `pending` or `declined`. For now, when `status=applied` this equals `recommendedRate` because the apply path writes the recommendation verbatim."
           },
           "status": {
             "type": "string",
@@ -8636,7 +8612,7 @@
                     "limit": 10000,
                     "used": 10000,
                     "scope": "monthly",
-                    "resets_at": "2026-06-01T00:00:00.000Z"
+                    "resetsAt": "2026-06-01T00:00:00.000Z"
                   }
                 }
               }
@@ -8858,55 +8834,6 @@
       }
     },
     "/v1/availability/{propertyId}": {
-      "put": {
-        "operationId": "updateAvailability",
-        "summary": "Set prices, block or unblock dates",
-        "description": "Writes the calendar for one property AND pushes to every connected channel in the same step. A write that only changed our copy would leave the OTA calendars stale and eventually double-book a guest.",
-        "tags": [
-          "Availability"
-        ],
-        "parameters": [
-          {
-            "name": "propertyId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AvailabilityWriteRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Calendar updated and pushed to channels",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AvailabilityWriteResult"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          },
-          "422": {
-            "$ref": "#/components/responses/UnprocessableEntity"
-          }
-        }
-      },
       "get": {
         "operationId": "get_availability",
         "summary": "Get property availability",
@@ -8955,6 +8882,55 @@
                 }
               }
             }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateAvailability",
+        "summary": "Set prices, block or unblock dates",
+        "description": "Writes the calendar for one property AND pushes to every connected channel in the same step. A write that only changed our copy would leave the OTA calendars stale and eventually double-book a guest.",
+        "tags": [
+          "Availability"
+        ],
+        "parameters": [
+          {
+            "name": "propertyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AvailabilityWriteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Calendar updated and pushed to channels",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvailabilityWriteResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
@@ -11646,7 +11622,7 @@
       "patch": {
         "operationId": "update_webhook",
         "summary": "Update webhook subscription",
-        "description": "Update url, description, events, or status (active|paused). Re-enabling clears `consecutive_failures` and `disabled_at`.",
+        "description": "Update url, description, events, or status (active|paused). Re-enabling clears `consecutiveFailures` and `disabledAt`.",
         "tags": [
           "Webhooks"
         ],
@@ -12051,7 +12027,7 @@
       "get": {
         "operationId": "list_airbnb_listings",
         "summary": "List Airbnb listings",
-        "description": "List every Airbnb listing this workspace has access to via the connected Airbnb account. **Pure DB read \u2014 never calls Airbnb upstream.** The connect flow is what populates the local cache; the API serves what's already there. Customers with a disconnected host still see their last-synced data, with the top-level `data_freshness` envelope flagging the staleness and pointing at the reconnect URL.\n\nPass `?include=amenities` to enrich each connection with its locally-cached amenity set. Returns `null` per connection when the cache is empty.",
+        "description": "List every Airbnb listing this workspace has access to via the connected Airbnb account. **Pure DB read \u2014 never calls Airbnb upstream.** The connect flow is what populates the local cache; the API serves what's already there. Customers with a disconnected host still see their last-synced data, with the top-level `dataFreshness` envelope flagging the staleness and pointing at the reconnect URL.\n\nPass `?include=amenities` to enrich each connection with its locally-cached amenity set. Returns `null` per connection when the cache is empty.",
         "tags": [
           "Airbnb"
         ],
@@ -12848,7 +12824,7 @@
       "get": {
         "operationId": "list_airbnb_alterations",
         "summary": "List Airbnb alterations",
-        "description": "List reservation alteration requests for Airbnb reservations in this workspace. **Pure DB read** from the local `reservation_alterations` mirror \u2014 never calls Airbnb upstream \u2014 scoped to your workspace via the reservations join.\n\nDefault returns only pending alterations; pass `?type=all` for the full history. Filter to a single reservation with `?reservation_code=<confirmation code>`. Every response carries the `data_freshness` envelope.",
+        "description": "List reservation alteration requests for Airbnb reservations in this workspace. **Pure DB read** from the local `reservation_alterations` mirror \u2014 never calls Airbnb upstream \u2014 scoped to your workspace via the reservations join.\n\nDefault returns only pending alterations; pass `?type=all` for the full history. Filter to a single reservation with `?reservation_code=<confirmation code>`. Every response carries the `dataFreshness` envelope.",
         "tags": [
           "Airbnb"
         ],
@@ -12886,7 +12862,7 @@
                   "type": "object",
                   "required": [
                     "data",
-                    "data_freshness"
+                    "dataFreshness"
                   ],
                   "properties": {
                     "data": {
@@ -12895,7 +12871,7 @@
                         "$ref": "#/components/schemas/AirbnbAlteration"
                       }
                     },
-                    "data_freshness": {
+                    "dataFreshness": {
                       "$ref": "#/components/schemas/AirbnbDataFreshness"
                     }
                   }
@@ -12996,13 +12972,13 @@
                   "type": "object",
                   "required": [
                     "data",
-                    "data_freshness"
+                    "dataFreshness"
                   ],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/AirbnbAlteration"
                     },
-                    "data_freshness": {
+                    "dataFreshness": {
                       "$ref": "#/components/schemas/AirbnbDataFreshness"
                     }
                   }
@@ -13133,7 +13109,7 @@
                   "type": "object",
                   "required": [
                     "data",
-                    "data_freshness"
+                    "dataFreshness"
                   ],
                   "properties": {
                     "data": {
@@ -13142,7 +13118,7 @@
                         "$ref": "#/components/schemas/AirbnbTransaction"
                       }
                     },
-                    "data_freshness": {
+                    "dataFreshness": {
                       "$ref": "#/components/schemas/AirbnbDataFreshness"
                     }
                   }
@@ -13265,13 +13241,13 @@
                   "type": "object",
                   "required": [
                     "data",
-                    "data_freshness"
+                    "dataFreshness"
                   ],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/AirbnbThread"
                     },
-                    "data_freshness": {
+                    "dataFreshness": {
                       "$ref": "#/components/schemas/AirbnbDataFreshness"
                     }
                   }
@@ -13375,7 +13351,7 @@
       "get": {
         "operationId": "list_airbnb_listing_amenities",
         "summary": "List Airbnb amenities",
-        "description": "List an Airbnb listing's amenities. **Pure DB read** from the local `listings_airbnb_amenities` cache \u2014 never calls Airbnb upstream. The response splits amenities into `amenities` (regular) and `accessibility_amenities` (step-free access, wide doorways, grab rails, disabled parking, wheelchair, accessible-height fixtures, hoists, etc). Both are arrays (`[]` when none). Consult `data_freshness` to disambiguate \"never synced\" from \"fresh and genuinely empty\". Returns `404` when the listing has no Airbnb connection in this workspace.",
+        "description": "List an Airbnb listing's amenities. **Pure DB read** from the local `listings_airbnb_amenities` cache \u2014 never calls Airbnb upstream. The response splits amenities into `amenities` (regular) and `accessibility_amenities` (step-free access, wide doorways, grab rails, disabled parking, wheelchair, accessible-height fixtures, hoists, etc). Both are arrays (`[]` when none). Consult `dataFreshness` to disambiguate \"never synced\" from \"fresh and genuinely empty\". Returns `404` when the listing has no Airbnb connection in this workspace.",
         "tags": [
           "Airbnb"
         ],
@@ -13399,7 +13375,7 @@
                   "type": "object",
                   "required": [
                     "data",
-                    "data_freshness"
+                    "dataFreshness"
                   ],
                   "properties": {
                     "data": {
@@ -13419,7 +13395,7 @@
                         }
                       }
                     },
-                    "data_freshness": {
+                    "dataFreshness": {
                       "$ref": "#/components/schemas/AirbnbDataFreshness"
                     }
                   }
@@ -13480,7 +13456,7 @@
                   "type": "object",
                   "required": [
                     "data",
-                    "data_freshness"
+                    "dataFreshness"
                   ],
                   "properties": {
                     "data": {
@@ -13490,7 +13466,7 @@
                         "additionalProperties": true
                       }
                     },
-                    "data_freshness": {
+                    "dataFreshness": {
                       "$ref": "#/components/schemas/AirbnbDataFreshness"
                     }
                   }
@@ -13584,7 +13560,7 @@
                   "type": "object",
                   "required": [
                     "data",
-                    "data_freshness"
+                    "dataFreshness"
                   ],
                   "properties": {
                     "data": {
@@ -13594,7 +13570,7 @@
                         "additionalProperties": true
                       }
                     },
-                    "data_freshness": {
+                    "dataFreshness": {
                       "$ref": "#/components/schemas/AirbnbDataFreshness"
                     }
                   }
@@ -13664,7 +13640,7 @@
                   "type": "object",
                   "required": [
                     "data",
-                    "data_freshness"
+                    "dataFreshness"
                   ],
                   "properties": {
                     "data": {
@@ -13674,7 +13650,7 @@
                         "additionalProperties": true
                       }
                     },
-                    "data_freshness": {
+                    "dataFreshness": {
                       "$ref": "#/components/schemas/AirbnbDataFreshness"
                     }
                   }
@@ -13741,13 +13717,13 @@
                   "type": "object",
                   "required": [
                     "data",
-                    "data_freshness"
+                    "dataFreshness"
                   ],
                   "properties": {
                     "data": {
                       "description": "Shape depends on `type`: an object `{ standards, issues }` for `all`/`standards`, or an array for `issues`/`stats`."
                     },
-                    "data_freshness": {
+                    "dataFreshness": {
                       "$ref": "#/components/schemas/AirbnbDataFreshness"
                     }
                   }
@@ -13798,7 +13774,7 @@
                   "type": "object",
                   "required": [
                     "data",
-                    "data_freshness"
+                    "dataFreshness"
                   ],
                   "properties": {
                     "data": {
@@ -13808,7 +13784,7 @@
                         "additionalProperties": true
                       }
                     },
-                    "data_freshness": {
+                    "dataFreshness": {
                       "$ref": "#/components/schemas/AirbnbDataFreshness"
                     }
                   }
@@ -13978,13 +13954,13 @@
                   "type": "object",
                   "required": [
                     "data",
-                    "data_freshness"
+                    "dataFreshness"
                   ],
                   "properties": {
                     "data": {
                       "description": "Shape depends on `type`: `{ hosts, locales }` for `all`, or an array for `hosts`/`permits`/`locales`."
                     },
-                    "data_freshness": {
+                    "dataFreshness": {
                       "$ref": "#/components/schemas/AirbnbDataFreshness"
                     }
                   }
@@ -16920,11 +16896,11 @@
                     "pagination": {
                       "type": "object",
                       "properties": {
-                        "next_cursor": {
+                        "nextCursor": {
                           "type": "string",
                           "nullable": true
                         },
-                        "has_more": {
+                        "hasMore": {
                           "type": "boolean"
                         },
                         "total": {
@@ -16991,11 +16967,11 @@
                     "limits": {
                       "type": "object",
                       "properties": {
-                        "monthly_requests": {
+                        "monthlyRequests": {
                           "type": "integer",
                           "nullable": true
                         },
-                        "daily_ai_requests": {
+                        "dailyAiRequests": {
                           "type": "integer",
                           "nullable": true
                         }
@@ -17007,7 +16983,7 @@
                         "monthly": {
                           "type": "integer"
                         },
-                        "daily_ai": {
+                        "dailyAi": {
                           "type": "integer"
                         }
                       }
@@ -17019,13 +16995,13 @@
                           "type": "integer",
                           "nullable": true
                         },
-                        "daily_ai": {
+                        "dailyAi": {
                           "type": "integer",
                           "nullable": true
                         }
                       }
                     },
-                    "resets_at": {
+                    "resetsAt": {
                       "type": "string",
                       "format": "date-time"
                     },
@@ -17139,15 +17115,15 @@
                     "limits": {
                       "type": "object",
                       "properties": {
-                        "monthly_requests": {
+                        "monthlyRequests": {
                           "type": "integer",
                           "nullable": true
                         },
-                        "daily_ai_requests": {
+                        "dailyAiRequests": {
                           "type": "integer",
                           "nullable": true
                         },
-                        "dynamic_pricing_listings": {
+                        "dynamicPricingListings": {
                           "type": "integer",
                           "nullable": true
                         }
@@ -17159,10 +17135,10 @@
                         "monthly": {
                           "type": "integer"
                         },
-                        "daily_ai": {
+                        "dailyAi": {
                           "type": "integer"
                         },
-                        "dynamic_pricing_listings": {
+                        "dynamicPricingListings": {
                           "type": "integer"
                         }
                       }
@@ -17174,17 +17150,17 @@
                           "type": "integer",
                           "nullable": true
                         },
-                        "daily_ai": {
+                        "dailyAi": {
                           "type": "integer",
                           "nullable": true
                         },
-                        "dynamic_pricing_listings": {
+                        "dynamicPricingListings": {
                           "type": "integer",
                           "nullable": true
                         }
                       }
                     },
-                    "resets_at": {
+                    "resetsAt": {
                       "type": "string",
                       "format": "date-time"
                     }
@@ -17203,6 +17179,32 @@
       }
     },
     "/v1/schema/custom": {
+      "get": {
+        "operationId": "listCustomSchemas",
+        "summary": "List custom schemas",
+        "description": "Returns every custom schema owned by the workspace, including inactive ones.",
+        "tags": [
+          "schema"
+        ],
+        "responses": {
+          "200": {
+            "description": "Custom schemas list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomSchemaListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      },
       "post": {
         "operationId": "createCustomSchema",
         "summary": "Create a custom schema",
@@ -17242,32 +17244,6 @@
           },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntity"
-          }
-        }
-      },
-      "get": {
-        "operationId": "listCustomSchemas",
-        "summary": "List custom schemas",
-        "description": "Returns every custom schema owned by the workspace, including inactive ones.",
-        "tags": [
-          "schema"
-        ],
-        "responses": {
-          "200": {
-            "description": "Custom schemas list",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CustomSchemaListResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
           }
         }
       }
@@ -17473,7 +17449,7 @@
                         "total": {
                           "type": "integer"
                         },
-                        "has_more": {
+                        "hasMore": {
                           "type": "boolean"
                         }
                       }

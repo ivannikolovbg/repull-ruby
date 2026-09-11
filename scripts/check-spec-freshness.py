@@ -138,7 +138,51 @@ def fetch_live_spec(url: str) -> dict:
     sys.exit(2)
 
 
+LIVE_SPEC: dict | None = None
+LOCAL_SPEC: dict | None = None
+
 HTTP_METHODS = ("get", "post", "put", "patch", "delete", "head", "options")
+
+
+def schema_fingerprint(spec: dict) -> set[str]:
+    """Every property as "Schema.path:type" -- the SHAPE, not the prose.
+
+    Operation inventory alone is not enough. Nineteen schema corrections shipped
+    -- ten fields renamed because the serializer camelCases keys, three list
+    responses that are arrays rather than objects, four ids that are strings
+    rather than integers, and lat/lng likewise -- and every SDK snapshot stayed
+    stale while this check printed OK, because not one path or method had moved.
+
+    Descriptions, examples and enums are deliberately excluded: prose changes
+    constantly and would make this cry wolf, and repull-ruby's regen strips
+    enums from its snapshot before generating, so comparing them would fail
+    there forever for a reason that has nothing to do with drift.
+    """
+    out: set[str] = set()
+
+    def walk(node, where, depth=0):
+        if not isinstance(node, dict) or depth > 12:
+            return
+        props = node.get("properties")
+        if isinstance(props, dict):
+            for k, v in props.items():
+                t = v.get("type") if isinstance(v, dict) else None
+                ref = v.get("$ref") if isinstance(v, dict) else None
+                out.add(f"{where}.{k}:{t or ref or '?'}")
+                walk(v, f"{where}.{k}", depth + 1)
+        items = node.get("items")
+        if isinstance(items, dict):
+            out.add(f"{where}[]:{items.get('type') or items.get('$ref') or '?'}")
+            walk(items, f"{where}[]", depth + 1)
+        if isinstance(node.get("required"), list):
+            for r in node["required"]:
+                out.add(f"{where}.required:{r}")
+
+    for name, sch in (spec.get("components", {}).get("schemas", {}) or {}).items():
+        t = sch.get("type") if isinstance(sch, dict) else None
+        out.add(f"{name}:{t or '?'}")
+        walk(sch, name)
+    return out
 
 
 def spec_bare_paths(spec: dict, label: str) -> set[str]:
@@ -191,10 +235,19 @@ def run_snapshot_mode(snapshot_path: str, live: set[str]) -> int:
     stale = sorted(local - live)   # SDK declares it, API does not have it
     missing = sorted(live - local)  # API has it, SDK cannot reach it
 
+    # Schema-shape comparison. `live_spec`/`local_spec` are set by main().
+    schema_stale: list[str] = []
+    schema_missing: list[str] = []
+    if LIVE_SPEC is not None and LOCAL_SPEC is not None:
+        lf = schema_fingerprint(LOCAL_SPEC)
+        rf = schema_fingerprint(LIVE_SPEC)
+        schema_stale = sorted(lf - rf)
+        schema_missing = sorted(rf - lf)
+
     print(f"  snapshot : {snapshot_path} ({len(local)} operations)")
     print(f"  live     : {len(live)} operations")
 
-    if not stale and not missing:
+    if not stale and not missing and not schema_stale and not schema_missing:
         print(f"\nOK: snapshot matches the live API exactly ({len(local)} operations).")
         return 0
 
@@ -212,6 +265,18 @@ def run_snapshot_mode(snapshot_path: str, live: set[str]) -> int:
         print("  (these operations are unreachable from this SDK):")
         for path in missing:
             print(f"    + {path}")
+        print()
+
+    if schema_stale or schema_missing:
+        n = len(schema_stale) + len(schema_missing)
+        print(f"  {n} schema difference(s) -- the shapes the SDK types are built")
+        print("  from no longer match the API:")
+        for d in schema_missing[:12]:
+            print(f"    + {d}")
+        for d in schema_stale[:12]:
+            print(f"    - {d}")
+        if n > 24:
+            print(f"    ... and {n - 24} more")
         print()
 
     print("  FIX: re-run this repo's regen script to pull the live spec and")
@@ -314,6 +379,13 @@ def main() -> int:
     spec = fetch_live_spec(args.spec_url)
 
     if args.mode == "snapshot":
+        global LIVE_SPEC, LOCAL_SPEC
+        LIVE_SPEC = spec
+        try:
+            with open(args.snapshot, encoding="utf-8") as fh:
+                LOCAL_SPEC = json.load(fh)
+        except Exception:
+            LOCAL_SPEC = None
         # Method + path, so an operation added to an existing path is visible.
         return run_snapshot_mode(args.snapshot, spec_paths(spec, args.spec_url))
 

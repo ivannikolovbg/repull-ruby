@@ -8,8 +8,8 @@
 | **name** | **String** | Property name | [optional] |
 | **address** | **String** | Street address (from the listing&#39;s &#x60;street&#x60; field). | [optional] |
 | **city** | **String** |  | [optional] |
-| **latitude** | **Float** | Detail endpoint only. | [optional] |
-| **longitude** | **Float** | Detail endpoint only. | [optional] |
+| **latitude** | **String** | Detail endpoint only. Decimal degrees, as a string. | [optional] |
+| **longitude** | **String** | Detail endpoint only. Decimal degrees, as a string. | [optional] |
 | **currency** | **String** | ISO 4217 currency code for this property&#39;s pricing. | [optional] |
 | **status** | **String** | Derived from &#x60;listings.active&#x60;. | [optional] |
 | **lifecycle_status** | **String** | The listing&#39;s lifecycle state (e.g. &#x60;live&#x60;, &#x60;draft&#x60;, &#x60;archived&#x60;). | [optional] |

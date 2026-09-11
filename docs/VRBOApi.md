@@ -10,7 +10,7 @@ All URIs are relative to *https://api.repull.dev*
 
 ## list_vrbo_listings
 
-> <VrboListingListResponse> list_vrbo_listings
+> <Array<VrboListing>> list_vrbo_listings
 
 List VRBO listings
 
@@ -42,7 +42,7 @@ end
 
 This returns an Array which contains the response data, status code and headers.
 
-> <Array(<VrboListingListResponse>, Integer, Hash)> list_vrbo_listings_with_http_info
+> <Array(<Array<VrboListing>>, Integer, Hash)> list_vrbo_listings_with_http_info
 
 ```ruby
 begin
@@ -50,7 +50,7 @@ begin
   data, status_code, headers = api_instance.list_vrbo_listings_with_http_info
   p status_code # => 2xx
   p headers # => { ... }
-  p data # => <VrboListingListResponse>
+  p data # => <Array<VrboListing>>
 rescue Repull::ApiError => e
   puts "Error when calling VRBOApi->list_vrbo_listings_with_http_info: #{e}"
 end
@@ -62,7 +62,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**VrboListingListResponse**](VrboListingListResponse.md)
+[**Array&lt;VrboListing&gt;**](VrboListing.md)
 
 ### Authorization
 

@@ -4,7 +4,7 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **listing_id** | **Integer** | Vanio (Repull) listing id | [optional] |
+| **listing_id** | **String** | Vanio (Repull) listing id | [optional] |
 | **name** | **String** | Listing title | [optional] |
 | **city** | **String** |  | [optional] |
 | **connections** | [**Array&lt;AirbnbConnection&gt;**](AirbnbConnection.md) |  | [optional] |
