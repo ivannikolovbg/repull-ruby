@@ -191,7 +191,7 @@ Repull.configure do |config|
 end
 
 api_instance = Repull::ReviewsApi.new
-id = 'id_example' # String | Resource id from the path.
+id = 56 # Integer | Internal Repull review id.
 reply_to_review_request = Repull::ReplyToReviewRequest.new({message: 'message_example'}) # ReplyToReviewRequest | 
 
 begin
@@ -225,7 +225,7 @@ end
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **id** | **String** | Resource id from the path. |  |
+| **id** | **Integer** | Internal Repull review id. |  |
 | **reply_to_review_request** | [**ReplyToReviewRequest**](ReplyToReviewRequest.md) |  |  |
 
 ### Return type

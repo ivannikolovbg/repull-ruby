@@ -65,6 +65,7 @@ import argparse
 import json
 import os
 import re
+import subprocess
 import sys
 import time
 import urllib.error
@@ -79,29 +80,58 @@ FETCH_BACKOFF_SECONDS = 2
 # live spec
 # ---------------------------------------------------------------------------
 
+def _fetch_with_curl(url: str) -> str:
+    """
+    Fetch via curl.
+
+    api.repull.dev sits behind Cloudflare, which fingerprints the TLS handshake
+    (JA3/JA4) -- not just headers. Python's urllib/OpenSSL handshake gets a hard
+    403 on EVERY request no matter what User-Agent or Accept headers are set,
+    while curl on the same machine gets a 200. Setting a browser User-Agent does
+    NOT help, because the block is below the HTTP layer.
+
+    So curl is the primary transport. It is preinstalled on ubuntu-latest (and
+    every other GitHub runner image), so this costs nothing in CI.
+    """
+    proc = subprocess.run(
+        [
+            "curl", "--silent", "--show-error", "--fail",
+            "--location", "--max-time", "30",
+            "--header", "Accept: application/json",
+            url,
+        ],
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode != 0:
+        raise RuntimeError(f"curl exit {proc.returncode}: {proc.stderr.strip()}")
+    return proc.stdout
+
+
+def _fetch_with_urllib(url: str) -> str:
+    req = urllib.request.Request(url, headers={"Accept": "application/json"})
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        if resp.status != 200:
+            raise RuntimeError(f"HTTP {resp.status}")
+        return resp.read().decode("utf-8")
+
+
 def fetch_live_spec(url: str) -> dict:
     last_err: Exception | None = None
     for attempt in range(1, FETCH_ATTEMPTS + 1):
-        try:
-            req = urllib.request.Request(
-                url,
-                headers={
-                    "Accept": "application/json",
-                    "User-Agent": "repull-sdk-spec-freshness-check",
-                },
+        for transport in (_fetch_with_curl, _fetch_with_urllib):
+            try:
+                return json.loads(transport(url))
+            except FileNotFoundError as err:  # curl missing -> try urllib
+                last_err = err
+            except Exception as err:  # noqa: BLE001 - retry anything transient
+                last_err = err
+        if attempt < FETCH_ATTEMPTS:
+            print(
+                f"  fetch attempt {attempt}/{FETCH_ATTEMPTS} failed ({last_err}); retrying...",
+                file=sys.stderr,
             )
-            with urllib.request.urlopen(req, timeout=30) as resp:
-                if resp.status != 200:
-                    raise RuntimeError(f"HTTP {resp.status}")
-                return json.loads(resp.read().decode("utf-8"))
-        except Exception as err:  # noqa: BLE001 - retry anything transient
-            last_err = err
-            if attempt < FETCH_ATTEMPTS:
-                print(
-                    f"  fetch attempt {attempt}/{FETCH_ATTEMPTS} failed ({err}); retrying...",
-                    file=sys.stderr,
-                )
-                time.sleep(FETCH_BACKOFF_SECONDS * attempt)
+            time.sleep(FETCH_BACKOFF_SECONDS * attempt)
 
     print(f"\nERROR: could not fetch the live spec at {url}: {last_err}", file=sys.stderr)
     print("This is a fetch failure, not drift. Re-run the job.", file=sys.stderr)

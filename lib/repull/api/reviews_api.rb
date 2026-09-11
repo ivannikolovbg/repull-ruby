@@ -218,7 +218,7 @@ module Repull
 
     # Reply to a review on any channel
     # Resolves the review, reads its channel and dispatches the reply. Channel-neutral: you do not need to know where the review came from.  Replies are available on Airbnb today; a review from a channel without a reply API returns `422 unsupported_channel` naming the channels that do work.
-    # @param id [String] Resource id from the path.
+    # @param id [Integer] Internal Repull review id.
     # @param reply_to_review_request [ReplyToReviewRequest] 
     # @param [Hash] opts the optional parameters
     # @return [ReplyToReview201Response]
@@ -229,7 +229,7 @@ module Repull
 
     # Reply to a review on any channel
     # Resolves the review, reads its channel and dispatches the reply. Channel-neutral: you do not need to know where the review came from.  Replies are available on Airbnb today; a review from a channel without a reply API returns &#x60;422 unsupported_channel&#x60; naming the channels that do work.
-    # @param id [String] Resource id from the path.
+    # @param id [Integer] Internal Repull review id.
     # @param reply_to_review_request [ReplyToReviewRequest] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(ReplyToReview201Response, Integer, Hash)>] ReplyToReview201Response data, response status code and response headers
