@@ -348,7 +348,7 @@ def run_source_mode(source_dir: str, live: set[str]) -> int:
     bogus = sorted(p for p in found if normalize(p) not in shapes)
 
     if not bogus:
-        print(f"\nOK: every /v1/ path referenced in source exists in the live API.")
+        print("\nOK: every /v1/ path referenced in source exists in the live API.")
         return 0
 
     print(f"\nFAIL: {len(bogus)} path(s) referenced in source do NOT exist in the live API.")
