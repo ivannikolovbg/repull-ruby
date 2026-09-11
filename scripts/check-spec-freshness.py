@@ -138,12 +138,42 @@ def fetch_live_spec(url: str) -> dict:
     sys.exit(2)
 
 
-def spec_paths(spec: dict, label: str) -> set[str]:
+HTTP_METHODS = ("get", "post", "put", "patch", "delete", "head", "options")
+
+
+def spec_bare_paths(spec: dict, label: str) -> set[str]:
+    """Just the path keys, for source mode -- a literal in code has no method."""
     paths = spec.get("paths")
     if not isinstance(paths, dict):
         print(f"ERROR: {label} has no usable 'paths' object", file=sys.stderr)
         sys.exit(2)
     return set(paths)
+
+
+def spec_paths(spec: dict, label: str) -> set[str]:
+    """Every OPERATION, as "POST /v1/reservations" -- not just the path key.
+
+    Comparing bare path keys let a whole operation disappear unnoticed. Four
+    write endpoints (create a reservation, update a reservation, create a
+    guest, send a message to a guest) were added as new METHODS on paths that
+    already existed for GET, so the path set was byte-identical before and
+    after and every SDK silently lacked them while this check printed OK.
+
+    Method + path is the unit a caller actually reaches for, so it is the unit
+    the guard compares.
+    """
+    paths = spec.get("paths")
+    if not isinstance(paths, dict):
+        print(f"ERROR: {label} has no usable 'paths' object", file=sys.stderr)
+        sys.exit(2)
+    ops: set[str] = set()
+    for path, item in paths.items():
+        if not isinstance(item, dict):
+            continue
+        for method in item:
+            if method.lower() in HTTP_METHODS:
+                ops.add(f"{method.upper()} {path}")
+    return ops
 
 
 # ---------------------------------------------------------------------------
@@ -161,24 +191,24 @@ def run_snapshot_mode(snapshot_path: str, live: set[str]) -> int:
     stale = sorted(local - live)   # SDK declares it, API does not have it
     missing = sorted(live - local)  # API has it, SDK cannot reach it
 
-    print(f"  snapshot : {snapshot_path} ({len(local)} paths)")
-    print(f"  live     : {len(live)} paths")
+    print(f"  snapshot : {snapshot_path} ({len(local)} operations)")
+    print(f"  live     : {len(live)} operations")
 
     if not stale and not missing:
-        print(f"\nOK: snapshot path set matches the live API exactly ({len(local)} paths).")
+        print(f"\nOK: snapshot matches the live API exactly ({len(local)} operations).")
         return 0
 
     print("\nFAIL: committed OpenAPI snapshot has drifted from the live API.\n")
 
     if stale:
-        print(f"  {len(stale)} path(s) in the SDK that the API DOES NOT HAVE")
+        print(f"  {len(stale)} operation(s) in the SDK that the API DOES NOT HAVE")
         print("  (the SDK ships dead code -- these calls will 404):")
         for path in stale:
             print(f"    - {path}")
         print()
 
     if missing:
-        print(f"  {len(missing)} path(s) the API HAS that the SDK IS MISSING")
+        print(f"  {len(missing)} operation(s) the API HAS that the SDK IS MISSING")
         print("  (these operations are unreachable from this SDK):")
         for path in missing:
             print(f"    + {path}")
@@ -281,11 +311,16 @@ def main() -> int:
     print("Repull SDK spec-freshness check")
     print(f"  spec url : {args.spec_url}")
 
-    live = spec_paths(fetch_live_spec(args.spec_url), args.spec_url)
+    spec = fetch_live_spec(args.spec_url)
 
     if args.mode == "snapshot":
-        return run_snapshot_mode(args.snapshot, live)
-    return run_source_mode(args.source_dir, live)
+        # Method + path, so an operation added to an existing path is visible.
+        return run_snapshot_mode(args.snapshot, spec_paths(spec, args.spec_url))
+
+    # Source mode matches bare "/v1/..." literals found in code, which carry no
+    # method, so it compares against paths rather than operations.
+    return run_source_mode(args.source_dir, spec_bare_paths(spec, args.spec_url))
+
 
 
 if __name__ == "__main__":
