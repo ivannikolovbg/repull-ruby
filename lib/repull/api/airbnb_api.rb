@@ -1,7 +1,7 @@
 =begin
 #Repull API
 
-#The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.  ## Designed for AI agents Every error response on this API includes machine-parseable fields so an LLM (Claude in MCP, Cursor, Cline, GPT, etc.) can self-recover without escalating to a human: - `error.code` — stable string identifier (e.g. `invalid_params`, `rate_limit_exceeded`) - `error.message` — human-readable cause - `error.fix` — exact recovery steps (e.g. \"Pass `check_in_after` as ISO 8601: `?check_in_after=2026-01-15`\") - `error.docs_url` — link to the canonical write-up at `https://repull.dev/docs/errors/{code}` - `error.request_id` — id to correlate with server-side logs - `error.field` / `error.value_received` / `error.valid_values` / `error.did_you_mean` — when the error is parameter-specific - `error.retry_after` — seconds to wait before retrying (rate-limit + transient upstream)  `Access-Control-Expose-Headers` lists `x-request-id` and the `X-RateLimit-*` family so browsers can read them on cross-origin responses.  ## Quick Start 1. Get an API key at https://repull.dev/dashboard 2. Connect a PMS: `POST /v1/connect/{provider}` 3. List properties: `GET /v1/properties` 4. Get reservations: `GET /v1/reservations`  ## Authentication All requests require a Bearer token: ``` Authorization: Bearer sk_test_YOUR_API_KEY ```  Sandbox keys start with `sk_test_`, production with `sk_live_`.  ## Request Correlation (X-Request-ID) Every response carries an `X-Request-ID` header, e.g. `X-Request-ID: req_01HXY...`. Include this id in support tickets and bug reports — we can trace the full request lifecycle (auth, rate limit, handler, downstream calls, log row) from a single id.  You may set the header on the inbound request to forward your own trace id; we will echo it back instead of generating a new one. Accepted format: `^[\\\\w.-]{1,128}$`.  The id is also embedded in error envelopes as `request_id` so server-side log diffs work even when the response headers are stripped by an intermediate proxy.  ## Rate Limits The public API enforces a per-API-key sliding-window rate limit on top of the per-tier monthly + daily-AI quotas.  **Default policy:** 600 requests per 60 seconds, per API key. Sliding window — there is no fixed-minute boundary you can burst across.  Every response includes:  | Header | Meaning | |---|---| | `X-RateLimit-Limit` | Requests permitted in the current window. | | `X-RateLimit-Remaining` | Requests left in the current window after this call. | | `X-RateLimit-Reset` | Unix epoch (seconds) when the next slot opens. | | `X-RateLimit-Policy` | Machine-readable policy descriptor, e.g. `600;w=60`. | | `Retry-After` | Seconds to wait before retrying. **Only present on 429 responses.** |  **On 429 (rate_limit_exceeded):** the response body matches the standard error envelope with `code: \"rate_limit_exceeded\"`, plus `limit`, `window_seconds`, `retry_after`, and `request_id` fields. SDKs MUST honor `Retry-After` and use exponential backoff with jitter on subsequent retries — never a tight loop.  Recommended backoff: ``` sleep_ms = (Retry-After * 1000) + random(0..250) ```  Monthly + daily-AI tier quotas (`free`, `starter`, `custom`) are enforced separately and also surface as 429s; they include `tier`, `scope`, and `resets_at` fields.  ## Plan Limits (402 — `listings_limit_exceeded`) The Repull API also enforces a per-tier cap on **active listings**:  | Tier | Active listings cap | |---|---| | `free` | 3 | | `starter` | 50 | | `custom` | unlimited |  When a customer's active-listing count is above their tier cap, the API returns **`402 Payment Required`** with `error.code = \"listings_limit_exceeded\"` on every route EXCEPT:  - `/v1/health` — uptime probes are never gated. - `/v1/usage/*` — so dashboards can render the over-cap state. - Any `DELETE` — so the customer can trim listings to get back under the cap without paying.  Unlike 429, 402 is NOT a \"wait and retry\" condition — `Retry-After` is not set. The only paths back to 200 are:   1. `DELETE` enough listings to come back under the cap, or   2. Upgrade at `https://repull.dev/dashboard/billing`. The server-side usage cache is 60s, so the first 200 after an upgrade may take up to a minute.  The envelope mirrors `rate_limit_exceeded` for SDK ergonomics: `tier`, `limit`, `active_listings`, `upgrade_url`, plus the standard `code` / `message` / `fix` / `docs_url` / `request_id`.
+#The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.  ## Designed for AI agents Every error response on this API includes machine-parseable fields so an LLM (Claude in MCP, Cursor, Cline, GPT, etc.) can self-recover without escalating to a human: - `error.code` — stable string identifier (e.g. `invalid_params`, `rate_limit_exceeded`) - `error.message` — human-readable cause - `error.fix` — exact recovery steps (e.g. \"Pass `check_in_after` as ISO 8601: `?check_in_after=2026-01-15`\") - `error.docs_url` — link to the canonical write-up at `https://repull.dev/docs/errors/{code}` - `error.request_id` — id to correlate with server-side logs - `error.field` / `error.value_received` / `error.valid_values` / `error.did_you_mean` — when the error is parameter-specific - `error.retry_after` — seconds to wait before retrying (rate-limit + transient upstream)  `Access-Control-Expose-Headers` lists `x-request-id` and the `X-RateLimit-*` family so browsers can read them on cross-origin responses.  ## Quick Start 1. Get an API key at https://repull.dev/dashboard 2. Connect a PMS: `POST /v1/connect/{provider}` 3. List properties: `GET /v1/properties` 4. Get reservations: `GET /v1/reservations`  ## Authentication All requests require a Bearer token: ``` Authorization: Bearer sk_live_YOUR_API_KEY ```  ## Request Correlation (X-Request-ID) Every response carries an `X-Request-ID` header, e.g. `X-Request-ID: req_01HXY...`. Include this id in support tickets and bug reports — we can trace the full request lifecycle (auth, rate limit, handler, downstream calls, log row) from a single id.  You may set the header on the inbound request to forward your own trace id; we will echo it back instead of generating a new one. Accepted format: `^[\\\\w.-]{1,128}$`.  The id is also embedded in error envelopes as `request_id` so server-side log diffs work even when the response headers are stripped by an intermediate proxy.  ## Rate Limits The public API enforces a per-API-key sliding-window rate limit on top of the per-tier monthly + daily-AI quotas.  **Default policy:** 600 requests per 60 seconds, per API key. Sliding window — there is no fixed-minute boundary you can burst across.  Every response includes:  | Header | Meaning | |---|---| | `X-RateLimit-Limit` | Requests permitted in the current window. | | `X-RateLimit-Remaining` | Requests left in the current window after this call. | | `X-RateLimit-Reset` | Unix epoch (seconds) when the next slot opens. | | `X-RateLimit-Policy` | Machine-readable policy descriptor, e.g. `600;w=60`. | | `Retry-After` | Seconds to wait before retrying. **Only present on 429 responses.** |  **On 429 (rate_limit_exceeded):** the response body matches the standard error envelope with `code: \"rate_limit_exceeded\"`, plus `limit`, `window_seconds`, `retry_after`, and `request_id` fields. SDKs MUST honor `Retry-After` and use exponential backoff with jitter on subsequent retries — never a tight loop.  Recommended backoff: ``` sleep_ms = (Retry-After * 1000) + random(0..250) ```  Monthly + daily-AI tier quotas (`free`, `starter`, `custom`) are enforced separately and also surface as 429s; they include `tier`, `scope`, and `resets_at` fields.  ## Plan Limits (402 — `listings_limit_exceeded`) The Repull API also enforces a per-tier cap on **active listings**:  | Tier | Active listings cap | |---|---| | `free` | 3 | | `starter` | 50 | | `custom` | unlimited |  When a customer's active-listing count is above their tier cap, the API returns **`402 Payment Required`** with `error.code = \"listings_limit_exceeded\"` on every route EXCEPT:  - `/v1/health` — uptime probes are never gated. - `/v1/usage/*` — so dashboards can render the over-cap state. - Any `DELETE` — so the customer can trim listings to get back under the cap without paying.  Unlike 429, 402 is NOT a \"wait and retry\" condition — `Retry-After` is not set. The only paths back to 200 are:   1. `DELETE` enough listings to come back under the cap, or   2. Upgrade at `https://repull.dev/dashboard/billing`. The server-side usage cache is 60s, so the first 200 after an upgrade may take up to a minute.  The envelope mirrors `rate_limit_exceeded` for SDK ergonomics: `tier`, `limit`, `active_listings`, `upgrade_url`, plus the standard `code` / `message` / `fix` / `docs_url` / `request_id`.
 
 The version of the OpenAPI document: 1.0.0
 Contact: ivan@vanio.ai
@@ -19,6 +19,76 @@ module Repull
     def initialize(api_client = ApiClient.default)
       @api_client = api_client
     end
+    # Accept Airbnb alteration
+    # Accept a pending Airbnb reservation alteration. **Write-side** — calls Airbnb upstream (`respondToAlteration`) to approve the proposed date / guest-count / price change. Requires a connected Airbnb host for the workspace (else `404 no_connection`) and that the alteration id belongs to a reservation in your workspace (else `404 not_found`). No request body is required.
+    # @param id [String] Airbnb alteration id (the &#x60;alterationId&#x60; from a &#x60;GET /v1/channels/airbnb/alterations&#x60; row).
+    # @param [Hash] opts the optional parameters
+    # @option opts [Object] :body 
+    # @return [nil]
+    def accept_airbnb_alteration(id, opts = {})
+      accept_airbnb_alteration_with_http_info(id, opts)
+      nil
+    end
+
+    # Accept Airbnb alteration
+    # Accept a pending Airbnb reservation alteration. **Write-side** — calls Airbnb upstream (&#x60;respondToAlteration&#x60;) to approve the proposed date / guest-count / price change. Requires a connected Airbnb host for the workspace (else &#x60;404 no_connection&#x60;) and that the alteration id belongs to a reservation in your workspace (else &#x60;404 not_found&#x60;). No request body is required.
+    # @param id [String] Airbnb alteration id (the &#x60;alterationId&#x60; from a &#x60;GET /v1/channels/airbnb/alterations&#x60; row).
+    # @param [Hash] opts the optional parameters
+    # @option opts [Object] :body 
+    # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
+    def accept_airbnb_alteration_with_http_info(id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: AirbnbApi.accept_airbnb_alteration ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling AirbnbApi.accept_airbnb_alteration"
+      end
+      # resource path
+      local_var_path = '/v1/channels/airbnb/alterations/{id}/accept'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(opts[:'body'])
+
+      # return_type
+      return_type = opts[:debug_return_type]
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"AirbnbApi.accept_airbnb_alteration",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: AirbnbApi#accept_airbnb_alteration\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # Listing action (delete/push/publish)
     # Apply a state action to a listing by id. The path `id` is the canonical Repull listing id.  `delete` is a **deactivate of the Repull record only** — it sets the listing inactive and KEEPS the row; it does NOT touch the upstream Airbnb listing (Repull never deletes or deactivates on Airbnb's side). Use it to exclude a listing / trim back under the plan-listings cap; reactivate via `PATCH /v1/listings/{id}` with `{ \"active\": true }`. Idempotent.  `push` / `publish` push the listing's content to Airbnb via the same host-side sync orchestrator as `POST /v1/listings/{id}/publish/airbnb` — pass `airbnbConnectionId` to update an already-mapped Airbnb listing, or `hostId` to create + publish a new one under that host. `force` re-pushes every field, ignoring dirty-field tracking.  Any other action (e.g. `pull`, `unlist`) returns a structured 422 naming the supported actions.
     # @param id [String] 
@@ -360,6 +430,76 @@ module Repull
       return data, status_code, headers
     end
 
+    # Decline Airbnb alteration
+    # Decline a pending Airbnb reservation alteration. **Write-side** — calls Airbnb upstream (`respondToAlteration`) to reject the proposed change. Requires a connected Airbnb host for the workspace (else `404 no_connection`) and that the alteration id belongs to a reservation in your workspace (else `404 not_found`). No request body is required.
+    # @param id [String] Airbnb alteration id (the &#x60;alterationId&#x60; from a &#x60;GET /v1/channels/airbnb/alterations&#x60; row).
+    # @param [Hash] opts the optional parameters
+    # @option opts [Object] :body 
+    # @return [nil]
+    def decline_airbnb_alteration(id, opts = {})
+      decline_airbnb_alteration_with_http_info(id, opts)
+      nil
+    end
+
+    # Decline Airbnb alteration
+    # Decline a pending Airbnb reservation alteration. **Write-side** — calls Airbnb upstream (&#x60;respondToAlteration&#x60;) to reject the proposed change. Requires a connected Airbnb host for the workspace (else &#x60;404 no_connection&#x60;) and that the alteration id belongs to a reservation in your workspace (else &#x60;404 not_found&#x60;). No request body is required.
+    # @param id [String] Airbnb alteration id (the &#x60;alterationId&#x60; from a &#x60;GET /v1/channels/airbnb/alterations&#x60; row).
+    # @param [Hash] opts the optional parameters
+    # @option opts [Object] :body 
+    # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
+    def decline_airbnb_alteration_with_http_info(id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: AirbnbApi.decline_airbnb_alteration ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling AirbnbApi.decline_airbnb_alteration"
+      end
+      # resource path
+      local_var_path = '/v1/channels/airbnb/alterations/{id}/decline'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(opts[:'body'])
+
+      # return_type
+      return_type = opts[:debug_return_type]
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"AirbnbApi.decline_airbnb_alteration",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: AirbnbApi#decline_airbnb_alteration\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # Delete an Airbnb photo
     # Remove a single photo from an Airbnb listing. Pass the Airbnb-side photo id as `?photoId=`. Write-side — calls Airbnb upstream; the local photo cache is reconciled by the sync worker afterwards.
     # @param id [String] 
@@ -642,7 +782,7 @@ module Repull
     # @param id [String] Repull listing id (numeric string).
     # @param [Hash] opts the optional parameters
     # @option opts [String] :locale Filter to a single locale (prefix match, case-insensitive).
-    # @return [ListAirbnbTransactions200Response]
+    # @return [GetAirbnbCheckinGuide200Response]
     def get_airbnb_checkin_guide(id, opts = {})
       data, _status_code, _headers = get_airbnb_checkin_guide_with_http_info(id, opts)
       data
@@ -653,7 +793,7 @@ module Repull
     # @param id [String] Repull listing id (numeric string).
     # @param [Hash] opts the optional parameters
     # @option opts [String] :locale Filter to a single locale (prefix match, case-insensitive).
-    # @return [Array<(ListAirbnbTransactions200Response, Integer, Hash)>] ListAirbnbTransactions200Response data, response status code and response headers
+    # @return [Array<(GetAirbnbCheckinGuide200Response, Integer, Hash)>] GetAirbnbCheckinGuide200Response data, response status code and response headers
     def get_airbnb_checkin_guide_with_http_info(id, opts = {})
       if @api_client.config.debugging
         @api_client.config.logger.debug 'Calling API: AirbnbApi.get_airbnb_checkin_guide ...'
@@ -681,7 +821,7 @@ module Repull
       post_body = opts[:debug_body]
 
       # return_type
-      return_type = opts[:debug_return_type] || 'ListAirbnbTransactions200Response'
+      return_type = opts[:debug_return_type] || 'GetAirbnbCheckinGuide200Response'
 
       # auth_names
       auth_names = opts[:debug_auth_names] || ['bearerAuth']
@@ -707,7 +847,7 @@ module Repull
     # Return the checkout tasks an Airbnb listing shows guests at departure. **Pure DB read** from `listings_airbnb_checkout_tasks`. Returns `404` when the listing has no Airbnb connection in this workspace.
     # @param id [String] Repull listing id (numeric string).
     # @param [Hash] opts the optional parameters
-    # @return [ListAirbnbTransactions200Response]
+    # @return [GetAirbnbCheckinGuide200Response]
     def get_airbnb_checkout_guide(id, opts = {})
       data, _status_code, _headers = get_airbnb_checkout_guide_with_http_info(id, opts)
       data
@@ -717,7 +857,7 @@ module Repull
     # Return the checkout tasks an Airbnb listing shows guests at departure. **Pure DB read** from &#x60;listings_airbnb_checkout_tasks&#x60;. Returns &#x60;404&#x60; when the listing has no Airbnb connection in this workspace.
     # @param id [String] Repull listing id (numeric string).
     # @param [Hash] opts the optional parameters
-    # @return [Array<(ListAirbnbTransactions200Response, Integer, Hash)>] ListAirbnbTransactions200Response data, response status code and response headers
+    # @return [Array<(GetAirbnbCheckinGuide200Response, Integer, Hash)>] GetAirbnbCheckinGuide200Response data, response status code and response headers
     def get_airbnb_checkout_guide_with_http_info(id, opts = {})
       if @api_client.config.debugging
         @api_client.config.logger.debug 'Calling API: AirbnbApi.get_airbnb_checkout_guide ...'
@@ -744,7 +884,7 @@ module Repull
       post_body = opts[:debug_body]
 
       # return_type
-      return_type = opts[:debug_return_type] || 'ListAirbnbTransactions200Response'
+      return_type = opts[:debug_return_type] || 'GetAirbnbCheckinGuide200Response'
 
       # auth_names
       auth_names = opts[:debug_auth_names] || ['bearerAuth']
@@ -1413,7 +1553,7 @@ module Repull
     # @param [Hash] opts the optional parameters
     # @option opts [String] :locale Filter to a single locale (prefix match, case-insensitive).
     # @option opts [String] :country Legacy alias for &#x60;locale&#x60;. Prefer &#x60;locale&#x60;.
-    # @return [ListAirbnbTransactions200Response]
+    # @return [GetAirbnbCheckinGuide200Response]
     def list_airbnb_listing_descriptions(id, opts = {})
       data, _status_code, _headers = list_airbnb_listing_descriptions_with_http_info(id, opts)
       data
@@ -1425,7 +1565,7 @@ module Repull
     # @param [Hash] opts the optional parameters
     # @option opts [String] :locale Filter to a single locale (prefix match, case-insensitive).
     # @option opts [String] :country Legacy alias for &#x60;locale&#x60;. Prefer &#x60;locale&#x60;.
-    # @return [Array<(ListAirbnbTransactions200Response, Integer, Hash)>] ListAirbnbTransactions200Response data, response status code and response headers
+    # @return [Array<(GetAirbnbCheckinGuide200Response, Integer, Hash)>] GetAirbnbCheckinGuide200Response data, response status code and response headers
     def list_airbnb_listing_descriptions_with_http_info(id, opts = {})
       if @api_client.config.debugging
         @api_client.config.logger.debug 'Calling API: AirbnbApi.list_airbnb_listing_descriptions ...'
@@ -1454,7 +1594,7 @@ module Repull
       post_body = opts[:debug_body]
 
       # return_type
-      return_type = opts[:debug_return_type] || 'ListAirbnbTransactions200Response'
+      return_type = opts[:debug_return_type] || 'GetAirbnbCheckinGuide200Response'
 
       # auth_names
       auth_names = opts[:debug_auth_names] || ['bearerAuth']
@@ -1541,7 +1681,7 @@ module Repull
     # List the rooms configured on an Airbnb listing, ordered by room number. **Pure DB read** from `listings_airbnb_rooms`. Returns `404` when the listing has no Airbnb connection in this workspace.
     # @param id [String] Repull listing id (numeric string).
     # @param [Hash] opts the optional parameters
-    # @return [ListAirbnbTransactions200Response]
+    # @return [GetAirbnbCheckinGuide200Response]
     def list_airbnb_listing_rooms(id, opts = {})
       data, _status_code, _headers = list_airbnb_listing_rooms_with_http_info(id, opts)
       data
@@ -1551,7 +1691,7 @@ module Repull
     # List the rooms configured on an Airbnb listing, ordered by room number. **Pure DB read** from &#x60;listings_airbnb_rooms&#x60;. Returns &#x60;404&#x60; when the listing has no Airbnb connection in this workspace.
     # @param id [String] Repull listing id (numeric string).
     # @param [Hash] opts the optional parameters
-    # @return [Array<(ListAirbnbTransactions200Response, Integer, Hash)>] ListAirbnbTransactions200Response data, response status code and response headers
+    # @return [Array<(GetAirbnbCheckinGuide200Response, Integer, Hash)>] GetAirbnbCheckinGuide200Response data, response status code and response headers
     def list_airbnb_listing_rooms_with_http_info(id, opts = {})
       if @api_client.config.debugging
         @api_client.config.logger.debug 'Calling API: AirbnbApi.list_airbnb_listing_rooms ...'
@@ -1578,7 +1718,7 @@ module Repull
       post_body = opts[:debug_body]
 
       # return_type
-      return_type = opts[:debug_return_type] || 'ListAirbnbTransactions200Response'
+      return_type = opts[:debug_return_type] || 'GetAirbnbCheckinGuide200Response'
 
       # auth_names
       auth_names = opts[:debug_auth_names] || ['bearerAuth']
@@ -1939,7 +2079,7 @@ module Repull
     end
 
     # List Airbnb transactions
-    # List Airbnb host transactions (payouts, adjustments, resolutions) for this workspace. **Pure DB read** — customer-facing reads never call Airbnb upstream. The transactions mirror is not yet synced into this surface, so today this endpoint returns an empty array with `data_freshness.stale = true` and `reason: \"never_synced\"`. Shape and contract are stable; the array populates once the sync worker lands.
+    # List Airbnb host transactions (reservation earnings, payouts, resolution adjustments) for this workspace, newest first. **Pure DB read** — customer-facing reads never call Airbnb upstream; they serve the `airbnb_transactions` mirror. Each row carries the genuine host- and guest-side financial breakdown (accommodation subtotal, cleaning fee, host + guest service fees split base/VAT, tax buckets, expected/actual host payout with settlement status). Trigger a refresh with `POST` on this path. When the mirror is empty or the host disconnected, `data_freshness.stale = true` with a `reason` (`never_synced`, `host_disconnected_<iso>`, `sync_lag_>_24h`).
     # @param [Hash] opts the optional parameters
     # @return [ListAirbnbTransactions200Response]
     def list_airbnb_transactions(opts = {})
@@ -1948,7 +2088,7 @@ module Repull
     end
 
     # List Airbnb transactions
-    # List Airbnb host transactions (payouts, adjustments, resolutions) for this workspace. **Pure DB read** — customer-facing reads never call Airbnb upstream. The transactions mirror is not yet synced into this surface, so today this endpoint returns an empty array with &#x60;data_freshness.stale &#x3D; true&#x60; and &#x60;reason: \&quot;never_synced\&quot;&#x60;. Shape and contract are stable; the array populates once the sync worker lands.
+    # List Airbnb host transactions (reservation earnings, payouts, resolution adjustments) for this workspace, newest first. **Pure DB read** — customer-facing reads never call Airbnb upstream; they serve the &#x60;airbnb_transactions&#x60; mirror. Each row carries the genuine host- and guest-side financial breakdown (accommodation subtotal, cleaning fee, host + guest service fees split base/VAT, tax buckets, expected/actual host payout with settlement status). Trigger a refresh with &#x60;POST&#x60; on this path. When the mirror is empty or the host disconnected, &#x60;data_freshness.stale &#x3D; true&#x60; with a &#x60;reason&#x60; (&#x60;never_synced&#x60;, &#x60;host_disconnected_&lt;iso&gt;&#x60;, &#x60;sync_lag_&gt;_24h&#x60;).
     # @param [Hash] opts the optional parameters
     # @return [Array<(ListAirbnbTransactions200Response, Integer, Hash)>] ListAirbnbTransactions200Response data, response status code and response headers
     def list_airbnb_transactions_with_http_info(opts = {})
@@ -2193,27 +2333,33 @@ module Repull
     end
 
     # Send Airbnb message
-    # Send a message in an Airbnb thread as the host. Airbnb enforces content rules (no off-platform contact info, no external URLs) — violating messages are rejected upstream and surface as `airbnb_error`.
-    # @param thread_id [String] 
+    # Send a message in an Airbnb thread as the host. Airbnb enforces content rules (no off-platform contact info, no external URLs) — violating messages are rejected upstream and surface as `airbnb_error`.  The `{threadId}` is the Airbnb thread id — the `externalThreadId` field on a unified `Conversation` (`GET /v1/conversations`).
+    # @param thread_id [String] Airbnb thread id (the &#x60;externalThreadId&#x60; on a unified &#x60;Conversation&#x60;).
+    # @param send_airbnb_message_request [SendAirbnbMessageRequest] 
     # @param [Hash] opts the optional parameters
     # @return [nil]
-    def send_airbnb_message(thread_id, opts = {})
-      send_airbnb_message_with_http_info(thread_id, opts)
+    def send_airbnb_message(thread_id, send_airbnb_message_request, opts = {})
+      send_airbnb_message_with_http_info(thread_id, send_airbnb_message_request, opts)
       nil
     end
 
     # Send Airbnb message
-    # Send a message in an Airbnb thread as the host. Airbnb enforces content rules (no off-platform contact info, no external URLs) — violating messages are rejected upstream and surface as &#x60;airbnb_error&#x60;.
-    # @param thread_id [String] 
+    # Send a message in an Airbnb thread as the host. Airbnb enforces content rules (no off-platform contact info, no external URLs) — violating messages are rejected upstream and surface as &#x60;airbnb_error&#x60;.  The &#x60;{threadId}&#x60; is the Airbnb thread id — the &#x60;externalThreadId&#x60; field on a unified &#x60;Conversation&#x60; (&#x60;GET /v1/conversations&#x60;).
+    # @param thread_id [String] Airbnb thread id (the &#x60;externalThreadId&#x60; on a unified &#x60;Conversation&#x60;).
+    # @param send_airbnb_message_request [SendAirbnbMessageRequest] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
-    def send_airbnb_message_with_http_info(thread_id, opts = {})
+    def send_airbnb_message_with_http_info(thread_id, send_airbnb_message_request, opts = {})
       if @api_client.config.debugging
         @api_client.config.logger.debug 'Calling API: AirbnbApi.send_airbnb_message ...'
       end
       # verify the required parameter 'thread_id' is set
       if @api_client.config.client_side_validation && thread_id.nil?
         fail ArgumentError, "Missing the required parameter 'thread_id' when calling AirbnbApi.send_airbnb_message"
+      end
+      # verify the required parameter 'send_airbnb_message_request' is set
+      if @api_client.config.client_side_validation && send_airbnb_message_request.nil?
+        fail ArgumentError, "Missing the required parameter 'send_airbnb_message_request' when calling AirbnbApi.send_airbnb_message"
       end
       # resource path
       local_var_path = '/v1/channels/airbnb/messaging/{threadId}/messages'.sub('{threadId}', CGI.escape(thread_id.to_s))
@@ -2223,12 +2369,19 @@ module Repull
 
       # header parameters
       header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
 
       # form parameters
       form_params = opts[:form_params] || {}
 
       # http body (model)
-      post_body = opts[:debug_body]
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(send_airbnb_message_request)
 
       # return_type
       return_type = opts[:debug_return_type]
@@ -2249,6 +2402,70 @@ module Repull
       data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: AirbnbApi#send_airbnb_message\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Sync Airbnb transactions
+    # Refresh the Airbnb transactions mirror for this workspace by pulling from Airbnb upstream and upserting the breakdown that `GET` serves. Optional JSON body `{ start_date, end_date, transaction_type }` (`transaction_type` is `COMPLETED` or `UPCOMING`; both are synced when omitted). Returns `{ synced, count }`.
+    # @param [Hash] opts the optional parameters
+    # @option opts [SyncAirbnbTransactionsRequest] :sync_airbnb_transactions_request 
+    # @return [SyncAirbnbTransactions200Response]
+    def sync_airbnb_transactions(opts = {})
+      data, _status_code, _headers = sync_airbnb_transactions_with_http_info(opts)
+      data
+    end
+
+    # Sync Airbnb transactions
+    # Refresh the Airbnb transactions mirror for this workspace by pulling from Airbnb upstream and upserting the breakdown that &#x60;GET&#x60; serves. Optional JSON body &#x60;{ start_date, end_date, transaction_type }&#x60; (&#x60;transaction_type&#x60; is &#x60;COMPLETED&#x60; or &#x60;UPCOMING&#x60;; both are synced when omitted). Returns &#x60;{ synced, count }&#x60;.
+    # @param [Hash] opts the optional parameters
+    # @option opts [SyncAirbnbTransactionsRequest] :sync_airbnb_transactions_request 
+    # @return [Array<(SyncAirbnbTransactions200Response, Integer, Hash)>] SyncAirbnbTransactions200Response data, response status code and response headers
+    def sync_airbnb_transactions_with_http_info(opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: AirbnbApi.sync_airbnb_transactions ...'
+      end
+      # resource path
+      local_var_path = '/v1/channels/airbnb/transactions'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(opts[:'sync_airbnb_transactions_request'])
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'SyncAirbnbTransactions200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"AirbnbApi.sync_airbnb_transactions",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: AirbnbApi#sync_airbnb_transactions\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end

@@ -25,10 +25,14 @@ Repull::WebhookEvent.openapi_one_of
 #   :'PaymentCompletedEvent',
 #   :'PaymentRefundedEvent',
 #   :'RepullPingEvent',
+#   :'ReservationAlterationCreatedEvent',
+#   :'ReservationAlterationRespondedEvent',
 #   :'ReservationCancelledEvent',
 #   :'ReservationCreatedEvent',
 #   :'ReservationMessageReceivedEvent',
-#   :'ReservationUpdatedEvent'
+#   :'ReservationUpdatedEvent',
+#   :'ReviewCreatedEvent',
+#   :'ReviewRespondedEvent'
 # ]
 ```
 
@@ -68,10 +72,14 @@ Repull::WebhookEvent.openapi_discriminator_mapping
 #   :'payment.completed' => :'PaymentCompletedEvent',
 #   :'payment.refunded' => :'PaymentRefundedEvent',
 #   :'repull.ping' => :'RepullPingEvent',
+#   :'reservation.alteration.created' => :'ReservationAlterationCreatedEvent',
+#   :'reservation.alteration.responded' => :'ReservationAlterationRespondedEvent',
 #   :'reservation.cancelled' => :'ReservationCancelledEvent',
 #   :'reservation.created' => :'ReservationCreatedEvent',
 #   :'reservation.message.received' => :'ReservationMessageReceivedEvent',
-#   :'reservation.updated' => :'ReservationUpdatedEvent'
+#   :'reservation.updated' => :'ReservationUpdatedEvent',
+#   :'review.created' => :'ReviewCreatedEvent',
+#   :'review.responded' => :'ReviewRespondedEvent'
 # }
 ```
 
@@ -110,9 +118,13 @@ Repull::WebhookEvent.build(data_that_doesnt_match)
 - `PaymentCompletedEvent`
 - `PaymentRefundedEvent`
 - `RepullPingEvent`
+- `ReservationAlterationCreatedEvent`
+- `ReservationAlterationRespondedEvent`
 - `ReservationCancelledEvent`
 - `ReservationCreatedEvent`
 - `ReservationMessageReceivedEvent`
 - `ReservationUpdatedEvent`
+- `ReviewCreatedEvent`
+- `ReviewRespondedEvent`
 - `nil` (if no type matches)
 

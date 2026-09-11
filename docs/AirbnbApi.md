@@ -4,11 +4,13 @@ All URIs are relative to *https://api.repull.dev*
 
 | Method | HTTP request | Description |
 | ------ | ------------ | ----------- |
+| [**accept_airbnb_alteration**](AirbnbApi.md#accept_airbnb_alteration) | **POST** /v1/channels/airbnb/alterations/{id}/accept | Accept Airbnb alteration |
 | [**airbnb_listing_action**](AirbnbApi.md#airbnb_listing_action) | **POST** /v1/channels/airbnb/listings/{id} | Listing action (delete/push/publish) |
 | [**airbnb_reservation_action**](AirbnbApi.md#airbnb_reservation_action) | **POST** /v1/channels/airbnb/reservations/{code} | Accept/decline/cancel Airbnb reservation |
 | [**create_airbnb_alteration**](AirbnbApi.md#create_airbnb_alteration) | **POST** /v1/channels/airbnb/alterations | Create Airbnb alteration |
 | [**create_airbnb_listing_room**](AirbnbApi.md#create_airbnb_listing_room) | **POST** /v1/channels/airbnb/listings/{id}/rooms | Create an Airbnb room |
 | [**create_airbnb_offer**](AirbnbApi.md#create_airbnb_offer) | **POST** /v1/channels/airbnb/offers | Create Airbnb special offer or pre-approval |
+| [**decline_airbnb_alteration**](AirbnbApi.md#decline_airbnb_alteration) | **POST** /v1/channels/airbnb/alterations/{id}/decline | Decline Airbnb alteration |
 | [**delete_airbnb_listing_photo**](AirbnbApi.md#delete_airbnb_listing_photo) | **DELETE** /v1/channels/airbnb/listings/{id}/photos | Delete an Airbnb photo |
 | [**delete_airbnb_listing_room**](AirbnbApi.md#delete_airbnb_listing_room) | **DELETE** /v1/channels/airbnb/listings/{id}/rooms | Delete an Airbnb room |
 | [**edit_airbnb_review**](AirbnbApi.md#edit_airbnb_review) | **PUT** /v1/channels/airbnb/reviews/{id} | Edit Airbnb host review |
@@ -38,12 +40,85 @@ All URIs are relative to *https://api.repull.dev*
 | [**respond_airbnb_review**](AirbnbApi.md#respond_airbnb_review) | **POST** /v1/channels/airbnb/reviews/{id}/respond | Respond to Airbnb review |
 | [**respond_airbnb_review_legacy**](AirbnbApi.md#respond_airbnb_review_legacy) | **POST** /v1/channels/airbnb/reviews | Respond to / submit Airbnb review (legacy) |
 | [**send_airbnb_message**](AirbnbApi.md#send_airbnb_message) | **POST** /v1/channels/airbnb/messaging/{threadId}/messages | Send Airbnb message |
+| [**sync_airbnb_transactions**](AirbnbApi.md#sync_airbnb_transactions) | **POST** /v1/channels/airbnb/transactions | Sync Airbnb transactions |
 | [**update_airbnb_checkin_guide**](AirbnbApi.md#update_airbnb_checkin_guide) | **PUT** /v1/channels/airbnb/listings/{id}/checkin-guide | Upsert Airbnb check-in guide |
 | [**update_airbnb_listing_availability**](AirbnbApi.md#update_airbnb_listing_availability) | **PUT** /v1/channels/airbnb/listings/{id}/availability | Update Airbnb availability |
 | [**update_airbnb_listing_pricing**](AirbnbApi.md#update_airbnb_listing_pricing) | **PUT** /v1/channels/airbnb/listings/{id}/pricing | Update Airbnb pricing |
 | [**update_airbnb_message**](AirbnbApi.md#update_airbnb_message) | **PATCH** /v1/channels/airbnb/messaging/{threadId}/messages/{messageId} | Edit / react to / mark an Airbnb message |
 | [**upload_airbnb_listing_photos**](AirbnbApi.md#upload_airbnb_listing_photos) | **POST** /v1/channels/airbnb/listings/{id}/photos | Upload photos to Airbnb |
 | [**withdraw_airbnb_offer**](AirbnbApi.md#withdraw_airbnb_offer) | **DELETE** /v1/channels/airbnb/offers | Withdraw Airbnb special offer |
+
+
+## accept_airbnb_alteration
+
+> accept_airbnb_alteration(id, opts)
+
+Accept Airbnb alteration
+
+Accept a pending Airbnb reservation alteration. **Write-side** — calls Airbnb upstream (`respondToAlteration`) to approve the proposed date / guest-count / price change. Requires a connected Airbnb host for the workspace (else `404 no_connection`) and that the alteration id belongs to a reservation in your workspace (else `404 not_found`). No request body is required.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::AirbnbApi.new
+id = 'id_example' # String | Airbnb alteration id (the `alterationId` from a `GET /v1/channels/airbnb/alterations` row).
+opts = {
+  body: { ... } # Object | 
+}
+
+begin
+  # Accept Airbnb alteration
+  api_instance.accept_airbnb_alteration(id, opts)
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->accept_airbnb_alteration: #{e}"
+end
+```
+
+#### Using the accept_airbnb_alteration_with_http_info variant
+
+This returns an Array which contains the response data (`nil` in this case), status code and headers.
+
+> <Array(nil, Integer, Hash)> accept_airbnb_alteration_with_http_info(id, opts)
+
+```ruby
+begin
+  # Accept Airbnb alteration
+  data, status_code, headers = api_instance.accept_airbnb_alteration_with_http_info(id, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => nil
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->accept_airbnb_alteration_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Airbnb alteration id (the &#x60;alterationId&#x60; from a &#x60;GET /v1/channels/airbnb/alterations&#x60; row). |  |
+| **body** | **Object** |  | [optional] |
+
+### Return type
+
+nil (empty response body)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
 
 
 ## airbnb_listing_action
@@ -392,6 +467,78 @@ nil (empty response body)
 - **Accept**: application/json
 
 
+## decline_airbnb_alteration
+
+> decline_airbnb_alteration(id, opts)
+
+Decline Airbnb alteration
+
+Decline a pending Airbnb reservation alteration. **Write-side** — calls Airbnb upstream (`respondToAlteration`) to reject the proposed change. Requires a connected Airbnb host for the workspace (else `404 no_connection`) and that the alteration id belongs to a reservation in your workspace (else `404 not_found`). No request body is required.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::AirbnbApi.new
+id = 'id_example' # String | Airbnb alteration id (the `alterationId` from a `GET /v1/channels/airbnb/alterations` row).
+opts = {
+  body: { ... } # Object | 
+}
+
+begin
+  # Decline Airbnb alteration
+  api_instance.decline_airbnb_alteration(id, opts)
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->decline_airbnb_alteration: #{e}"
+end
+```
+
+#### Using the decline_airbnb_alteration_with_http_info variant
+
+This returns an Array which contains the response data (`nil` in this case), status code and headers.
+
+> <Array(nil, Integer, Hash)> decline_airbnb_alteration_with_http_info(id, opts)
+
+```ruby
+begin
+  # Decline Airbnb alteration
+  data, status_code, headers = api_instance.decline_airbnb_alteration_with_http_info(id, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => nil
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->decline_airbnb_alteration_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Airbnb alteration id (the &#x60;alterationId&#x60; from a &#x60;GET /v1/channels/airbnb/alterations&#x60; row). |  |
+| **body** | **Object** |  | [optional] |
+
+### Return type
+
+nil (empty response body)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
 ## delete_airbnb_listing_photo
 
 > <DeleteAirbnbListingPhoto200Response> delete_airbnb_listing_photo(id, photo_id)
@@ -676,7 +823,7 @@ end
 
 ## get_airbnb_checkin_guide
 
-> <ListAirbnbTransactions200Response> get_airbnb_checkin_guide(id, opts)
+> <GetAirbnbCheckinGuide200Response> get_airbnb_checkin_guide(id, opts)
 
 Get Airbnb check-in guide
 
@@ -712,7 +859,7 @@ end
 
 This returns an Array which contains the response data, status code and headers.
 
-> <Array(<ListAirbnbTransactions200Response>, Integer, Hash)> get_airbnb_checkin_guide_with_http_info(id, opts)
+> <Array(<GetAirbnbCheckinGuide200Response>, Integer, Hash)> get_airbnb_checkin_guide_with_http_info(id, opts)
 
 ```ruby
 begin
@@ -720,7 +867,7 @@ begin
   data, status_code, headers = api_instance.get_airbnb_checkin_guide_with_http_info(id, opts)
   p status_code # => 2xx
   p headers # => { ... }
-  p data # => <ListAirbnbTransactions200Response>
+  p data # => <GetAirbnbCheckinGuide200Response>
 rescue Repull::ApiError => e
   puts "Error when calling AirbnbApi->get_airbnb_checkin_guide_with_http_info: #{e}"
 end
@@ -735,7 +882,7 @@ end
 
 ### Return type
 
-[**ListAirbnbTransactions200Response**](ListAirbnbTransactions200Response.md)
+[**GetAirbnbCheckinGuide200Response**](GetAirbnbCheckinGuide200Response.md)
 
 ### Authorization
 
@@ -749,7 +896,7 @@ end
 
 ## get_airbnb_checkout_guide
 
-> <ListAirbnbTransactions200Response> get_airbnb_checkout_guide(id)
+> <GetAirbnbCheckinGuide200Response> get_airbnb_checkout_guide(id)
 
 Get Airbnb checkout guide
 
@@ -782,7 +929,7 @@ end
 
 This returns an Array which contains the response data, status code and headers.
 
-> <Array(<ListAirbnbTransactions200Response>, Integer, Hash)> get_airbnb_checkout_guide_with_http_info(id)
+> <Array(<GetAirbnbCheckinGuide200Response>, Integer, Hash)> get_airbnb_checkout_guide_with_http_info(id)
 
 ```ruby
 begin
@@ -790,7 +937,7 @@ begin
   data, status_code, headers = api_instance.get_airbnb_checkout_guide_with_http_info(id)
   p status_code # => 2xx
   p headers # => { ... }
-  p data # => <ListAirbnbTransactions200Response>
+  p data # => <GetAirbnbCheckinGuide200Response>
 rescue Repull::ApiError => e
   puts "Error when calling AirbnbApi->get_airbnb_checkout_guide_with_http_info: #{e}"
 end
@@ -804,7 +951,7 @@ end
 
 ### Return type
 
-[**ListAirbnbTransactions200Response**](ListAirbnbTransactions200Response.md)
+[**GetAirbnbCheckinGuide200Response**](GetAirbnbCheckinGuide200Response.md)
 
 ### Authorization
 
@@ -1519,7 +1666,7 @@ end
 
 ## list_airbnb_listing_descriptions
 
-> <ListAirbnbTransactions200Response> list_airbnb_listing_descriptions(id, opts)
+> <GetAirbnbCheckinGuide200Response> list_airbnb_listing_descriptions(id, opts)
 
 List Airbnb descriptions
 
@@ -1556,7 +1703,7 @@ end
 
 This returns an Array which contains the response data, status code and headers.
 
-> <Array(<ListAirbnbTransactions200Response>, Integer, Hash)> list_airbnb_listing_descriptions_with_http_info(id, opts)
+> <Array(<GetAirbnbCheckinGuide200Response>, Integer, Hash)> list_airbnb_listing_descriptions_with_http_info(id, opts)
 
 ```ruby
 begin
@@ -1564,7 +1711,7 @@ begin
   data, status_code, headers = api_instance.list_airbnb_listing_descriptions_with_http_info(id, opts)
   p status_code # => 2xx
   p headers # => { ... }
-  p data # => <ListAirbnbTransactions200Response>
+  p data # => <GetAirbnbCheckinGuide200Response>
 rescue Repull::ApiError => e
   puts "Error when calling AirbnbApi->list_airbnb_listing_descriptions_with_http_info: #{e}"
 end
@@ -1580,7 +1727,7 @@ end
 
 ### Return type
 
-[**ListAirbnbTransactions200Response**](ListAirbnbTransactions200Response.md)
+[**GetAirbnbCheckinGuide200Response**](GetAirbnbCheckinGuide200Response.md)
 
 ### Authorization
 
@@ -1662,7 +1809,7 @@ nil (empty response body)
 
 ## list_airbnb_listing_rooms
 
-> <ListAirbnbTransactions200Response> list_airbnb_listing_rooms(id)
+> <GetAirbnbCheckinGuide200Response> list_airbnb_listing_rooms(id)
 
 List Airbnb rooms
 
@@ -1695,7 +1842,7 @@ end
 
 This returns an Array which contains the response data, status code and headers.
 
-> <Array(<ListAirbnbTransactions200Response>, Integer, Hash)> list_airbnb_listing_rooms_with_http_info(id)
+> <Array(<GetAirbnbCheckinGuide200Response>, Integer, Hash)> list_airbnb_listing_rooms_with_http_info(id)
 
 ```ruby
 begin
@@ -1703,7 +1850,7 @@ begin
   data, status_code, headers = api_instance.list_airbnb_listing_rooms_with_http_info(id)
   p status_code # => 2xx
   p headers # => { ... }
-  p data # => <ListAirbnbTransactions200Response>
+  p data # => <GetAirbnbCheckinGuide200Response>
 rescue Repull::ApiError => e
   puts "Error when calling AirbnbApi->list_airbnb_listing_rooms_with_http_info: #{e}"
 end
@@ -1717,7 +1864,7 @@ end
 
 ### Return type
 
-[**ListAirbnbTransactions200Response**](ListAirbnbTransactions200Response.md)
+[**GetAirbnbCheckinGuide200Response**](GetAirbnbCheckinGuide200Response.md)
 
 ### Authorization
 
@@ -2092,7 +2239,7 @@ This endpoint does not need any parameter.
 
 List Airbnb transactions
 
-List Airbnb host transactions (payouts, adjustments, resolutions) for this workspace. **Pure DB read** — customer-facing reads never call Airbnb upstream. The transactions mirror is not yet synced into this surface, so today this endpoint returns an empty array with `data_freshness.stale = true` and `reason: \"never_synced\"`. Shape and contract are stable; the array populates once the sync worker lands.
+List Airbnb host transactions (reservation earnings, payouts, resolution adjustments) for this workspace, newest first. **Pure DB read** — customer-facing reads never call Airbnb upstream; they serve the `airbnb_transactions` mirror. Each row carries the genuine host- and guest-side financial breakdown (accommodation subtotal, cleaning fee, host + guest service fees split base/VAT, tax buckets, expected/actual host payout with settlement status). Trigger a refresh with `POST` on this path. When the mirror is empty or the host disconnected, `data_freshness.stale = true` with a `reason` (`never_synced`, `host_disconnected_<iso>`, `sync_lag_>_24h`).
 
 ### Examples
 
@@ -2359,11 +2506,11 @@ nil (empty response body)
 
 ## send_airbnb_message
 
-> send_airbnb_message(thread_id)
+> send_airbnb_message(thread_id, send_airbnb_message_request)
 
 Send Airbnb message
 
-Send a message in an Airbnb thread as the host. Airbnb enforces content rules (no off-platform contact info, no external URLs) — violating messages are rejected upstream and surface as `airbnb_error`.
+Send a message in an Airbnb thread as the host. Airbnb enforces content rules (no off-platform contact info, no external URLs) — violating messages are rejected upstream and surface as `airbnb_error`.  The `{threadId}` is the Airbnb thread id — the `externalThreadId` field on a unified `Conversation` (`GET /v1/conversations`).
 
 ### Examples
 
@@ -2377,11 +2524,12 @@ Repull.configure do |config|
 end
 
 api_instance = Repull::AirbnbApi.new
-thread_id = 'thread_id_example' # String | 
+thread_id = 'thread_id_example' # String | Airbnb thread id (the `externalThreadId` on a unified `Conversation`).
+send_airbnb_message_request = Repull::SendAirbnbMessageRequest.new({message: 'message_example'}) # SendAirbnbMessageRequest | 
 
 begin
   # Send Airbnb message
-  api_instance.send_airbnb_message(thread_id)
+  api_instance.send_airbnb_message(thread_id, send_airbnb_message_request)
 rescue Repull::ApiError => e
   puts "Error when calling AirbnbApi->send_airbnb_message: #{e}"
 end
@@ -2391,12 +2539,12 @@ end
 
 This returns an Array which contains the response data (`nil` in this case), status code and headers.
 
-> <Array(nil, Integer, Hash)> send_airbnb_message_with_http_info(thread_id)
+> <Array(nil, Integer, Hash)> send_airbnb_message_with_http_info(thread_id, send_airbnb_message_request)
 
 ```ruby
 begin
   # Send Airbnb message
-  data, status_code, headers = api_instance.send_airbnb_message_with_http_info(thread_id)
+  data, status_code, headers = api_instance.send_airbnb_message_with_http_info(thread_id, send_airbnb_message_request)
   p status_code # => 2xx
   p headers # => { ... }
   p data # => nil
@@ -2409,7 +2557,8 @@ end
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **thread_id** | **String** |  |  |
+| **thread_id** | **String** | Airbnb thread id (the &#x60;externalThreadId&#x60; on a unified &#x60;Conversation&#x60;). |  |
+| **send_airbnb_message_request** | [**SendAirbnbMessageRequest**](SendAirbnbMessageRequest.md) |  |  |
 
 ### Return type
 
@@ -2421,8 +2570,79 @@ nil (empty response body)
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## sync_airbnb_transactions
+
+> <SyncAirbnbTransactions200Response> sync_airbnb_transactions(opts)
+
+Sync Airbnb transactions
+
+Refresh the Airbnb transactions mirror for this workspace by pulling from Airbnb upstream and upserting the breakdown that `GET` serves. Optional JSON body `{ start_date, end_date, transaction_type }` (`transaction_type` is `COMPLETED` or `UPCOMING`; both are synced when omitted). Returns `{ synced, count }`.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::AirbnbApi.new
+opts = {
+  sync_airbnb_transactions_request: Repull::SyncAirbnbTransactionsRequest.new # SyncAirbnbTransactionsRequest | 
+}
+
+begin
+  # Sync Airbnb transactions
+  result = api_instance.sync_airbnb_transactions(opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->sync_airbnb_transactions: #{e}"
+end
+```
+
+#### Using the sync_airbnb_transactions_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<SyncAirbnbTransactions200Response>, Integer, Hash)> sync_airbnb_transactions_with_http_info(opts)
+
+```ruby
+begin
+  # Sync Airbnb transactions
+  data, status_code, headers = api_instance.sync_airbnb_transactions_with_http_info(opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <SyncAirbnbTransactions200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->sync_airbnb_transactions_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **sync_airbnb_transactions_request** | [**SyncAirbnbTransactionsRequest**](SyncAirbnbTransactionsRequest.md) |  | [optional] |
+
+### Return type
+
+[**SyncAirbnbTransactions200Response**](SyncAirbnbTransactions200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
 
 
 ## update_airbnb_checkin_guide

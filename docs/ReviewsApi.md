@@ -6,6 +6,7 @@ All URIs are relative to *https://api.repull.dev*
 | ------ | ------------ | ----------- |
 | [**get_review**](ReviewsApi.md#get_review) | **GET** /v1/reviews/{id} | Get review |
 | [**list_reviews**](ReviewsApi.md#list_reviews) | **GET** /v1/reviews | List reviews |
+| [**reply_to_review**](ReviewsApi.md#reply_to_review) | **POST** /v1/reviews/{id}/reply | Reply to a review on any channel |
 
 
 ## get_review
@@ -167,5 +168,76 @@ end
 ### HTTP request headers
 
 - **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## reply_to_review
+
+> <ReplyToReview201Response> reply_to_review(id, reply_to_review_request)
+
+Reply to a review on any channel
+
+Resolves the review, reads its channel and dispatches the reply. Channel-neutral: you do not need to know where the review came from.  Replies are available on Airbnb today; a review from a channel without a reply API returns `422 unsupported_channel` naming the channels that do work.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ReviewsApi.new
+id = 56 # Integer | Internal Repull review id.
+reply_to_review_request = Repull::ReplyToReviewRequest.new({message: 'message_example'}) # ReplyToReviewRequest | 
+
+begin
+  # Reply to a review on any channel
+  result = api_instance.reply_to_review(id, reply_to_review_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ReviewsApi->reply_to_review: #{e}"
+end
+```
+
+#### Using the reply_to_review_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<ReplyToReview201Response>, Integer, Hash)> reply_to_review_with_http_info(id, reply_to_review_request)
+
+```ruby
+begin
+  # Reply to a review on any channel
+  data, status_code, headers = api_instance.reply_to_review_with_http_info(id, reply_to_review_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <ReplyToReview201Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ReviewsApi->reply_to_review_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **Integer** | Internal Repull review id. |  |
+| **reply_to_review_request** | [**ReplyToReviewRequest**](ReplyToReviewRequest.md) |  |  |
+
+### Return type
+
+[**ReplyToReview201Response**](ReplyToReview201Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
 - **Accept**: application/json
 

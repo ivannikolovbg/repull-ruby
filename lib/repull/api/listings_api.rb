@@ -1,7 +1,7 @@
 =begin
 #Repull API
 
-#The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.  ## Designed for AI agents Every error response on this API includes machine-parseable fields so an LLM (Claude in MCP, Cursor, Cline, GPT, etc.) can self-recover without escalating to a human: - `error.code` — stable string identifier (e.g. `invalid_params`, `rate_limit_exceeded`) - `error.message` — human-readable cause - `error.fix` — exact recovery steps (e.g. \"Pass `check_in_after` as ISO 8601: `?check_in_after=2026-01-15`\") - `error.docs_url` — link to the canonical write-up at `https://repull.dev/docs/errors/{code}` - `error.request_id` — id to correlate with server-side logs - `error.field` / `error.value_received` / `error.valid_values` / `error.did_you_mean` — when the error is parameter-specific - `error.retry_after` — seconds to wait before retrying (rate-limit + transient upstream)  `Access-Control-Expose-Headers` lists `x-request-id` and the `X-RateLimit-*` family so browsers can read them on cross-origin responses.  ## Quick Start 1. Get an API key at https://repull.dev/dashboard 2. Connect a PMS: `POST /v1/connect/{provider}` 3. List properties: `GET /v1/properties` 4. Get reservations: `GET /v1/reservations`  ## Authentication All requests require a Bearer token: ``` Authorization: Bearer sk_test_YOUR_API_KEY ```  Sandbox keys start with `sk_test_`, production with `sk_live_`.  ## Request Correlation (X-Request-ID) Every response carries an `X-Request-ID` header, e.g. `X-Request-ID: req_01HXY...`. Include this id in support tickets and bug reports — we can trace the full request lifecycle (auth, rate limit, handler, downstream calls, log row) from a single id.  You may set the header on the inbound request to forward your own trace id; we will echo it back instead of generating a new one. Accepted format: `^[\\\\w.-]{1,128}$`.  The id is also embedded in error envelopes as `request_id` so server-side log diffs work even when the response headers are stripped by an intermediate proxy.  ## Rate Limits The public API enforces a per-API-key sliding-window rate limit on top of the per-tier monthly + daily-AI quotas.  **Default policy:** 600 requests per 60 seconds, per API key. Sliding window — there is no fixed-minute boundary you can burst across.  Every response includes:  | Header | Meaning | |---|---| | `X-RateLimit-Limit` | Requests permitted in the current window. | | `X-RateLimit-Remaining` | Requests left in the current window after this call. | | `X-RateLimit-Reset` | Unix epoch (seconds) when the next slot opens. | | `X-RateLimit-Policy` | Machine-readable policy descriptor, e.g. `600;w=60`. | | `Retry-After` | Seconds to wait before retrying. **Only present on 429 responses.** |  **On 429 (rate_limit_exceeded):** the response body matches the standard error envelope with `code: \"rate_limit_exceeded\"`, plus `limit`, `window_seconds`, `retry_after`, and `request_id` fields. SDKs MUST honor `Retry-After` and use exponential backoff with jitter on subsequent retries — never a tight loop.  Recommended backoff: ``` sleep_ms = (Retry-After * 1000) + random(0..250) ```  Monthly + daily-AI tier quotas (`free`, `starter`, `custom`) are enforced separately and also surface as 429s; they include `tier`, `scope`, and `resets_at` fields.  ## Plan Limits (402 — `listings_limit_exceeded`) The Repull API also enforces a per-tier cap on **active listings**:  | Tier | Active listings cap | |---|---| | `free` | 3 | | `starter` | 50 | | `custom` | unlimited |  When a customer's active-listing count is above their tier cap, the API returns **`402 Payment Required`** with `error.code = \"listings_limit_exceeded\"` on every route EXCEPT:  - `/v1/health` — uptime probes are never gated. - `/v1/usage/*` — so dashboards can render the over-cap state. - Any `DELETE` — so the customer can trim listings to get back under the cap without paying.  Unlike 429, 402 is NOT a \"wait and retry\" condition — `Retry-After` is not set. The only paths back to 200 are:   1. `DELETE` enough listings to come back under the cap, or   2. Upgrade at `https://repull.dev/dashboard/billing`. The server-side usage cache is 60s, so the first 200 after an upgrade may take up to a minute.  The envelope mirrors `rate_limit_exceeded` for SDK ergonomics: `tier`, `limit`, `active_listings`, `upgrade_url`, plus the standard `code` / `message` / `fix` / `docs_url` / `request_id`.
+#The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.  ## Designed for AI agents Every error response on this API includes machine-parseable fields so an LLM (Claude in MCP, Cursor, Cline, GPT, etc.) can self-recover without escalating to a human: - `error.code` — stable string identifier (e.g. `invalid_params`, `rate_limit_exceeded`) - `error.message` — human-readable cause - `error.fix` — exact recovery steps (e.g. \"Pass `check_in_after` as ISO 8601: `?check_in_after=2026-01-15`\") - `error.docs_url` — link to the canonical write-up at `https://repull.dev/docs/errors/{code}` - `error.request_id` — id to correlate with server-side logs - `error.field` / `error.value_received` / `error.valid_values` / `error.did_you_mean` — when the error is parameter-specific - `error.retry_after` — seconds to wait before retrying (rate-limit + transient upstream)  `Access-Control-Expose-Headers` lists `x-request-id` and the `X-RateLimit-*` family so browsers can read them on cross-origin responses.  ## Quick Start 1. Get an API key at https://repull.dev/dashboard 2. Connect a PMS: `POST /v1/connect/{provider}` 3. List properties: `GET /v1/properties` 4. Get reservations: `GET /v1/reservations`  ## Authentication All requests require a Bearer token: ``` Authorization: Bearer sk_live_YOUR_API_KEY ```  ## Request Correlation (X-Request-ID) Every response carries an `X-Request-ID` header, e.g. `X-Request-ID: req_01HXY...`. Include this id in support tickets and bug reports — we can trace the full request lifecycle (auth, rate limit, handler, downstream calls, log row) from a single id.  You may set the header on the inbound request to forward your own trace id; we will echo it back instead of generating a new one. Accepted format: `^[\\\\w.-]{1,128}$`.  The id is also embedded in error envelopes as `request_id` so server-side log diffs work even when the response headers are stripped by an intermediate proxy.  ## Rate Limits The public API enforces a per-API-key sliding-window rate limit on top of the per-tier monthly + daily-AI quotas.  **Default policy:** 600 requests per 60 seconds, per API key. Sliding window — there is no fixed-minute boundary you can burst across.  Every response includes:  | Header | Meaning | |---|---| | `X-RateLimit-Limit` | Requests permitted in the current window. | | `X-RateLimit-Remaining` | Requests left in the current window after this call. | | `X-RateLimit-Reset` | Unix epoch (seconds) when the next slot opens. | | `X-RateLimit-Policy` | Machine-readable policy descriptor, e.g. `600;w=60`. | | `Retry-After` | Seconds to wait before retrying. **Only present on 429 responses.** |  **On 429 (rate_limit_exceeded):** the response body matches the standard error envelope with `code: \"rate_limit_exceeded\"`, plus `limit`, `window_seconds`, `retry_after`, and `request_id` fields. SDKs MUST honor `Retry-After` and use exponential backoff with jitter on subsequent retries — never a tight loop.  Recommended backoff: ``` sleep_ms = (Retry-After * 1000) + random(0..250) ```  Monthly + daily-AI tier quotas (`free`, `starter`, `custom`) are enforced separately and also surface as 429s; they include `tier`, `scope`, and `resets_at` fields.  ## Plan Limits (402 — `listings_limit_exceeded`) The Repull API also enforces a per-tier cap on **active listings**:  | Tier | Active listings cap | |---|---| | `free` | 3 | | `starter` | 50 | | `custom` | unlimited |  When a customer's active-listing count is above their tier cap, the API returns **`402 Payment Required`** with `error.code = \"listings_limit_exceeded\"` on every route EXCEPT:  - `/v1/health` — uptime probes are never gated. - `/v1/usage/*` — so dashboards can render the over-cap state. - Any `DELETE` — so the customer can trim listings to get back under the cap without paying.  Unlike 429, 402 is NOT a \"wait and retry\" condition — `Retry-After` is not set. The only paths back to 200 are:   1. `DELETE` enough listings to come back under the cap, or   2. Upgrade at `https://repull.dev/dashboard/billing`. The server-side usage cache is 60s, so the first 200 after an upgrade may take up to a minute.  The envelope mirrors `rate_limit_exceeded` for SDK ergonomics: `tier`, `limit`, `active_listings`, `upgrade_url`, plus the standard `code` / `message` / `fix` / `docs_url` / `request_id`.
 
 The version of the OpenAPI document: 1.0.0
 Contact: ivan@vanio.ai
@@ -87,6 +87,80 @@ module Repull
       return data, status_code, headers
     end
 
+    # Mint a direct-to-storage photo upload URL
+    # Mints a short-lived signed upload URL + token for a listing photo. **The client PUTs the raw file bytes directly to the returned `uploadUrl` — the file bytes never pass through the Repull API or main vanio.** This endpoint only mints the URL; do not POST the file itself here, it will not be accepted.  Flow: (1) POST here with `fileName`/`fileType`/optional `fileSize` to get `{ uploadUrl, token, path, publicUrl, expiresIn }`; (2) PUT the raw file bytes to `uploadUrl` from the client; (3) `publicUrl` is the durable URL for the uploaded photo — attach it to the listing via `PUT /v1/listings/{id}/content` (`photos` field) or list it back via `GET /v1/listings/{id}/photos`.
+    # @param id [Integer] Repull listing id
+    # @param listing_photo_upload_url_request [ListingPhotoUploadUrlRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [ListingPhotoUploadUrlResponse]
+    def create_listing_photo_upload_url(id, listing_photo_upload_url_request, opts = {})
+      data, _status_code, _headers = create_listing_photo_upload_url_with_http_info(id, listing_photo_upload_url_request, opts)
+      data
+    end
+
+    # Mint a direct-to-storage photo upload URL
+    # Mints a short-lived signed upload URL + token for a listing photo. **The client PUTs the raw file bytes directly to the returned &#x60;uploadUrl&#x60; — the file bytes never pass through the Repull API or main vanio.** This endpoint only mints the URL; do not POST the file itself here, it will not be accepted.  Flow: (1) POST here with &#x60;fileName&#x60;/&#x60;fileType&#x60;/optional &#x60;fileSize&#x60; to get &#x60;{ uploadUrl, token, path, publicUrl, expiresIn }&#x60;; (2) PUT the raw file bytes to &#x60;uploadUrl&#x60; from the client; (3) &#x60;publicUrl&#x60; is the durable URL for the uploaded photo — attach it to the listing via &#x60;PUT /v1/listings/{id}/content&#x60; (&#x60;photos&#x60; field) or list it back via &#x60;GET /v1/listings/{id}/photos&#x60;.
+    # @param id [Integer] Repull listing id
+    # @param listing_photo_upload_url_request [ListingPhotoUploadUrlRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(ListingPhotoUploadUrlResponse, Integer, Hash)>] ListingPhotoUploadUrlResponse data, response status code and response headers
+    def create_listing_photo_upload_url_with_http_info(id, listing_photo_upload_url_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ListingsApi.create_listing_photo_upload_url ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling ListingsApi.create_listing_photo_upload_url"
+      end
+      # verify the required parameter 'listing_photo_upload_url_request' is set
+      if @api_client.config.client_side_validation && listing_photo_upload_url_request.nil?
+        fail ArgumentError, "Missing the required parameter 'listing_photo_upload_url_request' when calling ListingsApi.create_listing_photo_upload_url"
+      end
+      # resource path
+      local_var_path = '/v1/listings/{id}/photos/upload-url'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(listing_photo_upload_url_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'ListingPhotoUploadUrlResponse'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"ListingsApi.create_listing_photo_upload_url",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ListingsApi#create_listing_photo_upload_url\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # Deactivate (exclude) a listing
     # Deactivate a listing — sets it inactive and excludes it from Repull. This is a **soft** operation: the listing row is KEPT (never hard-deleted) and the upstream channel (Airbnb / Hospitable / Booking.com) is NEVER touched. Repull only mutates its own copy.  Equivalent to `PATCH /v1/listings/{id}` with `{ \"active\": false }`. This is the primary self-serve way for a free-tier customer to trim back under the plan-listings cap — `DELETE` is served even when the account is over the cap (a 402-locked account can still call it). To bring a listing back, use `PATCH` with `{ \"active\": true }`.  Idempotent: deactivating an already-inactive listing returns 200.
     # @param id [Integer] Repull listing id
@@ -146,6 +220,80 @@ module Repull
       data, status_code, headers = @api_client.call_api(:DELETE, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: ListingsApi#deactivate_listing\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Delete a stored listing photo
+    # Deletes a single stored photo by its storage `path` (as returned by `GET /v1/listings/{id}/photos` or `POST /v1/listings/{id}/photos/upload-url`).
+    # @param id [Integer] Repull listing id
+    # @param listing_photo_delete_request [ListingPhotoDeleteRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [ListingPhotoDeleteResponse]
+    def delete_listing_photo(id, listing_photo_delete_request, opts = {})
+      data, _status_code, _headers = delete_listing_photo_with_http_info(id, listing_photo_delete_request, opts)
+      data
+    end
+
+    # Delete a stored listing photo
+    # Deletes a single stored photo by its storage &#x60;path&#x60; (as returned by &#x60;GET /v1/listings/{id}/photos&#x60; or &#x60;POST /v1/listings/{id}/photos/upload-url&#x60;).
+    # @param id [Integer] Repull listing id
+    # @param listing_photo_delete_request [ListingPhotoDeleteRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(ListingPhotoDeleteResponse, Integer, Hash)>] ListingPhotoDeleteResponse data, response status code and response headers
+    def delete_listing_photo_with_http_info(id, listing_photo_delete_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ListingsApi.delete_listing_photo ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling ListingsApi.delete_listing_photo"
+      end
+      # verify the required parameter 'listing_photo_delete_request' is set
+      if @api_client.config.client_side_validation && listing_photo_delete_request.nil?
+        fail ArgumentError, "Missing the required parameter 'listing_photo_delete_request' when calling ListingsApi.delete_listing_photo"
+      end
+      # resource path
+      local_var_path = '/v1/listings/{id}/photos'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(listing_photo_delete_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'ListingPhotoDeleteResponse'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"ListingsApi.delete_listing_photo",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:DELETE, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ListingsApi#delete_listing_photo\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end
@@ -348,6 +496,69 @@ module Repull
       data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: ListingsApi#get_listing_publish_status\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # List a listing's stored photos
+    # Returns the photo set currently stored for this listing.
+    # @param id [Integer] Repull listing id
+    # @param [Hash] opts the optional parameters
+    # @return [ListingPhotosResponse]
+    def list_listing_photos(id, opts = {})
+      data, _status_code, _headers = list_listing_photos_with_http_info(id, opts)
+      data
+    end
+
+    # List a listing&#39;s stored photos
+    # Returns the photo set currently stored for this listing.
+    # @param id [Integer] Repull listing id
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(ListingPhotosResponse, Integer, Hash)>] ListingPhotosResponse data, response status code and response headers
+    def list_listing_photos_with_http_info(id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ListingsApi.list_listing_photos ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling ListingsApi.list_listing_photos"
+      end
+      # resource path
+      local_var_path = '/v1/listings/{id}/photos'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'ListingPhotosResponse'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"ListingsApi.list_listing_photos",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ListingsApi#list_listing_photos\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end

@@ -1,7 +1,7 @@
 =begin
 #Repull API
 
-#The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.  ## Designed for AI agents Every error response on this API includes machine-parseable fields so an LLM (Claude in MCP, Cursor, Cline, GPT, etc.) can self-recover without escalating to a human: - `error.code` — stable string identifier (e.g. `invalid_params`, `rate_limit_exceeded`) - `error.message` — human-readable cause - `error.fix` — exact recovery steps (e.g. \"Pass `check_in_after` as ISO 8601: `?check_in_after=2026-01-15`\") - `error.docs_url` — link to the canonical write-up at `https://repull.dev/docs/errors/{code}` - `error.request_id` — id to correlate with server-side logs - `error.field` / `error.value_received` / `error.valid_values` / `error.did_you_mean` — when the error is parameter-specific - `error.retry_after` — seconds to wait before retrying (rate-limit + transient upstream)  `Access-Control-Expose-Headers` lists `x-request-id` and the `X-RateLimit-*` family so browsers can read them on cross-origin responses.  ## Quick Start 1. Get an API key at https://repull.dev/dashboard 2. Connect a PMS: `POST /v1/connect/{provider}` 3. List properties: `GET /v1/properties` 4. Get reservations: `GET /v1/reservations`  ## Authentication All requests require a Bearer token: ``` Authorization: Bearer sk_test_YOUR_API_KEY ```  Sandbox keys start with `sk_test_`, production with `sk_live_`.  ## Request Correlation (X-Request-ID) Every response carries an `X-Request-ID` header, e.g. `X-Request-ID: req_01HXY...`. Include this id in support tickets and bug reports — we can trace the full request lifecycle (auth, rate limit, handler, downstream calls, log row) from a single id.  You may set the header on the inbound request to forward your own trace id; we will echo it back instead of generating a new one. Accepted format: `^[\\\\w.-]{1,128}$`.  The id is also embedded in error envelopes as `request_id` so server-side log diffs work even when the response headers are stripped by an intermediate proxy.  ## Rate Limits The public API enforces a per-API-key sliding-window rate limit on top of the per-tier monthly + daily-AI quotas.  **Default policy:** 600 requests per 60 seconds, per API key. Sliding window — there is no fixed-minute boundary you can burst across.  Every response includes:  | Header | Meaning | |---|---| | `X-RateLimit-Limit` | Requests permitted in the current window. | | `X-RateLimit-Remaining` | Requests left in the current window after this call. | | `X-RateLimit-Reset` | Unix epoch (seconds) when the next slot opens. | | `X-RateLimit-Policy` | Machine-readable policy descriptor, e.g. `600;w=60`. | | `Retry-After` | Seconds to wait before retrying. **Only present on 429 responses.** |  **On 429 (rate_limit_exceeded):** the response body matches the standard error envelope with `code: \"rate_limit_exceeded\"`, plus `limit`, `window_seconds`, `retry_after`, and `request_id` fields. SDKs MUST honor `Retry-After` and use exponential backoff with jitter on subsequent retries — never a tight loop.  Recommended backoff: ``` sleep_ms = (Retry-After * 1000) + random(0..250) ```  Monthly + daily-AI tier quotas (`free`, `starter`, `custom`) are enforced separately and also surface as 429s; they include `tier`, `scope`, and `resets_at` fields.  ## Plan Limits (402 — `listings_limit_exceeded`) The Repull API also enforces a per-tier cap on **active listings**:  | Tier | Active listings cap | |---|---| | `free` | 3 | | `starter` | 50 | | `custom` | unlimited |  When a customer's active-listing count is above their tier cap, the API returns **`402 Payment Required`** with `error.code = \"listings_limit_exceeded\"` on every route EXCEPT:  - `/v1/health` — uptime probes are never gated. - `/v1/usage/*` — so dashboards can render the over-cap state. - Any `DELETE` — so the customer can trim listings to get back under the cap without paying.  Unlike 429, 402 is NOT a \"wait and retry\" condition — `Retry-After` is not set. The only paths back to 200 are:   1. `DELETE` enough listings to come back under the cap, or   2. Upgrade at `https://repull.dev/dashboard/billing`. The server-side usage cache is 60s, so the first 200 after an upgrade may take up to a minute.  The envelope mirrors `rate_limit_exceeded` for SDK ergonomics: `tier`, `limit`, `active_listings`, `upgrade_url`, plus the standard `code` / `message` / `fix` / `docs_url` / `request_id`.
+#The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.  ## Designed for AI agents Every error response on this API includes machine-parseable fields so an LLM (Claude in MCP, Cursor, Cline, GPT, etc.) can self-recover without escalating to a human: - `error.code` — stable string identifier (e.g. `invalid_params`, `rate_limit_exceeded`) - `error.message` — human-readable cause - `error.fix` — exact recovery steps (e.g. \"Pass `check_in_after` as ISO 8601: `?check_in_after=2026-01-15`\") - `error.docs_url` — link to the canonical write-up at `https://repull.dev/docs/errors/{code}` - `error.request_id` — id to correlate with server-side logs - `error.field` / `error.value_received` / `error.valid_values` / `error.did_you_mean` — when the error is parameter-specific - `error.retry_after` — seconds to wait before retrying (rate-limit + transient upstream)  `Access-Control-Expose-Headers` lists `x-request-id` and the `X-RateLimit-*` family so browsers can read them on cross-origin responses.  ## Quick Start 1. Get an API key at https://repull.dev/dashboard 2. Connect a PMS: `POST /v1/connect/{provider}` 3. List properties: `GET /v1/properties` 4. Get reservations: `GET /v1/reservations`  ## Authentication All requests require a Bearer token: ``` Authorization: Bearer sk_live_YOUR_API_KEY ```  ## Request Correlation (X-Request-ID) Every response carries an `X-Request-ID` header, e.g. `X-Request-ID: req_01HXY...`. Include this id in support tickets and bug reports — we can trace the full request lifecycle (auth, rate limit, handler, downstream calls, log row) from a single id.  You may set the header on the inbound request to forward your own trace id; we will echo it back instead of generating a new one. Accepted format: `^[\\\\w.-]{1,128}$`.  The id is also embedded in error envelopes as `request_id` so server-side log diffs work even when the response headers are stripped by an intermediate proxy.  ## Rate Limits The public API enforces a per-API-key sliding-window rate limit on top of the per-tier monthly + daily-AI quotas.  **Default policy:** 600 requests per 60 seconds, per API key. Sliding window — there is no fixed-minute boundary you can burst across.  Every response includes:  | Header | Meaning | |---|---| | `X-RateLimit-Limit` | Requests permitted in the current window. | | `X-RateLimit-Remaining` | Requests left in the current window after this call. | | `X-RateLimit-Reset` | Unix epoch (seconds) when the next slot opens. | | `X-RateLimit-Policy` | Machine-readable policy descriptor, e.g. `600;w=60`. | | `Retry-After` | Seconds to wait before retrying. **Only present on 429 responses.** |  **On 429 (rate_limit_exceeded):** the response body matches the standard error envelope with `code: \"rate_limit_exceeded\"`, plus `limit`, `window_seconds`, `retry_after`, and `request_id` fields. SDKs MUST honor `Retry-After` and use exponential backoff with jitter on subsequent retries — never a tight loop.  Recommended backoff: ``` sleep_ms = (Retry-After * 1000) + random(0..250) ```  Monthly + daily-AI tier quotas (`free`, `starter`, `custom`) are enforced separately and also surface as 429s; they include `tier`, `scope`, and `resets_at` fields.  ## Plan Limits (402 — `listings_limit_exceeded`) The Repull API also enforces a per-tier cap on **active listings**:  | Tier | Active listings cap | |---|---| | `free` | 3 | | `starter` | 50 | | `custom` | unlimited |  When a customer's active-listing count is above their tier cap, the API returns **`402 Payment Required`** with `error.code = \"listings_limit_exceeded\"` on every route EXCEPT:  - `/v1/health` — uptime probes are never gated. - `/v1/usage/*` — so dashboards can render the over-cap state. - Any `DELETE` — so the customer can trim listings to get back under the cap without paying.  Unlike 429, 402 is NOT a \"wait and retry\" condition — `Retry-After` is not set. The only paths back to 200 are:   1. `DELETE` enough listings to come back under the cap, or   2. Upgrade at `https://repull.dev/dashboard/billing`. The server-side usage cache is 60s, so the first 200 after an upgrade may take up to a minute.  The envelope mirrors `rate_limit_exceeded` for SDK ergonomics: `tier`, `limit`, `active_listings`, `upgrade_url`, plus the standard `code` / `message` / `fix` / `docs_url` / `request_id`.
 
 The version of the OpenAPI document: 1.0.0
 Contact: ivan@vanio.ai
@@ -19,6 +19,74 @@ module Repull
     def initialize(api_client = ApiClient.default)
       @api_client = api_client
     end
+    # Booking.com connectivity callback
+    # Receives Booking.com's asynchronous confirmation that a property has designated Repull as its connectivity provider, and advances the Connect session. Called by Booking.com, not by integrators.
+    # @param request_body [Hash<String, Object>] 
+    # @param [Hash] opts the optional parameters
+    # @return [nil]
+    def booking_connect_callback(request_body, opts = {})
+      booking_connect_callback_with_http_info(request_body, opts)
+      nil
+    end
+
+    # Booking.com connectivity callback
+    # Receives Booking.com&#39;s asynchronous confirmation that a property has designated Repull as its connectivity provider, and advances the Connect session. Called by Booking.com, not by integrators.
+    # @param request_body [Hash<String, Object>] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
+    def booking_connect_callback_with_http_info(request_body, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ConnectApi.booking_connect_callback ...'
+      end
+      # verify the required parameter 'request_body' is set
+      if @api_client.config.client_side_validation && request_body.nil?
+        fail ArgumentError, "Missing the required parameter 'request_body' when calling ConnectApi.booking_connect_callback"
+      end
+      # resource path
+      local_var_path = '/v1/connect/booking/callback'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(request_body)
+
+      # return_type
+      return_type = opts[:debug_return_type]
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || []
+
+      new_options = opts.merge(
+        :operation => :"ConnectApi.booking_connect_callback",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ConnectApi#booking_connect_callback\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # Create a multi-channel Connect picker session
     # Mints a session that lands the user on the channel picker at `connect.repull.dev/{sessionId}` instead of jumping straight to a single provider. The user picks a channel from the registry, the picker page POSTs `selectConnectProvider` to bind the choice, and the per-provider flow takes over.  Use this when you want one entry point for all 13 channels. Use `POST /v1/connect/{provider}` instead when your UI already knows which channel to connect.
     # @param create_connect_session_request [CreateConnectSessionRequest] 
@@ -158,7 +226,7 @@ module Repull
     end
 
     # Disconnect provider
-    # Disconnect a PMS or OTA from this workspace. Revokes the OAuth token (where applicable), purges credentials, and stops all sync jobs. Resources synced from the provider remain queryable but become read-only and stop receiving updates.
+    # Disconnect a PMS or OTA from this workspace.  Currently supported for `booking` only: drops the stored connection and stops syncing the mapped rooms. Resources already synced remain queryable but become read-only and stop receiving updates.  Every other provider returns `501 not_implemented` with instructions for disconnecting on the provider's side — Airbnb in particular has to be revoked by the host (Account → Privacy & sharing → Connected apps), because the OAuth grant lives outside this service. The endpoint used to report `200 { disconnected: true }` for every provider while doing nothing; it now tells you the truth.
     # @param provider [String] PMS provider slug (e.g., hostaway, guesty, ownerrez)
     # @param [Hash] opts the optional parameters
     # @return [nil]
@@ -168,7 +236,7 @@ module Repull
     end
 
     # Disconnect provider
-    # Disconnect a PMS or OTA from this workspace. Revokes the OAuth token (where applicable), purges credentials, and stops all sync jobs. Resources synced from the provider remain queryable but become read-only and stop receiving updates.
+    # Disconnect a PMS or OTA from this workspace.  Currently supported for &#x60;booking&#x60; only: drops the stored connection and stops syncing the mapped rooms. Resources already synced remain queryable but become read-only and stop receiving updates.  Every other provider returns &#x60;501 not_implemented&#x60; with instructions for disconnecting on the provider&#39;s side — Airbnb in particular has to be revoked by the host (Account → Privacy &amp; sharing → Connected apps), because the OAuth grant lives outside this service. The endpoint used to report &#x60;200 { disconnected: true }&#x60; for every provider while doing nothing; it now tells you the truth.
     # @param provider [String] PMS provider slug (e.g., hostaway, guesty, ownerrez)
     # @param [Hash] opts the optional parameters
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
@@ -188,6 +256,8 @@ module Repull
 
       # header parameters
       header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
 
       # form parameters
       form_params = opts[:form_params] || {}
@@ -597,6 +667,686 @@ module Repull
       data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: ConnectApi#select_connect_provider\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Submit Beds24 credentials for a Connect session
+    # Completes a credentials-pattern connection for Beds24. API key + prop key from Beds24 → Settings → Apps & Integrations.  The credentials are validated against Beds24 before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.  No API key required when called with a `sessionId` — the session is the capability token.
+    # @param submit_beds24_credentials_request [SubmitBeds24CredentialsRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [SubmitBeds24Credentials200Response]
+    def submit_beds24_credentials(submit_beds24_credentials_request, opts = {})
+      data, _status_code, _headers = submit_beds24_credentials_with_http_info(submit_beds24_credentials_request, opts)
+      data
+    end
+
+    # Submit Beds24 credentials for a Connect session
+    # Completes a credentials-pattern connection for Beds24. API key + prop key from Beds24 → Settings → Apps &amp; Integrations.  The credentials are validated against Beds24 before anything is persisted, so an invalid pair returns &#x60;invalid_credentials&#x60; rather than creating a dead connection. On success the &#x60;pms_connections&#x60; row is written and the Connect session moves to its terminal state.  No API key required when called with a &#x60;sessionId&#x60; — the session is the capability token.
+    # @param submit_beds24_credentials_request [SubmitBeds24CredentialsRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(SubmitBeds24Credentials200Response, Integer, Hash)>] SubmitBeds24Credentials200Response data, response status code and response headers
+    def submit_beds24_credentials_with_http_info(submit_beds24_credentials_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ConnectApi.submit_beds24_credentials ...'
+      end
+      # verify the required parameter 'submit_beds24_credentials_request' is set
+      if @api_client.config.client_side_validation && submit_beds24_credentials_request.nil?
+        fail ArgumentError, "Missing the required parameter 'submit_beds24_credentials_request' when calling ConnectApi.submit_beds24_credentials"
+      end
+      # resource path
+      local_var_path = '/v1/connect/beds24/credentials'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(submit_beds24_credentials_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'SubmitBeds24Credentials200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"ConnectApi.submit_beds24_credentials",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ConnectApi#submit_beds24_credentials\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Submit BookingSync credentials for a Connect session
+    # Completes a credentials-pattern connection for BookingSync. OAuth client credentials issued by BookingSync.  The credentials are validated against BookingSync before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.  No API key required when called with a `sessionId` — the session is the capability token.
+    # @param submit_bookingsync_credentials_request [SubmitBookingsyncCredentialsRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [SubmitBeds24Credentials200Response]
+    def submit_bookingsync_credentials(submit_bookingsync_credentials_request, opts = {})
+      data, _status_code, _headers = submit_bookingsync_credentials_with_http_info(submit_bookingsync_credentials_request, opts)
+      data
+    end
+
+    # Submit BookingSync credentials for a Connect session
+    # Completes a credentials-pattern connection for BookingSync. OAuth client credentials issued by BookingSync.  The credentials are validated against BookingSync before anything is persisted, so an invalid pair returns &#x60;invalid_credentials&#x60; rather than creating a dead connection. On success the &#x60;pms_connections&#x60; row is written and the Connect session moves to its terminal state.  No API key required when called with a &#x60;sessionId&#x60; — the session is the capability token.
+    # @param submit_bookingsync_credentials_request [SubmitBookingsyncCredentialsRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(SubmitBeds24Credentials200Response, Integer, Hash)>] SubmitBeds24Credentials200Response data, response status code and response headers
+    def submit_bookingsync_credentials_with_http_info(submit_bookingsync_credentials_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ConnectApi.submit_bookingsync_credentials ...'
+      end
+      # verify the required parameter 'submit_bookingsync_credentials_request' is set
+      if @api_client.config.client_side_validation && submit_bookingsync_credentials_request.nil?
+        fail ArgumentError, "Missing the required parameter 'submit_bookingsync_credentials_request' when calling ConnectApi.submit_bookingsync_credentials"
+      end
+      # resource path
+      local_var_path = '/v1/connect/bookingsync/credentials'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(submit_bookingsync_credentials_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'SubmitBeds24Credentials200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"ConnectApi.submit_bookingsync_credentials",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ConnectApi#submit_bookingsync_credentials\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Submit Guesty credentials for a Connect session
+    # Completes a credentials-pattern connection for Guesty. Client ID + secret from Guesty → Integrations → Open API.  The credentials are validated against Guesty before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.  No API key required when called with a `sessionId` — the session is the capability token.
+    # @param submit_guesty_credentials_request [SubmitGuestyCredentialsRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [SubmitBeds24Credentials200Response]
+    def submit_guesty_credentials(submit_guesty_credentials_request, opts = {})
+      data, _status_code, _headers = submit_guesty_credentials_with_http_info(submit_guesty_credentials_request, opts)
+      data
+    end
+
+    # Submit Guesty credentials for a Connect session
+    # Completes a credentials-pattern connection for Guesty. Client ID + secret from Guesty → Integrations → Open API.  The credentials are validated against Guesty before anything is persisted, so an invalid pair returns &#x60;invalid_credentials&#x60; rather than creating a dead connection. On success the &#x60;pms_connections&#x60; row is written and the Connect session moves to its terminal state.  No API key required when called with a &#x60;sessionId&#x60; — the session is the capability token.
+    # @param submit_guesty_credentials_request [SubmitGuestyCredentialsRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(SubmitBeds24Credentials200Response, Integer, Hash)>] SubmitBeds24Credentials200Response data, response status code and response headers
+    def submit_guesty_credentials_with_http_info(submit_guesty_credentials_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ConnectApi.submit_guesty_credentials ...'
+      end
+      # verify the required parameter 'submit_guesty_credentials_request' is set
+      if @api_client.config.client_side_validation && submit_guesty_credentials_request.nil?
+        fail ArgumentError, "Missing the required parameter 'submit_guesty_credentials_request' when calling ConnectApi.submit_guesty_credentials"
+      end
+      # resource path
+      local_var_path = '/v1/connect/guesty/credentials'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(submit_guesty_credentials_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'SubmitBeds24Credentials200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"ConnectApi.submit_guesty_credentials",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ConnectApi#submit_guesty_credentials\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Submit Hospitable credentials for a Connect session
+    # Completes a credentials-pattern connection for Hospitable. Personal access token from Hospitable → Settings → API.  The credentials are validated against Hospitable before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.  No API key required when called with a `sessionId` — the session is the capability token.
+    # @param submit_hospitable_credentials_request [SubmitHospitableCredentialsRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [SubmitBeds24Credentials200Response]
+    def submit_hospitable_credentials(submit_hospitable_credentials_request, opts = {})
+      data, _status_code, _headers = submit_hospitable_credentials_with_http_info(submit_hospitable_credentials_request, opts)
+      data
+    end
+
+    # Submit Hospitable credentials for a Connect session
+    # Completes a credentials-pattern connection for Hospitable. Personal access token from Hospitable → Settings → API.  The credentials are validated against Hospitable before anything is persisted, so an invalid pair returns &#x60;invalid_credentials&#x60; rather than creating a dead connection. On success the &#x60;pms_connections&#x60; row is written and the Connect session moves to its terminal state.  No API key required when called with a &#x60;sessionId&#x60; — the session is the capability token.
+    # @param submit_hospitable_credentials_request [SubmitHospitableCredentialsRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(SubmitBeds24Credentials200Response, Integer, Hash)>] SubmitBeds24Credentials200Response data, response status code and response headers
+    def submit_hospitable_credentials_with_http_info(submit_hospitable_credentials_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ConnectApi.submit_hospitable_credentials ...'
+      end
+      # verify the required parameter 'submit_hospitable_credentials_request' is set
+      if @api_client.config.client_side_validation && submit_hospitable_credentials_request.nil?
+        fail ArgumentError, "Missing the required parameter 'submit_hospitable_credentials_request' when calling ConnectApi.submit_hospitable_credentials"
+      end
+      # resource path
+      local_var_path = '/v1/connect/hospitable/credentials'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(submit_hospitable_credentials_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'SubmitBeds24Credentials200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"ConnectApi.submit_hospitable_credentials",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ConnectApi#submit_hospitable_credentials\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Submit Hostaway credentials for a Connect session
+    # Completes a credentials-pattern connection for Hostaway. Account ID + API key from Hostaway → Settings → Public API.  The credentials are validated against Hostaway before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.  No API key required when called with a `sessionId` — the session is the capability token.
+    # @param submit_hostaway_credentials_request [SubmitHostawayCredentialsRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [SubmitBeds24Credentials200Response]
+    def submit_hostaway_credentials(submit_hostaway_credentials_request, opts = {})
+      data, _status_code, _headers = submit_hostaway_credentials_with_http_info(submit_hostaway_credentials_request, opts)
+      data
+    end
+
+    # Submit Hostaway credentials for a Connect session
+    # Completes a credentials-pattern connection for Hostaway. Account ID + API key from Hostaway → Settings → Public API.  The credentials are validated against Hostaway before anything is persisted, so an invalid pair returns &#x60;invalid_credentials&#x60; rather than creating a dead connection. On success the &#x60;pms_connections&#x60; row is written and the Connect session moves to its terminal state.  No API key required when called with a &#x60;sessionId&#x60; — the session is the capability token.
+    # @param submit_hostaway_credentials_request [SubmitHostawayCredentialsRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(SubmitBeds24Credentials200Response, Integer, Hash)>] SubmitBeds24Credentials200Response data, response status code and response headers
+    def submit_hostaway_credentials_with_http_info(submit_hostaway_credentials_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ConnectApi.submit_hostaway_credentials ...'
+      end
+      # verify the required parameter 'submit_hostaway_credentials_request' is set
+      if @api_client.config.client_side_validation && submit_hostaway_credentials_request.nil?
+        fail ArgumentError, "Missing the required parameter 'submit_hostaway_credentials_request' when calling ConnectApi.submit_hostaway_credentials"
+      end
+      # resource path
+      local_var_path = '/v1/connect/hostaway/credentials'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(submit_hostaway_credentials_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'SubmitBeds24Credentials200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"ConnectApi.submit_hostaway_credentials",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ConnectApi#submit_hostaway_credentials\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Submit iGMS credentials for a Connect session
+    # Completes a credentials-pattern connection for iGMS. API token from iGMS → Settings → Integrations.  The credentials are validated against iGMS before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.  No API key required when called with a `sessionId` — the session is the capability token.
+    # @param submit_igms_credentials_request [SubmitIgmsCredentialsRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [SubmitBeds24Credentials200Response]
+    def submit_igms_credentials(submit_igms_credentials_request, opts = {})
+      data, _status_code, _headers = submit_igms_credentials_with_http_info(submit_igms_credentials_request, opts)
+      data
+    end
+
+    # Submit iGMS credentials for a Connect session
+    # Completes a credentials-pattern connection for iGMS. API token from iGMS → Settings → Integrations.  The credentials are validated against iGMS before anything is persisted, so an invalid pair returns &#x60;invalid_credentials&#x60; rather than creating a dead connection. On success the &#x60;pms_connections&#x60; row is written and the Connect session moves to its terminal state.  No API key required when called with a &#x60;sessionId&#x60; — the session is the capability token.
+    # @param submit_igms_credentials_request [SubmitIgmsCredentialsRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(SubmitBeds24Credentials200Response, Integer, Hash)>] SubmitBeds24Credentials200Response data, response status code and response headers
+    def submit_igms_credentials_with_http_info(submit_igms_credentials_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ConnectApi.submit_igms_credentials ...'
+      end
+      # verify the required parameter 'submit_igms_credentials_request' is set
+      if @api_client.config.client_side_validation && submit_igms_credentials_request.nil?
+        fail ArgumentError, "Missing the required parameter 'submit_igms_credentials_request' when calling ConnectApi.submit_igms_credentials"
+      end
+      # resource path
+      local_var_path = '/v1/connect/igms/credentials'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(submit_igms_credentials_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'SubmitBeds24Credentials200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"ConnectApi.submit_igms_credentials",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ConnectApi#submit_igms_credentials\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Submit Lodgify credentials for a Connect session
+    # Completes a credentials-pattern connection for Lodgify. API key from Lodgify → Settings → Public API.  The credentials are validated against Lodgify before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.  No API key required when called with a `sessionId` — the session is the capability token.
+    # @param submit_lodgify_credentials_request [SubmitLodgifyCredentialsRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [SubmitBeds24Credentials200Response]
+    def submit_lodgify_credentials(submit_lodgify_credentials_request, opts = {})
+      data, _status_code, _headers = submit_lodgify_credentials_with_http_info(submit_lodgify_credentials_request, opts)
+      data
+    end
+
+    # Submit Lodgify credentials for a Connect session
+    # Completes a credentials-pattern connection for Lodgify. API key from Lodgify → Settings → Public API.  The credentials are validated against Lodgify before anything is persisted, so an invalid pair returns &#x60;invalid_credentials&#x60; rather than creating a dead connection. On success the &#x60;pms_connections&#x60; row is written and the Connect session moves to its terminal state.  No API key required when called with a &#x60;sessionId&#x60; — the session is the capability token.
+    # @param submit_lodgify_credentials_request [SubmitLodgifyCredentialsRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(SubmitBeds24Credentials200Response, Integer, Hash)>] SubmitBeds24Credentials200Response data, response status code and response headers
+    def submit_lodgify_credentials_with_http_info(submit_lodgify_credentials_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ConnectApi.submit_lodgify_credentials ...'
+      end
+      # verify the required parameter 'submit_lodgify_credentials_request' is set
+      if @api_client.config.client_side_validation && submit_lodgify_credentials_request.nil?
+        fail ArgumentError, "Missing the required parameter 'submit_lodgify_credentials_request' when calling ConnectApi.submit_lodgify_credentials"
+      end
+      # resource path
+      local_var_path = '/v1/connect/lodgify/credentials'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(submit_lodgify_credentials_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'SubmitBeds24Credentials200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"ConnectApi.submit_lodgify_credentials",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ConnectApi#submit_lodgify_credentials\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Submit OwnerRez credentials for a Connect session
+    # Completes a credentials-pattern connection for OwnerRez. Username + API token from OwnerRez → Settings → API.  The credentials are validated against OwnerRez before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.  No API key required when called with a `sessionId` — the session is the capability token.
+    # @param submit_ownerrez_credentials_request [SubmitOwnerrezCredentialsRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [SubmitBeds24Credentials200Response]
+    def submit_ownerrez_credentials(submit_ownerrez_credentials_request, opts = {})
+      data, _status_code, _headers = submit_ownerrez_credentials_with_http_info(submit_ownerrez_credentials_request, opts)
+      data
+    end
+
+    # Submit OwnerRez credentials for a Connect session
+    # Completes a credentials-pattern connection for OwnerRez. Username + API token from OwnerRez → Settings → API.  The credentials are validated against OwnerRez before anything is persisted, so an invalid pair returns &#x60;invalid_credentials&#x60; rather than creating a dead connection. On success the &#x60;pms_connections&#x60; row is written and the Connect session moves to its terminal state.  No API key required when called with a &#x60;sessionId&#x60; — the session is the capability token.
+    # @param submit_ownerrez_credentials_request [SubmitOwnerrezCredentialsRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(SubmitBeds24Credentials200Response, Integer, Hash)>] SubmitBeds24Credentials200Response data, response status code and response headers
+    def submit_ownerrez_credentials_with_http_info(submit_ownerrez_credentials_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ConnectApi.submit_ownerrez_credentials ...'
+      end
+      # verify the required parameter 'submit_ownerrez_credentials_request' is set
+      if @api_client.config.client_side_validation && submit_ownerrez_credentials_request.nil?
+        fail ArgumentError, "Missing the required parameter 'submit_ownerrez_credentials_request' when calling ConnectApi.submit_ownerrez_credentials"
+      end
+      # resource path
+      local_var_path = '/v1/connect/ownerrez/credentials'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(submit_ownerrez_credentials_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'SubmitBeds24Credentials200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"ConnectApi.submit_ownerrez_credentials",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ConnectApi#submit_ownerrez_credentials\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Submit Smoobu credentials for a Connect session
+    # Completes a credentials-pattern connection for Smoobu. API key from Smoobu → Settings → For developers.  The credentials are validated against Smoobu before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.  No API key required when called with a `sessionId` — the session is the capability token.
+    # @param submit_smoobu_credentials_request [SubmitSmoobuCredentialsRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [SubmitBeds24Credentials200Response]
+    def submit_smoobu_credentials(submit_smoobu_credentials_request, opts = {})
+      data, _status_code, _headers = submit_smoobu_credentials_with_http_info(submit_smoobu_credentials_request, opts)
+      data
+    end
+
+    # Submit Smoobu credentials for a Connect session
+    # Completes a credentials-pattern connection for Smoobu. API key from Smoobu → Settings → For developers.  The credentials are validated against Smoobu before anything is persisted, so an invalid pair returns &#x60;invalid_credentials&#x60; rather than creating a dead connection. On success the &#x60;pms_connections&#x60; row is written and the Connect session moves to its terminal state.  No API key required when called with a &#x60;sessionId&#x60; — the session is the capability token.
+    # @param submit_smoobu_credentials_request [SubmitSmoobuCredentialsRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(SubmitBeds24Credentials200Response, Integer, Hash)>] SubmitBeds24Credentials200Response data, response status code and response headers
+    def submit_smoobu_credentials_with_http_info(submit_smoobu_credentials_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ConnectApi.submit_smoobu_credentials ...'
+      end
+      # verify the required parameter 'submit_smoobu_credentials_request' is set
+      if @api_client.config.client_side_validation && submit_smoobu_credentials_request.nil?
+        fail ArgumentError, "Missing the required parameter 'submit_smoobu_credentials_request' when calling ConnectApi.submit_smoobu_credentials"
+      end
+      # resource path
+      local_var_path = '/v1/connect/smoobu/credentials'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(submit_smoobu_credentials_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'SubmitBeds24Credentials200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"ConnectApi.submit_smoobu_credentials",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ConnectApi#submit_smoobu_credentials\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Submit Vrbo credentials for a Connect session
+    # Completes a credentials-pattern connection for Vrbo. Activation handshake — Repull mints the Basic-Auth pair the host pastes into Vrbo Partner Central.  The credentials are validated against Vrbo before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.  No API key required when called with a `sessionId` — the session is the capability token.
+    # @param submit_vrbo_credentials_request [SubmitVrboCredentialsRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [SubmitBeds24Credentials200Response]
+    def submit_vrbo_credentials(submit_vrbo_credentials_request, opts = {})
+      data, _status_code, _headers = submit_vrbo_credentials_with_http_info(submit_vrbo_credentials_request, opts)
+      data
+    end
+
+    # Submit Vrbo credentials for a Connect session
+    # Completes a credentials-pattern connection for Vrbo. Activation handshake — Repull mints the Basic-Auth pair the host pastes into Vrbo Partner Central.  The credentials are validated against Vrbo before anything is persisted, so an invalid pair returns &#x60;invalid_credentials&#x60; rather than creating a dead connection. On success the &#x60;pms_connections&#x60; row is written and the Connect session moves to its terminal state.  No API key required when called with a &#x60;sessionId&#x60; — the session is the capability token.
+    # @param submit_vrbo_credentials_request [SubmitVrboCredentialsRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(SubmitBeds24Credentials200Response, Integer, Hash)>] SubmitBeds24Credentials200Response data, response status code and response headers
+    def submit_vrbo_credentials_with_http_info(submit_vrbo_credentials_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ConnectApi.submit_vrbo_credentials ...'
+      end
+      # verify the required parameter 'submit_vrbo_credentials_request' is set
+      if @api_client.config.client_side_validation && submit_vrbo_credentials_request.nil?
+        fail ArgumentError, "Missing the required parameter 'submit_vrbo_credentials_request' when calling ConnectApi.submit_vrbo_credentials"
+      end
+      # resource path
+      local_var_path = '/v1/connect/vrbo/credentials'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(submit_vrbo_credentials_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'SubmitBeds24Credentials200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"ConnectApi.submit_vrbo_credentials",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ConnectApi#submit_vrbo_credentials\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end

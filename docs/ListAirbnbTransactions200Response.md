@@ -4,7 +4,7 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **data** | **Array&lt;Hash&lt;String, Object&gt;&gt;** |  |  |
+| **data** | [**Array&lt;AirbnbTransaction&gt;**](AirbnbTransaction.md) |  |  |
 | **data_freshness** | [**AirbnbDataFreshness**](AirbnbDataFreshness.md) |  |  |
 
 ## Example

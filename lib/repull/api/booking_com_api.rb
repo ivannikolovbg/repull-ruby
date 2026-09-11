@@ -1,7 +1,7 @@
 =begin
 #Repull API
 
-#The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.  ## Designed for AI agents Every error response on this API includes machine-parseable fields so an LLM (Claude in MCP, Cursor, Cline, GPT, etc.) can self-recover without escalating to a human: - `error.code` — stable string identifier (e.g. `invalid_params`, `rate_limit_exceeded`) - `error.message` — human-readable cause - `error.fix` — exact recovery steps (e.g. \"Pass `check_in_after` as ISO 8601: `?check_in_after=2026-01-15`\") - `error.docs_url` — link to the canonical write-up at `https://repull.dev/docs/errors/{code}` - `error.request_id` — id to correlate with server-side logs - `error.field` / `error.value_received` / `error.valid_values` / `error.did_you_mean` — when the error is parameter-specific - `error.retry_after` — seconds to wait before retrying (rate-limit + transient upstream)  `Access-Control-Expose-Headers` lists `x-request-id` and the `X-RateLimit-*` family so browsers can read them on cross-origin responses.  ## Quick Start 1. Get an API key at https://repull.dev/dashboard 2. Connect a PMS: `POST /v1/connect/{provider}` 3. List properties: `GET /v1/properties` 4. Get reservations: `GET /v1/reservations`  ## Authentication All requests require a Bearer token: ``` Authorization: Bearer sk_test_YOUR_API_KEY ```  Sandbox keys start with `sk_test_`, production with `sk_live_`.  ## Request Correlation (X-Request-ID) Every response carries an `X-Request-ID` header, e.g. `X-Request-ID: req_01HXY...`. Include this id in support tickets and bug reports — we can trace the full request lifecycle (auth, rate limit, handler, downstream calls, log row) from a single id.  You may set the header on the inbound request to forward your own trace id; we will echo it back instead of generating a new one. Accepted format: `^[\\\\w.-]{1,128}$`.  The id is also embedded in error envelopes as `request_id` so server-side log diffs work even when the response headers are stripped by an intermediate proxy.  ## Rate Limits The public API enforces a per-API-key sliding-window rate limit on top of the per-tier monthly + daily-AI quotas.  **Default policy:** 600 requests per 60 seconds, per API key. Sliding window — there is no fixed-minute boundary you can burst across.  Every response includes:  | Header | Meaning | |---|---| | `X-RateLimit-Limit` | Requests permitted in the current window. | | `X-RateLimit-Remaining` | Requests left in the current window after this call. | | `X-RateLimit-Reset` | Unix epoch (seconds) when the next slot opens. | | `X-RateLimit-Policy` | Machine-readable policy descriptor, e.g. `600;w=60`. | | `Retry-After` | Seconds to wait before retrying. **Only present on 429 responses.** |  **On 429 (rate_limit_exceeded):** the response body matches the standard error envelope with `code: \"rate_limit_exceeded\"`, plus `limit`, `window_seconds`, `retry_after`, and `request_id` fields. SDKs MUST honor `Retry-After` and use exponential backoff with jitter on subsequent retries — never a tight loop.  Recommended backoff: ``` sleep_ms = (Retry-After * 1000) + random(0..250) ```  Monthly + daily-AI tier quotas (`free`, `starter`, `custom`) are enforced separately and also surface as 429s; they include `tier`, `scope`, and `resets_at` fields.  ## Plan Limits (402 — `listings_limit_exceeded`) The Repull API also enforces a per-tier cap on **active listings**:  | Tier | Active listings cap | |---|---| | `free` | 3 | | `starter` | 50 | | `custom` | unlimited |  When a customer's active-listing count is above their tier cap, the API returns **`402 Payment Required`** with `error.code = \"listings_limit_exceeded\"` on every route EXCEPT:  - `/v1/health` — uptime probes are never gated. - `/v1/usage/*` — so dashboards can render the over-cap state. - Any `DELETE` — so the customer can trim listings to get back under the cap without paying.  Unlike 429, 402 is NOT a \"wait and retry\" condition — `Retry-After` is not set. The only paths back to 200 are:   1. `DELETE` enough listings to come back under the cap, or   2. Upgrade at `https://repull.dev/dashboard/billing`. The server-side usage cache is 60s, so the first 200 after an upgrade may take up to a minute.  The envelope mirrors `rate_limit_exceeded` for SDK ergonomics: `tier`, `limit`, `active_listings`, `upgrade_url`, plus the standard `code` / `message` / `fix` / `docs_url` / `request_id`.
+#The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.  ## Designed for AI agents Every error response on this API includes machine-parseable fields so an LLM (Claude in MCP, Cursor, Cline, GPT, etc.) can self-recover without escalating to a human: - `error.code` — stable string identifier (e.g. `invalid_params`, `rate_limit_exceeded`) - `error.message` — human-readable cause - `error.fix` — exact recovery steps (e.g. \"Pass `check_in_after` as ISO 8601: `?check_in_after=2026-01-15`\") - `error.docs_url` — link to the canonical write-up at `https://repull.dev/docs/errors/{code}` - `error.request_id` — id to correlate with server-side logs - `error.field` / `error.value_received` / `error.valid_values` / `error.did_you_mean` — when the error is parameter-specific - `error.retry_after` — seconds to wait before retrying (rate-limit + transient upstream)  `Access-Control-Expose-Headers` lists `x-request-id` and the `X-RateLimit-*` family so browsers can read them on cross-origin responses.  ## Quick Start 1. Get an API key at https://repull.dev/dashboard 2. Connect a PMS: `POST /v1/connect/{provider}` 3. List properties: `GET /v1/properties` 4. Get reservations: `GET /v1/reservations`  ## Authentication All requests require a Bearer token: ``` Authorization: Bearer sk_live_YOUR_API_KEY ```  ## Request Correlation (X-Request-ID) Every response carries an `X-Request-ID` header, e.g. `X-Request-ID: req_01HXY...`. Include this id in support tickets and bug reports — we can trace the full request lifecycle (auth, rate limit, handler, downstream calls, log row) from a single id.  You may set the header on the inbound request to forward your own trace id; we will echo it back instead of generating a new one. Accepted format: `^[\\\\w.-]{1,128}$`.  The id is also embedded in error envelopes as `request_id` so server-side log diffs work even when the response headers are stripped by an intermediate proxy.  ## Rate Limits The public API enforces a per-API-key sliding-window rate limit on top of the per-tier monthly + daily-AI quotas.  **Default policy:** 600 requests per 60 seconds, per API key. Sliding window — there is no fixed-minute boundary you can burst across.  Every response includes:  | Header | Meaning | |---|---| | `X-RateLimit-Limit` | Requests permitted in the current window. | | `X-RateLimit-Remaining` | Requests left in the current window after this call. | | `X-RateLimit-Reset` | Unix epoch (seconds) when the next slot opens. | | `X-RateLimit-Policy` | Machine-readable policy descriptor, e.g. `600;w=60`. | | `Retry-After` | Seconds to wait before retrying. **Only present on 429 responses.** |  **On 429 (rate_limit_exceeded):** the response body matches the standard error envelope with `code: \"rate_limit_exceeded\"`, plus `limit`, `window_seconds`, `retry_after`, and `request_id` fields. SDKs MUST honor `Retry-After` and use exponential backoff with jitter on subsequent retries — never a tight loop.  Recommended backoff: ``` sleep_ms = (Retry-After * 1000) + random(0..250) ```  Monthly + daily-AI tier quotas (`free`, `starter`, `custom`) are enforced separately and also surface as 429s; they include `tier`, `scope`, and `resets_at` fields.  ## Plan Limits (402 — `listings_limit_exceeded`) The Repull API also enforces a per-tier cap on **active listings**:  | Tier | Active listings cap | |---|---| | `free` | 3 | | `starter` | 50 | | `custom` | unlimited |  When a customer's active-listing count is above their tier cap, the API returns **`402 Payment Required`** with `error.code = \"listings_limit_exceeded\"` on every route EXCEPT:  - `/v1/health` — uptime probes are never gated. - `/v1/usage/*` — so dashboards can render the over-cap state. - Any `DELETE` — so the customer can trim listings to get back under the cap without paying.  Unlike 429, 402 is NOT a \"wait and retry\" condition — `Retry-After` is not set. The only paths back to 200 are:   1. `DELETE` enough listings to come back under the cap, or   2. Upgrade at `https://repull.dev/dashboard/billing`. The server-side usage cache is 60s, so the first 200 after an upgrade may take up to a minute.  The envelope mirrors `rate_limit_exceeded` for SDK ergonomics: `tier`, `limit`, `active_listings`, `upgrade_url`, plus the standard `code` / `message` / `fix` / `docs_url` / `request_id`.
 
 The version of the OpenAPI document: 1.0.0
 Contact: ivan@vanio.ai
@@ -283,6 +283,82 @@ module Repull
       data, status_code, headers = @api_client.call_api(:DELETE, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: BookingComApi#delete_booking_webhook\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Read current Booking.com rates/availability/restrictions
+    # Read the current rate, availability, and restriction state for a Booking.com property so you can reconcile before writing with the PUT on this path. Keyed by `property_id` (the Booking hotel id), symmetric with the PUT.  Proxies Booking's `getRoomRateAvailability` — the returned fields (price, rooms-to-sell, min/max stay, closed-to-arrival/departure, stop-sell) are whatever Booking.com emits for the window. A listing-id-keyed equivalent is available at `GET /v1/channels/booking/listings/{id}/pricing`.
+    # @param property_id [String] Booking.com hotel/property id.
+    # @param [Hash] opts the optional parameters
+    # @option opts [Date] :start_date Window start (ISO YYYY-MM-DD).
+    # @option opts [Integer] :number_of_days Window length in days.
+    # @option opts [String] :room_id Restrict to a single Booking.com room id.
+    # @option opts [Boolean] :room_level When true, returns room-level (vs rate-plan-level) state.
+    # @return [BookingAvailabilityStateResponse]
+    def get_booking_availability(property_id, opts = {})
+      data, _status_code, _headers = get_booking_availability_with_http_info(property_id, opts)
+      data
+    end
+
+    # Read current Booking.com rates/availability/restrictions
+    # Read the current rate, availability, and restriction state for a Booking.com property so you can reconcile before writing with the PUT on this path. Keyed by &#x60;property_id&#x60; (the Booking hotel id), symmetric with the PUT.  Proxies Booking&#39;s &#x60;getRoomRateAvailability&#x60; — the returned fields (price, rooms-to-sell, min/max stay, closed-to-arrival/departure, stop-sell) are whatever Booking.com emits for the window. A listing-id-keyed equivalent is available at &#x60;GET /v1/channels/booking/listings/{id}/pricing&#x60;.
+    # @param property_id [String] Booking.com hotel/property id.
+    # @param [Hash] opts the optional parameters
+    # @option opts [Date] :start_date Window start (ISO YYYY-MM-DD).
+    # @option opts [Integer] :number_of_days Window length in days.
+    # @option opts [String] :room_id Restrict to a single Booking.com room id.
+    # @option opts [Boolean] :room_level When true, returns room-level (vs rate-plan-level) state.
+    # @return [Array<(BookingAvailabilityStateResponse, Integer, Hash)>] BookingAvailabilityStateResponse data, response status code and response headers
+    def get_booking_availability_with_http_info(property_id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: BookingComApi.get_booking_availability ...'
+      end
+      # verify the required parameter 'property_id' is set
+      if @api_client.config.client_side_validation && property_id.nil?
+        fail ArgumentError, "Missing the required parameter 'property_id' when calling BookingComApi.get_booking_availability"
+      end
+      # resource path
+      local_var_path = '/v1/channels/booking/availability'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+      query_params[:'property_id'] = property_id
+      query_params[:'start_date'] = opts[:'start_date'] if !opts[:'start_date'].nil?
+      query_params[:'number_of_days'] = opts[:'number_of_days'] if !opts[:'number_of_days'].nil?
+      query_params[:'room_id'] = opts[:'room_id'] if !opts[:'room_id'].nil?
+      query_params[:'room_level'] = opts[:'room_level'] if !opts[:'room_level'].nil?
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'BookingAvailabilityStateResponse'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"BookingComApi.get_booking_availability",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: BookingComApi#get_booking_availability\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end
@@ -658,16 +734,79 @@ module Repull
       return data, status_code, headers
     end
 
+    # List Booking.com rooms + rate-plan ids for a listing
+    # Return every Booking.com room and its rate plans for a listing, each with the `roomId` / `rateId` needed to assemble a restriction write via `PUT /v1/channels/booking/availability`.  `id` is a Vanio listing id — resolved to the Booking `hotel_id` via the workspace mapping (a listing with no active Booking.com mapping returns 404). Sourced from Booking's B.XML roomrates feed, which returns rooms and rate plans together (the rooms-unit feed alone omits rate-plan ids). This is the API-key surface for the room/rate ids that were previously only reachable inside the hosted Connect room-mapping flow.
+    # @param id [Integer] Vanio listing id — resolved to a Booking.com hotel id via the workspace mapping.
+    # @param [Hash] opts the optional parameters
+    # @return [BookingRoomsRatesResponse]
+    def list_booking_property_rooms(id, opts = {})
+      data, _status_code, _headers = list_booking_property_rooms_with_http_info(id, opts)
+      data
+    end
+
+    # List Booking.com rooms + rate-plan ids for a listing
+    # Return every Booking.com room and its rate plans for a listing, each with the &#x60;roomId&#x60; / &#x60;rateId&#x60; needed to assemble a restriction write via &#x60;PUT /v1/channels/booking/availability&#x60;.  &#x60;id&#x60; is a Vanio listing id — resolved to the Booking &#x60;hotel_id&#x60; via the workspace mapping (a listing with no active Booking.com mapping returns 404). Sourced from Booking&#39;s B.XML roomrates feed, which returns rooms and rate plans together (the rooms-unit feed alone omits rate-plan ids). This is the API-key surface for the room/rate ids that were previously only reachable inside the hosted Connect room-mapping flow.
+    # @param id [Integer] Vanio listing id — resolved to a Booking.com hotel id via the workspace mapping.
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(BookingRoomsRatesResponse, Integer, Hash)>] BookingRoomsRatesResponse data, response status code and response headers
+    def list_booking_property_rooms_with_http_info(id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: BookingComApi.list_booking_property_rooms ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling BookingComApi.list_booking_property_rooms"
+      end
+      # resource path
+      local_var_path = '/v1/channels/booking/properties/{id}/rooms'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'BookingRoomsRatesResponse'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"BookingComApi.list_booking_property_rooms",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: BookingComApi#list_booking_property_rooms\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # List Booking.com reservations
     # Pull reservations from Booking.com. `type=new` (default) returns un-acknowledged bookings; `type=modified` returns changed bookings. Pass both `reservation_id` and `hotel_id` to fetch a single reservation's full details. Acknowledge processed reservations with the POST so Booking stops re-serving them in the `new` queue.
     # @param [Hash] opts the optional parameters
     # @option opts [String] :type Which set to pull. &#x60;details&#x60; requires &#x60;reservation_id&#x60; + &#x60;hotel_id&#x60;. (default to 'new')
     # @option opts [String] :hotel_id Booking.com hotel id — filters &#x60;new&#x60;/&#x60;modified&#x60;, and is required with &#x60;reservation_id&#x60; for details.
     # @option opts [String] :reservation_id Booking.com reservation id — with &#x60;hotel_id&#x60;, returns that reservation&#39;s details.
-    # @return [nil]
+    # @return [ListBookingReservations200Response]
     def list_booking_reservations(opts = {})
-      list_booking_reservations_with_http_info(opts)
-      nil
+      data, _status_code, _headers = list_booking_reservations_with_http_info(opts)
+      data
     end
 
     # List Booking.com reservations
@@ -676,7 +815,7 @@ module Repull
     # @option opts [String] :type Which set to pull. &#x60;details&#x60; requires &#x60;reservation_id&#x60; + &#x60;hotel_id&#x60;. (default to 'new')
     # @option opts [String] :hotel_id Booking.com hotel id — filters &#x60;new&#x60;/&#x60;modified&#x60;, and is required with &#x60;reservation_id&#x60; for details.
     # @option opts [String] :reservation_id Booking.com reservation id — with &#x60;hotel_id&#x60;, returns that reservation&#39;s details.
-    # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
+    # @return [Array<(ListBookingReservations200Response, Integer, Hash)>] ListBookingReservations200Response data, response status code and response headers
     def list_booking_reservations_with_http_info(opts = {})
       if @api_client.config.debugging
         @api_client.config.logger.debug 'Calling API: BookingComApi.list_booking_reservations ...'
@@ -706,7 +845,7 @@ module Repull
       post_body = opts[:debug_body]
 
       # return_type
-      return_type = opts[:debug_return_type]
+      return_type = opts[:debug_return_type] || 'ListBookingReservations200Response'
 
       # auth_names
       auth_names = opts[:debug_auth_names] || ['bearerAuth']
@@ -919,20 +1058,26 @@ module Repull
 
     # Send Booking.com message
     # Send a message in a Booking.com conversation as the host. Booking enforces content rules similar to Airbnb.
+    # @param send_booking_message_request [SendBookingMessageRequest] 
     # @param [Hash] opts the optional parameters
     # @return [nil]
-    def send_booking_message(opts = {})
-      send_booking_message_with_http_info(opts)
+    def send_booking_message(send_booking_message_request, opts = {})
+      send_booking_message_with_http_info(send_booking_message_request, opts)
       nil
     end
 
     # Send Booking.com message
     # Send a message in a Booking.com conversation as the host. Booking enforces content rules similar to Airbnb.
+    # @param send_booking_message_request [SendBookingMessageRequest] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
-    def send_booking_message_with_http_info(opts = {})
+    def send_booking_message_with_http_info(send_booking_message_request, opts = {})
       if @api_client.config.debugging
         @api_client.config.logger.debug 'Calling API: BookingComApi.send_booking_message ...'
+      end
+      # verify the required parameter 'send_booking_message_request' is set
+      if @api_client.config.client_side_validation && send_booking_message_request.nil?
+        fail ArgumentError, "Missing the required parameter 'send_booking_message_request' when calling BookingComApi.send_booking_message"
       end
       # resource path
       local_var_path = '/v1/channels/booking/messaging'
@@ -942,12 +1087,19 @@ module Repull
 
       # header parameters
       header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
 
       # form parameters
       form_params = opts[:form_params] || {}
 
       # http body (model)
-      post_body = opts[:debug_body]
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(send_booking_message_request)
 
       # return_type
       return_type = opts[:debug_return_type]

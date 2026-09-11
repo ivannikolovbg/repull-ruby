@@ -8,12 +8,14 @@ All URIs are relative to *https://api.repull.dev*
 | [**booking_setup**](BookingComApi.md#booking_setup) | **POST** /v1/channels/booking/setup | Booking.com property setup actions |
 | [**create_booking_webhook**](BookingComApi.md#create_booking_webhook) | **POST** /v1/channels/booking/webhooks | Subscribe to a Booking.com notification |
 | [**delete_booking_webhook**](BookingComApi.md#delete_booking_webhook) | **DELETE** /v1/channels/booking/webhooks | Unsubscribe from a Booking.com notification |
+| [**get_booking_availability**](BookingComApi.md#get_booking_availability) | **GET** /v1/channels/booking/availability | Read current Booking.com rates/availability/restrictions |
 | [**get_booking_charges**](BookingComApi.md#get_booking_charges) | **GET** /v1/channels/booking/charges | Get Booking.com charges |
 | [**get_booking_content**](BookingComApi.md#get_booking_content) | **GET** /v1/channels/booking/content | Get Booking.com content |
 | [**get_booking_listing_pricing**](BookingComApi.md#get_booking_listing_pricing) | **GET** /v1/channels/booking/listings/{id}/pricing | Get Booking.com pricing for a listing |
 | [**get_booking_property**](BookingComApi.md#get_booking_property) | **GET** /v1/channels/booking/properties/{id} | Get Booking.com connection for a listing |
 | [**list_booking_conversations**](BookingComApi.md#list_booking_conversations) | **GET** /v1/channels/booking/messaging | List Booking.com conversations |
 | [**list_booking_properties**](BookingComApi.md#list_booking_properties) | **GET** /v1/channels/booking/properties | List Booking.com properties |
+| [**list_booking_property_rooms**](BookingComApi.md#list_booking_property_rooms) | **GET** /v1/channels/booking/properties/{id}/rooms | List Booking.com rooms + rate-plan ids for a listing |
 | [**list_booking_reservations**](BookingComApi.md#list_booking_reservations) | **GET** /v1/channels/booking/reservations | List Booking.com reservations |
 | [**list_booking_reviews**](BookingComApi.md#list_booking_reviews) | **GET** /v1/channels/booking/reviews | List Booking.com reviews |
 | [**list_booking_webhooks**](BookingComApi.md#list_booking_webhooks) | **GET** /v1/channels/booking/webhooks | List Booking.com webhook subscriptions |
@@ -286,6 +288,85 @@ end
 ### Return type
 
 nil (empty response body)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## get_booking_availability
+
+> <BookingAvailabilityStateResponse> get_booking_availability(property_id, opts)
+
+Read current Booking.com rates/availability/restrictions
+
+Read the current rate, availability, and restriction state for a Booking.com property so you can reconcile before writing with the PUT on this path. Keyed by `property_id` (the Booking hotel id), symmetric with the PUT.  Proxies Booking's `getRoomRateAvailability` — the returned fields (price, rooms-to-sell, min/max stay, closed-to-arrival/departure, stop-sell) are whatever Booking.com emits for the window. A listing-id-keyed equivalent is available at `GET /v1/channels/booking/listings/{id}/pricing`.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::BookingComApi.new
+property_id = 'property_id_example' # String | Booking.com hotel/property id.
+opts = {
+  start_date: Date.parse('2013-10-20'), # Date | Window start (ISO YYYY-MM-DD).
+  number_of_days: 56, # Integer | Window length in days.
+  room_id: 'room_id_example', # String | Restrict to a single Booking.com room id.
+  room_level: true # Boolean | When true, returns room-level (vs rate-plan-level) state.
+}
+
+begin
+  # Read current Booking.com rates/availability/restrictions
+  result = api_instance.get_booking_availability(property_id, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling BookingComApi->get_booking_availability: #{e}"
+end
+```
+
+#### Using the get_booking_availability_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<BookingAvailabilityStateResponse>, Integer, Hash)> get_booking_availability_with_http_info(property_id, opts)
+
+```ruby
+begin
+  # Read current Booking.com rates/availability/restrictions
+  data, status_code, headers = api_instance.get_booking_availability_with_http_info(property_id, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <BookingAvailabilityStateResponse>
+rescue Repull::ApiError => e
+  puts "Error when calling BookingComApi->get_booking_availability_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **property_id** | **String** | Booking.com hotel/property id. |  |
+| **start_date** | **Date** | Window start (ISO YYYY-MM-DD). | [optional] |
+| **number_of_days** | **Integer** | Window length in days. | [optional] |
+| **room_id** | **String** | Restrict to a single Booking.com room id. | [optional] |
+| **room_level** | **Boolean** | When true, returns room-level (vs rate-plan-level) state. | [optional] |
+
+### Return type
+
+[**BookingAvailabilityStateResponse**](BookingAvailabilityStateResponse.md)
 
 ### Authorization
 
@@ -709,9 +790,78 @@ This endpoint does not need any parameter.
 - **Accept**: application/json
 
 
+## list_booking_property_rooms
+
+> <BookingRoomsRatesResponse> list_booking_property_rooms(id)
+
+List Booking.com rooms + rate-plan ids for a listing
+
+Return every Booking.com room and its rate plans for a listing, each with the `roomId` / `rateId` needed to assemble a restriction write via `PUT /v1/channels/booking/availability`.  `id` is a Vanio listing id — resolved to the Booking `hotel_id` via the workspace mapping (a listing with no active Booking.com mapping returns 404). Sourced from Booking's B.XML roomrates feed, which returns rooms and rate plans together (the rooms-unit feed alone omits rate-plan ids). This is the API-key surface for the room/rate ids that were previously only reachable inside the hosted Connect room-mapping flow.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::BookingComApi.new
+id = 56 # Integer | Vanio listing id — resolved to a Booking.com hotel id via the workspace mapping.
+
+begin
+  # List Booking.com rooms + rate-plan ids for a listing
+  result = api_instance.list_booking_property_rooms(id)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling BookingComApi->list_booking_property_rooms: #{e}"
+end
+```
+
+#### Using the list_booking_property_rooms_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<BookingRoomsRatesResponse>, Integer, Hash)> list_booking_property_rooms_with_http_info(id)
+
+```ruby
+begin
+  # List Booking.com rooms + rate-plan ids for a listing
+  data, status_code, headers = api_instance.list_booking_property_rooms_with_http_info(id)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <BookingRoomsRatesResponse>
+rescue Repull::ApiError => e
+  puts "Error when calling BookingComApi->list_booking_property_rooms_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **Integer** | Vanio listing id — resolved to a Booking.com hotel id via the workspace mapping. |  |
+
+### Return type
+
+[**BookingRoomsRatesResponse**](BookingRoomsRatesResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
 ## list_booking_reservations
 
-> list_booking_reservations(opts)
+> <ListBookingReservations200Response> list_booking_reservations(opts)
 
 List Booking.com reservations
 
@@ -737,7 +887,8 @@ opts = {
 
 begin
   # List Booking.com reservations
-  api_instance.list_booking_reservations(opts)
+  result = api_instance.list_booking_reservations(opts)
+  p result
 rescue Repull::ApiError => e
   puts "Error when calling BookingComApi->list_booking_reservations: #{e}"
 end
@@ -745,9 +896,9 @@ end
 
 #### Using the list_booking_reservations_with_http_info variant
 
-This returns an Array which contains the response data (`nil` in this case), status code and headers.
+This returns an Array which contains the response data, status code and headers.
 
-> <Array(nil, Integer, Hash)> list_booking_reservations_with_http_info(opts)
+> <Array(<ListBookingReservations200Response>, Integer, Hash)> list_booking_reservations_with_http_info(opts)
 
 ```ruby
 begin
@@ -755,7 +906,7 @@ begin
   data, status_code, headers = api_instance.list_booking_reservations_with_http_info(opts)
   p status_code # => 2xx
   p headers # => { ... }
-  p data # => nil
+  p data # => <ListBookingReservations200Response>
 rescue Repull::ApiError => e
   puts "Error when calling BookingComApi->list_booking_reservations_with_http_info: #{e}"
 end
@@ -771,7 +922,7 @@ end
 
 ### Return type
 
-nil (empty response body)
+[**ListBookingReservations200Response**](ListBookingReservations200Response.md)
 
 ### Authorization
 
@@ -987,7 +1138,7 @@ end
 
 ## send_booking_message
 
-> send_booking_message
+> send_booking_message(send_booking_message_request)
 
 Send Booking.com message
 
@@ -1005,10 +1156,11 @@ Repull.configure do |config|
 end
 
 api_instance = Repull::BookingComApi.new
+send_booking_message_request = Repull::SendBookingMessageRequest.new({property_id: 37, conversation_id: 'conversation_id_example', message: 'message_example'}) # SendBookingMessageRequest | 
 
 begin
   # Send Booking.com message
-  api_instance.send_booking_message
+  api_instance.send_booking_message(send_booking_message_request)
 rescue Repull::ApiError => e
   puts "Error when calling BookingComApi->send_booking_message: #{e}"
 end
@@ -1018,12 +1170,12 @@ end
 
 This returns an Array which contains the response data (`nil` in this case), status code and headers.
 
-> <Array(nil, Integer, Hash)> send_booking_message_with_http_info
+> <Array(nil, Integer, Hash)> send_booking_message_with_http_info(send_booking_message_request)
 
 ```ruby
 begin
   # Send Booking.com message
-  data, status_code, headers = api_instance.send_booking_message_with_http_info
+  data, status_code, headers = api_instance.send_booking_message_with_http_info(send_booking_message_request)
   p status_code # => 2xx
   p headers # => { ... }
   p data # => nil
@@ -1034,7 +1186,9 @@ end
 
 ### Parameters
 
-This endpoint does not need any parameter.
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **send_booking_message_request** | [**SendBookingMessageRequest**](SendBookingMessageRequest.md) |  |  |
 
 ### Return type
 
@@ -1046,8 +1200,8 @@ nil (empty response body)
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Content-Type**: application/json
+- **Accept**: application/json
 
 
 ## update_booking_availability

@@ -1,0 +1,29 @@
+name: Spec freshness
+
+# Fails when this SDK's committed OpenAPI snapshot disagrees with the live spec
+# at https://api.repull.dev/openapi.json, in BOTH directions:
+#   - a path the SDK declares that the API does not have (dead code that 404s)
+#   - a path the API has that the SDK is missing (unreachable operations)
+#
+# The `schedule` trigger is the important one. Drift is usually caused by the
+# API gaining endpoints while this repo sits untouched, so a pull_request-only
+# check would never catch it.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    # daily, 06:17 UTC
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  spec-freshness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # python3 is preinstalled on ubuntu-latest and the script is stdlib-only,
+      # so no setup step is needed in any of the SDK repos regardless of language.
+      - name: Compare committed snapshot against the live API
+        run: python3 scripts/check-spec-freshness.py

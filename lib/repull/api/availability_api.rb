@@ -1,7 +1,7 @@
 =begin
 #Repull API
 
-#The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.  ## Designed for AI agents Every error response on this API includes machine-parseable fields so an LLM (Claude in MCP, Cursor, Cline, GPT, etc.) can self-recover without escalating to a human: - `error.code` — stable string identifier (e.g. `invalid_params`, `rate_limit_exceeded`) - `error.message` — human-readable cause - `error.fix` — exact recovery steps (e.g. \"Pass `check_in_after` as ISO 8601: `?check_in_after=2026-01-15`\") - `error.docs_url` — link to the canonical write-up at `https://repull.dev/docs/errors/{code}` - `error.request_id` — id to correlate with server-side logs - `error.field` / `error.value_received` / `error.valid_values` / `error.did_you_mean` — when the error is parameter-specific - `error.retry_after` — seconds to wait before retrying (rate-limit + transient upstream)  `Access-Control-Expose-Headers` lists `x-request-id` and the `X-RateLimit-*` family so browsers can read them on cross-origin responses.  ## Quick Start 1. Get an API key at https://repull.dev/dashboard 2. Connect a PMS: `POST /v1/connect/{provider}` 3. List properties: `GET /v1/properties` 4. Get reservations: `GET /v1/reservations`  ## Authentication All requests require a Bearer token: ``` Authorization: Bearer sk_test_YOUR_API_KEY ```  Sandbox keys start with `sk_test_`, production with `sk_live_`.  ## Request Correlation (X-Request-ID) Every response carries an `X-Request-ID` header, e.g. `X-Request-ID: req_01HXY...`. Include this id in support tickets and bug reports — we can trace the full request lifecycle (auth, rate limit, handler, downstream calls, log row) from a single id.  You may set the header on the inbound request to forward your own trace id; we will echo it back instead of generating a new one. Accepted format: `^[\\\\w.-]{1,128}$`.  The id is also embedded in error envelopes as `request_id` so server-side log diffs work even when the response headers are stripped by an intermediate proxy.  ## Rate Limits The public API enforces a per-API-key sliding-window rate limit on top of the per-tier monthly + daily-AI quotas.  **Default policy:** 600 requests per 60 seconds, per API key. Sliding window — there is no fixed-minute boundary you can burst across.  Every response includes:  | Header | Meaning | |---|---| | `X-RateLimit-Limit` | Requests permitted in the current window. | | `X-RateLimit-Remaining` | Requests left in the current window after this call. | | `X-RateLimit-Reset` | Unix epoch (seconds) when the next slot opens. | | `X-RateLimit-Policy` | Machine-readable policy descriptor, e.g. `600;w=60`. | | `Retry-After` | Seconds to wait before retrying. **Only present on 429 responses.** |  **On 429 (rate_limit_exceeded):** the response body matches the standard error envelope with `code: \"rate_limit_exceeded\"`, plus `limit`, `window_seconds`, `retry_after`, and `request_id` fields. SDKs MUST honor `Retry-After` and use exponential backoff with jitter on subsequent retries — never a tight loop.  Recommended backoff: ``` sleep_ms = (Retry-After * 1000) + random(0..250) ```  Monthly + daily-AI tier quotas (`free`, `starter`, `custom`) are enforced separately and also surface as 429s; they include `tier`, `scope`, and `resets_at` fields.  ## Plan Limits (402 — `listings_limit_exceeded`) The Repull API also enforces a per-tier cap on **active listings**:  | Tier | Active listings cap | |---|---| | `free` | 3 | | `starter` | 50 | | `custom` | unlimited |  When a customer's active-listing count is above their tier cap, the API returns **`402 Payment Required`** with `error.code = \"listings_limit_exceeded\"` on every route EXCEPT:  - `/v1/health` — uptime probes are never gated. - `/v1/usage/*` — so dashboards can render the over-cap state. - Any `DELETE` — so the customer can trim listings to get back under the cap without paying.  Unlike 429, 402 is NOT a \"wait and retry\" condition — `Retry-After` is not set. The only paths back to 200 are:   1. `DELETE` enough listings to come back under the cap, or   2. Upgrade at `https://repull.dev/dashboard/billing`. The server-side usage cache is 60s, so the first 200 after an upgrade may take up to a minute.  The envelope mirrors `rate_limit_exceeded` for SDK ergonomics: `tier`, `limit`, `active_listings`, `upgrade_url`, plus the standard `code` / `message` / `fix` / `docs_url` / `request_id`.
+#The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.  ## Designed for AI agents Every error response on this API includes machine-parseable fields so an LLM (Claude in MCP, Cursor, Cline, GPT, etc.) can self-recover without escalating to a human: - `error.code` — stable string identifier (e.g. `invalid_params`, `rate_limit_exceeded`) - `error.message` — human-readable cause - `error.fix` — exact recovery steps (e.g. \"Pass `check_in_after` as ISO 8601: `?check_in_after=2026-01-15`\") - `error.docs_url` — link to the canonical write-up at `https://repull.dev/docs/errors/{code}` - `error.request_id` — id to correlate with server-side logs - `error.field` / `error.value_received` / `error.valid_values` / `error.did_you_mean` — when the error is parameter-specific - `error.retry_after` — seconds to wait before retrying (rate-limit + transient upstream)  `Access-Control-Expose-Headers` lists `x-request-id` and the `X-RateLimit-*` family so browsers can read them on cross-origin responses.  ## Quick Start 1. Get an API key at https://repull.dev/dashboard 2. Connect a PMS: `POST /v1/connect/{provider}` 3. List properties: `GET /v1/properties` 4. Get reservations: `GET /v1/reservations`  ## Authentication All requests require a Bearer token: ``` Authorization: Bearer sk_live_YOUR_API_KEY ```  ## Request Correlation (X-Request-ID) Every response carries an `X-Request-ID` header, e.g. `X-Request-ID: req_01HXY...`. Include this id in support tickets and bug reports — we can trace the full request lifecycle (auth, rate limit, handler, downstream calls, log row) from a single id.  You may set the header on the inbound request to forward your own trace id; we will echo it back instead of generating a new one. Accepted format: `^[\\\\w.-]{1,128}$`.  The id is also embedded in error envelopes as `request_id` so server-side log diffs work even when the response headers are stripped by an intermediate proxy.  ## Rate Limits The public API enforces a per-API-key sliding-window rate limit on top of the per-tier monthly + daily-AI quotas.  **Default policy:** 600 requests per 60 seconds, per API key. Sliding window — there is no fixed-minute boundary you can burst across.  Every response includes:  | Header | Meaning | |---|---| | `X-RateLimit-Limit` | Requests permitted in the current window. | | `X-RateLimit-Remaining` | Requests left in the current window after this call. | | `X-RateLimit-Reset` | Unix epoch (seconds) when the next slot opens. | | `X-RateLimit-Policy` | Machine-readable policy descriptor, e.g. `600;w=60`. | | `Retry-After` | Seconds to wait before retrying. **Only present on 429 responses.** |  **On 429 (rate_limit_exceeded):** the response body matches the standard error envelope with `code: \"rate_limit_exceeded\"`, plus `limit`, `window_seconds`, `retry_after`, and `request_id` fields. SDKs MUST honor `Retry-After` and use exponential backoff with jitter on subsequent retries — never a tight loop.  Recommended backoff: ``` sleep_ms = (Retry-After * 1000) + random(0..250) ```  Monthly + daily-AI tier quotas (`free`, `starter`, `custom`) are enforced separately and also surface as 429s; they include `tier`, `scope`, and `resets_at` fields.  ## Plan Limits (402 — `listings_limit_exceeded`) The Repull API also enforces a per-tier cap on **active listings**:  | Tier | Active listings cap | |---|---| | `free` | 3 | | `starter` | 50 | | `custom` | unlimited |  When a customer's active-listing count is above their tier cap, the API returns **`402 Payment Required`** with `error.code = \"listings_limit_exceeded\"` on every route EXCEPT:  - `/v1/health` — uptime probes are never gated. - `/v1/usage/*` — so dashboards can render the over-cap state. - Any `DELETE` — so the customer can trim listings to get back under the cap without paying.  Unlike 429, 402 is NOT a \"wait and retry\" condition — `Retry-After` is not set. The only paths back to 200 are:   1. `DELETE` enough listings to come back under the cap, or   2. Upgrade at `https://repull.dev/dashboard/billing`. The server-side usage cache is 60s, so the first 200 after an upgrade may take up to a minute.  The envelope mirrors `rate_limit_exceeded` for SDK ergonomics: `tier`, `limit`, `active_listings`, `upgrade_url`, plus the standard `code` / `message` / `fix` / `docs_url` / `request_id`.
 
 The version of the OpenAPI document: 1.0.0
 Contact: ivan@vanio.ai
@@ -19,8 +19,76 @@ module Repull
     def initialize(api_client = ApiClient.default)
       @api_client = api_client
     end
+    # Update availability across many properties
+    # Applies ONE settings object across up to 500 properties and pushes the result to every connected channel.  Ownership is checked before anything is written: a batch containing a property from another workspace is refused as a whole and names the offending ids, rather than being partially applied.  Per-property *different* values are separate calls — presenting them as one request would be a false claim about atomicity.
+    # @param availability_batch_write_request [AvailabilityBatchWriteRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [AvailabilityWriteResult]
+    def batch_update_availability(availability_batch_write_request, opts = {})
+      data, _status_code, _headers = batch_update_availability_with_http_info(availability_batch_write_request, opts)
+      data
+    end
+
+    # Update availability across many properties
+    # Applies ONE settings object across up to 500 properties and pushes the result to every connected channel.  Ownership is checked before anything is written: a batch containing a property from another workspace is refused as a whole and names the offending ids, rather than being partially applied.  Per-property *different* values are separate calls — presenting them as one request would be a false claim about atomicity.
+    # @param availability_batch_write_request [AvailabilityBatchWriteRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(AvailabilityWriteResult, Integer, Hash)>] AvailabilityWriteResult data, response status code and response headers
+    def batch_update_availability_with_http_info(availability_batch_write_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: AvailabilityApi.batch_update_availability ...'
+      end
+      # verify the required parameter 'availability_batch_write_request' is set
+      if @api_client.config.client_side_validation && availability_batch_write_request.nil?
+        fail ArgumentError, "Missing the required parameter 'availability_batch_write_request' when calling AvailabilityApi.batch_update_availability"
+      end
+      # resource path
+      local_var_path = '/v1/availability/batch'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(availability_batch_write_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'AvailabilityWriteResult'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"AvailabilityApi.batch_update_availability",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:PATCH, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: AvailabilityApi#batch_update_availability\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # Get property availability
-    # Channel-agnostic day-by-day availability calendar for a property over a date window. Returns a thin per-date shape — `{ date, available, price, minNights }` — projected from the connected channel calendar (currently Airbnb).  The `from` and `to` query params are **required** (ISO `YYYY-MM-DD`, inclusive) — omitting or malforming either returns 422. The window is capped at 366 days; longer ranges are truncated to the first 366 days.  Every date in the window is present in `days`: dates with no explicit calendar row fall back to `available: true` at the property's default nightly price. A property with no channel calendar still returns a real 200 (a fully-default calendar), never a 404 — 404 means the property id does not exist or belongs to a different workspace.  This endpoint is read-only. Availability **writes** stay per-channel: `PUT /v1/channels/airbnb/listings/{id}/availability` (Airbnb) or `PUT /v1/channels/booking/availability` (Booking.com).
+    # Channel-agnostic day-by-day availability calendar for a property over a date window. Returns a thin per-date shape — `{ date, available, price, minNights }` — projected from the property calendar.  The `from` and `to` query params are **required** (ISO `YYYY-MM-DD`, inclusive) — omitting or malforming either returns 422. The window is capped at 366 days; longer ranges are truncated to the first 366 days.  **`days` contains only the dates we actually hold calendar data for.** Requested dates with no calendar row are listed in `coverage.missingDates` — their availability is unknown. Never treat a missing date as bookable: this endpoint deliberately does not synthesise availability, because a fabricated open date can be double-booked. A property with no calendar still returns a real 200 (`days: []`, every date in `coverage.missingDates`), never a 404 — 404 means the property id does not exist or belongs to a different workspace.  This endpoint is read-only, and the projected per-date shape carries **availability, price, and min-nights only** — it does NOT expose max-stay, closed-to-arrival (CTA), closed-to-departure (CTD), or the dedicated stop-sell flag. To read or write that full restriction set on Booking.com use the channel routes: `GET`/`PUT /v1/channels/booking/availability` (with the room + rate ids from `GET /v1/channels/booking/properties/{id}/rooms`). Availability **writes** always stay per-channel: `PUT /v1/channels/airbnb/listings/{id}/availability` (Airbnb) or `PUT /v1/channels/booking/availability` (Booking.com).
     # @param property_id [Integer] Repull property id (equal to &#x60;listings.id&#x60;; the same integer used as &#x60;propertyId&#x60; on availability and &#x60;listingId&#x60; on reservations).
     # @param from [Date] Start of the window (inclusive), ISO &#x60;YYYY-MM-DD&#x60;. Required — missing/malformed returns 422. &#x60;startDate&#x60; is accepted as an alias.
     # @param to [Date] End of the window (inclusive), ISO &#x60;YYYY-MM-DD&#x60;. Required — missing/malformed returns 422. &#x60;endDate&#x60; is accepted as an alias.
@@ -32,7 +100,7 @@ module Repull
     end
 
     # Get property availability
-    # Channel-agnostic day-by-day availability calendar for a property over a date window. Returns a thin per-date shape — &#x60;{ date, available, price, minNights }&#x60; — projected from the connected channel calendar (currently Airbnb).  The &#x60;from&#x60; and &#x60;to&#x60; query params are **required** (ISO &#x60;YYYY-MM-DD&#x60;, inclusive) — omitting or malforming either returns 422. The window is capped at 366 days; longer ranges are truncated to the first 366 days.  Every date in the window is present in &#x60;days&#x60;: dates with no explicit calendar row fall back to &#x60;available: true&#x60; at the property&#39;s default nightly price. A property with no channel calendar still returns a real 200 (a fully-default calendar), never a 404 — 404 means the property id does not exist or belongs to a different workspace.  This endpoint is read-only. Availability **writes** stay per-channel: &#x60;PUT /v1/channels/airbnb/listings/{id}/availability&#x60; (Airbnb) or &#x60;PUT /v1/channels/booking/availability&#x60; (Booking.com).
+    # Channel-agnostic day-by-day availability calendar for a property over a date window. Returns a thin per-date shape — &#x60;{ date, available, price, minNights }&#x60; — projected from the property calendar.  The &#x60;from&#x60; and &#x60;to&#x60; query params are **required** (ISO &#x60;YYYY-MM-DD&#x60;, inclusive) — omitting or malforming either returns 422. The window is capped at 366 days; longer ranges are truncated to the first 366 days.  **&#x60;days&#x60; contains only the dates we actually hold calendar data for.** Requested dates with no calendar row are listed in &#x60;coverage.missingDates&#x60; — their availability is unknown. Never treat a missing date as bookable: this endpoint deliberately does not synthesise availability, because a fabricated open date can be double-booked. A property with no calendar still returns a real 200 (&#x60;days: []&#x60;, every date in &#x60;coverage.missingDates&#x60;), never a 404 — 404 means the property id does not exist or belongs to a different workspace.  This endpoint is read-only, and the projected per-date shape carries **availability, price, and min-nights only** — it does NOT expose max-stay, closed-to-arrival (CTA), closed-to-departure (CTD), or the dedicated stop-sell flag. To read or write that full restriction set on Booking.com use the channel routes: &#x60;GET&#x60;/&#x60;PUT /v1/channels/booking/availability&#x60; (with the room + rate ids from &#x60;GET /v1/channels/booking/properties/{id}/rooms&#x60;). Availability **writes** always stay per-channel: &#x60;PUT /v1/channels/airbnb/listings/{id}/availability&#x60; (Airbnb) or &#x60;PUT /v1/channels/booking/availability&#x60; (Booking.com).
     # @param property_id [Integer] Repull property id (equal to &#x60;listings.id&#x60;; the same integer used as &#x60;propertyId&#x60; on availability and &#x60;listingId&#x60; on reservations).
     # @param from [Date] Start of the window (inclusive), ISO &#x60;YYYY-MM-DD&#x60;. Required — missing/malformed returns 422. &#x60;startDate&#x60; is accepted as an alias.
     # @param to [Date] End of the window (inclusive), ISO &#x60;YYYY-MM-DD&#x60;. Required — missing/malformed returns 422. &#x60;endDate&#x60; is accepted as an alias.
@@ -92,6 +160,80 @@ module Repull
       data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: AvailabilityApi#get_availability\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Set prices, block or unblock dates
+    # Writes the calendar for one property AND pushes to every connected channel in the same step. A write that only changed our copy would leave the OTA calendars stale and eventually double-book a guest.
+    # @param property_id [Integer] 
+    # @param availability_write_request [AvailabilityWriteRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [AvailabilityWriteResult]
+    def update_availability(property_id, availability_write_request, opts = {})
+      data, _status_code, _headers = update_availability_with_http_info(property_id, availability_write_request, opts)
+      data
+    end
+
+    # Set prices, block or unblock dates
+    # Writes the calendar for one property AND pushes to every connected channel in the same step. A write that only changed our copy would leave the OTA calendars stale and eventually double-book a guest.
+    # @param property_id [Integer] 
+    # @param availability_write_request [AvailabilityWriteRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(AvailabilityWriteResult, Integer, Hash)>] AvailabilityWriteResult data, response status code and response headers
+    def update_availability_with_http_info(property_id, availability_write_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: AvailabilityApi.update_availability ...'
+      end
+      # verify the required parameter 'property_id' is set
+      if @api_client.config.client_side_validation && property_id.nil?
+        fail ArgumentError, "Missing the required parameter 'property_id' when calling AvailabilityApi.update_availability"
+      end
+      # verify the required parameter 'availability_write_request' is set
+      if @api_client.config.client_side_validation && availability_write_request.nil?
+        fail ArgumentError, "Missing the required parameter 'availability_write_request' when calling AvailabilityApi.update_availability"
+      end
+      # resource path
+      local_var_path = '/v1/availability/{propertyId}'.sub('{propertyId}', CGI.escape(property_id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(availability_write_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'AvailabilityWriteResult'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"AvailabilityApi.update_availability",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:PUT, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: AvailabilityApi#update_availability\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end

@@ -49,7 +49,7 @@ See [`examples/quickstart.rb`](./examples/quickstart.rb) and [`examples/connect_
 
 ## Authentication
 
-All requests use a Bearer token. Get an API key from [repull.dev/dashboard](https://repull.dev/dashboard). Sandbox keys start with `sk_test_`, production keys with `sk_live_`.
+All requests use a Bearer token. Get an API key from [repull.dev/dashboard](https://repull.dev/dashboard). Production keys start with `sk_live_`.
 
 ```ruby
 Repull.configure do |c|
@@ -69,7 +69,7 @@ The SDK adds the `Authorization: Bearer ...` header automatically on every reque
 Run them:
 
 ```bash
-export REPULL_API_KEY=sk_test_...
+export REPULL_API_KEY=YOUR_API_KEY
 bundle exec ruby examples/quickstart.rb
 ```
 

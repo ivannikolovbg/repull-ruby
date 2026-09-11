@@ -14,6 +14,7 @@
 | **status** | **String** | Derived from &#x60;listings.active&#x60;. | [optional] |
 | **lifecycle_status** | **String** | The listing&#39;s lifecycle state (e.g. &#x60;live&#x60;, &#x60;draft&#x60;, &#x60;archived&#x60;). | [optional] |
 | **created_at** | **Time** | When the property was created. Detail endpoint only. | [optional] |
+| **updated_at** | **Time** | Last time this property record changed. Feed the newest value you have seen back as &#x60;?updated_since&#x3D;&#x60; to poll for changes only. List endpoint (&#x60;GET /v1/properties&#x60;) only. | [optional] |
 | **channels** | **Array&lt;String&gt;** | OTAs/channels this property is actively published on, as channel-name strings (e.g. &#x60;airbnb&#x60;, &#x60;booking&#x60;, &#x60;vrbo&#x60;). Empty array when the property has no active channel links. List endpoint (&#x60;GET /v1/properties&#x60;) only. | [optional] |
 | **amenities** | [**Array&lt;ListingAmenity&gt;**](ListingAmenity.md) | Amenity rows for the property. Detail endpoint only, and **only present when the caller passes &#x60;?include&#x3D;amenities&#x60;.** Empty array (&#x60;[]&#x60;) when the property has no amenity rows. | [optional] |
 
@@ -33,6 +34,7 @@ instance = Repull::Property.new(
   status: null,
   lifecycle_status: null,
   created_at: null,
+  updated_at: null,
   channels: [&quot;airbnb&quot;,&quot;booking&quot;],
   amenities: null
 )

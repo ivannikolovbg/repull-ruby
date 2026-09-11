@@ -2,6 +2,50 @@
 
 All notable changes to the `repull` gem are documented here.
 
+## [0.2.12] - 2026-09-11
+
+### Added
+
+Four new write operations, present in `lib/repull/`:
+
+- `GuestsApi#create_guest` (`POST /v1/guests`)
+- `ReservationsApi#create_reservation` (`POST /v1/reservations`)
+- `ReservationsApi#update_reservation` (`PATCH /v1/reservations/{id}`)
+- `ConversationsApi#send_conversation_message` (`POST /v1/conversations/{id}/messages`)
+
+### Notes
+
+- Operation-set parity with the live spec verified programmatically post-regen: 174 = 174, zero diff (path count unchanged at 124 — these are new methods on existing paths).
+
+## [0.2.11] - 2026-09-11
+
+### Fixed
+
+- **Synced OpenAPI spec to the live API** (102 → 124 paths). The checked-in `openapi/v1.json` snapshot had drifted from `https://api.repull.dev/openapi.json`.
+
+### Removed
+
+- **Sandbox endpoints and generated code.** `/v1/sandbox/reset` and `/v1/sandbox/seed` were removed from the live API (both now 404; `sk_test_` keys now return 401). Deleted the dead generated surface: `Repull::SandboxApi` and its models (`SandboxFixtureRef`, `SandboxResetResult`, `SandboxResetResultDeleted`, `SandboxSeedResult`) plus their docs pages. Updated the README to stop recommending `sk_test_` keys.
+
+### Added
+
+24 previously-generated-but-unreachable operations, now present in `lib/repull/`:
+
+- `AvailabilityApi#availability_batch_post` (`POST /v1/availability/batch`)
+- `AirbnbApi` alteration accept/decline (`POST /v1/channels/airbnb/alterations/{id}/accept`, `.../decline`)
+- `BookingComApi#booking_properties_id_rooms_get` (`GET /v1/channels/booking/properties/{id}/rooms`)
+- `ConnectApi` credentials-based connect for Beds24, BookingSync, Guesty, Hospitable, Hostaway, iGMS, Lodgify, OwnerRez, Smoobu, VRBO (`POST /v1/connect/{provider}/credentials`)
+- `ConnectApi#booking_callback_get` (`GET /v1/connect/booking/callback`)
+- `HealthApi` subsystem checks: Atlas, Auth, per-channel, MCP, Webhooks
+- `ListingsApi` photo endpoints (`GET/POST /v1/listings/{id}/photos`, `POST /v1/listings/{id}/photos/upload-url`)
+- `QuotesApi#quotes_post` (`POST /v1/quotes`)
+- `ReviewsApi#reviews_id_reply_post` (`POST /v1/reviews/{id}/reply`)
+
+### Notes
+
+- `scripts/regen.sh` now also patches a missing `id` path-parameter declaration on `POST /v1/reviews/{id}/reply` in the fetched spec (openapi-generator's spec validator rejected the live spec as published). Remove that patch once the live spec declares the parameter itself.
+- Path-set parity with the live spec verified programmatically post-regen: local and live `paths` keys are set-equal (124 = 124, zero diff).
+
 ## [0.2.6] - 2026-06-25
 
 ### Added

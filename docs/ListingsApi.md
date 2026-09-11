@@ -5,10 +5,13 @@ All URIs are relative to *https://api.repull.dev*
 | Method | HTTP request | Description |
 | ------ | ------------ | ----------- |
 | [**create_listing**](ListingsApi.md#create_listing) | **POST** /v1/listings | Create a Repull listing |
+| [**create_listing_photo_upload_url**](ListingsApi.md#create_listing_photo_upload_url) | **POST** /v1/listings/{id}/photos/upload-url | Mint a direct-to-storage photo upload URL |
 | [**deactivate_listing**](ListingsApi.md#deactivate_listing) | **DELETE** /v1/listings/{id} | Deactivate (exclude) a listing |
+| [**delete_listing_photo**](ListingsApi.md#delete_listing_photo) | **DELETE** /v1/listings/{id}/photos | Delete a stored listing photo |
 | [**generate_listing_content**](ListingsApi.md#generate_listing_content) | **POST** /v1/listings/{id}/generate-content | AI-generate listing content |
 | [**get_listing**](ListingsApi.md#get_listing) | **GET** /v1/listings/{id} | Get a listing |
 | [**get_listing_publish_status**](ListingsApi.md#get_listing_publish_status) | **GET** /v1/listings/{id}/publish-status | Per-channel publish status |
+| [**list_listing_photos**](ListingsApi.md#list_listing_photos) | **GET** /v1/listings/{id}/photos | List a listing&#39;s stored photos |
 | [**list_listings**](ListingsApi.md#list_listings) | **GET** /v1/listings | List listings |
 | [**publish_listing_to_airbnb**](ListingsApi.md#publish_listing_to_airbnb) | **POST** /v1/listings/{id}/publish/airbnb | Publish a listing to Airbnb |
 | [**publish_listing_to_booking**](ListingsApi.md#publish_listing_to_booking) | **POST** /v1/listings/{id}/publish/booking | Publish a listing to Booking.com |
@@ -74,6 +77,77 @@ end
 ### Return type
 
 [**ListingCreateResponse**](ListingCreateResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## create_listing_photo_upload_url
+
+> <ListingPhotoUploadUrlResponse> create_listing_photo_upload_url(id, listing_photo_upload_url_request)
+
+Mint a direct-to-storage photo upload URL
+
+Mints a short-lived signed upload URL + token for a listing photo. **The client PUTs the raw file bytes directly to the returned `uploadUrl` — the file bytes never pass through the Repull API or main vanio.** This endpoint only mints the URL; do not POST the file itself here, it will not be accepted.  Flow: (1) POST here with `fileName`/`fileType`/optional `fileSize` to get `{ uploadUrl, token, path, publicUrl, expiresIn }`; (2) PUT the raw file bytes to `uploadUrl` from the client; (3) `publicUrl` is the durable URL for the uploaded photo — attach it to the listing via `PUT /v1/listings/{id}/content` (`photos` field) or list it back via `GET /v1/listings/{id}/photos`.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ListingsApi.new
+id = 56 # Integer | Repull listing id
+listing_photo_upload_url_request = Repull::ListingPhotoUploadUrlRequest.new({file_name: 'living-room.jpg', file_type: 'image/jpeg'}) # ListingPhotoUploadUrlRequest | 
+
+begin
+  # Mint a direct-to-storage photo upload URL
+  result = api_instance.create_listing_photo_upload_url(id, listing_photo_upload_url_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ListingsApi->create_listing_photo_upload_url: #{e}"
+end
+```
+
+#### Using the create_listing_photo_upload_url_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<ListingPhotoUploadUrlResponse>, Integer, Hash)> create_listing_photo_upload_url_with_http_info(id, listing_photo_upload_url_request)
+
+```ruby
+begin
+  # Mint a direct-to-storage photo upload URL
+  data, status_code, headers = api_instance.create_listing_photo_upload_url_with_http_info(id, listing_photo_upload_url_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <ListingPhotoUploadUrlResponse>
+rescue Repull::ApiError => e
+  puts "Error when calling ListingsApi->create_listing_photo_upload_url_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **Integer** | Repull listing id |  |
+| **listing_photo_upload_url_request** | [**ListingPhotoUploadUrlRequest**](ListingPhotoUploadUrlRequest.md) |  |  |
+
+### Return type
+
+[**ListingPhotoUploadUrlResponse**](ListingPhotoUploadUrlResponse.md)
 
 ### Authorization
 
@@ -151,6 +225,77 @@ end
 ### HTTP request headers
 
 - **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## delete_listing_photo
+
+> <ListingPhotoDeleteResponse> delete_listing_photo(id, listing_photo_delete_request)
+
+Delete a stored listing photo
+
+Deletes a single stored photo by its storage `path` (as returned by `GET /v1/listings/{id}/photos` or `POST /v1/listings/{id}/photos/upload-url`).
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ListingsApi.new
+id = 56 # Integer | Repull listing id
+listing_photo_delete_request = Repull::ListingPhotoDeleteRequest.new({path: 'path_example'}) # ListingPhotoDeleteRequest | 
+
+begin
+  # Delete a stored listing photo
+  result = api_instance.delete_listing_photo(id, listing_photo_delete_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ListingsApi->delete_listing_photo: #{e}"
+end
+```
+
+#### Using the delete_listing_photo_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<ListingPhotoDeleteResponse>, Integer, Hash)> delete_listing_photo_with_http_info(id, listing_photo_delete_request)
+
+```ruby
+begin
+  # Delete a stored listing photo
+  data, status_code, headers = api_instance.delete_listing_photo_with_http_info(id, listing_photo_delete_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <ListingPhotoDeleteResponse>
+rescue Repull::ApiError => e
+  puts "Error when calling ListingsApi->delete_listing_photo_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **Integer** | Repull listing id |  |
+| **listing_photo_delete_request** | [**ListingPhotoDeleteRequest**](ListingPhotoDeleteRequest.md) |  |  |
+
+### Return type
+
+[**ListingPhotoDeleteResponse**](ListingPhotoDeleteResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 
@@ -360,6 +505,75 @@ end
 ### Return type
 
 [**ListingPublishStatusResponse**](ListingPublishStatusResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## list_listing_photos
+
+> <ListingPhotosResponse> list_listing_photos(id)
+
+List a listing's stored photos
+
+Returns the photo set currently stored for this listing.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ListingsApi.new
+id = 56 # Integer | Repull listing id
+
+begin
+  # List a listing's stored photos
+  result = api_instance.list_listing_photos(id)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ListingsApi->list_listing_photos: #{e}"
+end
+```
+
+#### Using the list_listing_photos_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<ListingPhotosResponse>, Integer, Hash)> list_listing_photos_with_http_info(id)
+
+```ruby
+begin
+  # List a listing's stored photos
+  data, status_code, headers = api_instance.list_listing_photos_with_http_info(id)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <ListingPhotosResponse>
+rescue Repull::ApiError => e
+  puts "Error when calling ListingsApi->list_listing_photos_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **Integer** | Repull listing id |  |
+
+### Return type
+
+[**ListingPhotosResponse**](ListingPhotosResponse.md)
 
 ### Authorization
 
