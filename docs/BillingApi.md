@@ -86,7 +86,7 @@ nil (empty response body)
 
 List API request logs
 
-Cursor-paginated raw API request log for the authenticated workspace, newest first. Filter by time `range`, `operation` id(s), status class, or free-text `q`. Walk pages with `cursor` from `pagination.next_cursor` until `pagination.has_more` is `false`; `offset` is accepted as a shallow alias (deep walks must use `cursor`).
+Cursor-paginated raw API request log for the authenticated workspace, newest first. Filter by time `range`, `operation` id(s), status class, or free-text `q`. Walk pages with `cursor` from `pagination.nextCursor` until `pagination.hasMore` is `false`; `offset` is accepted as a shallow alias (deep walks must use `cursor`).
 
 ### Examples
 
@@ -106,8 +106,8 @@ opts = {
   status: '2xx', # String | Status-class filter.
   q: 'q_example', # String | Free-text match on path / operation / request id.
   limit: 56, # Integer | Page size (max 200).
-  cursor: 'cursor_example', # String | Opaque cursor from the previous response's `pagination.next_cursor`.
-  offset: 56, # Integer | First-class alias for cursor-based pagination. Mutually exclusive with `cursor` — passing both returns 422. Accepts integers in `[0, 10000]`; deeper walks must use `cursor` (constant per-page cost). The response always includes `pagination.next_cursor` so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying.
+  cursor: 'cursor_example', # String | Opaque cursor from the previous response's `pagination.nextCursor`.
+  offset: 56, # Integer | First-class alias for cursor-based pagination. Mutually exclusive with `cursor` — passing both returns 422. Accepts integers in `[0, 10000]`; deeper walks must use `cursor` (constant per-page cost). The response always includes `pagination.nextCursor` so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying.
   include_total: true # Boolean | When `true` (default), the response's `pagination.total` carries the count of rows matching the current filter, across all pages. Pass `false` to skip the count for very large workspaces where the per-page COUNT(*) cost matters.
 }
 
@@ -147,8 +147,8 @@ end
 | **status** | **String** | Status-class filter. | [optional] |
 | **q** | **String** | Free-text match on path / operation / request id. | [optional] |
 | **limit** | **Integer** | Page size (max 200). | [optional][default to 50] |
-| **cursor** | **String** | Opaque cursor from the previous response&#39;s &#x60;pagination.next_cursor&#x60;. | [optional] |
-| **offset** | **Integer** | First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.next_cursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. | [optional][default to 0] |
+| **cursor** | **String** | Opaque cursor from the previous response&#39;s &#x60;pagination.nextCursor&#x60;. | [optional] |
+| **offset** | **Integer** | First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.nextCursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. | [optional][default to 0] |
 | **include_total** | **Boolean** | When &#x60;true&#x60; (default), the response&#39;s &#x60;pagination.total&#x60; carries the count of rows matching the current filter, across all pages. Pass &#x60;false&#x60; to skip the count for very large workspaces where the per-page COUNT(*) cost matters. | [optional][default to true] |
 
 ### Return type

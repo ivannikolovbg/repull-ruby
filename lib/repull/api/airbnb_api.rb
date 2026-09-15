@@ -20,7 +20,7 @@ module Repull
       @api_client = api_client
     end
     # Accept Airbnb alteration
-    # Accept a pending Airbnb reservation alteration. **Write-side** — calls Airbnb upstream (`respondToAlteration`) to approve the proposed date / guest-count / price change. Requires a connected Airbnb host for the workspace (else `404 no_connection`) and that the alteration id belongs to a reservation in your workspace (else `404 not_found`). No request body is required.
+    # Accept a pending Airbnb reservation alteration. **Write-side** — calls Airbnb upstream (`respondToAlteration`) to approve the proposed date / guest-count / price change. Requires a connected Airbnb host for the workspace (else `404 no_connection`) and that the alteration id belongs to a reservation in your workspace (else `404 not_found`). No request body is required.  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Airbnb alteration id (the &#x60;alterationId&#x60; from a &#x60;GET /v1/channels/airbnb/alterations&#x60; row).
     # @param [Hash] opts the optional parameters
     # @option opts [Object] :body 
@@ -31,7 +31,7 @@ module Repull
     end
 
     # Accept Airbnb alteration
-    # Accept a pending Airbnb reservation alteration. **Write-side** — calls Airbnb upstream (&#x60;respondToAlteration&#x60;) to approve the proposed date / guest-count / price change. Requires a connected Airbnb host for the workspace (else &#x60;404 no_connection&#x60;) and that the alteration id belongs to a reservation in your workspace (else &#x60;404 not_found&#x60;). No request body is required.
+    # Accept a pending Airbnb reservation alteration. **Write-side** — calls Airbnb upstream (&#x60;respondToAlteration&#x60;) to approve the proposed date / guest-count / price change. Requires a connected Airbnb host for the workspace (else &#x60;404 no_connection&#x60;) and that the alteration id belongs to a reservation in your workspace (else &#x60;404 not_found&#x60;). No request body is required.  Returns &#x60;403 listing_inactive&#x60; when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Airbnb alteration id (the &#x60;alterationId&#x60; from a &#x60;GET /v1/channels/airbnb/alterations&#x60; row).
     # @param [Hash] opts the optional parameters
     # @option opts [Object] :body 
@@ -90,7 +90,7 @@ module Repull
     end
 
     # Listing action (delete/push/publish)
-    # Apply a state action to a listing by id. The path `id` is the canonical Repull listing id.  `delete` is a **deactivate of the Repull record only** — it sets the listing inactive and KEEPS the row; it does NOT touch the upstream Airbnb listing (Repull never deletes or deactivates on Airbnb's side). Use it to exclude a listing / trim back under the plan-listings cap; reactivate via `PATCH /v1/listings/{id}` with `{ \"active\": true }`. Idempotent.  `push` / `publish` push the listing's content to Airbnb via the same host-side sync orchestrator as `POST /v1/listings/{id}/publish/airbnb` — pass `airbnbConnectionId` to update an already-mapped Airbnb listing, or `hostId` to create + publish a new one under that host. `force` re-pushes every field, ignoring dirty-field tracking.  Any other action (e.g. `pull`, `unlist`) returns a structured 422 naming the supported actions.
+    # Apply a state action to a listing by id. The path `id` is the canonical Repull listing id.  `delete` is a **deactivate of the Repull record only** — it sets the listing inactive and KEEPS the row; it does NOT touch the upstream Airbnb listing (Repull never deletes or deactivates on Airbnb's side). Use it to exclude a listing / trim back under the plan-listings cap; reactivate via `PATCH /v1/listings/{id}` with `{ \"active\": true }`. Idempotent.  `push` / `publish` push the listing's content to Airbnb via the same host-side sync orchestrator as `POST /v1/listings/{id}/publish/airbnb` — pass `airbnbConnectionId` to update an already-mapped Airbnb listing, or `hostId` to create + publish a new one under that host. `force` re-pushes every field, ignoring dirty-field tracking.  Any other action (e.g. `pull`, `unlist`) returns a structured 422 naming the supported actions.  Returns `403 listing_inactive` for `push`/`publish` when the listing is inactive. `delete` (deactivation) is always accepted.
     # @param id [String] 
     # @param [Hash] opts the optional parameters
     # @option opts [AirbnbListingActionRequest] :airbnb_listing_action_request 
@@ -101,7 +101,7 @@ module Repull
     end
 
     # Listing action (delete/push/publish)
-    # Apply a state action to a listing by id. The path &#x60;id&#x60; is the canonical Repull listing id.  &#x60;delete&#x60; is a **deactivate of the Repull record only** — it sets the listing inactive and KEEPS the row; it does NOT touch the upstream Airbnb listing (Repull never deletes or deactivates on Airbnb&#39;s side). Use it to exclude a listing / trim back under the plan-listings cap; reactivate via &#x60;PATCH /v1/listings/{id}&#x60; with &#x60;{ \&quot;active\&quot;: true }&#x60;. Idempotent.  &#x60;push&#x60; / &#x60;publish&#x60; push the listing&#39;s content to Airbnb via the same host-side sync orchestrator as &#x60;POST /v1/listings/{id}/publish/airbnb&#x60; — pass &#x60;airbnbConnectionId&#x60; to update an already-mapped Airbnb listing, or &#x60;hostId&#x60; to create + publish a new one under that host. &#x60;force&#x60; re-pushes every field, ignoring dirty-field tracking.  Any other action (e.g. &#x60;pull&#x60;, &#x60;unlist&#x60;) returns a structured 422 naming the supported actions.
+    # Apply a state action to a listing by id. The path &#x60;id&#x60; is the canonical Repull listing id.  &#x60;delete&#x60; is a **deactivate of the Repull record only** — it sets the listing inactive and KEEPS the row; it does NOT touch the upstream Airbnb listing (Repull never deletes or deactivates on Airbnb&#39;s side). Use it to exclude a listing / trim back under the plan-listings cap; reactivate via &#x60;PATCH /v1/listings/{id}&#x60; with &#x60;{ \&quot;active\&quot;: true }&#x60;. Idempotent.  &#x60;push&#x60; / &#x60;publish&#x60; push the listing&#39;s content to Airbnb via the same host-side sync orchestrator as &#x60;POST /v1/listings/{id}/publish/airbnb&#x60; — pass &#x60;airbnbConnectionId&#x60; to update an already-mapped Airbnb listing, or &#x60;hostId&#x60; to create + publish a new one under that host. &#x60;force&#x60; re-pushes every field, ignoring dirty-field tracking.  Any other action (e.g. &#x60;pull&#x60;, &#x60;unlist&#x60;) returns a structured 422 naming the supported actions.  Returns &#x60;403 listing_inactive&#x60; for &#x60;push&#x60;/&#x60;publish&#x60; when the listing is inactive. &#x60;delete&#x60; (deactivation) is always accepted.
     # @param id [String] 
     # @param [Hash] opts the optional parameters
     # @option opts [AirbnbListingActionRequest] :airbnb_listing_action_request 
@@ -160,7 +160,7 @@ module Repull
     end
 
     # Accept/decline/cancel Airbnb reservation
-    # Apply a state action to an Airbnb reservation — `accept` / `decline` (for inquiries and reservation requests), `cancel` (host cancellation, carries penalties), `pre-approve` (for inquiries).
+    # Apply a state action to an Airbnb reservation — `accept` / `decline` (for inquiries and reservation requests), `cancel` (host cancellation, carries penalties), `pre-approve` (for inquiries).  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param code [String] 
     # @param [Hash] opts the optional parameters
     # @return [nil]
@@ -170,7 +170,7 @@ module Repull
     end
 
     # Accept/decline/cancel Airbnb reservation
-    # Apply a state action to an Airbnb reservation — &#x60;accept&#x60; / &#x60;decline&#x60; (for inquiries and reservation requests), &#x60;cancel&#x60; (host cancellation, carries penalties), &#x60;pre-approve&#x60; (for inquiries).
+    # Apply a state action to an Airbnb reservation — &#x60;accept&#x60; / &#x60;decline&#x60; (for inquiries and reservation requests), &#x60;cancel&#x60; (host cancellation, carries penalties), &#x60;pre-approve&#x60; (for inquiries).  Returns &#x60;403 listing_inactive&#x60; when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param code [String] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
@@ -190,6 +190,8 @@ module Repull
 
       # header parameters
       header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
 
       # form parameters
       form_params = opts[:form_params] || {}
@@ -221,7 +223,7 @@ module Repull
     end
 
     # Create Airbnb alteration
-    # Create a reservation alteration request (change dates, guest count, or price) on Airbnb. **Write-side** — calls Airbnb upstream. Requires a connected Airbnb host for the workspace, else `404 no_connection`.
+    # Create a reservation alteration request (change dates, guest count, or price) on Airbnb. **Write-side** — calls Airbnb upstream. Requires a connected Airbnb host for the workspace, else `404 no_connection`.  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param create_airbnb_alteration_request [CreateAirbnbAlterationRequest] 
     # @param [Hash] opts the optional parameters
     # @return [nil]
@@ -231,7 +233,7 @@ module Repull
     end
 
     # Create Airbnb alteration
-    # Create a reservation alteration request (change dates, guest count, or price) on Airbnb. **Write-side** — calls Airbnb upstream. Requires a connected Airbnb host for the workspace, else &#x60;404 no_connection&#x60;.
+    # Create a reservation alteration request (change dates, guest count, or price) on Airbnb. **Write-side** — calls Airbnb upstream. Requires a connected Airbnb host for the workspace, else &#x60;404 no_connection&#x60;.  Returns &#x60;403 listing_inactive&#x60; when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param create_airbnb_alteration_request [CreateAirbnbAlterationRequest] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
@@ -289,7 +291,7 @@ module Repull
     end
 
     # Create an Airbnb room
-    # Create a new room on an Airbnb listing. **Write-side** — calls Airbnb upstream. Body is the full room object minus `room_id`. Requires a connected Airbnb host, else `404 no_connection`.
+    # Create a new room on an Airbnb listing. **Write-side** — calls Airbnb upstream. Body is the full room object minus `room_id`. Requires a connected Airbnb host, else `404 no_connection`.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Repull listing id (numeric string).
     # @param request_body [Hash<String, Object>] 
     # @param [Hash] opts the optional parameters
@@ -300,7 +302,7 @@ module Repull
     end
 
     # Create an Airbnb room
-    # Create a new room on an Airbnb listing. **Write-side** — calls Airbnb upstream. Body is the full room object minus &#x60;room_id&#x60;. Requires a connected Airbnb host, else &#x60;404 no_connection&#x60;.
+    # Create a new room on an Airbnb listing. **Write-side** — calls Airbnb upstream. Body is the full room object minus &#x60;room_id&#x60;. Requires a connected Airbnb host, else &#x60;404 no_connection&#x60;.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Repull listing id (numeric string).
     # @param request_body [Hash<String, Object>] 
     # @param [Hash] opts the optional parameters
@@ -363,7 +365,7 @@ module Repull
     end
 
     # Create Airbnb special offer or pre-approval
-    # Create a special offer or a pre-approval on Airbnb. **Write-side** — calls Airbnb upstream. The `type` discriminator selects the flavour:  - `offer` — a special offer with custom terms (the remaining body fields are the offer params). - `preapproval` — pre-approve an inquiry thread (requires `threadId`; optional `blockInstantBooking`).  Requires a connected Airbnb host, else `404 no_connection`.
+    # Create a special offer or a pre-approval on Airbnb. **Write-side** — calls Airbnb upstream. The `type` discriminator selects the flavour:  - `offer` — a special offer with custom terms (the remaining body fields are the offer params). - `preapproval` — pre-approve an inquiry thread (requires `threadId`; optional `blockInstantBooking`).  Requires a connected Airbnb host, else `404 no_connection`.  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param create_airbnb_offer_request [CreateAirbnbOfferRequest] 
     # @param [Hash] opts the optional parameters
     # @return [nil]
@@ -373,7 +375,7 @@ module Repull
     end
 
     # Create Airbnb special offer or pre-approval
-    # Create a special offer or a pre-approval on Airbnb. **Write-side** — calls Airbnb upstream. The &#x60;type&#x60; discriminator selects the flavour:  - &#x60;offer&#x60; — a special offer with custom terms (the remaining body fields are the offer params). - &#x60;preapproval&#x60; — pre-approve an inquiry thread (requires &#x60;threadId&#x60;; optional &#x60;blockInstantBooking&#x60;).  Requires a connected Airbnb host, else &#x60;404 no_connection&#x60;.
+    # Create a special offer or a pre-approval on Airbnb. **Write-side** — calls Airbnb upstream. The &#x60;type&#x60; discriminator selects the flavour:  - &#x60;offer&#x60; — a special offer with custom terms (the remaining body fields are the offer params). - &#x60;preapproval&#x60; — pre-approve an inquiry thread (requires &#x60;threadId&#x60;; optional &#x60;blockInstantBooking&#x60;).  Requires a connected Airbnb host, else &#x60;404 no_connection&#x60;.  Returns &#x60;403 listing_inactive&#x60; when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param create_airbnb_offer_request [CreateAirbnbOfferRequest] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
@@ -431,7 +433,7 @@ module Repull
     end
 
     # Decline Airbnb alteration
-    # Decline a pending Airbnb reservation alteration. **Write-side** — calls Airbnb upstream (`respondToAlteration`) to reject the proposed change. Requires a connected Airbnb host for the workspace (else `404 no_connection`) and that the alteration id belongs to a reservation in your workspace (else `404 not_found`). No request body is required.
+    # Decline a pending Airbnb reservation alteration. **Write-side** — calls Airbnb upstream (`respondToAlteration`) to reject the proposed change. Requires a connected Airbnb host for the workspace (else `404 no_connection`) and that the alteration id belongs to a reservation in your workspace (else `404 not_found`). No request body is required.  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Airbnb alteration id (the &#x60;alterationId&#x60; from a &#x60;GET /v1/channels/airbnb/alterations&#x60; row).
     # @param [Hash] opts the optional parameters
     # @option opts [Object] :body 
@@ -442,7 +444,7 @@ module Repull
     end
 
     # Decline Airbnb alteration
-    # Decline a pending Airbnb reservation alteration. **Write-side** — calls Airbnb upstream (&#x60;respondToAlteration&#x60;) to reject the proposed change. Requires a connected Airbnb host for the workspace (else &#x60;404 no_connection&#x60;) and that the alteration id belongs to a reservation in your workspace (else &#x60;404 not_found&#x60;). No request body is required.
+    # Decline a pending Airbnb reservation alteration. **Write-side** — calls Airbnb upstream (&#x60;respondToAlteration&#x60;) to reject the proposed change. Requires a connected Airbnb host for the workspace (else &#x60;404 no_connection&#x60;) and that the alteration id belongs to a reservation in your workspace (else &#x60;404 not_found&#x60;). No request body is required.  Returns &#x60;403 listing_inactive&#x60; when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Airbnb alteration id (the &#x60;alterationId&#x60; from a &#x60;GET /v1/channels/airbnb/alterations&#x60; row).
     # @param [Hash] opts the optional parameters
     # @option opts [Object] :body 
@@ -501,7 +503,7 @@ module Repull
     end
 
     # Delete an Airbnb photo
-    # Remove a single photo from an Airbnb listing. Pass the Airbnb-side photo id as `?photoId=`. Write-side — calls Airbnb upstream; the local photo cache is reconciled by the sync worker afterwards.
+    # Remove a single photo from an Airbnb listing. Pass the Airbnb-side photo id as `?photoId=`. Write-side — calls Airbnb upstream; the local photo cache is reconciled by the sync worker afterwards.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] 
     # @param photo_id [String] Airbnb-side photo id to delete.
     # @param [Hash] opts the optional parameters
@@ -512,7 +514,7 @@ module Repull
     end
 
     # Delete an Airbnb photo
-    # Remove a single photo from an Airbnb listing. Pass the Airbnb-side photo id as &#x60;?photoId&#x3D;&#x60;. Write-side — calls Airbnb upstream; the local photo cache is reconciled by the sync worker afterwards.
+    # Remove a single photo from an Airbnb listing. Pass the Airbnb-side photo id as &#x60;?photoId&#x3D;&#x60;. Write-side — calls Airbnb upstream; the local photo cache is reconciled by the sync worker afterwards.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] 
     # @param photo_id [String] Airbnb-side photo id to delete.
     # @param [Hash] opts the optional parameters
@@ -571,7 +573,7 @@ module Repull
     end
 
     # Delete an Airbnb room
-    # Delete a room from an Airbnb listing. **Write-side** — calls Airbnb upstream. Pass the Airbnb-side room id as `?roomId=`. Requires a connected Airbnb host, else `404 no_connection`.
+    # Delete a room from an Airbnb listing. **Write-side** — calls Airbnb upstream. Pass the Airbnb-side room id as `?roomId=`. Requires a connected Airbnb host, else `404 no_connection`.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Repull listing id (numeric string).
     # @param room_id [String] Airbnb-side room id to delete.
     # @param [Hash] opts the optional parameters
@@ -582,7 +584,7 @@ module Repull
     end
 
     # Delete an Airbnb room
-    # Delete a room from an Airbnb listing. **Write-side** — calls Airbnb upstream. Pass the Airbnb-side room id as &#x60;?roomId&#x3D;&#x60;. Requires a connected Airbnb host, else &#x60;404 no_connection&#x60;.
+    # Delete a room from an Airbnb listing. **Write-side** — calls Airbnb upstream. Pass the Airbnb-side room id as &#x60;?roomId&#x3D;&#x60;. Requires a connected Airbnb host, else &#x60;404 no_connection&#x60;.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Repull listing id (numeric string).
     # @param room_id [String] Airbnb-side room id to delete.
     # @param [Hash] opts the optional parameters
@@ -641,7 +643,7 @@ module Repull
     end
 
     # Edit Airbnb host review
-    # Edit a host-side review for an Airbnb stay. Airbnb collapses POST + PUT into the same upstream call (`PUT /v2/listing_reviews/{id}`), so this endpoint covers both initial submit and subsequent edits while the review window is open.  Body is a partial `AirbnbReview` — pass the fields you want to change (rating, public review, private feedback, category ratings).
+    # Edit a host-side review for an Airbnb stay. Airbnb collapses POST + PUT into the same upstream call (`PUT /v2/listing_reviews/{id}`), so this endpoint covers both initial submit and subsequent edits while the review window is open.  Body is a partial `AirbnbReview` — pass the fields you want to change (rating, public review, private feedback, category ratings).  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Airbnb review id (&#x60;HRabc123&#x60; style).
     # @param airbnb_review [AirbnbReview] 
     # @param [Hash] opts the optional parameters
@@ -652,7 +654,7 @@ module Repull
     end
 
     # Edit Airbnb host review
-    # Edit a host-side review for an Airbnb stay. Airbnb collapses POST + PUT into the same upstream call (&#x60;PUT /v2/listing_reviews/{id}&#x60;), so this endpoint covers both initial submit and subsequent edits while the review window is open.  Body is a partial &#x60;AirbnbReview&#x60; — pass the fields you want to change (rating, public review, private feedback, category ratings).
+    # Edit a host-side review for an Airbnb stay. Airbnb collapses POST + PUT into the same upstream call (&#x60;PUT /v2/listing_reviews/{id}&#x60;), so this endpoint covers both initial submit and subsequent edits while the review window is open.  Body is a partial &#x60;AirbnbReview&#x60; — pass the fields you want to change (rating, public review, private feedback, category ratings).  Returns &#x60;403 listing_inactive&#x60; when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Airbnb review id (&#x60;HRabc123&#x60; style).
     # @param airbnb_review [AirbnbReview] 
     # @param [Hash] opts the optional parameters
@@ -715,7 +717,7 @@ module Repull
     end
 
     # Get Airbnb alteration
-    # Fetch a single Airbnb reservation alteration by its Airbnb alteration id. **Pure DB read**, workspace-scoped via the reservations join. Returns `404 not_found` when no alteration matches the id in your workspace.
+    # Fetch a single Airbnb reservation alteration by its Airbnb alteration id. **Pure DB read**, workspace-scoped via the reservations join. Returns `404 not_found` when no alteration matches the id in your workspace.  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Airbnb alteration id.
     # @param [Hash] opts the optional parameters
     # @return [GetAirbnbAlteration200Response]
@@ -725,7 +727,7 @@ module Repull
     end
 
     # Get Airbnb alteration
-    # Fetch a single Airbnb reservation alteration by its Airbnb alteration id. **Pure DB read**, workspace-scoped via the reservations join. Returns &#x60;404 not_found&#x60; when no alteration matches the id in your workspace.
+    # Fetch a single Airbnb reservation alteration by its Airbnb alteration id. **Pure DB read**, workspace-scoped via the reservations join. Returns &#x60;404 not_found&#x60; when no alteration matches the id in your workspace.  Returns &#x60;403 listing_inactive&#x60; when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Airbnb alteration id.
     # @param [Hash] opts the optional parameters
     # @return [Array<(GetAirbnbAlteration200Response, Integer, Hash)>] GetAirbnbAlteration200Response data, response status code and response headers
@@ -778,7 +780,7 @@ module Repull
     end
 
     # Get Airbnb check-in guide
-    # Return every published locale variant of an Airbnb listing's check-in guide. **Pure DB read** from `listings_airbnb_check_in_guides`. Pass `?locale=en` to filter to one locale (prefix match). Returns `404` when the listing has no Airbnb connection in this workspace.
+    # Return every published locale variant of an Airbnb listing's check-in guide. **Pure DB read** from `listings_airbnb_check_in_guides`. Pass `?locale=en` to filter to one locale (prefix match). Returns `404` when the listing has no Airbnb connection in this workspace.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Repull listing id (numeric string).
     # @param [Hash] opts the optional parameters
     # @option opts [String] :locale Filter to a single locale (prefix match, case-insensitive).
@@ -789,7 +791,7 @@ module Repull
     end
 
     # Get Airbnb check-in guide
-    # Return every published locale variant of an Airbnb listing&#39;s check-in guide. **Pure DB read** from &#x60;listings_airbnb_check_in_guides&#x60;. Pass &#x60;?locale&#x3D;en&#x60; to filter to one locale (prefix match). Returns &#x60;404&#x60; when the listing has no Airbnb connection in this workspace.
+    # Return every published locale variant of an Airbnb listing&#39;s check-in guide. **Pure DB read** from &#x60;listings_airbnb_check_in_guides&#x60;. Pass &#x60;?locale&#x3D;en&#x60; to filter to one locale (prefix match). Returns &#x60;404&#x60; when the listing has no Airbnb connection in this workspace.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Repull listing id (numeric string).
     # @param [Hash] opts the optional parameters
     # @option opts [String] :locale Filter to a single locale (prefix match, case-insensitive).
@@ -844,7 +846,7 @@ module Repull
     end
 
     # Get Airbnb checkout guide
-    # Return the checkout tasks an Airbnb listing shows guests at departure. **Pure DB read** from `listings_airbnb_checkout_tasks`. Returns `404` when the listing has no Airbnb connection in this workspace.
+    # Return the checkout tasks an Airbnb listing shows guests at departure. **Pure DB read** from `listings_airbnb_checkout_tasks`. Returns `404` when the listing has no Airbnb connection in this workspace.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Repull listing id (numeric string).
     # @param [Hash] opts the optional parameters
     # @return [GetAirbnbCheckinGuide200Response]
@@ -854,7 +856,7 @@ module Repull
     end
 
     # Get Airbnb checkout guide
-    # Return the checkout tasks an Airbnb listing shows guests at departure. **Pure DB read** from &#x60;listings_airbnb_checkout_tasks&#x60;. Returns &#x60;404&#x60; when the listing has no Airbnb connection in this workspace.
+    # Return the checkout tasks an Airbnb listing shows guests at departure. **Pure DB read** from &#x60;listings_airbnb_checkout_tasks&#x60;. Returns &#x60;404&#x60; when the listing has no Airbnb connection in this workspace.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Repull listing id (numeric string).
     # @param [Hash] opts the optional parameters
     # @return [Array<(GetAirbnbCheckinGuide200Response, Integer, Hash)>] GetAirbnbCheckinGuide200Response data, response status code and response headers
@@ -964,7 +966,7 @@ module Repull
     end
 
     # Get Airbnb listing
-    # Fetch all Airbnb connection rows for a single Vanio listing id. A property may be linked from multiple Airbnb hosts — every match is returned. Pass `?include=amenities` to enrich each row with its current Airbnb amenities.
+    # Fetch all Airbnb connection rows for a single Vanio listing id. A property may be linked from multiple Airbnb hosts — every match is returned. Pass `?include=amenities` to enrich each row with its current Airbnb amenities.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] 
     # @param [Hash] opts the optional parameters
     # @option opts [String] :include Comma-separated expansions. Currently supported: &#x60;amenities&#x60;.
@@ -975,7 +977,7 @@ module Repull
     end
 
     # Get Airbnb listing
-    # Fetch all Airbnb connection rows for a single Vanio listing id. A property may be linked from multiple Airbnb hosts — every match is returned. Pass &#x60;?include&#x3D;amenities&#x60; to enrich each row with its current Airbnb amenities.
+    # Fetch all Airbnb connection rows for a single Vanio listing id. A property may be linked from multiple Airbnb hosts — every match is returned. Pass &#x60;?include&#x3D;amenities&#x60; to enrich each row with its current Airbnb amenities.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] 
     # @param [Hash] opts the optional parameters
     # @option opts [String] :include Comma-separated expansions. Currently supported: &#x60;amenities&#x60;.
@@ -1030,7 +1032,7 @@ module Repull
     end
 
     # Get Airbnb availability
-    # Read the per-day availability calendar for an Airbnb listing. Returns one row per day including price overrides, min-stay, and blocked status.
+    # Read the per-day availability calendar for an Airbnb listing. Returns one row per day including price overrides, min-stay, and blocked status.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] 
     # @param [Hash] opts the optional parameters
     # @return [nil]
@@ -1040,7 +1042,7 @@ module Repull
     end
 
     # Get Airbnb availability
-    # Read the per-day availability calendar for an Airbnb listing. Returns one row per day including price overrides, min-stay, and blocked status.
+    # Read the per-day availability calendar for an Airbnb listing. Returns one row per day including price overrides, min-stay, and blocked status.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
@@ -1060,6 +1062,8 @@ module Repull
 
       # header parameters
       header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
 
       # form parameters
       form_params = opts[:form_params] || {}
@@ -1091,7 +1095,7 @@ module Repull
     end
 
     # Get Airbnb pricing
-    # Read the current pricing config (base price, weekend uplift, length-of-stay discounts, smart-pricing bounds) for an Airbnb listing.
+    # Read the current pricing config (base price, weekend uplift, length-of-stay discounts, smart-pricing bounds) for an Airbnb listing.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] 
     # @param [Hash] opts the optional parameters
     # @return [nil]
@@ -1101,7 +1105,7 @@ module Repull
     end
 
     # Get Airbnb pricing
-    # Read the current pricing config (base price, weekend uplift, length-of-stay discounts, smart-pricing bounds) for an Airbnb listing.
+    # Read the current pricing config (base price, weekend uplift, length-of-stay discounts, smart-pricing bounds) for an Airbnb listing.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
@@ -1121,6 +1125,8 @@ module Repull
 
       # header parameters
       header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
 
       # form parameters
       form_params = opts[:form_params] || {}
@@ -1152,7 +1158,7 @@ module Repull
     end
 
     # Get Airbnb listing quality
-    # Return an Airbnb listing's quality signals — standards, reservation issues, and monthly quality stats. **Pure DB read** from the local quality mirrors. Scope the response with `?type=all|standards|issues|stats` (default `all`, which returns `{ standards, issues }`). Returns `404` when the listing has no Airbnb connection in this workspace.
+    # Return an Airbnb listing's quality signals — standards, reservation issues, and monthly quality stats. **Pure DB read** from the local quality mirrors. Scope the response with `?type=all|standards|issues|stats` (default `all`, which returns `{ standards, issues }`). Returns `404` when the listing has no Airbnb connection in this workspace.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Repull listing id (numeric string).
     # @param [Hash] opts the optional parameters
     # @option opts [String] :type Which quality slice to return. &#x60;all&#x60; returns &#x60;{ standards, issues }&#x60;. (default to 'all')
@@ -1163,7 +1169,7 @@ module Repull
     end
 
     # Get Airbnb listing quality
-    # Return an Airbnb listing&#39;s quality signals — standards, reservation issues, and monthly quality stats. **Pure DB read** from the local quality mirrors. Scope the response with &#x60;?type&#x3D;all|standards|issues|stats&#x60; (default &#x60;all&#x60;, which returns &#x60;{ standards, issues }&#x60;). Returns &#x60;404&#x60; when the listing has no Airbnb connection in this workspace.
+    # Return an Airbnb listing&#39;s quality signals — standards, reservation issues, and monthly quality stats. **Pure DB read** from the local quality mirrors. Scope the response with &#x60;?type&#x3D;all|standards|issues|stats&#x60; (default &#x60;all&#x60;, which returns &#x60;{ standards, issues }&#x60;). Returns &#x60;404&#x60; when the listing has no Airbnb connection in this workspace.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Repull listing id (numeric string).
     # @param [Hash] opts the optional parameters
     # @option opts [String] :type Which quality slice to return. &#x60;all&#x60; returns &#x60;{ standards, issues }&#x60;. (default to 'all')
@@ -1222,7 +1228,7 @@ module Repull
     end
 
     # Get Airbnb listing settings
-    # Return an Airbnb listing's host roles, published locales, and regulatory permits. **Pure DB read** — host roles from `listings_airbnb_details.host_roles`, locales from distinct `listings_airbnb_descriptions.locale`, permits from `listings_airbnb_permits`. Scope with `?type=all|hosts|permits|locales` (default `all`, which returns `{ hosts, locales }`). Returns `404` when the listing has no Airbnb connection in this workspace.
+    # Return an Airbnb listing's host roles, published locales, and regulatory permits. **Pure DB read** — host roles from `listings_airbnb_details.host_roles`, locales from distinct `listings_airbnb_descriptions.locale`, permits from `listings_airbnb_permits`. Scope with `?type=all|hosts|permits|locales` (default `all`, which returns `{ hosts, locales }`). Returns `404` when the listing has no Airbnb connection in this workspace.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Repull listing id (numeric string).
     # @param [Hash] opts the optional parameters
     # @option opts [String] :type Which settings slice to return. &#x60;all&#x60; returns &#x60;{ hosts, locales }&#x60;. (default to 'all')
@@ -1233,7 +1239,7 @@ module Repull
     end
 
     # Get Airbnb listing settings
-    # Return an Airbnb listing&#39;s host roles, published locales, and regulatory permits. **Pure DB read** — host roles from &#x60;listings_airbnb_details.host_roles&#x60;, locales from distinct &#x60;listings_airbnb_descriptions.locale&#x60;, permits from &#x60;listings_airbnb_permits&#x60;. Scope with &#x60;?type&#x3D;all|hosts|permits|locales&#x60; (default &#x60;all&#x60;, which returns &#x60;{ hosts, locales }&#x60;). Returns &#x60;404&#x60; when the listing has no Airbnb connection in this workspace.
+    # Return an Airbnb listing&#39;s host roles, published locales, and regulatory permits. **Pure DB read** — host roles from &#x60;listings_airbnb_details.host_roles&#x60;, locales from distinct &#x60;listings_airbnb_descriptions.locale&#x60;, permits from &#x60;listings_airbnb_permits&#x60;. Scope with &#x60;?type&#x3D;all|hosts|permits|locales&#x60; (default &#x60;all&#x60;, which returns &#x60;{ hosts, locales }&#x60;). Returns &#x60;404&#x60; when the listing has no Airbnb connection in this workspace.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Repull listing id (numeric string).
     # @param [Hash] opts the optional parameters
     # @option opts [String] :type Which settings slice to return. &#x60;all&#x60; returns &#x60;{ hosts, locales }&#x60;. (default to 'all')
@@ -1292,7 +1298,7 @@ module Repull
     end
 
     # Get Airbnb reservation
-    # Fetch a single Airbnb reservation by Airbnb confirmation code (e.g. `HMABCDEF12`).
+    # Fetch a single Airbnb reservation by Airbnb confirmation code (e.g. `HMABCDEF12`).  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param code [String] 
     # @param [Hash] opts the optional parameters
     # @return [AirbnbReservation]
@@ -1302,7 +1308,7 @@ module Repull
     end
 
     # Get Airbnb reservation
-    # Fetch a single Airbnb reservation by Airbnb confirmation code (e.g. &#x60;HMABCDEF12&#x60;).
+    # Fetch a single Airbnb reservation by Airbnb confirmation code (e.g. &#x60;HMABCDEF12&#x60;).  Returns &#x60;403 listing_inactive&#x60; when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param code [String] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(AirbnbReservation, Integer, Hash)>] AirbnbReservation data, response status code and response headers
@@ -1355,7 +1361,7 @@ module Repull
     end
 
     # Get Airbnb thread
-    # Fetch a single Airbnb message thread by its Airbnb thread id. **Pure DB read** from the local `message_threads` mirror, workspace-scoped. Returns `404 not_found` when no thread matches. For the messages within a thread use `GET /v1/channels/airbnb/messaging/{threadId}/messages`.
+    # Fetch a single Airbnb message thread by its Airbnb thread id. **Pure DB read** from the local `message_threads` mirror, workspace-scoped. Returns `404 not_found` when no thread matches. For the messages within a thread use `GET /v1/channels/airbnb/messaging/{threadId}/messages`.  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param thread_id [String] Airbnb thread id (matches the external thread id).
     # @param [Hash] opts the optional parameters
     # @return [GetAirbnbThread200Response]
@@ -1365,7 +1371,7 @@ module Repull
     end
 
     # Get Airbnb thread
-    # Fetch a single Airbnb message thread by its Airbnb thread id. **Pure DB read** from the local &#x60;message_threads&#x60; mirror, workspace-scoped. Returns &#x60;404 not_found&#x60; when no thread matches. For the messages within a thread use &#x60;GET /v1/channels/airbnb/messaging/{threadId}/messages&#x60;.
+    # Fetch a single Airbnb message thread by its Airbnb thread id. **Pure DB read** from the local &#x60;message_threads&#x60; mirror, workspace-scoped. Returns &#x60;404 not_found&#x60; when no thread matches. For the messages within a thread use &#x60;GET /v1/channels/airbnb/messaging/{threadId}/messages&#x60;.  Returns &#x60;403 listing_inactive&#x60; when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param thread_id [String] Airbnb thread id (matches the external thread id).
     # @param [Hash] opts the optional parameters
     # @return [Array<(GetAirbnbThread200Response, Integer, Hash)>] GetAirbnbThread200Response data, response status code and response headers
@@ -1418,7 +1424,7 @@ module Repull
     end
 
     # List Airbnb alterations
-    # List reservation alteration requests for Airbnb reservations in this workspace. **Pure DB read** from the local `reservation_alterations` mirror — never calls Airbnb upstream — scoped to your workspace via the reservations join.  Default returns only pending alterations; pass `?type=all` for the full history. Filter to a single reservation with `?reservation_code=<confirmation code>`. Every response carries the `dataFreshness` envelope.
+    # List reservation alteration requests for Airbnb reservations in this workspace. **Pure DB read** from the local `reservation_alterations` mirror — never calls Airbnb upstream — scoped to your workspace via the reservations join.  Default returns only pending alterations; pass `?type=all` for the full history. Filter to a single reservation with `?reservation_code=<confirmation code>`. Every response carries the `dataFreshness` envelope.  Alterations of reservations on inactive listings are left out. Filtering by a reservation on an inactive listing (`reservation_code`) returns `403 listing_inactive`.
     # @param [Hash] opts the optional parameters
     # @option opts [String] :type Scope: &#x60;pending&#x60; (default) returns only alterations awaiting a decision; &#x60;all&#x60; returns every alteration. (default to 'pending')
     # @option opts [String] :reservation_code Airbnb confirmation code — restricts results to a single reservation. Returns an empty array when no reservation matches within your workspace.
@@ -1429,7 +1435,7 @@ module Repull
     end
 
     # List Airbnb alterations
-    # List reservation alteration requests for Airbnb reservations in this workspace. **Pure DB read** from the local &#x60;reservation_alterations&#x60; mirror — never calls Airbnb upstream — scoped to your workspace via the reservations join.  Default returns only pending alterations; pass &#x60;?type&#x3D;all&#x60; for the full history. Filter to a single reservation with &#x60;?reservation_code&#x3D;&lt;confirmation code&gt;&#x60;. Every response carries the &#x60;dataFreshness&#x60; envelope.
+    # List reservation alteration requests for Airbnb reservations in this workspace. **Pure DB read** from the local &#x60;reservation_alterations&#x60; mirror — never calls Airbnb upstream — scoped to your workspace via the reservations join.  Default returns only pending alterations; pass &#x60;?type&#x3D;all&#x60; for the full history. Filter to a single reservation with &#x60;?reservation_code&#x3D;&lt;confirmation code&gt;&#x60;. Every response carries the &#x60;dataFreshness&#x60; envelope.  Alterations of reservations on inactive listings are left out. Filtering by a reservation on an inactive listing (&#x60;reservation_code&#x60;) returns &#x60;403 listing_inactive&#x60;.
     # @param [Hash] opts the optional parameters
     # @option opts [String] :type Scope: &#x60;pending&#x60; (default) returns only alterations awaiting a decision; &#x60;all&#x60; returns every alteration. (default to 'pending')
     # @option opts [String] :reservation_code Airbnb confirmation code — restricts results to a single reservation. Returns an empty array when no reservation matches within your workspace.
@@ -1485,7 +1491,7 @@ module Repull
     end
 
     # List Airbnb amenities
-    # List an Airbnb listing's amenities. **Pure DB read** from the local `listings_airbnb_amenities` cache — never calls Airbnb upstream. The response splits amenities into `amenities` (regular) and `accessibility_amenities` (step-free access, wide doorways, grab rails, disabled parking, wheelchair, accessible-height fixtures, hoists, etc). Both are arrays (`[]` when none). Consult `dataFreshness` to disambiguate \"never synced\" from \"fresh and genuinely empty\". Returns `404` when the listing has no Airbnb connection in this workspace.
+    # List an Airbnb listing's amenities. **Pure DB read** from the local `listings_airbnb_amenities` cache — never calls Airbnb upstream. The response splits amenities into `amenities` (regular) and `accessibility_amenities` (step-free access, wide doorways, grab rails, disabled parking, wheelchair, accessible-height fixtures, hoists, etc). Both are arrays (`[]` when none). Consult `dataFreshness` to disambiguate \"never synced\" from \"fresh and genuinely empty\". Returns `404` when the listing has no Airbnb connection in this workspace.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Repull listing id (numeric string).
     # @param [Hash] opts the optional parameters
     # @return [ListAirbnbListingAmenities200Response]
@@ -1495,7 +1501,7 @@ module Repull
     end
 
     # List Airbnb amenities
-    # List an Airbnb listing&#39;s amenities. **Pure DB read** from the local &#x60;listings_airbnb_amenities&#x60; cache — never calls Airbnb upstream. The response splits amenities into &#x60;amenities&#x60; (regular) and &#x60;accessibility_amenities&#x60; (step-free access, wide doorways, grab rails, disabled parking, wheelchair, accessible-height fixtures, hoists, etc). Both are arrays (&#x60;[]&#x60; when none). Consult &#x60;dataFreshness&#x60; to disambiguate \&quot;never synced\&quot; from \&quot;fresh and genuinely empty\&quot;. Returns &#x60;404&#x60; when the listing has no Airbnb connection in this workspace.
+    # List an Airbnb listing&#39;s amenities. **Pure DB read** from the local &#x60;listings_airbnb_amenities&#x60; cache — never calls Airbnb upstream. The response splits amenities into &#x60;amenities&#x60; (regular) and &#x60;accessibility_amenities&#x60; (step-free access, wide doorways, grab rails, disabled parking, wheelchair, accessible-height fixtures, hoists, etc). Both are arrays (&#x60;[]&#x60; when none). Consult &#x60;dataFreshness&#x60; to disambiguate \&quot;never synced\&quot; from \&quot;fresh and genuinely empty\&quot;. Returns &#x60;404&#x60; when the listing has no Airbnb connection in this workspace.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Repull listing id (numeric string).
     # @param [Hash] opts the optional parameters
     # @return [Array<(ListAirbnbListingAmenities200Response, Integer, Hash)>] ListAirbnbListingAmenities200Response data, response status code and response headers
@@ -1548,7 +1554,7 @@ module Repull
     end
 
     # List Airbnb descriptions
-    # List an Airbnb listing's per-locale content (name, summary, house rules, etc). **Pure DB read** from `listings_airbnb_descriptions`. Filter to one locale with `?locale=en` (the legacy `?country=` param is accepted as a soft alias). Returns `404` when the listing has no Airbnb connection in this workspace.
+    # List an Airbnb listing's per-locale content (name, summary, house rules, etc). **Pure DB read** from `listings_airbnb_descriptions`. Filter to one locale with `?locale=en` (the legacy `?country=` param is accepted as a soft alias). Returns `404` when the listing has no Airbnb connection in this workspace.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Repull listing id (numeric string).
     # @param [Hash] opts the optional parameters
     # @option opts [String] :locale Filter to a single locale (prefix match, case-insensitive).
@@ -1560,7 +1566,7 @@ module Repull
     end
 
     # List Airbnb descriptions
-    # List an Airbnb listing&#39;s per-locale content (name, summary, house rules, etc). **Pure DB read** from &#x60;listings_airbnb_descriptions&#x60;. Filter to one locale with &#x60;?locale&#x3D;en&#x60; (the legacy &#x60;?country&#x3D;&#x60; param is accepted as a soft alias). Returns &#x60;404&#x60; when the listing has no Airbnb connection in this workspace.
+    # List an Airbnb listing&#39;s per-locale content (name, summary, house rules, etc). **Pure DB read** from &#x60;listings_airbnb_descriptions&#x60;. Filter to one locale with &#x60;?locale&#x3D;en&#x60; (the legacy &#x60;?country&#x3D;&#x60; param is accepted as a soft alias). Returns &#x60;404&#x60; when the listing has no Airbnb connection in this workspace.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Repull listing id (numeric string).
     # @param [Hash] opts the optional parameters
     # @option opts [String] :locale Filter to a single locale (prefix match, case-insensitive).
@@ -1617,7 +1623,7 @@ module Repull
     end
 
     # List Airbnb photos
-    # List photos attached to an Airbnb listing in display order. Returns the public CDN URL plus Airbnb-side metadata (id, caption, room).
+    # List photos attached to an Airbnb listing in display order. Returns the public CDN URL plus Airbnb-side metadata (id, caption, room).  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] 
     # @param [Hash] opts the optional parameters
     # @return [nil]
@@ -1627,7 +1633,7 @@ module Repull
     end
 
     # List Airbnb photos
-    # List photos attached to an Airbnb listing in display order. Returns the public CDN URL plus Airbnb-side metadata (id, caption, room).
+    # List photos attached to an Airbnb listing in display order. Returns the public CDN URL plus Airbnb-side metadata (id, caption, room).  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
@@ -1647,6 +1653,8 @@ module Repull
 
       # header parameters
       header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
 
       # form parameters
       form_params = opts[:form_params] || {}
@@ -1678,7 +1686,7 @@ module Repull
     end
 
     # List Airbnb rooms
-    # List the rooms configured on an Airbnb listing, ordered by room number. **Pure DB read** from `listings_airbnb_rooms`. Returns `404` when the listing has no Airbnb connection in this workspace.
+    # List the rooms configured on an Airbnb listing, ordered by room number. **Pure DB read** from `listings_airbnb_rooms`. Returns `404` when the listing has no Airbnb connection in this workspace.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Repull listing id (numeric string).
     # @param [Hash] opts the optional parameters
     # @return [GetAirbnbCheckinGuide200Response]
@@ -1688,7 +1696,7 @@ module Repull
     end
 
     # List Airbnb rooms
-    # List the rooms configured on an Airbnb listing, ordered by room number. **Pure DB read** from &#x60;listings_airbnb_rooms&#x60;. Returns &#x60;404&#x60; when the listing has no Airbnb connection in this workspace.
+    # List the rooms configured on an Airbnb listing, ordered by room number. **Pure DB read** from &#x60;listings_airbnb_rooms&#x60;. Returns &#x60;404&#x60; when the listing has no Airbnb connection in this workspace.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Repull listing id (numeric string).
     # @param [Hash] opts the optional parameters
     # @return [Array<(GetAirbnbCheckinGuide200Response, Integer, Hash)>] GetAirbnbCheckinGuide200Response data, response status code and response headers
@@ -1741,7 +1749,7 @@ module Repull
     end
 
     # List Airbnb listings
-    # List every Airbnb listing this workspace has access to via the connected Airbnb account. **Pure DB read — never calls Airbnb upstream.** The connect flow is what populates the local cache; the API serves what's already there. Customers with a disconnected host still see their last-synced data, with the top-level `dataFreshness` envelope flagging the staleness and pointing at the reconnect URL.  Pass `?include=amenities` to enrich each connection with its locally-cached amenity set. Returns `null` per connection when the cache is empty.
+    # List every Airbnb listing this workspace has access to via the connected Airbnb account. **Pure DB read — never calls Airbnb upstream.** The connect flow is what populates the local cache; the API serves what's already there. Customers with a disconnected host still see their last-synced data, with the top-level `dataFreshness` envelope flagging the staleness and pointing at the reconnect URL.  Pass `?include=amenities` to enrich each connection with its locally-cached amenity set. Returns `null` per connection when the cache is empty.  Inactive listings are left out; they keep syncing and reappear once activated. Use `GET /v1/listings?status=inactive` to find them.
     # @param [Hash] opts the optional parameters
     # @option opts [String] :include Comma-separated expansions. Currently supported: &#x60;amenities&#x60; (adds &#x60;amenities&#x60; and &#x60;accessibility_amenities&#x60; arrays to each connection, sourced from the local &#x60;listings_airbnb_amenities&#x60; cache).
     # @return [AirbnbListingListResponse]
@@ -1751,7 +1759,7 @@ module Repull
     end
 
     # List Airbnb listings
-    # List every Airbnb listing this workspace has access to via the connected Airbnb account. **Pure DB read — never calls Airbnb upstream.** The connect flow is what populates the local cache; the API serves what&#39;s already there. Customers with a disconnected host still see their last-synced data, with the top-level &#x60;dataFreshness&#x60; envelope flagging the staleness and pointing at the reconnect URL.  Pass &#x60;?include&#x3D;amenities&#x60; to enrich each connection with its locally-cached amenity set. Returns &#x60;null&#x60; per connection when the cache is empty.
+    # List every Airbnb listing this workspace has access to via the connected Airbnb account. **Pure DB read — never calls Airbnb upstream.** The connect flow is what populates the local cache; the API serves what&#39;s already there. Customers with a disconnected host still see their last-synced data, with the top-level &#x60;dataFreshness&#x60; envelope flagging the staleness and pointing at the reconnect URL.  Pass &#x60;?include&#x3D;amenities&#x60; to enrich each connection with its locally-cached amenity set. Returns &#x60;null&#x60; per connection when the cache is empty.  Inactive listings are left out; they keep syncing and reappear once activated. Use &#x60;GET /v1/listings?status&#x3D;inactive&#x60; to find them.
     # @param [Hash] opts the optional parameters
     # @option opts [String] :include Comma-separated expansions. Currently supported: &#x60;amenities&#x60; (adds &#x60;amenities&#x60; and &#x60;accessibility_amenities&#x60; arrays to each connection, sourced from the local &#x60;listings_airbnb_amenities&#x60; cache).
     # @return [Array<(AirbnbListingListResponse, Integer, Hash)>] AirbnbListingListResponse data, response status code and response headers
@@ -1801,10 +1809,10 @@ module Repull
     end
 
     # List Airbnb reservations
-    # Cursor-paginated list of reservations sourced directly from Airbnb. Use this when you need Airbnb-specific fields (guest payout split, cancellation policy snapshot) that the unified `/v1/reservations` endpoint flattens away.  Walk pages with `?cursor=<pagination.next_cursor>` until `pagination.has_more` is `false`. The cursor is opaque — never construct or parse it client-side.  `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) — see the `offset` parameter below. Mutually exclusive with `cursor`. Internally this walks upstream Airbnb cursor pages to skip rows, so deep offsets cost N/limit upstream round-trips; cursor remains the better choice for deep pagination.  When `status` is omitted, all statuses are returned (Airbnb defaults to `accepted` only on its own surface, but this endpoint normalises to \"all\"). Pass `?status=accepted` to scope.
+    # Cursor-paginated list of reservations sourced directly from Airbnb. Use this when you need Airbnb-specific fields (guest payout split, cancellation policy snapshot) that the unified `/v1/reservations` endpoint flattens away.  Walk pages with `?cursor=<pagination.nextCursor>` until `pagination.hasMore` is `false`. The cursor is opaque — never construct or parse it client-side.  `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) — see the `offset` parameter below. Mutually exclusive with `cursor`. Internally this walks upstream Airbnb cursor pages to skip rows, so deep offsets cost N/limit upstream round-trips; cursor remains the better choice for deep pagination.  When `status` is omitted, all statuses are returned (Airbnb defaults to `accepted` only on its own surface, but this endpoint normalises to \"all\"). Pass `?status=accepted` to scope.  Reservations on inactive listings are left out (counts and cursors included); they keep syncing and reappear once the listing is activated. Filtering by an inactive listing (`listing_id`) returns `403 listing_inactive`.
     # @param [Hash] opts the optional parameters
-    # @option opts [String] :cursor Opaque cursor returned by the previous response&#39;s &#x60;pagination.next_cursor&#x60;. Omit to fetch the first page.
-    # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.next_cursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
+    # @option opts [String] :cursor Opaque cursor returned by the previous response&#39;s &#x60;pagination.nextCursor&#x60;. Omit to fetch the first page.
+    # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.nextCursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
     # @option opts [Integer] :limit Max items per page. Hard cap is 100. (default to 50)
     # @option opts [String] :listing_id Filter to one Airbnb listing id (numeric string).
     # @option opts [String] :status Filter by reservation status. Omit to receive all statuses.
@@ -1818,10 +1826,10 @@ module Repull
     end
 
     # List Airbnb reservations
-    # Cursor-paginated list of reservations sourced directly from Airbnb. Use this when you need Airbnb-specific fields (guest payout split, cancellation policy snapshot) that the unified &#x60;/v1/reservations&#x60; endpoint flattens away.  Walk pages with &#x60;?cursor&#x3D;&lt;pagination.next_cursor&gt;&#x60; until &#x60;pagination.has_more&#x60; is &#x60;false&#x60;. The cursor is opaque — never construct or parse it client-side.  &#x60;?offset&#x3D;&#x60; is also accepted as a first-class alias for shallow paging (0..10000) — see the &#x60;offset&#x60; parameter below. Mutually exclusive with &#x60;cursor&#x60;. Internally this walks upstream Airbnb cursor pages to skip rows, so deep offsets cost N/limit upstream round-trips; cursor remains the better choice for deep pagination.  When &#x60;status&#x60; is omitted, all statuses are returned (Airbnb defaults to &#x60;accepted&#x60; only on its own surface, but this endpoint normalises to \&quot;all\&quot;). Pass &#x60;?status&#x3D;accepted&#x60; to scope.
+    # Cursor-paginated list of reservations sourced directly from Airbnb. Use this when you need Airbnb-specific fields (guest payout split, cancellation policy snapshot) that the unified &#x60;/v1/reservations&#x60; endpoint flattens away.  Walk pages with &#x60;?cursor&#x3D;&lt;pagination.nextCursor&gt;&#x60; until &#x60;pagination.hasMore&#x60; is &#x60;false&#x60;. The cursor is opaque — never construct or parse it client-side.  &#x60;?offset&#x3D;&#x60; is also accepted as a first-class alias for shallow paging (0..10000) — see the &#x60;offset&#x60; parameter below. Mutually exclusive with &#x60;cursor&#x60;. Internally this walks upstream Airbnb cursor pages to skip rows, so deep offsets cost N/limit upstream round-trips; cursor remains the better choice for deep pagination.  When &#x60;status&#x60; is omitted, all statuses are returned (Airbnb defaults to &#x60;accepted&#x60; only on its own surface, but this endpoint normalises to \&quot;all\&quot;). Pass &#x60;?status&#x3D;accepted&#x60; to scope.  Reservations on inactive listings are left out (counts and cursors included); they keep syncing and reappear once the listing is activated. Filtering by an inactive listing (&#x60;listing_id&#x60;) returns &#x60;403 listing_inactive&#x60;.
     # @param [Hash] opts the optional parameters
-    # @option opts [String] :cursor Opaque cursor returned by the previous response&#39;s &#x60;pagination.next_cursor&#x60;. Omit to fetch the first page.
-    # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.next_cursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
+    # @option opts [String] :cursor Opaque cursor returned by the previous response&#39;s &#x60;pagination.nextCursor&#x60;. Omit to fetch the first page.
+    # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.nextCursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
     # @option opts [Integer] :limit Max items per page. Hard cap is 100. (default to 50)
     # @option opts [String] :listing_id Filter to one Airbnb listing id (numeric string).
     # @option opts [String] :status Filter by reservation status. Omit to receive all statuses.
@@ -1902,7 +1910,7 @@ module Repull
     end
 
     # List Airbnb reviews
-    # List reviews left by guests on Airbnb listings in this workspace. Includes both reviews of the host and reviews of the guest (where the host has not yet submitted theirs).
+    # List reviews left by guests on Airbnb listings in this workspace. Includes both reviews of the host and reviews of the guest (where the host has not yet submitted theirs).  Reviews of inactive listings are left out; they keep syncing and reappear once the listing is activated. Filtering by an inactive listing (`listing_id`) returns `403 listing_inactive`.
     # @param [Hash] opts the optional parameters
     # @return [AirbnbReviewListResponse]
     def list_airbnb_reviews(opts = {})
@@ -1911,7 +1919,7 @@ module Repull
     end
 
     # List Airbnb reviews
-    # List reviews left by guests on Airbnb listings in this workspace. Includes both reviews of the host and reviews of the guest (where the host has not yet submitted theirs).
+    # List reviews left by guests on Airbnb listings in this workspace. Includes both reviews of the host and reviews of the guest (where the host has not yet submitted theirs).  Reviews of inactive listings are left out; they keep syncing and reappear once the listing is activated. Filtering by an inactive listing (&#x60;listing_id&#x60;) returns &#x60;403 listing_inactive&#x60;.
     # @param [Hash] opts the optional parameters
     # @return [Array<(AirbnbReviewListResponse, Integer, Hash)>] AirbnbReviewListResponse data, response status code and response headers
     def list_airbnb_reviews_with_http_info(opts = {})
@@ -1959,7 +1967,7 @@ module Repull
     end
 
     # Get Airbnb messages
-    # Fetch the full message log for an Airbnb thread, ordered oldest-to-newest. Walk pages with `?cursor=` until `pagination.hasMore` is `false`.
+    # Fetch the full message log for an Airbnb thread, ordered oldest-to-newest. Walk pages with `?cursor=` until `pagination.hasMore` is `false`.  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param thread_id [String] 
     # @param [Hash] opts the optional parameters
     # @return [MessageListResponse]
@@ -1969,7 +1977,7 @@ module Repull
     end
 
     # Get Airbnb messages
-    # Fetch the full message log for an Airbnb thread, ordered oldest-to-newest. Walk pages with &#x60;?cursor&#x3D;&#x60; until &#x60;pagination.hasMore&#x60; is &#x60;false&#x60;.
+    # Fetch the full message log for an Airbnb thread, ordered oldest-to-newest. Walk pages with &#x60;?cursor&#x3D;&#x60; until &#x60;pagination.hasMore&#x60; is &#x60;false&#x60;.  Returns &#x60;403 listing_inactive&#x60; when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param thread_id [String] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(MessageListResponse, Integer, Hash)>] MessageListResponse data, response status code and response headers
@@ -2022,7 +2030,7 @@ module Repull
     end
 
     # List Airbnb message threads
-    # List Airbnb message threads (one per guest conversation). Cursor-paginated. Each thread includes a preview of the latest message.
+    # List Airbnb message threads (one per guest conversation). Cursor-paginated. Each thread includes a preview of the latest message.  Threads on inactive listings are left out; they keep syncing and reappear once the listing is activated. Filtering by an inactive listing (`listing_id`) returns `403 listing_inactive`.
     # @param [Hash] opts the optional parameters
     # @return [AirbnbThreadListResponse]
     def list_airbnb_threads(opts = {})
@@ -2031,7 +2039,7 @@ module Repull
     end
 
     # List Airbnb message threads
-    # List Airbnb message threads (one per guest conversation). Cursor-paginated. Each thread includes a preview of the latest message.
+    # List Airbnb message threads (one per guest conversation). Cursor-paginated. Each thread includes a preview of the latest message.  Threads on inactive listings are left out; they keep syncing and reappear once the listing is activated. Filtering by an inactive listing (&#x60;listing_id&#x60;) returns &#x60;403 listing_inactive&#x60;.
     # @param [Hash] opts the optional parameters
     # @return [Array<(AirbnbThreadListResponse, Integer, Hash)>] AirbnbThreadListResponse data, response status code and response headers
     def list_airbnb_threads_with_http_info(opts = {})
@@ -2079,7 +2087,7 @@ module Repull
     end
 
     # List Airbnb transactions
-    # List Airbnb host transactions (reservation earnings, payouts, resolution adjustments) for this workspace, newest first. **Pure DB read** — customer-facing reads never call Airbnb upstream; they serve the `airbnb_transactions` mirror. Each row carries the genuine host- and guest-side financial breakdown (accommodation subtotal, cleaning fee, host + guest service fees split base/VAT, tax buckets, expected/actual host payout with settlement status). Trigger a refresh with `POST` on this path. When the mirror is empty or the host disconnected, `data_freshness.stale = true` with a `reason` (`never_synced`, `host_disconnected_<iso>`, `sync_lag_>_24h`).
+    # List Airbnb host transactions (reservation earnings, payouts, resolution adjustments) for this workspace, newest first. **Pure DB read** — customer-facing reads never call Airbnb upstream; they serve the `airbnb_transactions` mirror. Each row carries the genuine host- and guest-side financial breakdown (accommodation subtotal, cleaning fee, host + guest service fees split base/VAT, tax buckets, expected/actual host payout with settlement status). Trigger a refresh with `POST` on this path. When the mirror is empty or the host disconnected, `dataFreshness.stale = true` with a `reason` (`never_synced`, `host_disconnected_<iso>`, `sync_lag_>_24h`).  Transactions of reservations on inactive listings are left out; payout rows, which belong to no listing, are always included.
     # @param [Hash] opts the optional parameters
     # @return [ListAirbnbTransactions200Response]
     def list_airbnb_transactions(opts = {})
@@ -2088,7 +2096,7 @@ module Repull
     end
 
     # List Airbnb transactions
-    # List Airbnb host transactions (reservation earnings, payouts, resolution adjustments) for this workspace, newest first. **Pure DB read** — customer-facing reads never call Airbnb upstream; they serve the &#x60;airbnb_transactions&#x60; mirror. Each row carries the genuine host- and guest-side financial breakdown (accommodation subtotal, cleaning fee, host + guest service fees split base/VAT, tax buckets, expected/actual host payout with settlement status). Trigger a refresh with &#x60;POST&#x60; on this path. When the mirror is empty or the host disconnected, &#x60;data_freshness.stale &#x3D; true&#x60; with a &#x60;reason&#x60; (&#x60;never_synced&#x60;, &#x60;host_disconnected_&lt;iso&gt;&#x60;, &#x60;sync_lag_&gt;_24h&#x60;).
+    # List Airbnb host transactions (reservation earnings, payouts, resolution adjustments) for this workspace, newest first. **Pure DB read** — customer-facing reads never call Airbnb upstream; they serve the &#x60;airbnb_transactions&#x60; mirror. Each row carries the genuine host- and guest-side financial breakdown (accommodation subtotal, cleaning fee, host + guest service fees split base/VAT, tax buckets, expected/actual host payout with settlement status). Trigger a refresh with &#x60;POST&#x60; on this path. When the mirror is empty or the host disconnected, &#x60;dataFreshness.stale &#x3D; true&#x60; with a &#x60;reason&#x60; (&#x60;never_synced&#x60;, &#x60;host_disconnected_&lt;iso&gt;&#x60;, &#x60;sync_lag_&gt;_24h&#x60;).  Transactions of reservations on inactive listings are left out; payout rows, which belong to no listing, are always included.
     # @param [Hash] opts the optional parameters
     # @return [Array<(ListAirbnbTransactions200Response, Integer, Hash)>] ListAirbnbTransactions200Response data, response status code and response headers
     def list_airbnb_transactions_with_http_info(opts = {})
@@ -2136,7 +2144,7 @@ module Repull
     end
 
     # Map an Airbnb listing to a Repull listing
-    # Link an existing Airbnb listing to a canonical Repull listing/property. **API-key-scoped** (unlike the Booking room mapping, which is Connect-session-scoped).  Discover the `airbnbId` (+ `hostId`) via `GET /v1/channels/airbnb/listings`, then re-point it at the `listingId` of your choice — the dedup / consolidation case where the Airbnb sync auto-created its own listing but you want the inventory under an existing property.  Repoints both the Airbnb record and its platform link to the target listing in one transaction. Idempotent — re-mapping to the same listing is a 200 no-op (`alreadyMapped: true`). Scope is enforced against your workspace on both the target listing and the existing Airbnb record; a listing that already links a different Airbnb listing returns 409.
+    # Link an existing Airbnb listing to a canonical Repull listing/property. **API-key-scoped** (unlike the Booking room mapping, which is Connect-session-scoped).  Discover the `airbnbId` (+ `hostId`) via `GET /v1/channels/airbnb/listings`, then re-point it at the `listingId` of your choice — the dedup / consolidation case where the Airbnb sync auto-created its own listing but you want the inventory under an existing property.  Repoints both the Airbnb record and its platform link to the target listing in one transaction. Idempotent — re-mapping to the same listing is a 200 no-op (`alreadyMapped: true`). Scope is enforced against your workspace on both the target listing and the existing Airbnb record; a listing that already links a different Airbnb listing returns 409.  Returns `403 listing_inactive` when the target listing, or the listing the Airbnb listing is mapped to now, is inactive; nothing is changed.
     # @param map_airbnb_listing_request [MapAirbnbListingRequest] 
     # @param [Hash] opts the optional parameters
     # @return [MapAirbnbListingResponse]
@@ -2146,7 +2154,7 @@ module Repull
     end
 
     # Map an Airbnb listing to a Repull listing
-    # Link an existing Airbnb listing to a canonical Repull listing/property. **API-key-scoped** (unlike the Booking room mapping, which is Connect-session-scoped).  Discover the &#x60;airbnbId&#x60; (+ &#x60;hostId&#x60;) via &#x60;GET /v1/channels/airbnb/listings&#x60;, then re-point it at the &#x60;listingId&#x60; of your choice — the dedup / consolidation case where the Airbnb sync auto-created its own listing but you want the inventory under an existing property.  Repoints both the Airbnb record and its platform link to the target listing in one transaction. Idempotent — re-mapping to the same listing is a 200 no-op (&#x60;alreadyMapped: true&#x60;). Scope is enforced against your workspace on both the target listing and the existing Airbnb record; a listing that already links a different Airbnb listing returns 409.
+    # Link an existing Airbnb listing to a canonical Repull listing/property. **API-key-scoped** (unlike the Booking room mapping, which is Connect-session-scoped).  Discover the &#x60;airbnbId&#x60; (+ &#x60;hostId&#x60;) via &#x60;GET /v1/channels/airbnb/listings&#x60;, then re-point it at the &#x60;listingId&#x60; of your choice — the dedup / consolidation case where the Airbnb sync auto-created its own listing but you want the inventory under an existing property.  Repoints both the Airbnb record and its platform link to the target listing in one transaction. Idempotent — re-mapping to the same listing is a 200 no-op (&#x60;alreadyMapped: true&#x60;). Scope is enforced against your workspace on both the target listing and the existing Airbnb record; a listing that already links a different Airbnb listing returns 409.  Returns &#x60;403 listing_inactive&#x60; when the target listing, or the listing the Airbnb listing is mapped to now, is inactive; nothing is changed.
     # @param map_airbnb_listing_request [MapAirbnbListingRequest] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(MapAirbnbListingResponse, Integer, Hash)>] MapAirbnbListingResponse data, response status code and response headers
@@ -2204,7 +2212,7 @@ module Repull
     end
 
     # Respond to Airbnb review
-    # Post a public host response to a guest review. Airbnb allows one response per review — repeated POSTs return 409. Response text is capped at 1000 characters.
+    # Post a public host response to a guest review. Airbnb allows one response per review — repeated POSTs return 409. Response text is capped at 1000 characters.  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Airbnb review id.
     # @param respond_airbnb_review_request [RespondAirbnbReviewRequest] 
     # @param [Hash] opts the optional parameters
@@ -2215,7 +2223,7 @@ module Repull
     end
 
     # Respond to Airbnb review
-    # Post a public host response to a guest review. Airbnb allows one response per review — repeated POSTs return 409. Response text is capped at 1000 characters.
+    # Post a public host response to a guest review. Airbnb allows one response per review — repeated POSTs return 409. Response text is capped at 1000 characters.  Returns &#x60;403 listing_inactive&#x60; when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Airbnb review id.
     # @param respond_airbnb_review_request [RespondAirbnbReviewRequest] 
     # @param [Hash] opts the optional parameters
@@ -2278,7 +2286,7 @@ module Repull
     end
 
     # Respond to / submit Airbnb review (legacy)
-    # Legacy action-based shape. Body `{ action: \"respond\"|\"submit\", reviewId, response?, review? }`. Kept for backwards compatibility — prefer `PUT /v1/channels/airbnb/reviews/{id}` (edit) and `POST /v1/channels/airbnb/reviews/{id}/respond` (reply) for new integrations.
+    # Legacy action-based shape. Body `{ action: \"respond\"|\"submit\", reviewId, response?, review? }`. Kept for backwards compatibility — prefer `PUT /v1/channels/airbnb/reviews/{id}` (edit) and `POST /v1/channels/airbnb/reviews/{id}/respond` (reply) for new integrations.  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param [Hash] opts the optional parameters
     # @return [nil]
     def respond_airbnb_review_legacy(opts = {})
@@ -2287,7 +2295,7 @@ module Repull
     end
 
     # Respond to / submit Airbnb review (legacy)
-    # Legacy action-based shape. Body &#x60;{ action: \&quot;respond\&quot;|\&quot;submit\&quot;, reviewId, response?, review? }&#x60;. Kept for backwards compatibility — prefer &#x60;PUT /v1/channels/airbnb/reviews/{id}&#x60; (edit) and &#x60;POST /v1/channels/airbnb/reviews/{id}/respond&#x60; (reply) for new integrations.
+    # Legacy action-based shape. Body &#x60;{ action: \&quot;respond\&quot;|\&quot;submit\&quot;, reviewId, response?, review? }&#x60;. Kept for backwards compatibility — prefer &#x60;PUT /v1/channels/airbnb/reviews/{id}&#x60; (edit) and &#x60;POST /v1/channels/airbnb/reviews/{id}/respond&#x60; (reply) for new integrations.  Returns &#x60;403 listing_inactive&#x60; when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param [Hash] opts the optional parameters
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
     def respond_airbnb_review_legacy_with_http_info(opts = {})
@@ -2302,6 +2310,8 @@ module Repull
 
       # header parameters
       header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
 
       # form parameters
       form_params = opts[:form_params] || {}
@@ -2333,7 +2343,7 @@ module Repull
     end
 
     # Send Airbnb message
-    # Send a message in an Airbnb thread as the host. Airbnb enforces content rules (no off-platform contact info, no external URLs) — violating messages are rejected upstream and surface as `airbnb_error`.  The `{threadId}` is the Airbnb thread id — the `externalThreadId` field on a unified `Conversation` (`GET /v1/conversations`).
+    # Send a message in an Airbnb thread as the host. Airbnb enforces content rules (no off-platform contact info, no external URLs) — violating messages are rejected upstream and surface as `airbnb_error`.  The `{threadId}` is the Airbnb thread id — the `externalThreadId` field on a unified `Conversation` (`GET /v1/conversations`).  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param thread_id [String] Airbnb thread id (the &#x60;externalThreadId&#x60; on a unified &#x60;Conversation&#x60;).
     # @param send_airbnb_message_request [SendAirbnbMessageRequest] 
     # @param [Hash] opts the optional parameters
@@ -2344,7 +2354,7 @@ module Repull
     end
 
     # Send Airbnb message
-    # Send a message in an Airbnb thread as the host. Airbnb enforces content rules (no off-platform contact info, no external URLs) — violating messages are rejected upstream and surface as &#x60;airbnb_error&#x60;.  The &#x60;{threadId}&#x60; is the Airbnb thread id — the &#x60;externalThreadId&#x60; field on a unified &#x60;Conversation&#x60; (&#x60;GET /v1/conversations&#x60;).
+    # Send a message in an Airbnb thread as the host. Airbnb enforces content rules (no off-platform contact info, no external URLs) — violating messages are rejected upstream and surface as &#x60;airbnb_error&#x60;.  The &#x60;{threadId}&#x60; is the Airbnb thread id — the &#x60;externalThreadId&#x60; field on a unified &#x60;Conversation&#x60; (&#x60;GET /v1/conversations&#x60;).  Returns &#x60;403 listing_inactive&#x60; when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param thread_id [String] Airbnb thread id (the &#x60;externalThreadId&#x60; on a unified &#x60;Conversation&#x60;).
     # @param send_airbnb_message_request [SendAirbnbMessageRequest] 
     # @param [Hash] opts the optional parameters
@@ -2471,7 +2481,7 @@ module Repull
     end
 
     # Upsert Airbnb check-in guide
-    # Upsert the check-in guide for one locale on an Airbnb listing. **Write-side** — calls Airbnb upstream; the DB mirror is reconciled by the sync worker once the upstream call returns. Target the locale with `?locale=en` (defaults to `en`). Requires a connected Airbnb host, else `404 no_connection`.
+    # Upsert the check-in guide for one locale on an Airbnb listing. **Write-side** — calls Airbnb upstream; the DB mirror is reconciled by the sync worker once the upstream call returns. Target the locale with `?locale=en` (defaults to `en`). Requires a connected Airbnb host, else `404 no_connection`.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Repull listing id (numeric string).
     # @param [Hash] opts the optional parameters
     # @option opts [String] :locale Locale to upsert. Defaults to &#x60;en&#x60;. (default to 'en')
@@ -2482,7 +2492,7 @@ module Repull
     end
 
     # Upsert Airbnb check-in guide
-    # Upsert the check-in guide for one locale on an Airbnb listing. **Write-side** — calls Airbnb upstream; the DB mirror is reconciled by the sync worker once the upstream call returns. Target the locale with &#x60;?locale&#x3D;en&#x60; (defaults to &#x60;en&#x60;). Requires a connected Airbnb host, else &#x60;404 no_connection&#x60;.
+    # Upsert the check-in guide for one locale on an Airbnb listing. **Write-side** — calls Airbnb upstream; the DB mirror is reconciled by the sync worker once the upstream call returns. Target the locale with &#x60;?locale&#x3D;en&#x60; (defaults to &#x60;en&#x60;). Requires a connected Airbnb host, else &#x60;404 no_connection&#x60;.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Repull listing id (numeric string).
     # @param [Hash] opts the optional parameters
     # @option opts [String] :locale Locale to upsert. Defaults to &#x60;en&#x60;. (default to 'en')
@@ -2537,7 +2547,7 @@ module Repull
     end
 
     # Update Airbnb availability
-    # Push availability + restrictions to Airbnb. `type: \"calendar\"` writes per-date restrictions — min/max nights, closed-to-arrival, closed-to-departure, and stop-sell (`availability: \"unavailable\"`) — via a batch of operations that each target either a date range or an explicit date list. `type: \"rules\"` writes listing-level availability rules (default min/max nights, booking lead time, turnover days, seasonal/day-of-week min nights). Restrictions never leak across channels — this endpoint writes only to Airbnb.
+    # Push availability + restrictions to Airbnb. `type: \"calendar\"` writes per-date restrictions — min/max nights, closed-to-arrival, closed-to-departure, and stop-sell (`availability: \"unavailable\"`) — via a batch of operations that each target either a date range or an explicit date list. `type: \"rules\"` writes listing-level availability rules (default min/max nights, booking lead time, turnover days, seasonal/day-of-week min nights). Restrictions never leak across channels — this endpoint writes only to Airbnb.  `{id}` is the **Repull listing id** (from `GET /v1/properties` or `GET /v1/channels/airbnb/listings`), not the Airbnb listing id — Repull translates it before calling Airbnb.  The body is validated before anything reaches Airbnb: a malformed body is `422 invalid_params` naming the `field`. Calendar operations accept only the documented fields.  **Blocking dates:** Airbnb requires a `busy_subtype` whenever `availability` is `\"unavailable\"`. If an operation leaves it out, Repull sends `busy_subtype: \"BLOCKED_BY_HOST\"`; send `\"OUTSIDE_RESERVATION\"` for dates held by a booking made on another channel.  **Errors:** `403 connection_reauth_required` — Airbnb no longer accepts the connection for this listing (reconnect; retrying won't help). `403 listing_inactive` — the listing is inactive. `404 not_found` — no Airbnb-connected listing with this id in the workspace. `422 airbnb_rejected` — Airbnb refused the change; `message` carries its reason. `429 airbnb_rate_limited` — back off. `502 airbnb_error` — Airbnb outage or timeout; retry.
     # @param id [String] 
     # @param airbnb_availability_write_request [AirbnbAvailabilityWriteRequest] 
     # @param [Hash] opts the optional parameters
@@ -2548,7 +2558,7 @@ module Repull
     end
 
     # Update Airbnb availability
-    # Push availability + restrictions to Airbnb. &#x60;type: \&quot;calendar\&quot;&#x60; writes per-date restrictions — min/max nights, closed-to-arrival, closed-to-departure, and stop-sell (&#x60;availability: \&quot;unavailable\&quot;&#x60;) — via a batch of operations that each target either a date range or an explicit date list. &#x60;type: \&quot;rules\&quot;&#x60; writes listing-level availability rules (default min/max nights, booking lead time, turnover days, seasonal/day-of-week min nights). Restrictions never leak across channels — this endpoint writes only to Airbnb.
+    # Push availability + restrictions to Airbnb. &#x60;type: \&quot;calendar\&quot;&#x60; writes per-date restrictions — min/max nights, closed-to-arrival, closed-to-departure, and stop-sell (&#x60;availability: \&quot;unavailable\&quot;&#x60;) — via a batch of operations that each target either a date range or an explicit date list. &#x60;type: \&quot;rules\&quot;&#x60; writes listing-level availability rules (default min/max nights, booking lead time, turnover days, seasonal/day-of-week min nights). Restrictions never leak across channels — this endpoint writes only to Airbnb.  &#x60;{id}&#x60; is the **Repull listing id** (from &#x60;GET /v1/properties&#x60; or &#x60;GET /v1/channels/airbnb/listings&#x60;), not the Airbnb listing id — Repull translates it before calling Airbnb.  The body is validated before anything reaches Airbnb: a malformed body is &#x60;422 invalid_params&#x60; naming the &#x60;field&#x60;. Calendar operations accept only the documented fields.  **Blocking dates:** Airbnb requires a &#x60;busy_subtype&#x60; whenever &#x60;availability&#x60; is &#x60;\&quot;unavailable\&quot;&#x60;. If an operation leaves it out, Repull sends &#x60;busy_subtype: \&quot;BLOCKED_BY_HOST\&quot;&#x60;; send &#x60;\&quot;OUTSIDE_RESERVATION\&quot;&#x60; for dates held by a booking made on another channel.  **Errors:** &#x60;403 connection_reauth_required&#x60; — Airbnb no longer accepts the connection for this listing (reconnect; retrying won&#39;t help). &#x60;403 listing_inactive&#x60; — the listing is inactive. &#x60;404 not_found&#x60; — no Airbnb-connected listing with this id in the workspace. &#x60;422 airbnb_rejected&#x60; — Airbnb refused the change; &#x60;message&#x60; carries its reason. &#x60;429 airbnb_rate_limited&#x60; — back off. &#x60;502 airbnb_error&#x60; — Airbnb outage or timeout; retry.
     # @param id [String] 
     # @param airbnb_availability_write_request [AirbnbAvailabilityWriteRequest] 
     # @param [Hash] opts the optional parameters
@@ -2573,6 +2583,8 @@ module Repull
 
       # header parameters
       header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
       # HTTP header 'Content-Type'
       content_type = @api_client.select_header_content_type(['application/json'])
       if !content_type.nil?
@@ -2609,7 +2621,7 @@ module Repull
     end
 
     # Update Airbnb pricing
-    # Push pricing changes to Airbnb. The `type` discriminator selects the sub-resource (model, standard settings, LOS, rate-plan, fees, currency, rule, or per-date `calendar`). `type: \"calendar\"` carries the full per-date restriction set — nightly price, min/max nights, closed-to-arrival, closed-to-departure, and stop-sell (`availability: \"unavailable\"`). For settings sub-resources the full object is replaced — GET first, mutate locally, then PUT the whole object.
+    # Push pricing changes to Airbnb. The `type` discriminator selects the sub-resource (model, standard settings, LOS, rate-plan, fees, currency, rule, or per-date `calendar`). `type: \"calendar\"` carries the full per-date restriction set — nightly price, min/max nights, closed-to-arrival, closed-to-departure, and stop-sell (`availability: \"unavailable\"`). For settings sub-resources the full object is replaced — GET first, mutate locally, then PUT the whole object.  `{id}` is the **Repull listing id** (from `GET /v1/properties` or `GET /v1/channels/airbnb/listings`), not the Airbnb listing id — Repull translates it before calling Airbnb.  The body is validated before anything reaches Airbnb: a malformed body is `422 invalid_params` naming the `field`. Calendar operations accept only the documented fields.  **Blocking dates:** Airbnb requires a `busy_subtype` whenever `availability` is `\"unavailable\"`. If an operation leaves it out, Repull sends `busy_subtype: \"BLOCKED_BY_HOST\"`; send `\"OUTSIDE_RESERVATION\"` for dates held by a booking made on another channel.  **Errors:** `403 connection_reauth_required` — Airbnb no longer accepts the connection for this listing (reconnect; retrying won't help). `403 listing_inactive` — the listing is inactive. `404 not_found` — no Airbnb-connected listing with this id in the workspace. `422 airbnb_rejected` — Airbnb refused the change; `message` carries its reason. `429 airbnb_rate_limited` — back off. `502 airbnb_error` — Airbnb outage or timeout; retry.
     # @param id [String] 
     # @param airbnb_pricing_write_request [AirbnbPricingWriteRequest] 
     # @param [Hash] opts the optional parameters
@@ -2620,7 +2632,7 @@ module Repull
     end
 
     # Update Airbnb pricing
-    # Push pricing changes to Airbnb. The &#x60;type&#x60; discriminator selects the sub-resource (model, standard settings, LOS, rate-plan, fees, currency, rule, or per-date &#x60;calendar&#x60;). &#x60;type: \&quot;calendar\&quot;&#x60; carries the full per-date restriction set — nightly price, min/max nights, closed-to-arrival, closed-to-departure, and stop-sell (&#x60;availability: \&quot;unavailable\&quot;&#x60;). For settings sub-resources the full object is replaced — GET first, mutate locally, then PUT the whole object.
+    # Push pricing changes to Airbnb. The &#x60;type&#x60; discriminator selects the sub-resource (model, standard settings, LOS, rate-plan, fees, currency, rule, or per-date &#x60;calendar&#x60;). &#x60;type: \&quot;calendar\&quot;&#x60; carries the full per-date restriction set — nightly price, min/max nights, closed-to-arrival, closed-to-departure, and stop-sell (&#x60;availability: \&quot;unavailable\&quot;&#x60;). For settings sub-resources the full object is replaced — GET first, mutate locally, then PUT the whole object.  &#x60;{id}&#x60; is the **Repull listing id** (from &#x60;GET /v1/properties&#x60; or &#x60;GET /v1/channels/airbnb/listings&#x60;), not the Airbnb listing id — Repull translates it before calling Airbnb.  The body is validated before anything reaches Airbnb: a malformed body is &#x60;422 invalid_params&#x60; naming the &#x60;field&#x60;. Calendar operations accept only the documented fields.  **Blocking dates:** Airbnb requires a &#x60;busy_subtype&#x60; whenever &#x60;availability&#x60; is &#x60;\&quot;unavailable\&quot;&#x60;. If an operation leaves it out, Repull sends &#x60;busy_subtype: \&quot;BLOCKED_BY_HOST\&quot;&#x60;; send &#x60;\&quot;OUTSIDE_RESERVATION\&quot;&#x60; for dates held by a booking made on another channel.  **Errors:** &#x60;403 connection_reauth_required&#x60; — Airbnb no longer accepts the connection for this listing (reconnect; retrying won&#39;t help). &#x60;403 listing_inactive&#x60; — the listing is inactive. &#x60;404 not_found&#x60; — no Airbnb-connected listing with this id in the workspace. &#x60;422 airbnb_rejected&#x60; — Airbnb refused the change; &#x60;message&#x60; carries its reason. &#x60;429 airbnb_rate_limited&#x60; — back off. &#x60;502 airbnb_error&#x60; — Airbnb outage or timeout; retry.
     # @param id [String] 
     # @param airbnb_pricing_write_request [AirbnbPricingWriteRequest] 
     # @param [Hash] opts the optional parameters
@@ -2645,6 +2657,8 @@ module Repull
 
       # header parameters
       header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
       # HTTP header 'Content-Type'
       content_type = @api_client.select_header_content_type(['application/json'])
       if !content_type.nil?
@@ -2681,7 +2695,7 @@ module Repull
     end
 
     # Edit / react to / mark an Airbnb message
-    # Act on a single message in an Airbnb thread. **Write-side** — calls Airbnb upstream. The `action` discriminator selects the operation:  - `edit` — replace message text (requires `message`). - `unsend` — retract the message. - `read` — mark the message as read. - `react` — add a reaction (requires `reaction`).  Requires a connected Airbnb host, else `404 no_connection`.
+    # Act on a single message in an Airbnb thread. **Write-side** — calls Airbnb upstream. The `action` discriminator selects the operation:  - `edit` — replace message text (requires `message`). - `unsend` — retract the message. - `read` — mark the message as read. - `react` — add a reaction (requires `reaction`).  Requires a connected Airbnb host, else `404 no_connection`.  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param thread_id [String] Airbnb thread id.
     # @param message_id [String] Airbnb message id within the thread.
     # @param update_airbnb_message_request [UpdateAirbnbMessageRequest] 
@@ -2693,7 +2707,7 @@ module Repull
     end
 
     # Edit / react to / mark an Airbnb message
-    # Act on a single message in an Airbnb thread. **Write-side** — calls Airbnb upstream. The &#x60;action&#x60; discriminator selects the operation:  - &#x60;edit&#x60; — replace message text (requires &#x60;message&#x60;). - &#x60;unsend&#x60; — retract the message. - &#x60;read&#x60; — mark the message as read. - &#x60;react&#x60; — add a reaction (requires &#x60;reaction&#x60;).  Requires a connected Airbnb host, else &#x60;404 no_connection&#x60;.
+    # Act on a single message in an Airbnb thread. **Write-side** — calls Airbnb upstream. The &#x60;action&#x60; discriminator selects the operation:  - &#x60;edit&#x60; — replace message text (requires &#x60;message&#x60;). - &#x60;unsend&#x60; — retract the message. - &#x60;read&#x60; — mark the message as read. - &#x60;react&#x60; — add a reaction (requires &#x60;reaction&#x60;).  Requires a connected Airbnb host, else &#x60;404 no_connection&#x60;.  Returns &#x60;403 listing_inactive&#x60; when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param thread_id [String] Airbnb thread id.
     # @param message_id [String] Airbnb message id within the thread.
     # @param update_airbnb_message_request [UpdateAirbnbMessageRequest] 
@@ -2761,7 +2775,7 @@ module Repull
     end
 
     # Upload photos to Airbnb
-    # Upload one or more photos to an Airbnb listing. Accepts public image URLs (Airbnb fetches them) — direct binary upload is not supported on this endpoint.
+    # Upload one or more photos to an Airbnb listing. Accepts public image URLs (Airbnb fetches them) — direct binary upload is not supported on this endpoint.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] 
     # @param [Hash] opts the optional parameters
     # @return [nil]
@@ -2771,7 +2785,7 @@ module Repull
     end
 
     # Upload photos to Airbnb
-    # Upload one or more photos to an Airbnb listing. Accepts public image URLs (Airbnb fetches them) — direct binary upload is not supported on this endpoint.
+    # Upload one or more photos to an Airbnb listing. Accepts public image URLs (Airbnb fetches them) — direct binary upload is not supported on this endpoint.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
@@ -2791,6 +2805,8 @@ module Repull
 
       # header parameters
       header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
 
       # form parameters
       form_params = opts[:form_params] || {}

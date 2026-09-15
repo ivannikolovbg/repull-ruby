@@ -15,7 +15,7 @@ All URIs are relative to *https://api.repull.dev*
 
 Update availability across many properties
 
-Applies ONE settings object across up to 500 properties and pushes the result to every connected channel.  Ownership is checked before anything is written: a batch containing a property from another workspace is refused as a whole and names the offending ids, rather than being partially applied.  Per-property *different* values are separate calls — presenting them as one request would be a false claim about atomicity.
+Applies ONE settings object across up to 500 properties and pushes the result to every connected channel.  Ownership is checked before anything is written: a batch containing a property from another workspace is refused as a whole and names the offending ids, rather than being partially applied.  Per-property *different* values are separate calls — presenting them as one request would be a false claim about atomicity.  Returns `403 listing_inactive` naming every inactive listing when any listing in the request is inactive; nothing is written.
 
 ### Examples
 
@@ -84,7 +84,7 @@ end
 
 Get property availability
 
-Channel-agnostic day-by-day availability calendar for a property over a date window. Returns a thin per-date shape — `{ date, available, price, minNights }` — projected from the property calendar.  The `from` and `to` query params are **required** (ISO `YYYY-MM-DD`, inclusive) — omitting or malforming either returns 422. The window is capped at 366 days; longer ranges are truncated to the first 366 days.  **`days` contains only the dates we actually hold calendar data for.** Requested dates with no calendar row are listed in `coverage.missingDates` — their availability is unknown. Never treat a missing date as bookable: this endpoint deliberately does not synthesise availability, because a fabricated open date can be double-booked. A property with no calendar still returns a real 200 (`days: []`, every date in `coverage.missingDates`), never a 404 — 404 means the property id does not exist or belongs to a different workspace.  This endpoint is read-only, and the projected per-date shape carries **availability, price, and min-nights only** — it does NOT expose max-stay, closed-to-arrival (CTA), closed-to-departure (CTD), or the dedicated stop-sell flag. To read or write that full restriction set on Booking.com use the channel routes: `GET`/`PUT /v1/channels/booking/availability` (with the room + rate ids from `GET /v1/channels/booking/properties/{id}/rooms`). Availability **writes** always stay per-channel: `PUT /v1/channels/airbnb/listings/{id}/availability` (Airbnb) or `PUT /v1/channels/booking/availability` (Booking.com).
+Channel-agnostic day-by-day availability calendar for a property over a date window. Returns a thin per-date shape — `{ date, available, price, minNights }` — projected from the property calendar.  The `from` and `to` query params are **required** (ISO `YYYY-MM-DD`, inclusive) — omitting or malforming either returns 422. The window is capped at 366 days; longer ranges are truncated to the first 366 days.  **`days` contains only the dates we actually hold calendar data for.** Requested dates with no calendar row are listed in `coverage.missingDates` — their availability is unknown. Never treat a missing date as bookable: this endpoint deliberately does not synthesise availability, because a fabricated open date can be double-booked. A property with no calendar still returns a real 200 (`days: []`, every date in `coverage.missingDates`), never a 404 — 404 means the property id does not exist or belongs to a different workspace.  This endpoint is read-only, and the projected per-date shape carries **availability, price, and min-nights only** — it does NOT expose max-stay, closed-to-arrival (CTA), closed-to-departure (CTD), or the dedicated stop-sell flag. To read or write that full restriction set on Booking.com use the channel routes: `GET`/`PUT /v1/channels/booking/availability` (with the room + rate ids from `GET /v1/channels/booking/properties/{id}/rooms`). Availability **writes** always stay per-channel: `PUT /v1/channels/airbnb/listings/{id}/availability` (Airbnb) or `PUT /v1/channels/booking/availability` (Booking.com).  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -157,7 +157,7 @@ end
 
 Set prices, block or unblock dates
 
-Writes the calendar for one property AND pushes to every connected channel in the same step. A write that only changed our copy would leave the OTA calendars stale and eventually double-book a guest.
+Writes the calendar for one property AND pushes to every connected channel in the same step. A write that only changed our copy would leave the OTA calendars stale and eventually double-book a guest.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 

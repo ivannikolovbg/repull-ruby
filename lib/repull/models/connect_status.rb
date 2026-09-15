@@ -33,6 +33,9 @@ module Repull
     # Host metadata, populated for Airbnb when the host row exists. Null for other providers (per-provider enrichment is incremental).
     attr_accessor :host
 
+    # Airbnb only: every Airbnb account this workspace has connected, including ones since disconnected. Pass `externalAccountId` as `accountId` to `DELETE /v1/connect/airbnb` to disconnect one account.
+    attr_accessor :accounts
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
@@ -42,7 +45,8 @@ module Repull
         :'status' => :'status',
         :'external_account_id' => :'externalAccountId',
         :'created_at' => :'createdAt',
-        :'host' => :'host'
+        :'host' => :'host',
+        :'accounts' => :'accounts'
       }
     end
 
@@ -65,7 +69,8 @@ module Repull
         :'status' => :'String',
         :'external_account_id' => :'String',
         :'created_at' => :'Time',
-        :'host' => :'ConnectHost'
+        :'host' => :'ConnectHost',
+        :'accounts' => :'Array<ConnectStatusAccountsInner>'
       }
     end
 
@@ -73,7 +78,7 @@ module Repull
     def self.openapi_nullable
       Set.new([
         :'external_account_id',
-        :'host'
+        :'host',
       ])
     end
 
@@ -120,6 +125,12 @@ module Repull
       if attributes.key?(:'host')
         self.host = attributes[:'host']
       end
+
+      if attributes.key?(:'accounts')
+        if (value = attributes[:'accounts']).is_a?(Array)
+          self.accounts = value
+        end
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -148,7 +159,8 @@ module Repull
           status == o.status &&
           external_account_id == o.external_account_id &&
           created_at == o.created_at &&
-          host == o.host
+          host == o.host &&
+          accounts == o.accounts
     end
 
     # @see the `==` method
@@ -160,7 +172,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [connected, provider, id, status, external_account_id, created_at, host].hash
+      [connected, provider, id, status, external_account_id, created_at, host, accounts].hash
     end
 
     # Builds the object from hash

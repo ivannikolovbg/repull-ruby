@@ -77,7 +77,7 @@ module Repull
     end
 
     # Get Plumguide availability
-    # Read the per-day availability calendar for a Plumguide listing. Returns the same row shape as Airbnb availability for SDK convenience.
+    # Read the per-day availability calendar for a Plumguide listing. Returns the same row shape as Airbnb availability for SDK convenience.  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param [Hash] opts the optional parameters
     # @return [nil]
     def get_plumguide_availability(opts = {})
@@ -86,7 +86,7 @@ module Repull
     end
 
     # Get Plumguide availability
-    # Read the per-day availability calendar for a Plumguide listing. Returns the same row shape as Airbnb availability for SDK convenience.
+    # Read the per-day availability calendar for a Plumguide listing. Returns the same row shape as Airbnb availability for SDK convenience.  Returns &#x60;403 listing_inactive&#x60; when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param [Hash] opts the optional parameters
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
     def get_plumguide_availability_with_http_info(opts = {})
@@ -101,6 +101,8 @@ module Repull
 
       # header parameters
       header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
 
       # form parameters
       form_params = opts[:form_params] || {}
@@ -132,7 +134,7 @@ module Repull
     end
 
     # Get Plumguide pricing
-    # Read the current pricing for a Plumguide listing (base price, currency, weekend uplift).
+    # Read the current pricing for a Plumguide listing (base price, currency, weekend uplift).  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param [Hash] opts the optional parameters
     # @return [nil]
     def get_plumguide_pricing(opts = {})
@@ -141,7 +143,7 @@ module Repull
     end
 
     # Get Plumguide pricing
-    # Read the current pricing for a Plumguide listing (base price, currency, weekend uplift).
+    # Read the current pricing for a Plumguide listing (base price, currency, weekend uplift).  Returns &#x60;403 listing_inactive&#x60; when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param [Hash] opts the optional parameters
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
     def get_plumguide_pricing_with_http_info(opts = {})
@@ -156,6 +158,8 @@ module Repull
 
       # header parameters
       header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
 
       # form parameters
       form_params = opts[:form_params] || {}
@@ -244,7 +248,7 @@ module Repull
     end
 
     # List Plumguide bookings
-    # List Plumguide bookings. Default returns all bookings; pass `listing_id` to filter to one listing, or `booking_code` to fetch a single booking.
+    # List Plumguide bookings. Default returns all bookings; pass `listing_id` to filter to one listing, or `booking_code` to fetch a single booking.  Returns `403 listing_inactive` when `listing_id` or `booking_code` resolves to an inactive listing. The unfiltered list is read straight from Plum Guide and is not filtered by listing status.
     # @param [Hash] opts the optional parameters
     # @option opts [Integer] :listing_id Filter to a single Plumguide listing.
     # @option opts [String] :booking_code Fetch a single booking by its Plumguide booking code.
@@ -255,7 +259,7 @@ module Repull
     end
 
     # List Plumguide bookings
-    # List Plumguide bookings. Default returns all bookings; pass &#x60;listing_id&#x60; to filter to one listing, or &#x60;booking_code&#x60; to fetch a single booking.
+    # List Plumguide bookings. Default returns all bookings; pass &#x60;listing_id&#x60; to filter to one listing, or &#x60;booking_code&#x60; to fetch a single booking.  Returns &#x60;403 listing_inactive&#x60; when &#x60;listing_id&#x60; or &#x60;booking_code&#x60; resolves to an inactive listing. The unfiltered list is read straight from Plum Guide and is not filtered by listing status.
     # @param [Hash] opts the optional parameters
     # @option opts [Integer] :listing_id Filter to a single Plumguide listing.
     # @option opts [String] :booking_code Fetch a single booking by its Plumguide booking code.
@@ -364,7 +368,7 @@ module Repull
     end
 
     # Push availability to Plumguide
-    # Push per-day availability changes to Plumguide. Plumguide accepts only the next 24 months — dates beyond that are silently ignored.
+    # Push per-day availability changes to Plumguide. Plumguide accepts only the next 24 months — dates beyond that are silently ignored.  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param [Hash] opts the optional parameters
     # @return [nil]
     def update_plumguide_availability(opts = {})
@@ -373,7 +377,7 @@ module Repull
     end
 
     # Push availability to Plumguide
-    # Push per-day availability changes to Plumguide. Plumguide accepts only the next 24 months — dates beyond that are silently ignored.
+    # Push per-day availability changes to Plumguide. Plumguide accepts only the next 24 months — dates beyond that are silently ignored.  Returns &#x60;403 listing_inactive&#x60; when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param [Hash] opts the optional parameters
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
     def update_plumguide_availability_with_http_info(opts = {})
@@ -388,6 +392,8 @@ module Repull
 
       # header parameters
       header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
 
       # form parameters
       form_params = opts[:form_params] || {}
@@ -419,7 +425,7 @@ module Repull
     end
 
     # Push pricing to Plumguide
-    # Push pricing changes to Plumguide. Plumguide rounds all prices to whole units of the listing currency — sub-unit precision is silently truncated.
+    # Push pricing changes to Plumguide. Plumguide rounds all prices to whole units of the listing currency — sub-unit precision is silently truncated.  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param [Hash] opts the optional parameters
     # @return [nil]
     def update_plumguide_pricing(opts = {})
@@ -428,7 +434,7 @@ module Repull
     end
 
     # Push pricing to Plumguide
-    # Push pricing changes to Plumguide. Plumguide rounds all prices to whole units of the listing currency — sub-unit precision is silently truncated.
+    # Push pricing changes to Plumguide. Plumguide rounds all prices to whole units of the listing currency — sub-unit precision is silently truncated.  Returns &#x60;403 listing_inactive&#x60; when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param [Hash] opts the optional parameters
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
     def update_plumguide_pricing_with_http_info(opts = {})
@@ -443,6 +449,8 @@ module Repull
 
       # header parameters
       header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
 
       # form parameters
       form_params = opts[:form_params] || {}

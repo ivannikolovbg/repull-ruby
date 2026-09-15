@@ -20,7 +20,7 @@ module Repull
       @api_client = api_client
     end
     # Price a stay
-    # Returns the full price breakdown for a stay — nightly total, length-of-stay discount, cleaning fee, pet and other fees, taxes, and the total.  A quote is priced against a booking website, because the markup, custom fees and tax overrides that decide what a guest is actually charged live there. A workspace with no booking site receives `422 quote_unavailable` rather than a number computed from different rules than the ones applied at checkout.
+    # Returns the full price breakdown for a stay — nightly total, length-of-stay discount, cleaning fee, pet and other fees, taxes, and the total.  A quote is priced against a booking website, because the markup, custom fees and tax overrides that decide what a guest is actually charged live there. A workspace with no booking site receives `422 quote_unavailable` rather than a number computed from different rules than the ones applied at checkout.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param property_id [Integer] Repull property id — discover via &#x60;GET /v1/properties&#x60;.
     # @param check_in [Date] 
     # @param check_out [Date] 
@@ -35,7 +35,7 @@ module Repull
     end
 
     # Price a stay
-    # Returns the full price breakdown for a stay — nightly total, length-of-stay discount, cleaning fee, pet and other fees, taxes, and the total.  A quote is priced against a booking website, because the markup, custom fees and tax overrides that decide what a guest is actually charged live there. A workspace with no booking site receives &#x60;422 quote_unavailable&#x60; rather than a number computed from different rules than the ones applied at checkout.
+    # Returns the full price breakdown for a stay — nightly total, length-of-stay discount, cleaning fee, pet and other fees, taxes, and the total.  A quote is priced against a booking website, because the markup, custom fees and tax overrides that decide what a guest is actually charged live there. A workspace with no booking site receives &#x60;422 quote_unavailable&#x60; rather than a number computed from different rules than the ones applied at checkout.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param property_id [Integer] Repull property id — discover via &#x60;GET /v1/properties&#x60;.
     # @param check_in [Date] 
     # @param check_out [Date] 

@@ -20,7 +20,7 @@ module Repull
       @api_client = api_client
     end
     # Create webhook subscription
-    # Register a new endpoint. Returns the plaintext signing secret ONCE — capture it from the response and store it securely. After this call the secret is masked everywhere; mint a new one with `POST /v1/webhooks/{id}/rotate-secret` if you lose it. See `GET /v1/webhooks/event-types` for the full list of subscribable events.
+    # Register a new endpoint. Returns the plaintext signing secret ONCE — capture it from the response and store it securely. After this call the secret is masked everywhere; mint a new one with `POST /v1/webhooks/{id}/rotate-secret` if you lose it. See `GET /v1/webhooks/event-types` for the full list of subscribable events. Events about an inactive listing (reservations, messages, alterations, reviews, payments, calendar and listing events) are not delivered. The data keeps syncing while the listing is inactive, but its events are never sent — including after you reactivate it; webhooks resume for events that happen from reactivation on. Account-level events are always delivered.
     # @param create_webhook_request [CreateWebhookRequest] 
     # @param [Hash] opts the optional parameters
     # @return [WebhookSubscription]
@@ -30,7 +30,7 @@ module Repull
     end
 
     # Create webhook subscription
-    # Register a new endpoint. Returns the plaintext signing secret ONCE — capture it from the response and store it securely. After this call the secret is masked everywhere; mint a new one with &#x60;POST /v1/webhooks/{id}/rotate-secret&#x60; if you lose it. See &#x60;GET /v1/webhooks/event-types&#x60; for the full list of subscribable events.
+    # Register a new endpoint. Returns the plaintext signing secret ONCE — capture it from the response and store it securely. After this call the secret is masked everywhere; mint a new one with &#x60;POST /v1/webhooks/{id}/rotate-secret&#x60; if you lose it. See &#x60;GET /v1/webhooks/event-types&#x60; for the full list of subscribable events. Events about an inactive listing (reservations, messages, alterations, reviews, payments, calendar and listing events) are not delivered. The data keeps syncing while the listing is inactive, but its events are never sent — including after you reactivate it; webhooks resume for events that happen from reactivation on. Account-level events are always delivered.
     # @param create_webhook_request [CreateWebhookRequest] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(WebhookSubscription, Integer, Hash)>] WebhookSubscription data, response status code and response headers
@@ -286,7 +286,7 @@ module Repull
     # @param [Hash] opts the optional parameters
     # @option opts [Integer] :limit  (default to 25)
     # @option opts [String] :cursor 
-    # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.next_cursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
+    # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.nextCursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
     # @option opts [String] :status  (default to 'all')
     # @return [WebhookDeliveryListResponse]
     def list_webhook_deliveries(id, opts = {})
@@ -300,7 +300,7 @@ module Repull
     # @param [Hash] opts the optional parameters
     # @option opts [Integer] :limit  (default to 25)
     # @option opts [String] :cursor 
-    # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.next_cursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
+    # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.nextCursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
     # @option opts [String] :status  (default to 'all')
     # @return [Array<(WebhookDeliveryListResponse, Integer, Hash)>] WebhookDeliveryListResponse data, response status code and response headers
     def list_webhook_deliveries_with_http_info(id, opts = {})
@@ -547,7 +547,7 @@ module Repull
     end
 
     # Replay webhook delivery
-    # Re-sends the original payload (same eventId, fresh deliveryId, attempt + 1).
+    # Re-sends the original payload (same eventId, fresh deliveryId, attempt + 1). A delivery about a listing that is inactive now is not re-sent and answers `403 listing_inactive`; activate the listing first.
     # @param id [String] 
     # @param delivery_id [String] 
     # @param [Hash] opts the optional parameters
@@ -558,7 +558,7 @@ module Repull
     end
 
     # Replay webhook delivery
-    # Re-sends the original payload (same eventId, fresh deliveryId, attempt + 1).
+    # Re-sends the original payload (same eventId, fresh deliveryId, attempt + 1). A delivery about a listing that is inactive now is not re-sent and answers &#x60;403 listing_inactive&#x60;; activate the listing first.
     # @param id [String] 
     # @param delivery_id [String] 
     # @param [Hash] opts the optional parameters
@@ -583,6 +583,8 @@ module Repull
 
       # header parameters
       header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
 
       # form parameters
       form_params = opts[:form_params] || {}

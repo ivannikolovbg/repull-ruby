@@ -185,7 +185,7 @@ opts = {
   country: 'country_example', # String | ISO 3166-1 alpha-2 (e.g. `US`, `ES`).
   min_listings: 56, # Integer | Minimum comp-set size — cities with fewer active comps are excluded.
   cursor: 'cursor_example', # String | Opaque cursor returned by the previous page's `pagination.nextCursor`.
-  offset: 56, # Integer | First-class alias for cursor-based pagination. Mutually exclusive with `cursor` — passing both returns 422. Accepts integers in `[0, 10000]`; deeper walks must use `cursor` (constant per-page cost). The response always includes `pagination.next_cursor` so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying.
+  offset: 56, # Integer | First-class alias for cursor-based pagination. Mutually exclusive with `cursor` — passing both returns 422. Accepts integers in `[0, 10000]`; deeper walks must use `cursor` (constant per-page cost). The response always includes `pagination.nextCursor` so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying.
   limit: 56, # Integer | 
   sort: 'listings_desc' # String | 
 }
@@ -225,7 +225,7 @@ end
 | **country** | **String** | ISO 3166-1 alpha-2 (e.g. &#x60;US&#x60;, &#x60;ES&#x60;). | [optional] |
 | **min_listings** | **Integer** | Minimum comp-set size — cities with fewer active comps are excluded. | [optional][default to 5] |
 | **cursor** | **String** | Opaque cursor returned by the previous page&#39;s &#x60;pagination.nextCursor&#x60;. | [optional] |
-| **offset** | **Integer** | First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.next_cursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. | [optional][default to 0] |
+| **offset** | **Integer** | First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.nextCursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. | [optional][default to 0] |
 | **limit** | **Integer** |  | [optional][default to 30] |
 | **sort** | **String** |  | [optional][default to &#39;listings_desc&#39;] |
 

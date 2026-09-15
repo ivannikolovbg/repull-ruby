@@ -20,7 +20,7 @@ module Repull
       @api_client = api_client
     end
     # Get review
-    # Returns one review (the bare `Review` object — NOT wrapped in `{ data: ... }`). Scoped to the authenticated workspace via the listings join — reviews that don't belong to the workspace return 404 (we don't differentiate to avoid leaking other customers' ids).
+    # Returns one review (the bare `Review` object — NOT wrapped in `{ data: ... }`). Scoped to the authenticated workspace via the listings join — reviews that don't belong to the workspace return 404 (we don't differentiate to avoid leaking other customers' ids).  A review of an inactive listing returns `403 listing_inactive`. Inactive listings keep syncing; activate the listing to use it here.
     # @param id [Integer] Internal Repull review id.
     # @param [Hash] opts the optional parameters
     # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
@@ -31,7 +31,7 @@ module Repull
     end
 
     # Get review
-    # Returns one review (the bare &#x60;Review&#x60; object — NOT wrapped in &#x60;{ data: ... }&#x60;). Scoped to the authenticated workspace via the listings join — reviews that don&#39;t belong to the workspace return 404 (we don&#39;t differentiate to avoid leaking other customers&#39; ids).
+    # Returns one review (the bare &#x60;Review&#x60; object — NOT wrapped in &#x60;{ data: ... }&#x60;). Scoped to the authenticated workspace via the listings join — reviews that don&#39;t belong to the workspace return 404 (we don&#39;t differentiate to avoid leaking other customers&#39; ids).  A review of an inactive listing returns &#x60;403 listing_inactive&#x60;. Inactive listings keep syncing; activate the listing to use it here.
     # @param id [Integer] Internal Repull review id.
     # @param [Hash] opts the optional parameters
     # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
@@ -86,11 +86,11 @@ module Repull
     end
 
     # List reviews
-    # Cursor-paginated guest + host review stream for the workspace. Backed by main vanio's unified `reviews` table (populated by per-channel backfill crons), so this surface returns the complete cross-channel history — separate from `/v1/channels/airbnb/reviews` which hits Airbnb live.  `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) — see the `offset` parameter below. Mutually exclusive with `cursor`.  Filters: `platform` (`airbnb`|`booking`|`vrbo`), `listing_id` (internal Repull listing id), `rating_min` / `rating_max` (inclusive bounds, 0..5), `status` (`responded`|`unanswered`|`all`), `reviewer_role` (`guest` (default) | `host` | `all`).
+    # Cursor-paginated guest + host review stream for the workspace. Backed by main vanio's unified `reviews` table (populated by per-channel backfill crons), so this surface returns the complete cross-channel history — separate from `/v1/channels/airbnb/reviews` which hits Airbnb live.  `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) — see the `offset` parameter below. Mutually exclusive with `cursor`.  Filters: `platform` (`airbnb`|`booking`|`vrbo`), `listing_id` (internal Repull listing id), `rating_min` / `rating_max` (inclusive bounds, 0..5), `status` (`responded`|`unanswered`|`all`), `reviewer_role` (`guest` (default) | `host` | `all`).  **Inactive listings:** reviews of inactive listings are left out of the page and of `pagination.total`. Filtering by an inactive `listing_id` returns `403 listing_inactive`. Inactive listings keep syncing; activate the listing to use it here.
     # @param [Hash] opts the optional parameters
     # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
     # @option opts [String] :cursor Opaque cursor returned in the previous response&#39;s &#x60;pagination.nextCursor&#x60;.
-    # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.next_cursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
+    # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.nextCursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
     # @option opts [Integer] :limit  (default to 20)
     # @option opts [String] :platform 
     # @option opts [Integer] :listing_id Restrict to one internal Repull listing.
@@ -105,11 +105,11 @@ module Repull
     end
 
     # List reviews
-    # Cursor-paginated guest + host review stream for the workspace. Backed by main vanio&#39;s unified &#x60;reviews&#x60; table (populated by per-channel backfill crons), so this surface returns the complete cross-channel history — separate from &#x60;/v1/channels/airbnb/reviews&#x60; which hits Airbnb live.  &#x60;?offset&#x3D;&#x60; is also accepted as a first-class alias for shallow paging (0..10000) — see the &#x60;offset&#x60; parameter below. Mutually exclusive with &#x60;cursor&#x60;.  Filters: &#x60;platform&#x60; (&#x60;airbnb&#x60;|&#x60;booking&#x60;|&#x60;vrbo&#x60;), &#x60;listing_id&#x60; (internal Repull listing id), &#x60;rating_min&#x60; / &#x60;rating_max&#x60; (inclusive bounds, 0..5), &#x60;status&#x60; (&#x60;responded&#x60;|&#x60;unanswered&#x60;|&#x60;all&#x60;), &#x60;reviewer_role&#x60; (&#x60;guest&#x60; (default) | &#x60;host&#x60; | &#x60;all&#x60;).
+    # Cursor-paginated guest + host review stream for the workspace. Backed by main vanio&#39;s unified &#x60;reviews&#x60; table (populated by per-channel backfill crons), so this surface returns the complete cross-channel history — separate from &#x60;/v1/channels/airbnb/reviews&#x60; which hits Airbnb live.  &#x60;?offset&#x3D;&#x60; is also accepted as a first-class alias for shallow paging (0..10000) — see the &#x60;offset&#x60; parameter below. Mutually exclusive with &#x60;cursor&#x60;.  Filters: &#x60;platform&#x60; (&#x60;airbnb&#x60;|&#x60;booking&#x60;|&#x60;vrbo&#x60;), &#x60;listing_id&#x60; (internal Repull listing id), &#x60;rating_min&#x60; / &#x60;rating_max&#x60; (inclusive bounds, 0..5), &#x60;status&#x60; (&#x60;responded&#x60;|&#x60;unanswered&#x60;|&#x60;all&#x60;), &#x60;reviewer_role&#x60; (&#x60;guest&#x60; (default) | &#x60;host&#x60; | &#x60;all&#x60;).  **Inactive listings:** reviews of inactive listings are left out of the page and of &#x60;pagination.total&#x60;. Filtering by an inactive &#x60;listing_id&#x60; returns &#x60;403 listing_inactive&#x60;. Inactive listings keep syncing; activate the listing to use it here.
     # @param [Hash] opts the optional parameters
     # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
     # @option opts [String] :cursor Opaque cursor returned in the previous response&#39;s &#x60;pagination.nextCursor&#x60;.
-    # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.next_cursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
+    # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.nextCursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
     # @option opts [Integer] :limit  (default to 20)
     # @option opts [String] :platform 
     # @option opts [Integer] :listing_id Restrict to one internal Repull listing.
@@ -217,7 +217,7 @@ module Repull
     end
 
     # Reply to a review on any channel
-    # Resolves the review, reads its channel and dispatches the reply. Channel-neutral: you do not need to know where the review came from.  Replies are available on Airbnb today; a review from a channel without a reply API returns `422 unsupported_channel` naming the channels that do work.
+    # Resolves the review, reads its channel and dispatches the reply. Channel-neutral: you do not need to know where the review came from.  Replies are available on Airbnb today; a review from a channel without a reply API returns `422 unsupported_channel` naming the channels that do work.  **Inactive listings:** a review of an inactive listing returns `403 listing_inactive` and no reply reaches the channel. Activate the listing first.
     # @param id [Integer] Internal Repull review id.
     # @param reply_to_review_request [ReplyToReviewRequest] 
     # @param [Hash] opts the optional parameters
@@ -228,7 +228,7 @@ module Repull
     end
 
     # Reply to a review on any channel
-    # Resolves the review, reads its channel and dispatches the reply. Channel-neutral: you do not need to know where the review came from.  Replies are available on Airbnb today; a review from a channel without a reply API returns &#x60;422 unsupported_channel&#x60; naming the channels that do work.
+    # Resolves the review, reads its channel and dispatches the reply. Channel-neutral: you do not need to know where the review came from.  Replies are available on Airbnb today; a review from a channel without a reply API returns &#x60;422 unsupported_channel&#x60; naming the channels that do work.  **Inactive listings:** a review of an inactive listing returns &#x60;403 listing_inactive&#x60; and no reply reaches the channel. Activate the listing first.
     # @param id [Integer] Internal Repull review id.
     # @param reply_to_review_request [ReplyToReviewRequest] 
     # @param [Hash] opts the optional parameters

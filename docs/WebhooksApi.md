@@ -25,7 +25,7 @@ All URIs are relative to *https://api.repull.dev*
 
 Create webhook subscription
 
-Register a new endpoint. Returns the plaintext signing secret ONCE — capture it from the response and store it securely. After this call the secret is masked everywhere; mint a new one with `POST /v1/webhooks/{id}/rotate-secret` if you lose it. See `GET /v1/webhooks/event-types` for the full list of subscribable events.
+Register a new endpoint. Returns the plaintext signing secret ONCE — capture it from the response and store it securely. After this call the secret is masked everywhere; mint a new one with `POST /v1/webhooks/{id}/rotate-secret` if you lose it. See `GET /v1/webhooks/event-types` for the full list of subscribable events. Events about an inactive listing (reservations, messages, alterations, reviews, payments, calendar and listing events) are not delivered. The data keeps syncing while the listing is inactive, but its events are never sent — including after you reactivate it; webhooks resume for events that happen from reactivation on. Account-level events are always delivered.
 
 ### Examples
 
@@ -320,7 +320,7 @@ id = '38400000-8cf0-11bd-b23e-10b96e4ef00d' # String |
 opts = {
   limit: 56, # Integer | 
   cursor: 'cursor_example', # String | 
-  offset: 56, # Integer | First-class alias for cursor-based pagination. Mutually exclusive with `cursor` — passing both returns 422. Accepts integers in `[0, 10000]`; deeper walks must use `cursor` (constant per-page cost). The response always includes `pagination.next_cursor` so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying.
+  offset: 56, # Integer | First-class alias for cursor-based pagination. Mutually exclusive with `cursor` — passing both returns 422. Accepts integers in `[0, 10000]`; deeper walks must use `cursor` (constant per-page cost). The response always includes `pagination.nextCursor` so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying.
   status: 'success' # String | 
 }
 
@@ -358,7 +358,7 @@ end
 | **id** | **String** |  |  |
 | **limit** | **Integer** |  | [optional][default to 25] |
 | **cursor** | **String** |  | [optional] |
-| **offset** | **Integer** | First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.next_cursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. | [optional][default to 0] |
+| **offset** | **Integer** | First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.nextCursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. | [optional][default to 0] |
 | **status** | **String** |  | [optional][default to &#39;all&#39;] |
 
 ### Return type
@@ -581,7 +581,7 @@ nil (empty response body)
 
 Replay webhook delivery
 
-Re-sends the original payload (same eventId, fresh deliveryId, attempt + 1).
+Re-sends the original payload (same eventId, fresh deliveryId, attempt + 1). A delivery about a listing that is inactive now is not re-sent and answers `403 listing_inactive`; activate the listing first.
 
 ### Examples
 
@@ -642,7 +642,7 @@ nil (empty response body)
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 
 ## rotate_webhook_secret

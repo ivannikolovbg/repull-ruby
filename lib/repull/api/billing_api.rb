@@ -82,15 +82,15 @@ module Repull
     end
 
     # List API request logs
-    # Cursor-paginated raw API request log for the authenticated workspace, newest first. Filter by time `range`, `operation` id(s), status class, or free-text `q`. Walk pages with `cursor` from `pagination.next_cursor` until `pagination.has_more` is `false`; `offset` is accepted as a shallow alias (deep walks must use `cursor`).
+    # Cursor-paginated raw API request log for the authenticated workspace, newest first. Filter by time `range`, `operation` id(s), status class, or free-text `q`. Walk pages with `cursor` from `pagination.nextCursor` until `pagination.hasMore` is `false`; `offset` is accepted as a shallow alias (deep walks must use `cursor`).
     # @param [Hash] opts the optional parameters
     # @option opts [String] :range Time window ending now. (default to '24h')
     # @option opts [String] :operation Comma-separated &#x60;operation_id&#x60; filter.
     # @option opts [String] :status Status-class filter.
     # @option opts [String] :q Free-text match on path / operation / request id.
     # @option opts [Integer] :limit Page size (max 200). (default to 50)
-    # @option opts [String] :cursor Opaque cursor from the previous response&#39;s &#x60;pagination.next_cursor&#x60;.
-    # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.next_cursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
+    # @option opts [String] :cursor Opaque cursor from the previous response&#39;s &#x60;pagination.nextCursor&#x60;.
+    # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.nextCursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
     # @option opts [Boolean] :include_total When &#x60;true&#x60; (default), the response&#39;s &#x60;pagination.total&#x60; carries the count of rows matching the current filter, across all pages. Pass &#x60;false&#x60; to skip the count for very large workspaces where the per-page COUNT(*) cost matters. (default to true)
     # @return [GetUsageLogs200Response]
     def get_usage_logs(opts = {})
@@ -99,15 +99,15 @@ module Repull
     end
 
     # List API request logs
-    # Cursor-paginated raw API request log for the authenticated workspace, newest first. Filter by time &#x60;range&#x60;, &#x60;operation&#x60; id(s), status class, or free-text &#x60;q&#x60;. Walk pages with &#x60;cursor&#x60; from &#x60;pagination.next_cursor&#x60; until &#x60;pagination.has_more&#x60; is &#x60;false&#x60;; &#x60;offset&#x60; is accepted as a shallow alias (deep walks must use &#x60;cursor&#x60;).
+    # Cursor-paginated raw API request log for the authenticated workspace, newest first. Filter by time &#x60;range&#x60;, &#x60;operation&#x60; id(s), status class, or free-text &#x60;q&#x60;. Walk pages with &#x60;cursor&#x60; from &#x60;pagination.nextCursor&#x60; until &#x60;pagination.hasMore&#x60; is &#x60;false&#x60;; &#x60;offset&#x60; is accepted as a shallow alias (deep walks must use &#x60;cursor&#x60;).
     # @param [Hash] opts the optional parameters
     # @option opts [String] :range Time window ending now. (default to '24h')
     # @option opts [String] :operation Comma-separated &#x60;operation_id&#x60; filter.
     # @option opts [String] :status Status-class filter.
     # @option opts [String] :q Free-text match on path / operation / request id.
     # @option opts [Integer] :limit Page size (max 200). (default to 50)
-    # @option opts [String] :cursor Opaque cursor from the previous response&#39;s &#x60;pagination.next_cursor&#x60;.
-    # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.next_cursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
+    # @option opts [String] :cursor Opaque cursor from the previous response&#39;s &#x60;pagination.nextCursor&#x60;.
+    # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.nextCursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
     # @option opts [Boolean] :include_total When &#x60;true&#x60; (default), the response&#39;s &#x60;pagination.total&#x60; carries the count of rows matching the current filter, across all pages. Pass &#x60;false&#x60; to skip the count for very large workspaces where the per-page COUNT(*) cost matters. (default to true)
     # @return [Array<(GetUsageLogs200Response, Integer, Hash)>] GetUsageLogs200Response data, response status code and response headers
     def get_usage_logs_with_http_info(opts = {})

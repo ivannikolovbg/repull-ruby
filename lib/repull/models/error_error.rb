@@ -48,6 +48,9 @@ module Repull
     # Suggestion for typos and near-matches. Present when the server can guess the intent.
     attr_accessor :did_you_mean
 
+    # Every inactive listing the request involved. Present on `code: \"listing_inactive\"` (HTTP 403) — activate these ids and retry.
+    attr_accessor :listing_ids
+
     # Seconds the client should wait before retrying. Mirrors the `Retry-After` HTTP header. Present on rate-limit responses and on transient upstream failures that are safe to retry.
     attr_accessor :retry_after
 
@@ -67,6 +70,7 @@ module Repull
         :'valid_params' => :'validParams',
         :'endpoint' => :'endpoint',
         :'did_you_mean' => :'did_you_mean',
+        :'listing_ids' => :'listing_ids',
         :'retry_after' => :'retry_after',
         :'support' => :'support'
       }
@@ -96,6 +100,7 @@ module Repull
         :'valid_params' => :'Array<String>',
         :'endpoint' => :'String',
         :'did_you_mean' => :'String',
+        :'listing_ids' => :'Array<String>',
         :'retry_after' => :'Integer',
         :'support' => :'ErrorErrorSupport'
       }
@@ -180,6 +185,12 @@ module Repull
 
       if attributes.key?(:'did_you_mean')
         self.did_you_mean = attributes[:'did_you_mean']
+      end
+
+      if attributes.key?(:'listing_ids')
+        if (value = attributes[:'listing_ids']).is_a?(Array)
+          self.listing_ids = value
+        end
       end
 
       if attributes.key?(:'retry_after')
@@ -297,6 +308,7 @@ module Repull
           valid_params == o.valid_params &&
           endpoint == o.endpoint &&
           did_you_mean == o.did_you_mean &&
+          listing_ids == o.listing_ids &&
           retry_after == o.retry_after &&
           support == o.support
     end
@@ -310,7 +322,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [code, message, fix, docs_url, request_id, field, value_received, valid_values, valid_params, endpoint, did_you_mean, retry_after, support].hash
+      [code, message, fix, docs_url, request_id, field, value_received, valid_values, valid_params, endpoint, did_you_mean, listing_ids, retry_after, support].hash
     end
 
     # Builds the object from hash

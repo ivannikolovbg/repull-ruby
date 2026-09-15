@@ -24,13 +24,17 @@ module Repull
 
     attr_accessor :connection_id
 
+    # Reservations pulled from Booking.com once the rooms were mapped. Mapping triggers the same full property sync the dashboard's Sync button runs, because a reservation can only be resolved to a listing through a mapped room. `null` means the sync could not be run — the connection and mapping are still good, and the property can be synced from the dashboard.
+    attr_accessor :reservations_imported
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
         :'success' => :'success',
         :'mapped' => :'mapped',
         :'session_id' => :'sessionId',
-        :'connection_id' => :'connectionId'
+        :'connection_id' => :'connectionId',
+        :'reservations_imported' => :'reservationsImported'
       }
     end
 
@@ -50,13 +54,15 @@ module Repull
         :'success' => :'Boolean',
         :'mapped' => :'Integer',
         :'session_id' => :'String',
-        :'connection_id' => :'String'
+        :'connection_id' => :'String',
+        :'reservations_imported' => :'Integer'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'reservations_imported'
       ])
     end
 
@@ -98,6 +104,10 @@ module Repull
         self.connection_id = attributes[:'connection_id']
       else
         self.connection_id = nil
+      end
+
+      if attributes.key?(:'reservations_imported')
+        self.reservations_imported = attributes[:'reservations_imported']
       end
     end
 
@@ -184,7 +194,8 @@ module Repull
           success == o.success &&
           mapped == o.mapped &&
           session_id == o.session_id &&
-          connection_id == o.connection_id
+          connection_id == o.connection_id &&
+          reservations_imported == o.reservations_imported
     end
 
     # @see the `==` method
@@ -196,7 +207,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [success, mapped, session_id, connection_id].hash
+      [success, mapped, session_id, connection_id, reservations_imported].hash
     end
 
     # Builds the object from hash

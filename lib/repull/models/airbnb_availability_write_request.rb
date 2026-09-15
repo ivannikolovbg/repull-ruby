@@ -102,6 +102,10 @@ module Repull
         invalid_properties.push('invalid value for "type", type cannot be nil.')
       end
 
+      if !@operations.nil? && @operations.length < 1
+        invalid_properties.push('invalid value for "operations", number of items must be greater than or equal to 1.')
+      end
+
       invalid_properties
     end
 
@@ -110,6 +114,7 @@ module Repull
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
       return false if @type.nil?
+      return false if !@operations.nil? && @operations.length < 1
       true
     end
 
@@ -121,6 +126,20 @@ module Repull
       end
 
       @type = type
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] operations Value to be assigned
+    def operations=(operations)
+      if operations.nil?
+        fail ArgumentError, 'operations cannot be nil'
+      end
+
+      if operations.length < 1
+        fail ArgumentError, 'invalid value for "operations", number of items must be greater than or equal to 1.'
+      end
+
+      @operations = operations
     end
 
     # Checks equality by comparing each attribute.

@@ -18,7 +18,7 @@ All URIs are relative to *https://api.repull.dev*
 
 Apply or decline pricing recommendations
 
-Apply: writes the recommended price to the listing's calendar for the given dates and triggers the platform fan-out (Airbnb / Booking.com / VRBO). Decline: marks the recommendation as `declined` so it stops surfacing — the model can re-recommend on the next training cycle.
+Apply: writes the recommended price to the listing's calendar for the given dates and triggers the platform fan-out (Airbnb / Booking.com / VRBO). Decline: marks the recommendation as `declined` so it stops surfacing — the model can re-recommend on the next training cycle.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -89,7 +89,7 @@ end
 
 Bulk apply or decline pricing recommendations
 
-Apply or decline pending Atlas pricing recommendations across many listings in one call. Built for power users with hundreds of listings who would otherwise need 500 sequential single-listing POSTs.  - `items` is capped at 500 entries per request — exceeding returns 422. - Per-item failures (stale listing IDs, no pending recs, channel auth blips) DO NOT fail the whole batch — partial success is the norm at this scale and the granular `failed[]` array lets the SDK retry just the bad entries. - Tier-limit accounting: this endpoint counts as **1 API call** regardless of how many items the body contains.  Apply path writes the recommended price to each listing's calendar via the calendar service (which fans out to Airbnb/Booking/VRBO) then marks the Atlas recommendation `applied`. Decline path is Atlas-only — fast.
+Apply or decline pending Atlas pricing recommendations across many listings in one call. Built for power users with hundreds of listings who would otherwise need 500 sequential single-listing POSTs.  - `items` is capped at 500 entries per request — exceeding returns 422. - Per-item failures (stale listing IDs, no pending recs, channel auth blips) DO NOT fail the whole batch — partial success is the norm at this scale and the granular `failed[]` array lets the SDK retry just the bad entries. - Tier-limit accounting: this endpoint counts as **1 API call** regardless of how many items the body contains.  Apply path writes the recommended price to each listing's calendar via the calendar service (which fans out to Airbnb/Booking/VRBO) then marks the Atlas recommendation `applied`. Decline path is Atlas-only — fast.  Returns `403 listing_inactive` naming every inactive listing when any listing in the request is inactive; nothing is written.
 
 ### Examples
 
@@ -158,7 +158,7 @@ end
 
 Get pricing recommendations
 
-Returns date-by-date pricing recommendations for a listing's upcoming calendar window, plus the listing's base-price context and a 5km comp summary. Recommendations come from the Atlas pricing model — pre-computed nightly and stored in `pricing_recommendations`. Use POST to apply or decline pending recommendations.
+Returns date-by-date pricing recommendations for a listing's upcoming calendar window, plus the listing's base-price context and a 5km comp summary. Recommendations come from the Atlas pricing model — pre-computed nightly and stored in `pricing_recommendations`. Use POST to apply or decline pending recommendations.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -233,7 +233,7 @@ end
 
 Pricing recommendation audit trail
 
-Cursor-paginated audit trail of pricing recommendations vs applied prices for a listing across a date window. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request.  Defaults to ±90 days from today. Cursor is a keyset on `date ASC` — stable even if rows are added during a partner's pagination walk. `limit` is capped at 500 — exceeding returns 422.  `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) — see the `offset` parameter below. Mutually exclusive with `cursor`.
+Cursor-paginated audit trail of pricing recommendations vs applied prices for a listing across a date window. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request.  Defaults to ±90 days from today. Cursor is a keyset on `date ASC` — stable even if rows are added during a partner's pagination walk. `limit` is capped at 500 — exceeding returns 422.  `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) — see the `offset` parameter below. Mutually exclusive with `cursor`.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -253,7 +253,7 @@ opts = {
   end_date: Date.parse('2013-10-20'), # Date | Inclusive. Defaults to today + 90 days.
   limit: 56, # Integer | 
   cursor: 'cursor_example', # String | Opaque cursor returned in the previous response's `pagination.nextCursor`. Omit to fetch the first page.
-  offset: 56 # Integer | First-class alias for cursor-based pagination. Mutually exclusive with `cursor` — passing both returns 422. Accepts integers in `[0, 10000]`; deeper walks must use `cursor` (constant per-page cost). The response always includes `pagination.next_cursor` so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying.
+  offset: 56 # Integer | First-class alias for cursor-based pagination. Mutually exclusive with `cursor` — passing both returns 422. Accepts integers in `[0, 10000]`; deeper walks must use `cursor` (constant per-page cost). The response always includes `pagination.nextCursor` so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying.
 }
 
 begin
@@ -292,7 +292,7 @@ end
 | **end_date** | **Date** | Inclusive. Defaults to today + 90 days. | [optional] |
 | **limit** | **Integer** |  | [optional][default to 100] |
 | **cursor** | **String** | Opaque cursor returned in the previous response&#39;s &#x60;pagination.nextCursor&#x60;. Omit to fetch the first page. | [optional] |
-| **offset** | **Integer** | First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.next_cursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. | [optional][default to 0] |
+| **offset** | **Integer** | First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.nextCursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. | [optional][default to 0] |
 
 ### Return type
 
@@ -314,7 +314,7 @@ end
 
 Get pricing strategy
 
-Returns the strategy that constrains how the Atlas pricing model behaves for this listing. If no strategy row exists yet, returns sane defaults flagged with `isDefault: true`.
+Returns the strategy that constrains how the Atlas pricing model behaves for this listing. If no strategy row exists yet, returns sane defaults flagged with `isDefault: true`.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -383,7 +383,7 @@ end
 
 Update pricing strategy
 
-Upserts the strategy on `(listing_id, customer_id)` — repeated PUTs are idempotent. Send only the fields you want to change; omitted fields take server-side defaults.
+Upserts the strategy on `(listing_id, customer_id)` — repeated PUTs are idempotent. Send only the fields you want to change; omitted fields take server-side defaults.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 

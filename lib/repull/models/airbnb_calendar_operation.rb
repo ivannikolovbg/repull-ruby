@@ -14,27 +14,30 @@ require 'date'
 require 'time'
 
 module Repull
-  # One calendar operation. Supply either `start_date` + `end_date` OR a `dates` array. Every restriction here is forwarded verbatim to Airbnb's batch calendar API.
+  # One calendar operation, applied to every date it names. Supply either `dates` OR a `start_date` + `end_date` pair (not both). Unknown fields are refused with `422 invalid_params` rather than dropped, so a misspelling such as `price` (the field is `daily_price`) can never look like a successful write.
   class AirbnbCalendarOperation < ApiModelBase
-    # Inclusive range start (pair with `end_date`).
+    # Inclusive range start, YYYY-MM-DD. Send together with `end_date`.
     attr_accessor :start_date
 
-    # Inclusive range end (pair with `start_date`).
+    # Inclusive range end, YYYY-MM-DD, on or after `start_date`.
     attr_accessor :end_date
 
-    # Explicit date or `start:end` range strings, as an alternative to `start_date`/`end_date`.
+    # Dates as `YYYY-MM-DD`, or inclusive ranges as `YYYY-MM-DD:YYYY-MM-DD` — an alternative to `start_date`/`end_date`.
     attr_accessor :dates
 
-    # Nightly price override.
+    # Nightly price override, in the listing currency.
     attr_accessor :daily_price
 
     # Stop-sell is expressed here: `unavailable` blocks the date(s); `available` re-opens; `default` reverts to rule-based availability.
     attr_accessor :availability
 
+    # Why a blocked date is blocked. Airbnb requires it whenever `availability` is `unavailable`; when you leave it out, Repull sends **`BLOCKED_BY_HOST`**. Use `OUTSIDE_RESERVATION` for a date held by a booking made on another channel.
+    attr_accessor :busy_subtype
+
     # Minimum length of stay for the date(s).
     attr_accessor :min_nights
 
-    # Maximum length of stay for the date(s).
+    # Maximum length of stay for the date(s); no lower than `min_nights`.
     attr_accessor :max_nights
 
     # Closed-to-arrival — no check-ins on the affected date(s).
@@ -53,6 +56,7 @@ module Repull
         :'dates' => :'dates',
         :'daily_price' => :'daily_price',
         :'availability' => :'availability',
+        :'busy_subtype' => :'busy_subtype',
         :'min_nights' => :'min_nights',
         :'max_nights' => :'max_nights',
         :'closed_to_arrival' => :'closed_to_arrival',
@@ -79,6 +83,7 @@ module Repull
         :'dates' => :'Array<String>',
         :'daily_price' => :'Float',
         :'availability' => :'String',
+        :'busy_subtype' => :'String',
         :'min_nights' => :'Integer',
         :'max_nights' => :'Integer',
         :'closed_to_arrival' => :'Boolean',
@@ -95,6 +100,7 @@ module Repull
         :'dates',
         :'daily_price',
         :'availability',
+        :'busy_subtype',
         :'min_nights',
         :'max_nights',
         :'closed_to_arrival',
@@ -141,6 +147,10 @@ module Repull
         self.availability = attributes[:'availability']
       end
 
+      if attributes.key?(:'busy_subtype')
+        self.busy_subtype = attributes[:'busy_subtype']
+      end
+
       if attributes.key?(:'min_nights')
         self.min_nights = attributes[:'min_nights']
       end
@@ -167,6 +177,30 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
+      if !@dates.nil? && @dates.length < 1
+        invalid_properties.push('invalid value for "dates", number of items must be greater than or equal to 1.')
+      end
+
+      if !@daily_price.nil? && @daily_price < 0
+        invalid_properties.push('invalid value for "daily_price", must be greater than or equal to 0.')
+      end
+
+      if !@min_nights.nil? && @min_nights > 1125
+        invalid_properties.push('invalid value for "min_nights", must be smaller than or equal to 1125.')
+      end
+
+      if !@min_nights.nil? && @min_nights < 1
+        invalid_properties.push('invalid value for "min_nights", must be greater than or equal to 1.')
+      end
+
+      if !@max_nights.nil? && @max_nights > 1125
+        invalid_properties.push('invalid value for "max_nights", must be smaller than or equal to 1125.')
+      end
+
+      if !@max_nights.nil? && @max_nights < 1
+        invalid_properties.push('invalid value for "max_nights", must be greater than or equal to 1.')
+      end
+
       invalid_properties
     end
 
@@ -174,7 +208,61 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
+      return false if !@dates.nil? && @dates.length < 1
+      return false if !@daily_price.nil? && @daily_price < 0
+      return false if !@min_nights.nil? && @min_nights > 1125
+      return false if !@min_nights.nil? && @min_nights < 1
+      return false if !@max_nights.nil? && @max_nights > 1125
+      return false if !@max_nights.nil? && @max_nights < 1
       true
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] dates Value to be assigned
+    def dates=(dates)
+      if !dates.nil? && dates.length < 1
+        fail ArgumentError, 'invalid value for "dates", number of items must be greater than or equal to 1.'
+      end
+
+      @dates = dates
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] daily_price Value to be assigned
+    def daily_price=(daily_price)
+      if !daily_price.nil? && daily_price < 0
+        fail ArgumentError, 'invalid value for "daily_price", must be greater than or equal to 0.'
+      end
+
+      @daily_price = daily_price
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] min_nights Value to be assigned
+    def min_nights=(min_nights)
+      if !min_nights.nil? && min_nights > 1125
+        fail ArgumentError, 'invalid value for "min_nights", must be smaller than or equal to 1125.'
+      end
+
+      if !min_nights.nil? && min_nights < 1
+        fail ArgumentError, 'invalid value for "min_nights", must be greater than or equal to 1.'
+      end
+
+      @min_nights = min_nights
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] max_nights Value to be assigned
+    def max_nights=(max_nights)
+      if !max_nights.nil? && max_nights > 1125
+        fail ArgumentError, 'invalid value for "max_nights", must be smaller than or equal to 1125.'
+      end
+
+      if !max_nights.nil? && max_nights < 1
+        fail ArgumentError, 'invalid value for "max_nights", must be greater than or equal to 1.'
+      end
+
+      @max_nights = max_nights
     end
 
     # Checks equality by comparing each attribute.
@@ -187,6 +275,7 @@ module Repull
           dates == o.dates &&
           daily_price == o.daily_price &&
           availability == o.availability &&
+          busy_subtype == o.busy_subtype &&
           min_nights == o.min_nights &&
           max_nights == o.max_nights &&
           closed_to_arrival == o.closed_to_arrival &&
@@ -203,7 +292,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [start_date, end_date, dates, daily_price, availability, min_nights, max_nights, closed_to_arrival, closed_to_departure, notes].hash
+      [start_date, end_date, dates, daily_price, availability, busy_subtype, min_nights, max_nights, closed_to_arrival, closed_to_departure, notes].hash
     end
 
     # Builds the object from hash

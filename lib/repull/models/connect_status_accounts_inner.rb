@@ -14,38 +14,27 @@ require 'date'
 require 'time'
 
 module Repull
-  # Body for `PUT /v1/channels/airbnb/listings/{id}/pricing`. The `type` discriminator selects the pricing sub-resource. `type: \"calendar\"` shares the same per-date restriction shape as the availability endpoint (min/max nights, closed-to-arrival/departure, stop-sell via `availability: \"unavailable\"`).
-  class AirbnbPricingWriteRequest < ApiModelBase
-    attr_accessor :type
+  class ConnectStatusAccountsInner < ApiModelBase
+    # Airbnb host ID, as a string (it can exceed 2^53).
+    attr_accessor :external_account_id
 
-    # Required when `type: \"calendar\"`. Batch of per-date price + restriction operations.
-    attr_accessor :operations
+    attr_accessor :name
 
-    # Required when `type: \"model\"` — the pricing-availability model to switch the listing to.
-    attr_accessor :model_type
+    attr_accessor :picture_url
 
-    # Required for `type: \"standard\" | \"rate-plan\" | \"fees\"` — the pricing-settings object to PUT.
-    attr_accessor :settings
+    attr_accessor :status
 
-    # Required for `type: \"los\"` — length-of-stay records.
-    attr_accessor :records
-
-    # Required for `type: \"currency\"` — ISO 4217 code in capitals, e.g. `USD`.
-    attr_accessor :currency
-
-    # Required for `type: \"rule\"` — a single pricing rule appended to the listing.
-    attr_accessor :rule
+    # True while the account is active and its authorization is usable.
+    attr_accessor :connected
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'type' => :'type',
-        :'operations' => :'operations',
-        :'model_type' => :'modelType',
-        :'settings' => :'settings',
-        :'records' => :'records',
-        :'currency' => :'currency',
-        :'rule' => :'rule'
+        :'external_account_id' => :'externalAccountId',
+        :'name' => :'name',
+        :'picture_url' => :'pictureUrl',
+        :'status' => :'status',
+        :'connected' => :'connected'
       }
     end
 
@@ -62,24 +51,20 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'type' => :'String',
-        :'operations' => :'Array<AirbnbCalendarOperation>',
-        :'model_type' => :'String',
-        :'settings' => :'Hash<String, Object>',
-        :'records' => :'Array<AirbnbPricingWriteRequestRecordsInner>',
-        :'currency' => :'String',
-        :'rule' => :'Hash<String, Object>'
+        :'external_account_id' => :'String',
+        :'name' => :'String',
+        :'picture_url' => :'String',
+        :'status' => :'String',
+        :'connected' => :'Boolean'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
-        :'model_type',
-        :'settings',
-        :'records',
-        :'currency',
-        :'rule'
+        :'name',
+        :'picture_url',
+        :'status',
       ])
     end
 
@@ -87,54 +72,36 @@ module Repull
     # @param [Hash] attributes Model attributes in the form of hash
     def initialize(attributes = {})
       if (!attributes.is_a?(Hash))
-        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::AirbnbPricingWriteRequest` initialize method"
+        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::ConnectStatusAccountsInner` initialize method"
       end
 
       # check to see if the attribute exists and convert string to symbol for hash key
       acceptable_attribute_map = self.class.acceptable_attribute_map
       attributes = attributes.each_with_object({}) { |(k, v), h|
         if (!acceptable_attribute_map.key?(k.to_sym))
-          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::AirbnbPricingWriteRequest`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
+          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::ConnectStatusAccountsInner`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
         end
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'type')
-        self.type = attributes[:'type']
-      else
-        self.type = nil
+      if attributes.key?(:'external_account_id')
+        self.external_account_id = attributes[:'external_account_id']
       end
 
-      if attributes.key?(:'operations')
-        if (value = attributes[:'operations']).is_a?(Array)
-          self.operations = value
-        end
+      if attributes.key?(:'name')
+        self.name = attributes[:'name']
       end
 
-      if attributes.key?(:'model_type')
-        self.model_type = attributes[:'model_type']
+      if attributes.key?(:'picture_url')
+        self.picture_url = attributes[:'picture_url']
       end
 
-      if attributes.key?(:'settings')
-        if (value = attributes[:'settings']).is_a?(Hash)
-          self.settings = value
-        end
+      if attributes.key?(:'status')
+        self.status = attributes[:'status']
       end
 
-      if attributes.key?(:'records')
-        if (value = attributes[:'records']).is_a?(Array)
-          self.records = value
-        end
-      end
-
-      if attributes.key?(:'currency')
-        self.currency = attributes[:'currency']
-      end
-
-      if attributes.key?(:'rule')
-        if (value = attributes[:'rule']).is_a?(Hash)
-          self.rule = value
-        end
+      if attributes.key?(:'connected')
+        self.connected = attributes[:'connected']
       end
     end
 
@@ -143,23 +110,6 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
-      if @type.nil?
-        invalid_properties.push('invalid value for "type", type cannot be nil.')
-      end
-
-      if !@operations.nil? && @operations.length < 1
-        invalid_properties.push('invalid value for "operations", number of items must be greater than or equal to 1.')
-      end
-
-      if !@records.nil? && @records.length < 1
-        invalid_properties.push('invalid value for "records", number of items must be greater than or equal to 1.')
-      end
-
-      pattern = Regexp.new(/^[A-Z]{3}$/)
-      if !@currency.nil? && @currency !~ pattern
-        invalid_properties.push("invalid value for \"currency\", must conform to the pattern #{pattern}.")
-      end
-
       invalid_properties
     end
 
@@ -167,56 +117,7 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
-      return false if @type.nil?
-      return false if !@operations.nil? && @operations.length < 1
-      return false if !@records.nil? && @records.length < 1
-      return false if !@currency.nil? && @currency !~ Regexp.new(/^[A-Z]{3}$/)
       true
-    end
-
-    # Custom attribute writer method with validation
-    # @param [Object] type Value to be assigned
-    def type=(type)
-      if type.nil?
-        fail ArgumentError, 'type cannot be nil'
-      end
-
-      @type = type
-    end
-
-    # Custom attribute writer method with validation
-    # @param [Object] operations Value to be assigned
-    def operations=(operations)
-      if operations.nil?
-        fail ArgumentError, 'operations cannot be nil'
-      end
-
-      if operations.length < 1
-        fail ArgumentError, 'invalid value for "operations", number of items must be greater than or equal to 1.'
-      end
-
-      @operations = operations
-    end
-
-    # Custom attribute writer method with validation
-    # @param [Object] records Value to be assigned
-    def records=(records)
-      if !records.nil? && records.length < 1
-        fail ArgumentError, 'invalid value for "records", number of items must be greater than or equal to 1.'
-      end
-
-      @records = records
-    end
-
-    # Custom attribute writer method with validation
-    # @param [Object] currency Value to be assigned
-    def currency=(currency)
-      pattern = Regexp.new(/^[A-Z]{3}$/)
-      if !currency.nil? && currency !~ pattern
-        fail ArgumentError, "invalid value for \"currency\", must conform to the pattern #{pattern}."
-      end
-
-      @currency = currency
     end
 
     # Checks equality by comparing each attribute.
@@ -224,13 +125,11 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          type == o.type &&
-          operations == o.operations &&
-          model_type == o.model_type &&
-          settings == o.settings &&
-          records == o.records &&
-          currency == o.currency &&
-          rule == o.rule
+          external_account_id == o.external_account_id &&
+          name == o.name &&
+          picture_url == o.picture_url &&
+          status == o.status &&
+          connected == o.connected
     end
 
     # @see the `==` method
@@ -242,7 +141,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [type, operations, model_type, settings, records, currency, rule].hash
+      [external_account_id, name, picture_url, status, connected].hash
     end
 
     # Builds the object from hash

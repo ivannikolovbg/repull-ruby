@@ -14,7 +14,7 @@ require 'date'
 require 'time'
 
 module Repull
-  # Cursor-paginated Airbnb reservation list. Pass `pagination.next_cursor` back as `?cursor=` to fetch the next page; stop when `pagination.has_more` is `false`.
+  # Cursor-paginated Airbnb reservation list. Pass `pagination.nextCursor` back as `?cursor=` to fetch the next page; stop when `pagination.hasMore` is `false`.
   class AirbnbReservationListResponse < ApiModelBase
     attr_accessor :data
 

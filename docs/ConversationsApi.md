@@ -16,7 +16,7 @@ All URIs are relative to *https://api.repull.dev*
 
 Get conversation detail
 
-Returns one thread (the same shape as the list-row `Conversation`) plus expanded `host` (from `airbnb_hosts` for the thread's `host_id`) and `guest` (resolved via the thread's `reservation_id`, with up to 50 contacts) blocks.
+Returns one thread (the same shape as the list-row `Conversation`) plus expanded `host` (from `airbnb_hosts` for the thread's `host_id`) and `guest` (resolved via the thread's `reservation_id`, with up to 50 contacts) blocks.  A conversation that belongs to an inactive listing (by the thread's listing or its reservation's listing) returns `403 listing_inactive`. Inactive listings keep syncing; activate the listing to use it here.
 
 ### Examples
 
@@ -89,7 +89,7 @@ end
 
 List messages in a conversation
 
-Cursor-paginated messages within one thread. Defaults to newest-first (`?order=desc`); pass `?order=asc` for chronological replay. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request.  `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) — see the `offset` parameter below. Mutually exclusive with `cursor`.
+Cursor-paginated messages within one thread. Defaults to newest-first (`?order=desc`); pass `?order=asc` for chronological replay. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request.  `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) — see the `offset` parameter below. Mutually exclusive with `cursor`.  A conversation that belongs to an inactive listing returns `403 listing_inactive`. Inactive listings keep syncing; activate the listing to use it here.
 
 ### Examples
 
@@ -107,7 +107,7 @@ id = 56 # Integer | Internal Repull thread id.
 opts = {
   x_schema: 'my-app-schema', # String | Apply a custom or built-in schema to transform the response. Built-in: `native` (default), `calry`, `calry-v1`. Custom: any schema name created via `POST /v1/schema/custom`. Unknown / inactive schema names fall back to `native`.
   cursor: 'cursor_example', # String | Opaque cursor returned in the previous response's `pagination.nextCursor`.
-  offset: 56, # Integer | First-class alias for cursor-based pagination. Mutually exclusive with `cursor` — passing both returns 422. Accepts integers in `[0, 10000]`; deeper walks must use `cursor` (constant per-page cost). The response always includes `pagination.next_cursor` so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying.
+  offset: 56, # Integer | First-class alias for cursor-based pagination. Mutually exclusive with `cursor` — passing both returns 422. Accepts integers in `[0, 10000]`; deeper walks must use `cursor` (constant per-page cost). The response always includes `pagination.nextCursor` so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying.
   limit: 56, # Integer | 
   order: 'asc' # String | `desc` (default) returns newest first. `asc` returns chronological replay.
 }
@@ -146,7 +146,7 @@ end
 | **id** | **Integer** | Internal Repull thread id. |  |
 | **x_schema** | **String** | Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;. | [optional] |
 | **cursor** | **String** | Opaque cursor returned in the previous response&#39;s &#x60;pagination.nextCursor&#x60;. | [optional] |
-| **offset** | **Integer** | First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.next_cursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. | [optional][default to 0] |
+| **offset** | **Integer** | First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.nextCursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. | [optional][default to 0] |
 | **limit** | **Integer** |  | [optional][default to 20] |
 | **order** | **String** | &#x60;desc&#x60; (default) returns newest first. &#x60;asc&#x60; returns chronological replay. | [optional][default to &#39;desc&#39;] |
 
@@ -170,7 +170,7 @@ end
 
 List conversations
 
-Cursor-paginated list of message threads owned by the workspace. Backed by main vanio's `/api/threads/list` which keyset-paginates against `(last_message_at, id)` for constant per-page cost. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request.  `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) — see the `offset` parameter below. Mutually exclusive with `cursor`.  Filters: `platform` (`airbnb`|`booking`|`vrbo`|`website`|`email`), `status` (`open`|`archived` — `archived` is a stable no-op until the bit lands on `message_threads`).
+Cursor-paginated list of message threads owned by the workspace. Backed by main vanio's `/api/threads/list` which keyset-paginates against `(last_message_at, id)` for constant per-page cost. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request.  `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) — see the `offset` parameter below. Mutually exclusive with `cursor`.  Filters: `platform` (`airbnb`|`booking`|`vrbo`|`website`|`email`), `status` (`open`|`archived` — `archived` is a stable no-op until the bit lands on `message_threads`).  **Inactive listings:** conversations that belong to an inactive listing (by the thread's listing or its reservation's listing) are left out of the page and of `pagination.total`. Inactive listings keep syncing; activate the listing to use it here.
 
 ### Examples
 
@@ -187,7 +187,7 @@ api_instance = Repull::ConversationsApi.new
 opts = {
   x_schema: 'my-app-schema', # String | Apply a custom or built-in schema to transform the response. Built-in: `native` (default), `calry`, `calry-v1`. Custom: any schema name created via `POST /v1/schema/custom`. Unknown / inactive schema names fall back to `native`.
   cursor: 'cursor_example', # String | Opaque cursor returned in the previous response's `pagination.nextCursor`. Omit to fetch the first page.
-  offset: 56, # Integer | First-class alias for cursor-based pagination. Mutually exclusive with `cursor` — passing both returns 422. Accepts integers in `[0, 10000]`; deeper walks must use `cursor` (constant per-page cost). The response always includes `pagination.next_cursor` so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying.
+  offset: 56, # Integer | First-class alias for cursor-based pagination. Mutually exclusive with `cursor` — passing both returns 422. Accepts integers in `[0, 10000]`; deeper walks must use `cursor` (constant per-page cost). The response always includes `pagination.nextCursor` so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying.
   limit: 56, # Integer | Max items per page. Hard cap is 100.
   platform: 'airbnb', # String | Restrict to threads on a single channel.
   status: 'open' # String | Filter by archive status. `archived` currently always returns an empty page — kept for forward-compat.
@@ -226,7 +226,7 @@ end
 | ---- | ---- | ----------- | ----- |
 | **x_schema** | **String** | Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;. | [optional] |
 | **cursor** | **String** | Opaque cursor returned in the previous response&#39;s &#x60;pagination.nextCursor&#x60;. Omit to fetch the first page. | [optional] |
-| **offset** | **Integer** | First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.next_cursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. | [optional][default to 0] |
+| **offset** | **Integer** | First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.nextCursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. | [optional][default to 0] |
 | **limit** | **Integer** | Max items per page. Hard cap is 100. | [optional][default to 20] |
 | **platform** | **String** | Restrict to threads on a single channel. | [optional] |
 | **status** | **String** | Filter by archive status. &#x60;archived&#x60; currently always returns an empty page — kept for forward-compat. | [optional] |
@@ -251,7 +251,7 @@ end
 
 Send a message to the guest
 
-Sends a message to the guest on this conversation and records it in the thread.  Omit `channel` and the message goes out on whichever channel the conversation already uses (Airbnb, Booking.com, SMS, email or the direct-booking site) — that is the right default. Pass `channel` only to force a specific one.  The message is attributed to the API, not to Vanio AI: it is recorded with `aiGenerated` false so an API send is never counted as an automated reply.  ### Airbnb rewrites links — check `contentRewritten`  Airbnb rejects guest messages containing a link, an email address or a phone number, and names the offending text. When that happens the offending fragment is stripped and the remainder is re-sent once, which means **the guest receives a message that is not the one you wrote**. Reporting that as a plain success would be a lie, so every response carries `contentRewritten`; when it is `true`, `deliveredContent` is the text that actually reached the guest. Check it before assuming your message went out verbatim.  When the text cannot be salvaged (the link is most of the message) nothing is delivered and the call returns `422 message_not_sent` with the channel's verbatim refusal in `statusReason`.  Send `Idempotency-Key` — without it, retrying after a network timeout sends the guest the same message twice.
+Sends a message to the guest on this conversation and records it in the thread.  Omit `channel` and the message goes out on whichever channel the conversation already uses (Airbnb, Booking.com, SMS, email or the direct-booking site) — that is the right default. Pass `channel` only to force a specific one.  The message is attributed to the API, not to Vanio AI: it is recorded with `aiGenerated` false so an API send is never counted as an automated reply.  ### Airbnb rewrites links — check `contentRewritten`  Airbnb rejects guest messages containing a link, an email address or a phone number, and names the offending text. When that happens the offending fragment is stripped and the remainder is re-sent once, which means **the guest receives a message that is not the one you wrote**. Reporting that as a plain success would be a lie, so every response carries `contentRewritten`; when it is `true`, `deliveredContent` is the text that actually reached the guest. Check it before assuming your message went out verbatim.  When the text cannot be salvaged (the link is most of the message) nothing is delivered and the call returns `422 message_not_sent` with the channel's verbatim refusal in `statusReason`.  Send `Idempotency-Key` — without it, retrying after a network timeout sends the guest the same message twice.  **Inactive listings:** a conversation that belongs to an inactive listing returns `403 listing_inactive` and no message is sent. Activate the listing first.
 
 ### Examples
 

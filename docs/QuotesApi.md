@@ -13,7 +13,7 @@ All URIs are relative to *https://api.repull.dev*
 
 Price a stay
 
-Returns the full price breakdown for a stay — nightly total, length-of-stay discount, cleaning fee, pet and other fees, taxes, and the total.  A quote is priced against a booking website, because the markup, custom fees and tax overrides that decide what a guest is actually charged live there. A workspace with no booking site receives `422 quote_unavailable` rather than a number computed from different rules than the ones applied at checkout.
+Returns the full price breakdown for a stay — nightly total, length-of-stay discount, cleaning fee, pet and other fees, taxes, and the total.  A quote is priced against a booking website, because the markup, custom fees and tax overrides that decide what a guest is actually charged live there. A workspace with no booking site receives `422 quote_unavailable` rather than a number computed from different rules than the ones applied at checkout.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 

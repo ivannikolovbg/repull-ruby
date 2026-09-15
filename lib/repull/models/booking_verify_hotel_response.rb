@@ -34,6 +34,31 @@ module Repull
 
     attr_accessor :city
 
+    # Capabilities Booking.com explicitly refused for this property (HTTP 401/403), usually empty. `content` means the connection is live and syncs reservations, rates and messages normally, but the Content API was never granted, so the property name, rooms and photos cannot be read from Booking.com and are substituted. A capability whose probe failed for any other reason is omitted rather than listed here.
+    attr_accessor :missing_capabilities
+
+    class EnumAttributeValidator
+      attr_reader :datatype
+      attr_reader :allowable_values
+
+      def initialize(datatype, allowable_values)
+        @allowable_values = allowable_values.map do |value|
+          case datatype.to_s
+          when /Integer/i
+            value.to_i
+          when /Float/i
+            value.to_f
+          else
+            value
+          end
+        end
+      end
+
+      def valid?(value)
+        !value || allowable_values.include?(value)
+      end
+    end
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
@@ -44,7 +69,8 @@ module Repull
         :'hotel_name' => :'hotelName',
         :'hotel_type' => :'hotelType',
         :'country' => :'country',
-        :'city' => :'city'
+        :'city' => :'city',
+        :'missing_capabilities' => :'missingCapabilities'
       }
     end
 
@@ -68,7 +94,8 @@ module Repull
         :'hotel_name' => :'String',
         :'hotel_type' => :'String',
         :'country' => :'String',
-        :'city' => :'String'
+        :'city' => :'String',
+        :'missing_capabilities' => :'Array<String>'
       }
     end
 
@@ -78,7 +105,7 @@ module Repull
         :'hotel_name',
         :'hotel_type',
         :'country',
-        :'city'
+        :'city',
       ])
     end
 
@@ -136,6 +163,12 @@ module Repull
 
       if attributes.key?(:'city')
         self.city = attributes[:'city']
+      end
+
+      if attributes.key?(:'missing_capabilities')
+        if (value = attributes[:'missing_capabilities']).is_a?(Array)
+          self.missing_capabilities = value
+        end
       end
     end
 
@@ -226,7 +259,8 @@ module Repull
           hotel_name == o.hotel_name &&
           hotel_type == o.hotel_type &&
           country == o.country &&
-          city == o.city
+          city == o.city &&
+          missing_capabilities == o.missing_capabilities
     end
 
     # @see the `==` method
@@ -238,7 +272,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [valid, session_id, connection_id, hotel_id, hotel_name, hotel_type, country, city].hash
+      [valid, session_id, connection_id, hotel_id, hotel_name, hotel_type, country, city, missing_capabilities].hash
     end
 
     # Builds the object from hash

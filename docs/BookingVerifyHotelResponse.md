@@ -12,6 +12,7 @@
 | **hotel_type** | **String** | Booking.com hotel/property type code (e.g. &#x60;apartment&#x60;, &#x60;hotel&#x60;). | [optional] |
 | **country** | **String** |  | [optional] |
 | **city** | **String** |  | [optional] |
+| **missing_capabilities** | **Array&lt;String&gt;** | Capabilities Booking.com explicitly refused for this property (HTTP 401/403), usually empty. &#x60;content&#x60; means the connection is live and syncs reservations, rates and messages normally, but the Content API was never granted, so the property name, rooms and photos cannot be read from Booking.com and are substituted. A capability whose probe failed for any other reason is omitted rather than listed here. | [optional] |
 
 ## Example
 
@@ -26,7 +27,8 @@ instance = Repull::BookingVerifyHotelResponse.new(
   hotel_name: null,
   hotel_type: null,
   country: null,
-  city: null
+  city: null,
+  missing_capabilities: null
 )
 ```
 

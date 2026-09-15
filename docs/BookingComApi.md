@@ -33,7 +33,7 @@ All URIs are relative to *https://api.repull.dev*
 
 Acknowledge Booking.com reservations
 
-Acknowledge one or more reservations so Booking.com removes them from the `new` queue. The body carries `reservation_ids` (non-empty array). Acknowledge only after you have durably persisted each reservation.
+Acknowledge one or more reservations so Booking.com removes them from the `new` queue. The body carries `reservation_ids` (non-empty array). Acknowledge only after you have durably persisted each reservation.  Only reservations that belong to this workspace can be acknowledged. If any id in `reservation_ids` is not one of this workspace's Booking.com reservations (`confirmationCode` on `GET /v1/reservations?platform=booking`), nothing is acknowledged and the response is `404 not_found` naming those ids in `reservation_ids`.
 
 ### Examples
 
@@ -101,7 +101,7 @@ nil (empty response body)
 
 Booking.com property setup actions
 
-Action-router for onboarding a property onto Booking.com. Select the step with `action`:  - `create-legal-entity` — register the legal entity (returns 201). - `check-legal-status` — poll legal-entity status by `leid`. - `check-readiness` — check whether a property is ready to open (`property_id`). - `open-property` — open the property for sale (`property_id`). - `set-contacts` — set property contacts (`property_id`, `contacts`). - `set-policies` — set property policies (`property_id`, plus policy fields).  Missing required fields per action return a validation error; upstream failures surface as `booking_error`.
+Action-router for onboarding a property onto Booking.com. Select the step with `action`:  - `create-legal-entity` — register the legal entity (returns 201). - `check-legal-status` — poll legal-entity status by `leid`. - `check-readiness` — check whether a property is ready to open (`property_id`). - `open-property` — open the property for sale (`property_id`). - `set-contacts` — set property contacts (`property_id`, `contacts`). - `set-policies` — set property policies (`property_id`, plus policy fields).  Missing required fields per action return a validation error; upstream failures surface as `booking_error`.  Every action that takes a `property_id` requires a property connected to this workspace; any other id returns `404 not_found`.  Returns `403 listing_inactive` when any listing mapped to the Booking.com property is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -169,7 +169,7 @@ nil (empty response body)
 
 Subscribe to a Booking.com notification
 
-Subscribe to a Booking.com CNS notification type, delivered to `callback_url`. Returns 201 on success.
+**Not available through the API — always returns `403 forbidden`.** Booking.com notification subscriptions belong to the Repull platform account that every workspace shares: they are per notification type, not per property, so reading or changing them would affect every workspace. Booking.com events for your own properties are delivered through Repull webhooks — subscribe with `POST /v1/webhooks`.
 
 ### Examples
 
@@ -237,7 +237,7 @@ nil (empty response body)
 
 Unsubscribe from a Booking.com notification
 
-Remove a Booking.com CNS subscription. Pass the `notification_type` to unsubscribe as a query param — required.
+**Not available through the API — always returns `403 forbidden`.** Booking.com notification subscriptions belong to the Repull platform account that every workspace shares: they are per notification type, not per property, so reading or changing them would affect every workspace. Booking.com events for your own properties are delivered through Repull webhooks — subscribe with `POST /v1/webhooks`.
 
 ### Examples
 
@@ -305,7 +305,7 @@ nil (empty response body)
 
 Read current Booking.com rates/availability/restrictions
 
-Read the current rate, availability, and restriction state for a Booking.com property so you can reconcile before writing with the PUT on this path. Keyed by `property_id` (the Booking hotel id), symmetric with the PUT.  Proxies Booking's `getRoomRateAvailability` — the returned fields (price, rooms-to-sell, min/max stay, closed-to-arrival/departure, stop-sell) are whatever Booking.com emits for the window. A listing-id-keyed equivalent is available at `GET /v1/channels/booking/listings/{id}/pricing`.
+Read the current rate, availability, and restriction state for a Booking.com property so you can reconcile before writing with the PUT on this path. Keyed by `property_id` (the Booking hotel id), symmetric with the PUT.  Proxies Booking's `getRoomRateAvailability` — the returned fields (price, rooms-to-sell, min/max stay, closed-to-arrival/departure, stop-sell) are whatever Booking.com emits for the window. A listing-id-keyed equivalent is available at `GET /v1/channels/booking/listings/{id}/pricing`.  `property_id` must be a Booking.com property connected to this workspace (`GET /v1/channels/booking/properties` lists them). Any other id — including one connected to a different workspace — returns `404 not_found`, the same answer as an id that does not exist.  Returns `403 listing_inactive` when any listing mapped to the Booking.com property is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -384,7 +384,7 @@ end
 
 Get Booking.com charges
 
-Fetch the extra-charge set (cleaning fee, resort fee, city tax, etc.) configured for a Booking.com property. Pass the Booking.com `property_id` as a query param — required.
+Fetch the extra-charge set (cleaning fee, resort fee, city tax, etc.) configured for a Booking.com property. Pass the Booking.com `property_id` as a query param — required.  `property_id` must be a Booking.com property connected to this workspace (`GET /v1/channels/booking/properties` lists them). Any other id — including one connected to a different workspace — returns `404 not_found`, the same answer as an id that does not exist.  Returns `403 listing_inactive` when any listing mapped to the Booking.com property is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -452,7 +452,7 @@ nil (empty response body)
 
 Get Booking.com content
 
-Fetch the current content (descriptions, amenities, photos) for a Booking.com property. Used to round-trip edits through Repull.
+Fetch the current content (descriptions, amenities, photos) for a Booking.com property. Used to round-trip edits through Repull.  `property_id` must be a Booking.com property connected to this workspace (`GET /v1/channels/booking/properties` lists them). Any other id — including one connected to a different workspace — returns `404 not_found`, the same answer as an id that does not exist.  Returns `403 listing_inactive` when any listing mapped to the Booking.com property is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -508,7 +508,7 @@ nil (empty response body)
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 
 ## get_booking_listing_pricing
@@ -517,7 +517,7 @@ nil (empty response body)
 
 Get Booking.com pricing for a listing
 
-Resolves the Vanio listing ID to its Booking.com `hotel_id` (via the `listings_booking` mapping owned by the authenticated workspace), then proxies Booking's `getRoomRateAvailability` for the requested window. Pricing on Booking is per-room/per-rate-plan, so `room_id` and `room_level` flow through query params unchanged.  Mirrors the per-channel `/listings/{id}/pricing` shape used by Airbnb so SDK consumers can carry a Vanio listing ID across channels.
+Resolves the Vanio listing ID to its Booking.com `hotel_id` (via the `listings_booking` mapping owned by the authenticated workspace), then proxies Booking's `getRoomRateAvailability` for the requested window. Pricing on Booking is per-room/per-rate-plan, so `room_id` and `room_level` flow through query params unchanged.  Mirrors the per-channel `/listings/{id}/pricing` shape used by Airbnb so SDK consumers can carry a Vanio listing ID across channels.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -596,7 +596,7 @@ end
 
 Get Booking.com connection for a listing
 
-Return the Booking.com connection record(s) for a Vanio listing — the linked Booking hotel id, sync flags, markup, sync category, and suspension state. Scoped to the authenticated workspace; a listing with no Booking.com connection returns 404.
+Return the Booking.com connection record(s) for a Vanio listing — the linked Booking hotel id, sync flags, markup, sync category, and suspension state. Scoped to the authenticated workspace; a listing with no Booking.com connection returns 404.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -664,7 +664,7 @@ nil (empty response body)
 
 List Booking.com conversations
 
-List Booking.com guest conversations. Cursor-paginated. Use the messaging POST to send a reply.
+List Booking.com guest conversations. Cursor-paginated. Use the messaging POST to send a reply.  Scoped to this workspace. With `property_id`, the property must be connected to this workspace — any other id returns `404 not_found`. Without it, only messages for this workspace's own Booking.com properties are returned.  Returns `403 listing_inactive` when any listing mapped to the Booking.com property is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -730,7 +730,7 @@ This endpoint does not need any parameter.
 
 List Booking.com properties
 
-List Booking.com hotels claimed by this workspace. Each row includes the Booking-side hotel id and the connected room types.
+List Booking.com hotels claimed by this workspace. Each row includes the Booking-side hotel id and the connected room types.  Inactive listings are left out; they keep syncing and reappear once activated. Use `GET /v1/listings?status=inactive` to find them.
 
 ### Examples
 
@@ -796,7 +796,7 @@ This endpoint does not need any parameter.
 
 List Booking.com rooms + rate-plan ids for a listing
 
-Return every Booking.com room and its rate plans for a listing, each with the `roomId` / `rateId` needed to assemble a restriction write via `PUT /v1/channels/booking/availability`.  `id` is a Vanio listing id — resolved to the Booking `hotel_id` via the workspace mapping (a listing with no active Booking.com mapping returns 404). Sourced from Booking's B.XML roomrates feed, which returns rooms and rate plans together (the rooms-unit feed alone omits rate-plan ids). This is the API-key surface for the room/rate ids that were previously only reachable inside the hosted Connect room-mapping flow.
+Return every Booking.com room and its rate plans for a listing, each with the `roomId` / `rateId` needed to assemble a restriction write via `PUT /v1/channels/booking/availability`.  `id` is a Vanio listing id — resolved to the Booking `hotel_id` via the workspace mapping (a listing with no active Booking.com mapping returns 404). Sourced from Booking's B.XML roomrates feed, which returns rooms and rate plans together (the rooms-unit feed alone omits rate-plan ids). This is the API-key surface for the room/rate ids that were previously only reachable inside the hosted Connect room-mapping flow.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -865,7 +865,7 @@ end
 
 List Booking.com reservations
 
-Pull reservations from Booking.com. `type=new` (default) returns un-acknowledged bookings; `type=modified` returns changed bookings. Pass both `reservation_id` and `hotel_id` to fetch a single reservation's full details. Acknowledge processed reservations with the POST so Booking stops re-serving them in the `new` queue.
+Pull reservations from Booking.com. `type=new` (default) returns un-acknowledged bookings; `type=modified` returns changed bookings. Pass both `reservation_id` and `hotel_id` to fetch a single reservation's full details. Acknowledge processed reservations with the POST so Booking stops re-serving them in the `new` queue.  Scoped to this workspace. `hotel_id` (or its alias `property_id`) must be a property connected to this workspace; any other id returns `404 not_found`, the same as an id that does not exist. Without a hotel, `new`/`modified` cover every Booking.com property this workspace holds (and return `404 not_found` if it holds none). A `reservation_id` that belongs to another workspace returns `404 not_found`.  Returns `403 listing_inactive` when any listing mapped to the Booking.com property is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -940,7 +940,7 @@ end
 
 List Booking.com reviews
 
-List guest reviews for a Booking.com property. Pass `property_id` (the Booking.com hotel id) as a query param — required.
+List guest reviews for a Booking.com property. Pass `property_id` (the Booking.com hotel id) as a query param — required.  `property_id` must be a Booking.com property connected to this workspace (`GET /v1/channels/booking/properties` lists them). Any other id — including one connected to a different workspace — returns `404 not_found`, the same answer as an id that does not exist.  Returns `403 listing_inactive` when any listing mapped to the Booking.com property is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -1008,7 +1008,7 @@ nil (empty response body)
 
 List Booking.com webhook subscriptions
 
-List the workspace's Booking.com Content Notification Service (CNS) subscriptions — the notification types Booking pushes to your callback URLs.
+**Not available through the API — always returns `403 forbidden`.** Booking.com notification subscriptions belong to the Repull platform account that every workspace shares: they are per notification type, not per property, so reading or changing them would affect every workspace. Booking.com events for your own properties are delivered through Repull webhooks — subscribe with `POST /v1/webhooks`.
 
 ### Examples
 
@@ -1073,7 +1073,7 @@ nil (empty response body)
 
 Reply to Booking.com review
 
-Post a public host reply to a guest review on Booking.com. Booking allows one host reply per review — repeated POSTs are rejected by upstream.  Booking.com does NOT support host-authored reviews of guests via the API (platform-level limitation), so this endpoint is reply-only.
+Post a public host reply to a guest review on Booking.com. Booking allows one host reply per review — repeated POSTs are rejected by upstream.  Booking.com does NOT support host-authored reviews of guests via the API (platform-level limitation), so this endpoint is reply-only.  `property_id` must be a Booking.com property connected to this workspace (`GET /v1/channels/booking/properties` lists them). Any other id — including one connected to a different workspace — returns `404 not_found`, the same answer as an id that does not exist.  Returns `403 listing_inactive` when any listing mapped to the Booking.com property is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -1142,7 +1142,7 @@ end
 
 Send Booking.com message
 
-Send a message in a Booking.com conversation as the host. Booking enforces content rules similar to Airbnb.
+Send a message in a Booking.com conversation as the host. Booking enforces content rules similar to Airbnb.  `property_id` must be a Booking.com property connected to this workspace (`GET /v1/channels/booking/properties` lists them). Any other id — including one connected to a different workspace — returns `404 not_found`, the same answer as an id that does not exist.  Returns `403 listing_inactive` when any listing mapped to the Booking.com property is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -1210,7 +1210,7 @@ nil (empty response body)
 
 Update Booking.com rates/availability
 
-Push availability, rates, and the full restriction set to Booking.com. `type` selects the write path:  - `rates` — nightly price + length-of-stay / arrival restrictions (min/max stay, closed-to-arrival, closed-to-departure, advance-reservation window). - `availability` — inventory (`availableRooms`), the dedicated stop-sell flag (`closed`), and the same restriction set. - `derived-pricing` — occupancy-derived pricing rules.  Restrictions never leak across channels — this endpoint writes only to Booking.com. Errors from upstream surface as `booking_error`.
+Push availability, rates, and the full restriction set to Booking.com. `type` selects the write path:  - `rates` — nightly price + length-of-stay / arrival restrictions (min/max stay, closed-to-arrival, closed-to-departure, advance-reservation window). - `availability` — inventory (`availableRooms`), the dedicated stop-sell flag (`closed`), and the same restriction set. - `derived-pricing` — occupancy-derived pricing rules.  Restrictions never leak across channels — this endpoint writes only to Booking.com. Errors from upstream surface as `booking_error`.  `property_id` must be a Booking.com property connected to this workspace (`GET /v1/channels/booking/properties` lists them). Any other id — including one connected to a different workspace — returns `404 not_found`, the same answer as an id that does not exist.  Returns `403 listing_inactive` when any listing mapped to the Booking.com property is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -1278,7 +1278,7 @@ nil (empty response body)
 
 Set Booking.com charges
 
-Replace the extra-charge set for a Booking.com property. The body carries the target `property_id` and the full `charges` array — Booking treats the write as a full replacement, so include every charge you want to keep.
+Replace the extra-charge set for a Booking.com property. The body carries the target `property_id` and the full `charges` array — Booking treats the write as a full replacement, so include every charge you want to keep.  `property_id` must be a Booking.com property connected to this workspace (`GET /v1/channels/booking/properties` lists them). Any other id — including one connected to a different workspace — returns `404 not_found`, the same answer as an id that does not exist.  Returns `403 listing_inactive` when any listing mapped to the Booking.com property is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -1346,7 +1346,7 @@ nil (empty response body)
 
 Update Booking.com content
 
-Push content changes (descriptions, amenities, photos) to Booking.com. Booking enforces editorial review on text fields — changes appear after their content moderation queue clears.
+Push content changes (descriptions, amenities, photos) to Booking.com. Booking enforces editorial review on text fields — changes appear after their content moderation queue clears.  `property_id` must be a Booking.com property connected to this workspace (`GET /v1/channels/booking/properties` lists them). Any other id — including one connected to a different workspace — returns `404 not_found`, the same answer as an id that does not exist.  Returns `403 listing_inactive` when any listing mapped to the Booking.com property is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -1402,7 +1402,7 @@ nil (empty response body)
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 
 ## update_booking_listing_pricing
@@ -1411,7 +1411,7 @@ nil (empty response body)
 
 Update Booking.com pricing for a listing
 
-Pushes one or more rate updates to Booking.com via `updateRates`. Each update needs `roomId` + `rateId` + `dateRange` + `price` + `currency`. Field-level validation runs up front so callers don't have to parse Booking's XML error envelope to discover a missing `roomId`.
+Pushes one or more rate updates to Booking.com via `updateRates`. Each update needs `roomId` + `rateId` + `dateRange` + `price` + `currency`. Field-level validation runs up front so callers don't have to parse Booking's XML error envelope to discover a missing `roomId`.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 

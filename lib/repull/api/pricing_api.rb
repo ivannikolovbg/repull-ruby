@@ -20,7 +20,7 @@ module Repull
       @api_client = api_client
     end
     # Apply or decline pricing recommendations
-    # Apply: writes the recommended price to the listing's calendar for the given dates and triggers the platform fan-out (Airbnb / Booking.com / VRBO). Decline: marks the recommendation as `declined` so it stops surfacing — the model can re-recommend on the next training cycle.
+    # Apply: writes the recommended price to the listing's calendar for the given dates and triggers the platform fan-out (Airbnb / Booking.com / VRBO). Decline: marks the recommendation as `declined` so it stops surfacing — the model can re-recommend on the next training cycle.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [Integer] 
     # @param listing_pricing_apply_request [ListingPricingApplyRequest] 
     # @param [Hash] opts the optional parameters
@@ -31,7 +31,7 @@ module Repull
     end
 
     # Apply or decline pricing recommendations
-    # Apply: writes the recommended price to the listing&#39;s calendar for the given dates and triggers the platform fan-out (Airbnb / Booking.com / VRBO). Decline: marks the recommendation as &#x60;declined&#x60; so it stops surfacing — the model can re-recommend on the next training cycle.
+    # Apply: writes the recommended price to the listing&#39;s calendar for the given dates and triggers the platform fan-out (Airbnb / Booking.com / VRBO). Decline: marks the recommendation as &#x60;declined&#x60; so it stops surfacing — the model can re-recommend on the next training cycle.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [Integer] 
     # @param listing_pricing_apply_request [ListingPricingApplyRequest] 
     # @param [Hash] opts the optional parameters
@@ -94,7 +94,7 @@ module Repull
     end
 
     # Bulk apply or decline pricing recommendations
-    # Apply or decline pending Atlas pricing recommendations across many listings in one call. Built for power users with hundreds of listings who would otherwise need 500 sequential single-listing POSTs.  - `items` is capped at 500 entries per request — exceeding returns 422. - Per-item failures (stale listing IDs, no pending recs, channel auth blips) DO NOT fail the whole batch — partial success is the norm at this scale and the granular `failed[]` array lets the SDK retry just the bad entries. - Tier-limit accounting: this endpoint counts as **1 API call** regardless of how many items the body contains.  Apply path writes the recommended price to each listing's calendar via the calendar service (which fans out to Airbnb/Booking/VRBO) then marks the Atlas recommendation `applied`. Decline path is Atlas-only — fast.
+    # Apply or decline pending Atlas pricing recommendations across many listings in one call. Built for power users with hundreds of listings who would otherwise need 500 sequential single-listing POSTs.  - `items` is capped at 500 entries per request — exceeding returns 422. - Per-item failures (stale listing IDs, no pending recs, channel auth blips) DO NOT fail the whole batch — partial success is the norm at this scale and the granular `failed[]` array lets the SDK retry just the bad entries. - Tier-limit accounting: this endpoint counts as **1 API call** regardless of how many items the body contains.  Apply path writes the recommended price to each listing's calendar via the calendar service (which fans out to Airbnb/Booking/VRBO) then marks the Atlas recommendation `applied`. Decline path is Atlas-only — fast.  Returns `403 listing_inactive` naming every inactive listing when any listing in the request is inactive; nothing is written.
     # @param bulk_pricing_request [BulkPricingRequest] 
     # @param [Hash] opts the optional parameters
     # @return [BulkPricingResponse]
@@ -104,7 +104,7 @@ module Repull
     end
 
     # Bulk apply or decline pricing recommendations
-    # Apply or decline pending Atlas pricing recommendations across many listings in one call. Built for power users with hundreds of listings who would otherwise need 500 sequential single-listing POSTs.  - &#x60;items&#x60; is capped at 500 entries per request — exceeding returns 422. - Per-item failures (stale listing IDs, no pending recs, channel auth blips) DO NOT fail the whole batch — partial success is the norm at this scale and the granular &#x60;failed[]&#x60; array lets the SDK retry just the bad entries. - Tier-limit accounting: this endpoint counts as **1 API call** regardless of how many items the body contains.  Apply path writes the recommended price to each listing&#39;s calendar via the calendar service (which fans out to Airbnb/Booking/VRBO) then marks the Atlas recommendation &#x60;applied&#x60;. Decline path is Atlas-only — fast.
+    # Apply or decline pending Atlas pricing recommendations across many listings in one call. Built for power users with hundreds of listings who would otherwise need 500 sequential single-listing POSTs.  - &#x60;items&#x60; is capped at 500 entries per request — exceeding returns 422. - Per-item failures (stale listing IDs, no pending recs, channel auth blips) DO NOT fail the whole batch — partial success is the norm at this scale and the granular &#x60;failed[]&#x60; array lets the SDK retry just the bad entries. - Tier-limit accounting: this endpoint counts as **1 API call** regardless of how many items the body contains.  Apply path writes the recommended price to each listing&#39;s calendar via the calendar service (which fans out to Airbnb/Booking/VRBO) then marks the Atlas recommendation &#x60;applied&#x60;. Decline path is Atlas-only — fast.  Returns &#x60;403 listing_inactive&#x60; naming every inactive listing when any listing in the request is inactive; nothing is written.
     # @param bulk_pricing_request [BulkPricingRequest] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(BulkPricingResponse, Integer, Hash)>] BulkPricingResponse data, response status code and response headers
@@ -162,7 +162,7 @@ module Repull
     end
 
     # Get pricing recommendations
-    # Returns date-by-date pricing recommendations for a listing's upcoming calendar window, plus the listing's base-price context and a 5km comp summary. Recommendations come from the Atlas pricing model — pre-computed nightly and stored in `pricing_recommendations`. Use POST to apply or decline pending recommendations.
+    # Returns date-by-date pricing recommendations for a listing's upcoming calendar window, plus the listing's base-price context and a 5km comp summary. Recommendations come from the Atlas pricing model — pre-computed nightly and stored in `pricing_recommendations`. Use POST to apply or decline pending recommendations.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [Integer] Listing ID
     # @param [Hash] opts the optional parameters
     # @option opts [Date] :start_date Inclusive start of the calendar window. Defaults to today.
@@ -174,7 +174,7 @@ module Repull
     end
 
     # Get pricing recommendations
-    # Returns date-by-date pricing recommendations for a listing&#39;s upcoming calendar window, plus the listing&#39;s base-price context and a 5km comp summary. Recommendations come from the Atlas pricing model — pre-computed nightly and stored in &#x60;pricing_recommendations&#x60;. Use POST to apply or decline pending recommendations.
+    # Returns date-by-date pricing recommendations for a listing&#39;s upcoming calendar window, plus the listing&#39;s base-price context and a 5km comp summary. Recommendations come from the Atlas pricing model — pre-computed nightly and stored in &#x60;pricing_recommendations&#x60;. Use POST to apply or decline pending recommendations.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [Integer] Listing ID
     # @param [Hash] opts the optional parameters
     # @option opts [Date] :start_date Inclusive start of the calendar window. Defaults to today.
@@ -231,14 +231,14 @@ module Repull
     end
 
     # Pricing recommendation audit trail
-    # Cursor-paginated audit trail of pricing recommendations vs applied prices for a listing across a date window. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request.  Defaults to ±90 days from today. Cursor is a keyset on `date ASC` — stable even if rows are added during a partner's pagination walk. `limit` is capped at 500 — exceeding returns 422.  `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) — see the `offset` parameter below. Mutually exclusive with `cursor`.
+    # Cursor-paginated audit trail of pricing recommendations vs applied prices for a listing across a date window. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request.  Defaults to ±90 days from today. Cursor is a keyset on `date ASC` — stable even if rows are added during a partner's pagination walk. `limit` is capped at 500 — exceeding returns 422.  `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) — see the `offset` parameter below. Mutually exclusive with `cursor`.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [Integer] 
     # @param [Hash] opts the optional parameters
     # @option opts [Date] :start_date Inclusive. Defaults to today - 90 days.
     # @option opts [Date] :end_date Inclusive. Defaults to today + 90 days.
     # @option opts [Integer] :limit  (default to 100)
     # @option opts [String] :cursor Opaque cursor returned in the previous response&#39;s &#x60;pagination.nextCursor&#x60;. Omit to fetch the first page.
-    # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.next_cursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
+    # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.nextCursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
     # @return [ListingPricingHistoryResponse]
     def get_listing_pricing_history(id, opts = {})
       data, _status_code, _headers = get_listing_pricing_history_with_http_info(id, opts)
@@ -246,14 +246,14 @@ module Repull
     end
 
     # Pricing recommendation audit trail
-    # Cursor-paginated audit trail of pricing recommendations vs applied prices for a listing across a date window. Use &#x60;pagination.nextCursor&#x60; from one response as the &#x60;cursor&#x60; query param of the next request.  Defaults to ±90 days from today. Cursor is a keyset on &#x60;date ASC&#x60; — stable even if rows are added during a partner&#39;s pagination walk. &#x60;limit&#x60; is capped at 500 — exceeding returns 422.  &#x60;?offset&#x3D;&#x60; is also accepted as a first-class alias for shallow paging (0..10000) — see the &#x60;offset&#x60; parameter below. Mutually exclusive with &#x60;cursor&#x60;.
+    # Cursor-paginated audit trail of pricing recommendations vs applied prices for a listing across a date window. Use &#x60;pagination.nextCursor&#x60; from one response as the &#x60;cursor&#x60; query param of the next request.  Defaults to ±90 days from today. Cursor is a keyset on &#x60;date ASC&#x60; — stable even if rows are added during a partner&#39;s pagination walk. &#x60;limit&#x60; is capped at 500 — exceeding returns 422.  &#x60;?offset&#x3D;&#x60; is also accepted as a first-class alias for shallow paging (0..10000) — see the &#x60;offset&#x60; parameter below. Mutually exclusive with &#x60;cursor&#x60;.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [Integer] 
     # @param [Hash] opts the optional parameters
     # @option opts [Date] :start_date Inclusive. Defaults to today - 90 days.
     # @option opts [Date] :end_date Inclusive. Defaults to today + 90 days.
     # @option opts [Integer] :limit  (default to 100)
     # @option opts [String] :cursor Opaque cursor returned in the previous response&#39;s &#x60;pagination.nextCursor&#x60;. Omit to fetch the first page.
-    # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.next_cursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
+    # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.nextCursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
     # @return [Array<(ListingPricingHistoryResponse, Integer, Hash)>] ListingPricingHistoryResponse data, response status code and response headers
     def get_listing_pricing_history_with_http_info(id, opts = {})
       if @api_client.config.debugging
@@ -325,7 +325,7 @@ module Repull
     end
 
     # Get pricing strategy
-    # Returns the strategy that constrains how the Atlas pricing model behaves for this listing. If no strategy row exists yet, returns sane defaults flagged with `isDefault: true`.
+    # Returns the strategy that constrains how the Atlas pricing model behaves for this listing. If no strategy row exists yet, returns sane defaults flagged with `isDefault: true`.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [Integer] 
     # @param [Hash] opts the optional parameters
     # @return [ListingPricingStrategy]
@@ -335,7 +335,7 @@ module Repull
     end
 
     # Get pricing strategy
-    # Returns the strategy that constrains how the Atlas pricing model behaves for this listing. If no strategy row exists yet, returns sane defaults flagged with &#x60;isDefault: true&#x60;.
+    # Returns the strategy that constrains how the Atlas pricing model behaves for this listing. If no strategy row exists yet, returns sane defaults flagged with &#x60;isDefault: true&#x60;.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [Integer] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(ListingPricingStrategy, Integer, Hash)>] ListingPricingStrategy data, response status code and response headers
@@ -388,7 +388,7 @@ module Repull
     end
 
     # Update pricing strategy
-    # Upserts the strategy on `(listing_id, customer_id)` — repeated PUTs are idempotent. Send only the fields you want to change; omitted fields take server-side defaults.
+    # Upserts the strategy on `(listing_id, customer_id)` — repeated PUTs are idempotent. Send only the fields you want to change; omitted fields take server-side defaults.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [Integer] 
     # @param listing_pricing_strategy_input [ListingPricingStrategyInput] 
     # @param [Hash] opts the optional parameters
@@ -399,7 +399,7 @@ module Repull
     end
 
     # Update pricing strategy
-    # Upserts the strategy on &#x60;(listing_id, customer_id)&#x60; — repeated PUTs are idempotent. Send only the fields you want to change; omitted fields take server-side defaults.
+    # Upserts the strategy on &#x60;(listing_id, customer_id)&#x60; — repeated PUTs are idempotent. Send only the fields you want to change; omitted fields take server-side defaults.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [Integer] 
     # @param listing_pricing_strategy_input [ListingPricingStrategyInput] 
     # @param [Hash] opts the optional parameters

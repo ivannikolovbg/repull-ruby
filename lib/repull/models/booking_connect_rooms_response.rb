@@ -27,6 +27,31 @@ module Repull
 
     attr_accessor :listing_options
 
+    # Capabilities Booking.com explicitly refused for this property, usually empty. `content` means reservations, availability and messaging sync normally, but the Content API was never granted — so room names and photos are placeholders, and nightly prices cannot be published until the grant is added (the currency is unknown and is never guessed).
+    attr_accessor :missing_capabilities
+
+    class EnumAttributeValidator
+      attr_reader :datatype
+      attr_reader :allowable_values
+
+      def initialize(datatype, allowable_values)
+        @allowable_values = allowable_values.map do |value|
+          case datatype.to_s
+          when /Integer/i
+            value.to_i
+          when /Float/i
+            value.to_f
+          else
+            value
+          end
+        end
+      end
+
+      def valid?(value)
+        !value || allowable_values.include?(value)
+      end
+    end
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
@@ -34,7 +59,8 @@ module Repull
         :'session_id' => :'sessionId',
         :'hotel_id' => :'hotelId',
         :'rooms' => :'rooms',
-        :'listing_options' => :'listingOptions'
+        :'listing_options' => :'listingOptions',
+        :'missing_capabilities' => :'missingCapabilities'
       }
     end
 
@@ -55,7 +81,8 @@ module Repull
         :'session_id' => :'String',
         :'hotel_id' => :'String',
         :'rooms' => :'Array<BookingConnectRoom>',
-        :'listing_options' => :'Array<BookingConnectListingOption>'
+        :'listing_options' => :'Array<BookingConnectListingOption>',
+        :'missing_capabilities' => :'Array<String>'
       }
     end
 
@@ -113,6 +140,12 @@ module Repull
         end
       else
         self.listing_options = nil
+      end
+
+      if attributes.key?(:'missing_capabilities')
+        if (value = attributes[:'missing_capabilities']).is_a?(Array)
+          self.missing_capabilities = value
+        end
       end
     end
 
@@ -215,7 +248,8 @@ module Repull
           session_id == o.session_id &&
           hotel_id == o.hotel_id &&
           rooms == o.rooms &&
-          listing_options == o.listing_options
+          listing_options == o.listing_options &&
+          missing_capabilities == o.missing_capabilities
     end
 
     # @see the `==` method
@@ -227,7 +261,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [status, session_id, hotel_id, rooms, listing_options].hash
+      [status, session_id, hotel_id, rooms, listing_options, missing_capabilities].hash
     end
 
     # Builds the object from hash

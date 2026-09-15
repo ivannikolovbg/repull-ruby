@@ -15,6 +15,7 @@
 | **valid_params** | **Array&lt;String&gt;** | Sorted list of every query param this endpoint accepts. Present on &#x60;code: \&quot;unknown_params\&quot;&#x60; (HTTP 422) so SDK consumers can self-correct without reading docs. | [optional] |
 | **endpoint** | **String** | The endpoint path that produced the error. Present on &#x60;code: \&quot;unknown_params\&quot;&#x60; so consumers can match validation failures to the operation they invoked. | [optional] |
 | **did_you_mean** | **String** | Suggestion for typos and near-matches. Present when the server can guess the intent. | [optional] |
+| **listing_ids** | **Array&lt;String&gt;** | Every inactive listing the request involved. Present on &#x60;code: \&quot;listing_inactive\&quot;&#x60; (HTTP 403) — activate these ids and retry. | [optional] |
 | **retry_after** | **Integer** | Seconds the client should wait before retrying. Mirrors the &#x60;Retry-After&#x60; HTTP header. Present on rate-limit responses and on transient upstream failures that are safe to retry. | [optional] |
 | **support** | [**ErrorErrorSupport**](ErrorErrorSupport.md) |  | [optional] |
 
@@ -35,6 +36,7 @@ instance = Repull::ErrorError.new(
   valid_params: [&quot;cursor&quot;,&quot;has_reservation&quot;,&quot;include_total&quot;,&quot;limit&quot;,&quot;listingId&quot;,&quot;q&quot;],
   endpoint: /v1/guests,
   did_you_mean: check_in_after,
+  listing_ids: [&quot;4118&quot;],
   retry_after: 60,
   support: null
 )

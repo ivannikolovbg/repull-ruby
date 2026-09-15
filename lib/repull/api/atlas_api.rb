@@ -20,7 +20,7 @@ module Repull
       @api_client = api_client
     end
     # Atlas DNA segment intelligence for a listing
-    # Aggregates Atlas DNA segment signal (quality tier, design style, bedrooms) across the listing's geographic neighborhood (default: 5km radius) or the whole city, so consumers can answer: - What segments dominate my market? - Which segment does my listing match best? - What's the ADR uplift for moving up a tier?  DNA coverage is still ramping — segments are scored asynchronously. Cities and radii without scored comps return `totalCompsAnalyzed: 0` plus a `low_dna_coverage` recommendation rather than fabricated data.
+    # Aggregates Atlas DNA segment signal (quality tier, design style, bedrooms) across the listing's geographic neighborhood (default: 5km radius) or the whole city, so consumers can answer: - What segments dominate my market? - Which segment does my listing match best? - What's the ADR uplift for moving up a tier?  DNA coverage is still ramping — segments are scored asynchronously. Cities and radii without scored comps return `totalCompsAnalyzed: 0` plus a `low_dna_coverage` recommendation rather than fabricated data.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [Integer] 
     # @param [Hash] opts the optional parameters
     # @option opts [String] :level &#x60;comp_set&#x60; (default) restricts to a &#x60;radius_km&#x60; bbox. &#x60;market&#x60; aggregates across the whole city. (default to 'comp_set')
@@ -32,7 +32,7 @@ module Repull
     end
 
     # Atlas DNA segment intelligence for a listing
-    # Aggregates Atlas DNA segment signal (quality tier, design style, bedrooms) across the listing&#39;s geographic neighborhood (default: 5km radius) or the whole city, so consumers can answer: - What segments dominate my market? - Which segment does my listing match best? - What&#39;s the ADR uplift for moving up a tier?  DNA coverage is still ramping — segments are scored asynchronously. Cities and radii without scored comps return &#x60;totalCompsAnalyzed: 0&#x60; plus a &#x60;low_dna_coverage&#x60; recommendation rather than fabricated data.
+    # Aggregates Atlas DNA segment signal (quality tier, design style, bedrooms) across the listing&#39;s geographic neighborhood (default: 5km radius) or the whole city, so consumers can answer: - What segments dominate my market? - Which segment does my listing match best? - What&#39;s the ADR uplift for moving up a tier?  DNA coverage is still ramping — segments are scored asynchronously. Cities and radii without scored comps return &#x60;totalCompsAnalyzed: 0&#x60; plus a &#x60;low_dna_coverage&#x60; recommendation rather than fabricated data.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [Integer] 
     # @param [Hash] opts the optional parameters
     # @option opts [String] :level &#x60;comp_set&#x60; (default) restricts to a &#x60;radius_km&#x60; bbox. &#x60;market&#x60; aggregates across the whole city. (default to 'comp_set')
@@ -101,7 +101,7 @@ module Repull
     end
 
     # Comp set for a listing (with daily nightly pricing)
-    # Returns the actual comp set for a listing — the underlying competitor listings (with daily nightly pricing), not just the aggregated `compSummary` from `/pricing`. Each comp comes back with distance, bedrooms, ratings, lat/lng, platform link, and a per-day rate/availability series for the requested window.  Powered by Atlas. Comps with no coordinates are excluded — there's no way to rank them by distance. Listings without coordinates return `data: []` and a `warning` field.
+    # Returns the actual comp set for a listing — the underlying competitor listings (with daily nightly pricing), not just the aggregated `compSummary` from `/pricing`. Each comp comes back with distance, bedrooms, ratings, lat/lng, platform link, and a per-day rate/availability series for the requested window.  Powered by Atlas. Comps with no coordinates are excluded — there's no way to rank them by distance. Listings without coordinates return `data: []` and a `warning` field.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [Integer] 
     # @param [Hash] opts the optional parameters
     # @option opts [Float] :radius_km Bbox + haversine on lat/lng. Default 5, max 50. (default to 5)
@@ -115,7 +115,7 @@ module Repull
     end
 
     # Comp set for a listing (with daily nightly pricing)
-    # Returns the actual comp set for a listing — the underlying competitor listings (with daily nightly pricing), not just the aggregated &#x60;compSummary&#x60; from &#x60;/pricing&#x60;. Each comp comes back with distance, bedrooms, ratings, lat/lng, platform link, and a per-day rate/availability series for the requested window.  Powered by Atlas. Comps with no coordinates are excluded — there&#39;s no way to rank them by distance. Listings without coordinates return &#x60;data: []&#x60; and a &#x60;warning&#x60; field.
+    # Returns the actual comp set for a listing — the underlying competitor listings (with daily nightly pricing), not just the aggregated &#x60;compSummary&#x60; from &#x60;/pricing&#x60;. Each comp comes back with distance, bedrooms, ratings, lat/lng, platform link, and a per-day rate/availability series for the requested window.  Powered by Atlas. Comps with no coordinates are excluded — there&#39;s no way to rank them by distance. Listings without coordinates return &#x60;data: []&#x60; and a &#x60;warning&#x60; field.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [Integer] 
     # @param [Hash] opts the optional parameters
     # @option opts [Float] :radius_km Bbox + haversine on lat/lng. Default 5, max 50. (default to 5)

@@ -14,19 +14,23 @@ require 'date'
 require 'time'
 
 module Repull
-  # A single room→listing assignment. Pass `listingId: null` to explicitly UNMAP a room (e.g. \"skip this room for now\") — this also removes the corresponding `listing_platform_links` row.
+  # A single room→listing assignment. Pass `listingId: null` to explicitly UNMAP a room (e.g. \"skip this room for now\") — this also removes the corresponding `listing_platform_links` row. Pass `create: true` instead of a `listingId` to have a listing created for the room, which is what a customer onboarding from Booking.com first needs, since they have no listings to map to yet.
   class BookingRoomMapping < ApiModelBase
     # Repull-side `listings_booking_rooms.id` from `listConnectBookingRooms`.
     attr_accessor :room_id
 
-    # Repull listing to bind to this room. `null` to unmap.
+    # Repull listing to bind to this room. `null` to unmap. Omit when `create` is true.
     attr_accessor :listing_id
+
+    # Create a new listing for this room and map it, instead of binding an existing one. Mutually exclusive with `listingId` — sending both is rejected with 400 rather than silently resolved. Idempotent: a room that is already mapped keeps its existing listing and no duplicate is created.
+    attr_accessor :create
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
         :'room_id' => :'roomId',
-        :'listing_id' => :'listingId'
+        :'listing_id' => :'listingId',
+        :'create' => :'create'
       }
     end
 
@@ -44,14 +48,15 @@ module Repull
     def self.openapi_types
       {
         :'room_id' => :'String',
-        :'listing_id' => :'String'
+        :'listing_id' => :'String',
+        :'create' => :'Boolean'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
-        :'listing_id'
+        :'listing_id',
       ])
     end
 
@@ -79,6 +84,10 @@ module Repull
 
       if attributes.key?(:'listing_id')
         self.listing_id = attributes[:'listing_id']
+      end
+
+      if attributes.key?(:'create')
+        self.create = attributes[:'create']
       end
     end
 
@@ -118,7 +127,8 @@ module Repull
       return true if self.equal?(o)
       self.class == o.class &&
           room_id == o.room_id &&
-          listing_id == o.listing_id
+          listing_id == o.listing_id &&
+          create == o.create
     end
 
     # @see the `==` method
@@ -130,7 +140,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [room_id, listing_id].hash
+      [room_id, listing_id, create].hash
     end
 
     # Builds the object from hash

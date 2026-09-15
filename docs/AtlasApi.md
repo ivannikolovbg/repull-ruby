@@ -14,7 +14,7 @@ All URIs are relative to *https://api.repull.dev*
 
 Atlas DNA segment intelligence for a listing
 
-Aggregates Atlas DNA segment signal (quality tier, design style, bedrooms) across the listing's geographic neighborhood (default: 5km radius) or the whole city, so consumers can answer: - What segments dominate my market? - Which segment does my listing match best? - What's the ADR uplift for moving up a tier?  DNA coverage is still ramping — segments are scored asynchronously. Cities and radii without scored comps return `totalCompsAnalyzed: 0` plus a `low_dna_coverage` recommendation rather than fabricated data.
+Aggregates Atlas DNA segment signal (quality tier, design style, bedrooms) across the listing's geographic neighborhood (default: 5km radius) or the whole city, so consumers can answer: - What segments dominate my market? - Which segment does my listing match best? - What's the ADR uplift for moving up a tier?  DNA coverage is still ramping — segments are scored asynchronously. Cities and radii without scored comps return `totalCompsAnalyzed: 0` plus a `low_dna_coverage` recommendation rather than fabricated data.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -89,7 +89,7 @@ end
 
 Comp set for a listing (with daily nightly pricing)
 
-Returns the actual comp set for a listing — the underlying competitor listings (with daily nightly pricing), not just the aggregated `compSummary` from `/pricing`. Each comp comes back with distance, bedrooms, ratings, lat/lng, platform link, and a per-day rate/availability series for the requested window.  Powered by Atlas. Comps with no coordinates are excluded — there's no way to rank them by distance. Listings without coordinates return `data: []` and a `warning` field.
+Returns the actual comp set for a listing — the underlying competitor listings (with daily nightly pricing), not just the aggregated `compSummary` from `/pricing`. Each comp comes back with distance, bedrooms, ratings, lat/lng, platform link, and a per-day rate/availability series for the requested window.  Powered by Atlas. Comps with no coordinates are excluded — there's no way to rank them by distance. Listings without coordinates return `data: []` and a `warning` field.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 

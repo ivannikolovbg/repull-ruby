@@ -86,7 +86,7 @@ nil (empty response body)
 
 Get Plumguide availability
 
-Read the per-day availability calendar for a Plumguide listing. Returns the same row shape as Airbnb availability for SDK convenience.
+Read the per-day availability calendar for a Plumguide listing. Returns the same row shape as Airbnb availability for SDK convenience.  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -142,7 +142,7 @@ nil (empty response body)
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 
 ## get_plumguide_pricing
@@ -151,7 +151,7 @@ nil (empty response body)
 
 Get Plumguide pricing
 
-Read the current pricing for a Plumguide listing (base price, currency, weekend uplift).
+Read the current pricing for a Plumguide listing (base price, currency, weekend uplift).  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -207,7 +207,7 @@ nil (empty response body)
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 
 ## get_plumguide_webhooks
@@ -281,7 +281,7 @@ nil (empty response body)
 
 List Plumguide bookings
 
-List Plumguide bookings. Default returns all bookings; pass `listing_id` to filter to one listing, or `booking_code` to fetch a single booking.
+List Plumguide bookings. Default returns all bookings; pass `listing_id` to filter to one listing, or `booking_code` to fetch a single booking.  Returns `403 listing_inactive` when `listing_id` or `booking_code` resolves to an inactive listing. The unfiltered list is read straight from Plum Guide and is not filtered by listing status.
 
 ### Examples
 
@@ -419,7 +419,7 @@ This endpoint does not need any parameter.
 
 Push availability to Plumguide
 
-Push per-day availability changes to Plumguide. Plumguide accepts only the next 24 months — dates beyond that are silently ignored.
+Push per-day availability changes to Plumguide. Plumguide accepts only the next 24 months — dates beyond that are silently ignored.  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -475,7 +475,7 @@ nil (empty response body)
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 
 ## update_plumguide_pricing
@@ -484,7 +484,7 @@ nil (empty response body)
 
 Push pricing to Plumguide
 
-Push pricing changes to Plumguide. Plumguide rounds all prices to whole units of the listing currency — sub-unit precision is silently truncated.
+Push pricing changes to Plumguide. Plumguide rounds all prices to whole units of the listing currency — sub-unit precision is silently truncated.  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -540,7 +540,7 @@ nil (empty response body)
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 
 ## update_plumguide_webhooks

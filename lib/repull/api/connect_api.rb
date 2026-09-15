@@ -226,20 +226,22 @@ module Repull
     end
 
     # Disconnect provider
-    # Disconnect a PMS or OTA from this workspace.  Currently supported for `booking` only: drops the stored connection and stops syncing the mapped rooms. Resources already synced remain queryable but become read-only and stop receiving updates.  Every other provider returns `501 not_implemented` with instructions for disconnecting on the provider's side — Airbnb in particular has to be revoked by the host (Account → Privacy & sharing → Connected apps), because the OAuth grant lives outside this service. The endpoint used to report `200 { disconnected: true }` for every provider while doing nothing; it now tells you the truth.
+    # Disconnect ONE connected account of a provider from this workspace. Supported for `airbnb` and `booking`.  **Which account.** Pass `accountId` — for Airbnb the host id (`accounts[].externalAccountId` from `GET /v1/connect/airbnb`), for Booking.com the hotel id. It is optional only when the workspace has exactly one account for the provider. With several and no `accountId`, the call returns `422` with the account ids in `valid_values` instead of guessing. An `accountId` that is not connected to this workspace returns `404`. Disconnecting one account leaves the others connected.  **What happens.** The account's stored authorization is removed and it stops syncing. Its listings are **deactivated**, not deleted: they stop counting toward your plan's listing limit, their data is kept, and they are returned in `listingsDeactivated`. A listing that is still connected through another account or channel stays active. Reconnect the account, then activate the listings with `POST /v1/listings/status`.  The change is all or nothing. For Airbnb, the host can also revoke access on Airbnb's side (Account → Privacy & sharing → Connected apps); that alone does not update this workspace, so call this endpoint as well.  Other providers return `501 not_implemented` with instructions for disconnecting on the provider's side.
     # @param provider [String] PMS provider slug (e.g., hostaway, guesty, ownerrez)
     # @param [Hash] opts the optional parameters
-    # @return [nil]
+    # @option opts [String] :account_id The account to disconnect: the Airbnb host id (&#x60;accounts[].externalAccountId&#x60; on &#x60;GET /v1/connect/airbnb&#x60;) or the Booking.com hotel id. Required when the workspace has more than one connected account for the provider. Not the same as the &#x60;X-Account-Id&#x60; header.
+    # @return [DeleteConnection200Response]
     def delete_connection(provider, opts = {})
-      delete_connection_with_http_info(provider, opts)
-      nil
+      data, _status_code, _headers = delete_connection_with_http_info(provider, opts)
+      data
     end
 
     # Disconnect provider
-    # Disconnect a PMS or OTA from this workspace.  Currently supported for &#x60;booking&#x60; only: drops the stored connection and stops syncing the mapped rooms. Resources already synced remain queryable but become read-only and stop receiving updates.  Every other provider returns &#x60;501 not_implemented&#x60; with instructions for disconnecting on the provider&#39;s side — Airbnb in particular has to be revoked by the host (Account → Privacy &amp; sharing → Connected apps), because the OAuth grant lives outside this service. The endpoint used to report &#x60;200 { disconnected: true }&#x60; for every provider while doing nothing; it now tells you the truth.
+    # Disconnect ONE connected account of a provider from this workspace. Supported for &#x60;airbnb&#x60; and &#x60;booking&#x60;.  **Which account.** Pass &#x60;accountId&#x60; — for Airbnb the host id (&#x60;accounts[].externalAccountId&#x60; from &#x60;GET /v1/connect/airbnb&#x60;), for Booking.com the hotel id. It is optional only when the workspace has exactly one account for the provider. With several and no &#x60;accountId&#x60;, the call returns &#x60;422&#x60; with the account ids in &#x60;valid_values&#x60; instead of guessing. An &#x60;accountId&#x60; that is not connected to this workspace returns &#x60;404&#x60;. Disconnecting one account leaves the others connected.  **What happens.** The account&#39;s stored authorization is removed and it stops syncing. Its listings are **deactivated**, not deleted: they stop counting toward your plan&#39;s listing limit, their data is kept, and they are returned in &#x60;listingsDeactivated&#x60;. A listing that is still connected through another account or channel stays active. Reconnect the account, then activate the listings with &#x60;POST /v1/listings/status&#x60;.  The change is all or nothing. For Airbnb, the host can also revoke access on Airbnb&#39;s side (Account → Privacy &amp; sharing → Connected apps); that alone does not update this workspace, so call this endpoint as well.  Other providers return &#x60;501 not_implemented&#x60; with instructions for disconnecting on the provider&#39;s side.
     # @param provider [String] PMS provider slug (e.g., hostaway, guesty, ownerrez)
     # @param [Hash] opts the optional parameters
-    # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
+    # @option opts [String] :account_id The account to disconnect: the Airbnb host id (&#x60;accounts[].externalAccountId&#x60; on &#x60;GET /v1/connect/airbnb&#x60;) or the Booking.com hotel id. Required when the workspace has more than one connected account for the provider. Not the same as the &#x60;X-Account-Id&#x60; header.
+    # @return [Array<(DeleteConnection200Response, Integer, Hash)>] DeleteConnection200Response data, response status code and response headers
     def delete_connection_with_http_info(provider, opts = {})
       if @api_client.config.debugging
         @api_client.config.logger.debug 'Calling API: ConnectApi.delete_connection ...'
@@ -253,6 +255,7 @@ module Repull
 
       # query parameters
       query_params = opts[:query_params] || {}
+      query_params[:'accountId'] = opts[:'account_id'] if !opts[:'account_id'].nil?
 
       # header parameters
       header_params = opts[:header_params] || {}
@@ -266,7 +269,7 @@ module Repull
       post_body = opts[:debug_body]
 
       # return_type
-      return_type = opts[:debug_return_type]
+      return_type = opts[:debug_return_type] || 'DeleteConnection200Response'
 
       # auth_names
       auth_names = opts[:debug_auth_names] || ['bearerAuth']

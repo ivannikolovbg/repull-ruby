@@ -2,6 +2,31 @@
 
 All notable changes to the `repull` gem are documented here.
 
+## [0.2.14] - 2026-09-15
+
+### Added
+
+- **Regenerated against the live spec (174 → 175 operations).**
+- `ListingsApi#set_listings_status` — `POST /v1/listings/status`. Activate or deactivate up to 500 listings in one all-or-nothing call. New models `ListingStatusBatchRequest` (`listing_ids`, `active`) and `ListingStatusBatchResponse` (`active`, `updated`, `unchanged`).
+- `ConnectApi#delete_connection(provider, account_id: ...)` — optional `accountId` query param on `DELETE /v1/connect/{provider}`, required when a workspace has more than one account for the provider. Typed `DeleteConnection200Response` (`disconnected`, `provider`, `account_id`, `listings_deactivated`); the account's listings are deactivated, not deleted.
+- `ConnectStatus#accounts` (`ConnectStatusAccountsInner`) — every Airbnb account the workspace has connected.
+- New `403 listing_inactive` error response, declared on 83 operations.
+- Airbnb calendar operations gain `busy_subtype`; `AirbnbPricingWriteRequest` LOS `records` are now typed (`AirbnbPricingWriteRequestRecordsInner`).
+
+### Changed
+
+- Lists default to active listings: `GET /v1/listings` accepts `status=active|inactive|archived|all`, `GET /v1/properties` accepts `status=active|inactive|all`. Inactive rows carry identity fields only; reading or writing an inactive listing returns `403 listing_inactive`.
+- Airbnb calendar writes (`PUT .../pricing`, `PUT .../availability`) validate more strictly (unknown fields such as `price` are refused with `422 invalid_params`) and declare new errors: `422 airbnb_rejected`, `403 connection_reauth_required`, `429 airbnb_rate_limited`.
+- Sending `accessType` to `POST /v1/connect/airbnb` now locks the consent screen to that tier; omit it to let the host choose.
+
+### Deprecated
+
+- Booking.com webhooks endpoints (`GET`/`POST`/`DELETE /v1/channels/booking/webhooks`) are deprecated and always return `403`.
+
+### Fixed
+
+- Removed the stale generated `spec/api/ai_api_spec.rb`, which tested the long-removed `AIApi` and failed `rspec` on every run.
+
 ## [0.2.13] - 2026-09-11
 
 ### Fixed
