@@ -2,6 +2,32 @@
 
 All notable changes to the `repull` gem are documented here.
 
+## [0.2.15] - 2026-09-18
+
+### Added
+
+- **Regenerated against the live spec (175 → 191 operations).** New Airbnb listing content write surface, plus a manual pull-from-Airbnb operation.
+- **Airbnb booking settings** — `AirbnbApi#get_airbnb_booking_settings` / `#update_airbnb_booking_settings` (`GET`/`PUT /v1/channels/airbnb/listings/{id}/booking-settings`). Covers cancellation policy (including non-refundable), instant book, advance notice, booking window, check-in/check-out windows, and preparation time.
+- **Airbnb listing details** — `AirbnbApi#get_airbnb_listing_details` / `#update_airbnb_listing_details` (`GET`/`PUT .../details`). Property type, room type, quiet hours, check-in method, and the `lockedFields` Airbnb will not let this listing change.
+- **Airbnb permits** — `AirbnbApi#list_airbnb_listing_permits` / `#update_airbnb_listing_permits` (`GET`/`PUT .../permits`).
+- **Airbnb safety disclosures** — `AirbnbApi#list_airbnb_listing_safety_disclosures` / `#update_airbnb_listing_safety_disclosures` (`GET`/`PUT .../safety-disclosures`).
+- **Airbnb per-locale descriptions** — `AirbnbApi#update_airbnb_listing_descriptions` (`PUT .../descriptions`), for non-primary-locale content (the existing publish flow only pushes the primary locale).
+- **Airbnb photo management** — `AirbnbApi#update_airbnb_listing_photo` (`PATCH .../photos`), `#reorder_airbnb_listing_photos` (`PUT .../photos/order`), `#set_airbnb_listing_cover_photo` (`PUT .../photos/cover`).
+- **Airbnb rooms + amenities** — `AirbnbApi#update_airbnb_listing_room` (`PUT .../rooms`), `#update_airbnb_listing_amenities` (`PUT .../amenities`).
+- **Airbnb alteration cancel** — `AirbnbApi#cancel_airbnb_alteration` (`POST /v1/channels/airbnb/alterations/{id}/cancel`), alongside the existing accept/reject.
+- **Manual Airbnb pull** — `ListingsApi#pull_listing_from_airbnb` (`POST /v1/listings/{id}/pull/airbnb`), typed `ListingPullResponse`.
+- `?include=thumbnail` now works on **both** listing list endpoints — `ListingsApi#list_listings` and `AirbnbApi#list_airbnb_listings` — guaranteeing `thumbnailUrl` on every row, including reduced inactive ones.
+- `AirbnbConnection` gains `syncCategory` (Airbnb's own per-listing API sync decision — `sync_all` / `sync_rates_and_availability` / `none`) and `writable` (`false` exactly when `syncCategory` is `none`), plus `lockedFields`, `accountId`, `accountName`, `hostName` (`hostId`/`hostName` kept as compatibility aliases for `accountId`/`accountName`).
+- `AirbnbDataFreshness.accounts` (`AirbnbAccountFreshness`) — per-connected-account freshness verdict, so one disconnected host no longer marks the whole response stale (`stale` becomes `false` with `reason: partial_account_staleness` instead).
+- `Reservation.checkInTime` / `Reservation.checkOutTime` — local `HH:MM` check-in/check-out time in the property's own timezone.
+- New error code `listing_not_api_connected`, with `ErrorError.listingId` / `.airbnbListingId` / `.syncCategory` — returned when a write targets a listing Airbnb has not authorized for API sync.
+- Typed `AirbnbPublishResult.lockedFields` on the publish response.
+
+### BREAKING
+
+- `AirbnbApi#create_airbnb_alteration` request model renamed: `CreateAirbnbAlterationRequest` → `AirbnbAlterationCreateRequest`. The old class is removed.
+- `ListingsApi#publish_listing_to_airbnb` now returns the newly-typed `ListingPublishAirbnbResponse` instead of the generic `ListingPublishResponse`. (`ListingPublishResponse` itself is unchanged and still used by the non-Airbnb-specific publish endpoint.)
+
 ## [0.2.14] - 2026-09-15
 
 ### Added

@@ -22,8 +22,17 @@ module Repull
     # Airbnb-side listing id
     attr_accessor :airbnb_id
 
-    # Airbnb host user id
+    # Which connected Airbnb account this row belongs to — the Airbnb host id, as a string (they exceed 2^53). The same value `?account_id=` accepts and `GET /v1/connect/airbnb` returns as `accounts[].externalAccountId`.
+    attr_accessor :account_id
+
+    # Display name of that connected Airbnb account.
+    attr_accessor :account_name
+
+    # Alias of `accountId`, kept for compatibility — same Airbnb host id, same string.
     attr_accessor :host_id
+
+    # Alias of `accountName`, kept for compatibility.
+    attr_accessor :host_name
 
     attr_accessor :active
 
@@ -34,7 +43,16 @@ module Repull
     # Decimal markup (e.g. \"1.10\" for +10%).
     attr_accessor :markup
 
+    # Airbnb's own API sync decision for THIS listing, as Airbnb reports it. Airbnb authorises sync one listing at a time, so a connected account can still contain listings it will not accept writes for.  - `sync_all` — Repull manages content, rates and availability. - `sync_rates_and_availability` — Repull manages rates and availability; listing content is managed by the host on Airbnb. - `none` — the listing is **not** connected to Repull on Airbnb's side. Every write to it is refused with `403 listing_not_api_connected`; reconnecting the Airbnb account does not change this, the host must switch the listing on in Airbnb.  `null` when the listing has not synced yet. Not to be confused with `syncEnabled`, which is a Repull-side flag and says nothing about what Airbnb accepts.
+    attr_accessor :sync_category
+
+    # Whether Repull will send a write for this listing to Airbnb. `false` exactly when `syncCategory` is `none` — such a write is refused with `403 listing_not_api_connected` before anything reaches Airbnb. Check this before a portfolio-wide push instead of discovering it one 403 at a time.
+    attr_accessor :writable
+
     attr_accessor :created_at
+
+    # Fields Airbnb will NOT let you change on this listing — `property_type_category`, `name`, `check_in_option`, `summary`, `space`, individual amenities, … Airbnb does not refuse a write to a locked field: it returns 200, reports the field as locked, and applies nothing. Check this before a content write; `[]` means nothing is known to be locked. Recorded at sync time, so a lock added on Airbnb since the last sync will show up on the write instead (as `blockedFields` in the response).
+    attr_accessor :locked_fields
 
     # Present only when `?include=amenities` is passed. Sourced from the local `listings_airbnb_amenities` cache (populated by the Airbnb sync worker). Returns `null` when the cache is empty for this connection — see the top-level `dataFreshness` envelope to disambiguate \"never synced\" vs \"host disconnected\" vs \"fresh and genuinely empty\".
     attr_accessor :amenities
@@ -47,12 +65,18 @@ module Repull
       {
         :'id' => :'id',
         :'airbnb_id' => :'airbnbId',
+        :'account_id' => :'accountId',
+        :'account_name' => :'accountName',
         :'host_id' => :'hostId',
+        :'host_name' => :'hostName',
         :'active' => :'active',
         :'sync_enabled' => :'syncEnabled',
         :'primary' => :'primary',
         :'markup' => :'markup',
+        :'sync_category' => :'syncCategory',
+        :'writable' => :'writable',
         :'created_at' => :'createdAt',
+        :'locked_fields' => :'lockedFields',
         :'amenities' => :'amenities',
         :'accessibility_amenities' => :'accessibility_amenities'
       }
@@ -73,12 +97,18 @@ module Repull
       {
         :'id' => :'String',
         :'airbnb_id' => :'String',
+        :'account_id' => :'String',
+        :'account_name' => :'String',
         :'host_id' => :'String',
+        :'host_name' => :'String',
         :'active' => :'Boolean',
         :'sync_enabled' => :'Boolean',
         :'primary' => :'Boolean',
         :'markup' => :'String',
+        :'sync_category' => :'String',
+        :'writable' => :'Boolean',
         :'created_at' => :'Time',
+        :'locked_fields' => :'Array<String>',
         :'amenities' => :'Array<AirbnbConnectionAmenitiesInner>',
         :'accessibility_amenities' => :'Array<AirbnbConnectionAccessibilityAmenitiesInner>'
       }
@@ -87,7 +117,12 @@ module Repull
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'account_id',
+        :'account_name',
+        :'host_id',
+        :'host_name',
         :'markup',
+        :'sync_category',
         :'amenities',
         :'accessibility_amenities'
       ])
@@ -117,8 +152,20 @@ module Repull
         self.airbnb_id = attributes[:'airbnb_id']
       end
 
+      if attributes.key?(:'account_id')
+        self.account_id = attributes[:'account_id']
+      end
+
+      if attributes.key?(:'account_name')
+        self.account_name = attributes[:'account_name']
+      end
+
       if attributes.key?(:'host_id')
         self.host_id = attributes[:'host_id']
+      end
+
+      if attributes.key?(:'host_name')
+        self.host_name = attributes[:'host_name']
       end
 
       if attributes.key?(:'active')
@@ -137,8 +184,22 @@ module Repull
         self.markup = attributes[:'markup']
       end
 
+      if attributes.key?(:'sync_category')
+        self.sync_category = attributes[:'sync_category']
+      end
+
+      if attributes.key?(:'writable')
+        self.writable = attributes[:'writable']
+      end
+
       if attributes.key?(:'created_at')
         self.created_at = attributes[:'created_at']
+      end
+
+      if attributes.key?(:'locked_fields')
+        if (value = attributes[:'locked_fields']).is_a?(Array)
+          self.locked_fields = value
+        end
       end
 
       if attributes.key?(:'amenities')
@@ -176,12 +237,18 @@ module Repull
       self.class == o.class &&
           id == o.id &&
           airbnb_id == o.airbnb_id &&
+          account_id == o.account_id &&
+          account_name == o.account_name &&
           host_id == o.host_id &&
+          host_name == o.host_name &&
           active == o.active &&
           sync_enabled == o.sync_enabled &&
           primary == o.primary &&
           markup == o.markup &&
+          sync_category == o.sync_category &&
+          writable == o.writable &&
           created_at == o.created_at &&
+          locked_fields == o.locked_fields &&
           amenities == o.amenities &&
           accessibility_amenities == o.accessibility_amenities
     end
@@ -195,7 +262,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, airbnb_id, host_id, active, sync_enabled, primary, markup, created_at, amenities, accessibility_amenities].hash
+      [id, airbnb_id, account_id, account_name, host_id, host_name, active, sync_enabled, primary, markup, sync_category, writable, created_at, locked_fields, amenities, accessibility_amenities].hash
     end
 
     # Builds the object from hash

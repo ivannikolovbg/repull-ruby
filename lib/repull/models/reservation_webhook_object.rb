@@ -14,7 +14,7 @@ require 'date'
 require 'time'
 
 module Repull
-  # Lightweight reservation snapshot delivered as `data.object` on every reservation webhook event. Stable across `reservation.created`, `reservation.updated`, and `reservation.cancelled`. Fetch the full reservation via `GET /v1/reservations/{id}` if you need pricing, guest contact info, or audit history — those are deliberately omitted to keep deliveries small.
+  # Lightweight reservation snapshot delivered as `data.object` on every reservation webhook event. Stable across `reservation.created`, `reservation.updated`, and `reservation.cancelled`. Fetch the full reservation via `GET /v1/reservations/{id}` if you need pricing, guest contact info, or audit history — those are deliberately omitted to keep deliveries small.  **Stay terms are the one exception to that rule.** `cancellationPolicy`, `checkInTime` and `checkOutTime` ride on every delivery, because the decisions they drive — is a refund owed, when can housekeeping turn the unit over — are made at the moment the webhook lands, not on a follow-up fetch. They are operational parameters of the booking, not contact or payment data. Guest email, payment method and payment reference stay off the snapshot; see `GET /v1/reservations/{id}`.  All three are `null` when the source channel did not supply them. They are never defaulted: a fabricated policy is worse than a missing one.
   class ReservationWebhookObject < ApiModelBase
     # Repull-internal reservation id. Pass to `GET /v1/reservations/{id}`.
     attr_accessor :id
@@ -40,6 +40,15 @@ module Repull
     # Lifecycle status — typically `confirmed`, `cancelled`, `pending`, `inquiry`.
     attr_accessor :status
 
+    # Cancellation policy the booking was made under, **verbatim from the source channel** — not normalised, because the codes do not mean the same thing across channels.  - Airbnb, Vrbo, direct and owner bookings carry a named code: `flexible`, `moderate`, `firm_14`, `strict_14_with_grace_period`, `better_strict_with_grace_period`, `super_strict_30`, `super_strict_60`, `tiered_pricing_non_refundable`, `long_term_flexible`, `flexible_new`. - **Booking.com carries its numeric policy id as a string** (`\"1\"`, `\"74\"`, `\"121\"`). It is not self-describing — resolve it against the property's policy set on Booking.com.  `null` when the channel supplied none (iCal-imported bookings, some legacy direct rows).
+    attr_accessor :cancellation_policy
+
+    # Local check-in time, `HH:MM` on a 24-hour clock in the **property's own timezone** — not UTC, and not the subscriber's. Usually inherited from the listing policy, but per-reservation where the channel or an agreed early check-in overrides it. `null` when unknown.
+    attr_accessor :check_in_time
+
+    # Local check-out time, `HH:MM` on a 24-hour clock in the property's own timezone. Pair it with `checkoutDate` to schedule the turnover. `null` when unknown.
+    attr_accessor :check_out_time
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
@@ -50,7 +59,10 @@ module Repull
         :'customer_id' => :'customerId',
         :'checkin_date' => :'checkinDate',
         :'checkout_date' => :'checkoutDate',
-        :'status' => :'status'
+        :'status' => :'status',
+        :'cancellation_policy' => :'cancellationPolicy',
+        :'check_in_time' => :'checkInTime',
+        :'check_out_time' => :'checkOutTime'
       }
     end
 
@@ -74,13 +86,19 @@ module Repull
         :'customer_id' => :'Integer',
         :'checkin_date' => :'Date',
         :'checkout_date' => :'Date',
-        :'status' => :'String'
+        :'status' => :'String',
+        :'cancellation_policy' => :'String',
+        :'check_in_time' => :'String',
+        :'check_out_time' => :'String'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'cancellation_policy',
+        :'check_in_time',
+        :'check_out_time'
       ])
     end
 
@@ -146,6 +164,18 @@ module Repull
         self.status = attributes[:'status']
       else
         self.status = nil
+      end
+
+      if attributes.key?(:'cancellation_policy')
+        self.cancellation_policy = attributes[:'cancellation_policy']
+      end
+
+      if attributes.key?(:'check_in_time')
+        self.check_in_time = attributes[:'check_in_time']
+      end
+
+      if attributes.key?(:'check_out_time')
+        self.check_out_time = attributes[:'check_out_time']
       end
     end
 
@@ -296,7 +326,10 @@ module Repull
           customer_id == o.customer_id &&
           checkin_date == o.checkin_date &&
           checkout_date == o.checkout_date &&
-          status == o.status
+          status == o.status &&
+          cancellation_policy == o.cancellation_policy &&
+          check_in_time == o.check_in_time &&
+          check_out_time == o.check_out_time
     end
 
     # @see the `==` method
@@ -308,7 +341,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, uid, channel, listing_id, customer_id, checkin_date, checkout_date, status].hash
+      [id, uid, channel, listing_id, customer_id, checkin_date, checkout_date, status, cancellation_policy, check_in_time, check_out_time].hash
     end
 
     # Builds the object from hash

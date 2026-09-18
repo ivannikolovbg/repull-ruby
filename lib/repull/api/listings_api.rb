@@ -564,16 +564,16 @@ module Repull
     end
 
     # List listings
-    # Cursor-paginated list of listings owned by the authenticated workspace. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request to walk the full set. `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) — see the `offset` parameter below. Mutually exclusive with `cursor`. Filters: `q` (substring on name/street/city), `status`, `channel`.  **Optional expansions:** Pass `?include=content` to enrich each row with the rich content slab (summary, description, space, house rules, etc. — sourced from `listings_descriptions` for the `en` locale). Pass `?include=details` for the structural slab (bedrooms, bathrooms, person capacity, check-in window, wifi, house manual, etc.). Both default to `null` per row when the underlying `listings_descriptions` / `listings_details` row is missing — distinct from the field being absent (which signals the expansion was not requested). Combine comma-separated, e.g. `?include=content,details`. The default response stays lean; consumers must opt in.  **Inactive listings:** by default only active listings are returned. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated, so when `status` asks for inactive ones they carry only `id`, `name`, `status` and `channels` — enough to choose what to activate with `PATCH /v1/listings/{id}`. `?include=` expansions are not applied to them.
+    # Cursor-paginated list of listings owned by the authenticated workspace. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request to walk the full set. `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) — see the `offset` parameter below. Mutually exclusive with `cursor`. Filters: `q` (substring on name/street/city), `status`, `channel`.  **Optional expansions:** Pass `?include=content` to enrich each row with the rich content slab (summary, description, space, house rules, etc. — sourced from `listings_descriptions` for the `en` locale). Pass `?include=details` for the structural slab (bedrooms, bathrooms, person capacity, check-in window, wifi, house manual, etc.). Both default to `null` per row when the underlying `listings_descriptions` / `listings_details` row is missing — distinct from the field being absent (which signals the expansion was not requested). Pass `?include=thumbnail` to guarantee `thumbnailUrl` on every returned row — including the reduced inactive ones. Combine comma-separated, e.g. `?include=content,thumbnail`. The default response stays lean; consumers must opt in.  **Inactive listings:** by default only active listings are returned. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated, so when `status` asks for inactive ones they carry only `id`, `name`, `status` and `channels` — enough to choose what to activate with `PATCH /v1/listings/{id}`. The `content` and `details` expansions are not applied to them. `?include=thumbnail` is the one exception: it adds `thumbnailUrl` to an inactive row so a single request can render an active/inactive selection screen with pictures, instead of one follow-up call per listing (which an inactive listing would answer with `403 listing_inactive` anyway).
     # @param [Hash] opts the optional parameters
     # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
     # @option opts [String] :cursor Opaque cursor returned in the previous response&#39;s &#x60;pagination.nextCursor&#x60;. Omit to fetch the first page.
     # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.nextCursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
     # @option opts [Integer] :limit Max items per page. Hard cap is 100. (default to 20)
     # @option opts [String] :q Case-insensitive substring search on name, street, or city.
-    # @option opts [String] :status Filter by listing status. Defaults to &#x60;active&#x60;. Pass &#x60;inactive&#x60; to list the listings you can activate, &#x60;archived&#x60; for archived ones, or &#x60;all&#x60; for every status. Inactive listings are returned with identity fields only — &#x60;id&#x60;, &#x60;name&#x60;, &#x60;status&#x60; and &#x60;channels&#x60; — and never with &#x60;address&#x60;, &#x60;thumbnailUrl&#x60;, &#x60;content&#x60; or &#x60;details&#x60;; activate one to see the rest. (default to 'active')
+    # @option opts [String] :status Filter by listing status. Defaults to &#x60;active&#x60;. Pass &#x60;inactive&#x60; to list the listings you can activate, &#x60;archived&#x60; for archived ones, or &#x60;all&#x60; for every status. Inactive listings are returned with identity fields only — &#x60;id&#x60;, &#x60;name&#x60;, &#x60;status&#x60; and &#x60;channels&#x60; — and never with &#x60;address&#x60;, &#x60;content&#x60; or &#x60;details&#x60;; activate one to see the rest. The only field you can add to an inactive row is &#x60;thumbnailUrl&#x60;, via &#x60;?include&#x3D;thumbnail&#x60;. (default to 'active')
     # @option opts [String] :channel Restrict to listings published on the given channel (&#x60;airbnb&#x60;, &#x60;booking&#x60;, &#x60;vrbo&#x60;, etc.). Joins through &#x60;listing_platform_links&#x60; and matches active links only.
-    # @option opts [String] :include Comma-separated optional expansions. Currently supported: &#x60;content&#x60;, &#x60;details&#x60;. Unknown values return 422 with a &#x60;valid_values&#x60; envelope. (Note: &#x60;amenities&#x60; is not yet supported on the list endpoint — use the detail endpoint to fetch amenity rows for a single listing.)
+    # @option opts [String] :include Comma-separated optional expansions. Currently supported: &#x60;content&#x60;, &#x60;details&#x60;, &#x60;thumbnail&#x60;. &#x60;thumbnail&#x60; guarantees &#x60;thumbnailUrl&#x60; on every row and is the only expansion that applies to inactive listings. Unknown values return 422 with a &#x60;valid_values&#x60; envelope. (Note: &#x60;amenities&#x60; is not yet supported on the list endpoint — use the detail endpoint to fetch amenity rows for a single listing.)
     # @return [ListingListResponse]
     def list_listings(opts = {})
       data, _status_code, _headers = list_listings_with_http_info(opts)
@@ -581,16 +581,16 @@ module Repull
     end
 
     # List listings
-    # Cursor-paginated list of listings owned by the authenticated workspace. Use &#x60;pagination.nextCursor&#x60; from one response as the &#x60;cursor&#x60; query param of the next request to walk the full set. &#x60;?offset&#x3D;&#x60; is also accepted as a first-class alias for shallow paging (0..10000) — see the &#x60;offset&#x60; parameter below. Mutually exclusive with &#x60;cursor&#x60;. Filters: &#x60;q&#x60; (substring on name/street/city), &#x60;status&#x60;, &#x60;channel&#x60;.  **Optional expansions:** Pass &#x60;?include&#x3D;content&#x60; to enrich each row with the rich content slab (summary, description, space, house rules, etc. — sourced from &#x60;listings_descriptions&#x60; for the &#x60;en&#x60; locale). Pass &#x60;?include&#x3D;details&#x60; for the structural slab (bedrooms, bathrooms, person capacity, check-in window, wifi, house manual, etc.). Both default to &#x60;null&#x60; per row when the underlying &#x60;listings_descriptions&#x60; / &#x60;listings_details&#x60; row is missing — distinct from the field being absent (which signals the expansion was not requested). Combine comma-separated, e.g. &#x60;?include&#x3D;content,details&#x60;. The default response stays lean; consumers must opt in.  **Inactive listings:** by default only active listings are returned. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated, so when &#x60;status&#x60; asks for inactive ones they carry only &#x60;id&#x60;, &#x60;name&#x60;, &#x60;status&#x60; and &#x60;channels&#x60; — enough to choose what to activate with &#x60;PATCH /v1/listings/{id}&#x60;. &#x60;?include&#x3D;&#x60; expansions are not applied to them.
+    # Cursor-paginated list of listings owned by the authenticated workspace. Use &#x60;pagination.nextCursor&#x60; from one response as the &#x60;cursor&#x60; query param of the next request to walk the full set. &#x60;?offset&#x3D;&#x60; is also accepted as a first-class alias for shallow paging (0..10000) — see the &#x60;offset&#x60; parameter below. Mutually exclusive with &#x60;cursor&#x60;. Filters: &#x60;q&#x60; (substring on name/street/city), &#x60;status&#x60;, &#x60;channel&#x60;.  **Optional expansions:** Pass &#x60;?include&#x3D;content&#x60; to enrich each row with the rich content slab (summary, description, space, house rules, etc. — sourced from &#x60;listings_descriptions&#x60; for the &#x60;en&#x60; locale). Pass &#x60;?include&#x3D;details&#x60; for the structural slab (bedrooms, bathrooms, person capacity, check-in window, wifi, house manual, etc.). Both default to &#x60;null&#x60; per row when the underlying &#x60;listings_descriptions&#x60; / &#x60;listings_details&#x60; row is missing — distinct from the field being absent (which signals the expansion was not requested). Pass &#x60;?include&#x3D;thumbnail&#x60; to guarantee &#x60;thumbnailUrl&#x60; on every returned row — including the reduced inactive ones. Combine comma-separated, e.g. &#x60;?include&#x3D;content,thumbnail&#x60;. The default response stays lean; consumers must opt in.  **Inactive listings:** by default only active listings are returned. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated, so when &#x60;status&#x60; asks for inactive ones they carry only &#x60;id&#x60;, &#x60;name&#x60;, &#x60;status&#x60; and &#x60;channels&#x60; — enough to choose what to activate with &#x60;PATCH /v1/listings/{id}&#x60;. The &#x60;content&#x60; and &#x60;details&#x60; expansions are not applied to them. &#x60;?include&#x3D;thumbnail&#x60; is the one exception: it adds &#x60;thumbnailUrl&#x60; to an inactive row so a single request can render an active/inactive selection screen with pictures, instead of one follow-up call per listing (which an inactive listing would answer with &#x60;403 listing_inactive&#x60; anyway).
     # @param [Hash] opts the optional parameters
     # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
     # @option opts [String] :cursor Opaque cursor returned in the previous response&#39;s &#x60;pagination.nextCursor&#x60;. Omit to fetch the first page.
     # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.nextCursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
     # @option opts [Integer] :limit Max items per page. Hard cap is 100. (default to 20)
     # @option opts [String] :q Case-insensitive substring search on name, street, or city.
-    # @option opts [String] :status Filter by listing status. Defaults to &#x60;active&#x60;. Pass &#x60;inactive&#x60; to list the listings you can activate, &#x60;archived&#x60; for archived ones, or &#x60;all&#x60; for every status. Inactive listings are returned with identity fields only — &#x60;id&#x60;, &#x60;name&#x60;, &#x60;status&#x60; and &#x60;channels&#x60; — and never with &#x60;address&#x60;, &#x60;thumbnailUrl&#x60;, &#x60;content&#x60; or &#x60;details&#x60;; activate one to see the rest. (default to 'active')
+    # @option opts [String] :status Filter by listing status. Defaults to &#x60;active&#x60;. Pass &#x60;inactive&#x60; to list the listings you can activate, &#x60;archived&#x60; for archived ones, or &#x60;all&#x60; for every status. Inactive listings are returned with identity fields only — &#x60;id&#x60;, &#x60;name&#x60;, &#x60;status&#x60; and &#x60;channels&#x60; — and never with &#x60;address&#x60;, &#x60;content&#x60; or &#x60;details&#x60;; activate one to see the rest. The only field you can add to an inactive row is &#x60;thumbnailUrl&#x60;, via &#x60;?include&#x3D;thumbnail&#x60;. (default to 'active')
     # @option opts [String] :channel Restrict to listings published on the given channel (&#x60;airbnb&#x60;, &#x60;booking&#x60;, &#x60;vrbo&#x60;, etc.). Joins through &#x60;listing_platform_links&#x60; and matches active links only.
-    # @option opts [String] :include Comma-separated optional expansions. Currently supported: &#x60;content&#x60;, &#x60;details&#x60;. Unknown values return 422 with a &#x60;valid_values&#x60; envelope. (Note: &#x60;amenities&#x60; is not yet supported on the list endpoint — use the detail endpoint to fetch amenity rows for a single listing.)
+    # @option opts [String] :include Comma-separated optional expansions. Currently supported: &#x60;content&#x60;, &#x60;details&#x60;, &#x60;thumbnail&#x60;. &#x60;thumbnail&#x60; guarantees &#x60;thumbnailUrl&#x60; on every row and is the only expansion that applies to inactive listings. Unknown values return 422 with a &#x60;valid_values&#x60; envelope. (Note: &#x60;amenities&#x60; is not yet supported on the list endpoint — use the detail endpoint to fetch amenity rows for a single listing.)
     # @return [Array<(ListingListResponse, Integer, Hash)>] ListingListResponse data, response status code and response headers
     def list_listings_with_http_info(opts = {})
       if @api_client.config.debugging
@@ -665,22 +665,24 @@ module Repull
     end
 
     # Publish a listing to Airbnb
-    # Push a Repull listing to Airbnb. Pass `airbnbConnectionId` to update an already-mapped Airbnb listing, or `hostId` to create a brand-new Airbnb listing under that host.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # Push a Repull listing's canonical content to Airbnb. Pass `airbnbConnectionId` to update an already-mapped Airbnb listing, or `hostId` to create a brand-new Airbnb listing under that host.  **A publish is not one call to Airbnb.** It is up to eight independent ones — details, description, amenities, rooms, policies, photos, pricing, checkout_tasks — and each can fail on its own. `result.published` is true only when every attempted section landed; `result.sections` lists the ones that did and `result.errors[]` carries Airbnb's own reason, per section, for the ones that did not. **A partial publish is normal and is not rolled back**: what succeeded stays applied. Publish again once you have fixed the failing sections — a re-publish of an unchanged section is harmless.  `result.lockedFields` names the fields Airbnb will not let this listing change at all. They are not retryable by anyone: Airbnb answers 200 and applies nothing. `GET /v1/channels/airbnb/listings/{id}` reports the same list up front.  **Which fields this pushes** — title, description sections and house rules (English/primary locale), amenities, rooms and beds, photos, nightly price and fees, cancellation policy and guest controls, check-in/out times, quiet hours, property and room type, checkout tasks. **Not pushed by this endpoint:** non-primary locales (`PUT /v1/channels/airbnb/listings/{id}/descriptions`), guest-safety disclosures (`PUT …/safety-disclosures`), check-in method (`PUT …/details`), permits (`PUT …/permits`), and the calendar (`PUT …/availability`).  `force: true` re-pushes every section, ignoring dirty-field tracking. Without it only the sections changed since the last successful publish are sent.  Send `Idempotency-Key` to make a retry safe: a timeout on a publish otherwise leaves you unable to tell whether it ran.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [Integer] 
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable.
     # @option opts [ListingPublishAirbnbRequest] :listing_publish_airbnb_request 
-    # @return [ListingPublishResponse]
+    # @return [ListingPublishAirbnbResponse]
     def publish_listing_to_airbnb(id, opts = {})
       data, _status_code, _headers = publish_listing_to_airbnb_with_http_info(id, opts)
       data
     end
 
     # Publish a listing to Airbnb
-    # Push a Repull listing to Airbnb. Pass &#x60;airbnbConnectionId&#x60; to update an already-mapped Airbnb listing, or &#x60;hostId&#x60; to create a brand-new Airbnb listing under that host.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # Push a Repull listing&#39;s canonical content to Airbnb. Pass &#x60;airbnbConnectionId&#x60; to update an already-mapped Airbnb listing, or &#x60;hostId&#x60; to create a brand-new Airbnb listing under that host.  **A publish is not one call to Airbnb.** It is up to eight independent ones — details, description, amenities, rooms, policies, photos, pricing, checkout_tasks — and each can fail on its own. &#x60;result.published&#x60; is true only when every attempted section landed; &#x60;result.sections&#x60; lists the ones that did and &#x60;result.errors[]&#x60; carries Airbnb&#39;s own reason, per section, for the ones that did not. **A partial publish is normal and is not rolled back**: what succeeded stays applied. Publish again once you have fixed the failing sections — a re-publish of an unchanged section is harmless.  &#x60;result.lockedFields&#x60; names the fields Airbnb will not let this listing change at all. They are not retryable by anyone: Airbnb answers 200 and applies nothing. &#x60;GET /v1/channels/airbnb/listings/{id}&#x60; reports the same list up front.  **Which fields this pushes** — title, description sections and house rules (English/primary locale), amenities, rooms and beds, photos, nightly price and fees, cancellation policy and guest controls, check-in/out times, quiet hours, property and room type, checkout tasks. **Not pushed by this endpoint:** non-primary locales (&#x60;PUT /v1/channels/airbnb/listings/{id}/descriptions&#x60;), guest-safety disclosures (&#x60;PUT …/safety-disclosures&#x60;), check-in method (&#x60;PUT …/details&#x60;), permits (&#x60;PUT …/permits&#x60;), and the calendar (&#x60;PUT …/availability&#x60;).  &#x60;force: true&#x60; re-pushes every section, ignoring dirty-field tracking. Without it only the sections changed since the last successful publish are sent.  Send &#x60;Idempotency-Key&#x60; to make a retry safe: a timeout on a publish otherwise leaves you unable to tell whether it ran.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [Integer] 
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable.
     # @option opts [ListingPublishAirbnbRequest] :listing_publish_airbnb_request 
-    # @return [Array<(ListingPublishResponse, Integer, Hash)>] ListingPublishResponse data, response status code and response headers
+    # @return [Array<(ListingPublishAirbnbResponse, Integer, Hash)>] ListingPublishAirbnbResponse data, response status code and response headers
     def publish_listing_to_airbnb_with_http_info(id, opts = {})
       if @api_client.config.debugging
         @api_client.config.logger.debug 'Calling API: ListingsApi.publish_listing_to_airbnb ...'
@@ -689,6 +691,10 @@ module Repull
       if @api_client.config.client_side_validation && id.nil?
         fail ArgumentError, "Missing the required parameter 'id' when calling ListingsApi.publish_listing_to_airbnb"
       end
+      if @api_client.config.client_side_validation && !opts[:'idempotency_key'].nil? && opts[:'idempotency_key'].to_s.length > 255
+        fail ArgumentError, 'invalid value for "opts[:"idempotency_key"]" when calling ListingsApi.publish_listing_to_airbnb, the character length must be smaller than or equal to 255.'
+      end
+
       # resource path
       local_var_path = '/v1/listings/{id}/publish/airbnb'.sub('{id}', CGI.escape(id.to_s))
 
@@ -704,6 +710,7 @@ module Repull
       if !content_type.nil?
           header_params['Content-Type'] = content_type
       end
+      header_params[:'Idempotency-Key'] = opts[:'idempotency_key'] if !opts[:'idempotency_key'].nil?
 
       # form parameters
       form_params = opts[:form_params] || {}
@@ -712,7 +719,7 @@ module Repull
       post_body = opts[:debug_body] || @api_client.object_to_http_body(opts[:'listing_publish_airbnb_request'])
 
       # return_type
-      return_type = opts[:debug_return_type] || 'ListingPublishResponse'
+      return_type = opts[:debug_return_type] || 'ListingPublishAirbnbResponse'
 
       # auth_names
       auth_names = opts[:debug_auth_names] || ['bearerAuth']
@@ -793,6 +800,76 @@ module Repull
       data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: ListingsApi#publish_listing_to_booking\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Refresh a listing from Airbnb
+    # Re-read this listing from Airbnb and update your stored copy, then report what was refreshed and when. The mirror image of `POST /v1/listings/{id}/publish/airbnb`.  Every other Airbnb read on this API is served from our database. This endpoint is the one that goes and asks Airbnb — use it after a push, to see the values Airbnb actually kept, or when a host has changed something in the Airbnb app.  **What it refreshes:** basic listing facts (property type, bedrooms, beds, bathrooms, capacity), descriptions, photos, rooms and beds, amenities, booking settings (check-in/check-out windows, guest controls, cancellation policy), stay rules (min/max nights, advance-booking window, turnover buffer), pricing settings and standard fees, permits, checkout tasks and the check-in guide. After it returns, those values are what `GET /v1/listings/{id}?include=content,details` and the `/v1/channels/airbnb/**` routes serve.  **What it does NOT refresh:** the calendar (nightly rates and availability — see `GET /v1/channels/airbnb/listings/{id}/availability`), reservations, messages, reviews or payouts. Those arrive continuously through the channel's own sync and never need a manual pull.  **Runs synchronously** — the response is the result, not a job id. Expect several seconds.  **One pull per listing per 15 minutes.** A pull is roughly a dozen Airbnb calls; a second call inside the window returns `429 rate_limit_exceeded` with `Retry-After` and `nextPullAvailableAt`, and makes no Airbnb calls. Two simultaneous calls cannot both run.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # @param id [Integer] 
+    # @param [Hash] opts the optional parameters
+    # @option opts [ListingPullAirbnbRequest] :listing_pull_airbnb_request 
+    # @return [ListingPullResponse]
+    def pull_listing_from_airbnb(id, opts = {})
+      data, _status_code, _headers = pull_listing_from_airbnb_with_http_info(id, opts)
+      data
+    end
+
+    # Refresh a listing from Airbnb
+    # Re-read this listing from Airbnb and update your stored copy, then report what was refreshed and when. The mirror image of &#x60;POST /v1/listings/{id}/publish/airbnb&#x60;.  Every other Airbnb read on this API is served from our database. This endpoint is the one that goes and asks Airbnb — use it after a push, to see the values Airbnb actually kept, or when a host has changed something in the Airbnb app.  **What it refreshes:** basic listing facts (property type, bedrooms, beds, bathrooms, capacity), descriptions, photos, rooms and beds, amenities, booking settings (check-in/check-out windows, guest controls, cancellation policy), stay rules (min/max nights, advance-booking window, turnover buffer), pricing settings and standard fees, permits, checkout tasks and the check-in guide. After it returns, those values are what &#x60;GET /v1/listings/{id}?include&#x3D;content,details&#x60; and the &#x60;/v1/channels/airbnb/**&#x60; routes serve.  **What it does NOT refresh:** the calendar (nightly rates and availability — see &#x60;GET /v1/channels/airbnb/listings/{id}/availability&#x60;), reservations, messages, reviews or payouts. Those arrive continuously through the channel&#39;s own sync and never need a manual pull.  **Runs synchronously** — the response is the result, not a job id. Expect several seconds.  **One pull per listing per 15 minutes.** A pull is roughly a dozen Airbnb calls; a second call inside the window returns &#x60;429 rate_limit_exceeded&#x60; with &#x60;Retry-After&#x60; and &#x60;nextPullAvailableAt&#x60;, and makes no Airbnb calls. Two simultaneous calls cannot both run.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # @param id [Integer] 
+    # @param [Hash] opts the optional parameters
+    # @option opts [ListingPullAirbnbRequest] :listing_pull_airbnb_request 
+    # @return [Array<(ListingPullResponse, Integer, Hash)>] ListingPullResponse data, response status code and response headers
+    def pull_listing_from_airbnb_with_http_info(id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ListingsApi.pull_listing_from_airbnb ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling ListingsApi.pull_listing_from_airbnb"
+      end
+      # resource path
+      local_var_path = '/v1/listings/{id}/pull/airbnb'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(opts[:'listing_pull_airbnb_request'])
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'ListingPullResponse'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"ListingsApi.pull_listing_from_airbnb",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ListingsApi#pull_listing_from_airbnb\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end
@@ -940,10 +1017,11 @@ module Repull
     end
 
     # Update canonical listing content
-    # Write your PMS's canonical listing content — title, description, amenities, address, occupancy, and policies — into a Repull listing, making it the source of truth. This is the flagship \"the PMS owns listing content, Repull distributes it\" enabler.  **Partial update:** every field is optional. Only the fields you send are written; absent fields are left untouched. `amenities` is a FULL replacement of the amenity set (omit to leave untouched, send `[]` to clear).  **Local write only — NOT a channel publish.** This mutates Repull's own copy of the content. It does NOT push to Airbnb / Booking.com; it marks the channels dirty so a later publish knows what changed. Distribution stays a separate explicit step.  **Photos are deferred:** a provided `photos` array is echoed back in the `deferred` field and NOT persisted (media ingestion is a follow-up).  Cross-tenant access (a listing that belongs to a different workspace) returns 404 — never 403. This endpoint is served even when the account is over the plan-listings cap, since editing content on a listing you already own never grows the portfolio.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # Write your PMS's canonical listing content — title, description, amenities, address, occupancy, and policies — into a Repull listing, making it the source of truth. This is the flagship \"the PMS owns listing content, Repull distributes it\" enabler.  **Partial update:** every field is optional. Only the fields you send are written; absent fields are left untouched. `amenities` is a FULL replacement of the amenity set (omit to leave untouched, send `[]` to clear).  **Multilingual:** send `locale` to say which language this copy is in (`it`, `pt-BR`, …). Canonical content is stored per locale, so each language keeps its own row instead of overwriting the English one. Omit it for English.  **Local write only — NOT a channel publish.** This mutates Repull's own copy of the content. It does NOT push to Airbnb / Booking.com; it marks the channels dirty so a later publish knows what changed. Distribution stays a separate explicit step.  **Photos are deferred:** a provided `photos` array is echoed back in the `deferred` field and NOT persisted (media ingestion is a follow-up).  Cross-tenant access (a listing that belongs to a different workspace) returns 404 — never 403. This endpoint is served even when the account is over the plan-listings cap, since editing content on a listing you already own never grows the portfolio.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [Integer] Repull listing id
     # @param listing_content_update_request [ListingContentUpdateRequest] 
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable.
     # @return [ListingContentUpdateResponse]
     def update_listing_content(id, listing_content_update_request, opts = {})
       data, _status_code, _headers = update_listing_content_with_http_info(id, listing_content_update_request, opts)
@@ -951,10 +1029,11 @@ module Repull
     end
 
     # Update canonical listing content
-    # Write your PMS&#39;s canonical listing content — title, description, amenities, address, occupancy, and policies — into a Repull listing, making it the source of truth. This is the flagship \&quot;the PMS owns listing content, Repull distributes it\&quot; enabler.  **Partial update:** every field is optional. Only the fields you send are written; absent fields are left untouched. &#x60;amenities&#x60; is a FULL replacement of the amenity set (omit to leave untouched, send &#x60;[]&#x60; to clear).  **Local write only — NOT a channel publish.** This mutates Repull&#39;s own copy of the content. It does NOT push to Airbnb / Booking.com; it marks the channels dirty so a later publish knows what changed. Distribution stays a separate explicit step.  **Photos are deferred:** a provided &#x60;photos&#x60; array is echoed back in the &#x60;deferred&#x60; field and NOT persisted (media ingestion is a follow-up).  Cross-tenant access (a listing that belongs to a different workspace) returns 404 — never 403. This endpoint is served even when the account is over the plan-listings cap, since editing content on a listing you already own never grows the portfolio.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # Write your PMS&#39;s canonical listing content — title, description, amenities, address, occupancy, and policies — into a Repull listing, making it the source of truth. This is the flagship \&quot;the PMS owns listing content, Repull distributes it\&quot; enabler.  **Partial update:** every field is optional. Only the fields you send are written; absent fields are left untouched. &#x60;amenities&#x60; is a FULL replacement of the amenity set (omit to leave untouched, send &#x60;[]&#x60; to clear).  **Multilingual:** send &#x60;locale&#x60; to say which language this copy is in (&#x60;it&#x60;, &#x60;pt-BR&#x60;, …). Canonical content is stored per locale, so each language keeps its own row instead of overwriting the English one. Omit it for English.  **Local write only — NOT a channel publish.** This mutates Repull&#39;s own copy of the content. It does NOT push to Airbnb / Booking.com; it marks the channels dirty so a later publish knows what changed. Distribution stays a separate explicit step.  **Photos are deferred:** a provided &#x60;photos&#x60; array is echoed back in the &#x60;deferred&#x60; field and NOT persisted (media ingestion is a follow-up).  Cross-tenant access (a listing that belongs to a different workspace) returns 404 — never 403. This endpoint is served even when the account is over the plan-listings cap, since editing content on a listing you already own never grows the portfolio.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [Integer] Repull listing id
     # @param listing_content_update_request [ListingContentUpdateRequest] 
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable.
     # @return [Array<(ListingContentUpdateResponse, Integer, Hash)>] ListingContentUpdateResponse data, response status code and response headers
     def update_listing_content_with_http_info(id, listing_content_update_request, opts = {})
       if @api_client.config.debugging
@@ -968,6 +1047,10 @@ module Repull
       if @api_client.config.client_side_validation && listing_content_update_request.nil?
         fail ArgumentError, "Missing the required parameter 'listing_content_update_request' when calling ListingsApi.update_listing_content"
       end
+      if @api_client.config.client_side_validation && !opts[:'idempotency_key'].nil? && opts[:'idempotency_key'].to_s.length > 255
+        fail ArgumentError, 'invalid value for "opts[:"idempotency_key"]" when calling ListingsApi.update_listing_content, the character length must be smaller than or equal to 255.'
+      end
+
       # resource path
       local_var_path = '/v1/listings/{id}/content'.sub('{id}', CGI.escape(id.to_s))
 
@@ -983,6 +1066,7 @@ module Repull
       if !content_type.nil?
           header_params['Content-Type'] = content_type
       end
+      header_params[:'Idempotency-Key'] = opts[:'idempotency_key'] if !opts[:'idempotency_key'].nil?
 
       # form parameters
       form_params = opts[:form_params] || {}

@@ -14,26 +14,56 @@ require 'date'
 require 'time'
 
 module Repull
-  class CreateAirbnbAlterationRequest < ApiModelBase
-    # Airbnb confirmation code of the reservation to alter.
-    attr_accessor :confirmation_code
+  # The Airbnb-side detail row(s) for the listing, from the local mirror. One entry per Airbnb connection.
+  class AirbnbListingDetailsResponse < ApiModelBase
+    attr_accessor :listing_airbnb_id
 
-    # New check-in date (YYYY-MM-DD).
-    attr_accessor :check_in
+    attr_accessor :name
 
-    # New check-out date (YYYY-MM-DD).
-    attr_accessor :check_out
+    attr_accessor :property_type_group
 
-    # New guest count.
-    attr_accessor :number_of_guests
+    attr_accessor :property_type_category
+
+    attr_accessor :room_type_category
+
+    attr_accessor :person_capacity
+
+    attr_accessor :bedrooms
+
+    attr_accessor :beds
+
+    attr_accessor :bathrooms
+
+    # Whether the Airbnb listing is live. `false` means unlisted on Airbnb — unrelated to the Repull record being active.
+    attr_accessor :has_availability
+
+    # `{ category, instruction }` — how the guest gets in.
+    attr_accessor :check_in_option
+
+    attr_accessor :listing_nickname
+
+    # Attributes Airbnb refuses to change on this listing.
+    attr_accessor :locked_fields
+
+    attr_accessor :updated_at
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'confirmation_code' => :'confirmation_code',
-        :'check_in' => :'check_in',
-        :'check_out' => :'check_out',
-        :'number_of_guests' => :'number_of_guests'
+        :'listing_airbnb_id' => :'listingAirbnbId',
+        :'name' => :'name',
+        :'property_type_group' => :'propertyTypeGroup',
+        :'property_type_category' => :'propertyTypeCategory',
+        :'room_type_category' => :'roomTypeCategory',
+        :'person_capacity' => :'personCapacity',
+        :'bedrooms' => :'bedrooms',
+        :'beds' => :'beds',
+        :'bathrooms' => :'bathrooms',
+        :'has_availability' => :'hasAvailability',
+        :'check_in_option' => :'checkInOption',
+        :'listing_nickname' => :'listingNickname',
+        :'locked_fields' => :'lockedFields',
+        :'updated_at' => :'updatedAt'
       }
     end
 
@@ -50,16 +80,38 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'confirmation_code' => :'String',
-        :'check_in' => :'Date',
-        :'check_out' => :'Date',
-        :'number_of_guests' => :'Integer'
+        :'listing_airbnb_id' => :'String',
+        :'name' => :'String',
+        :'property_type_group' => :'String',
+        :'property_type_category' => :'String',
+        :'room_type_category' => :'String',
+        :'person_capacity' => :'Integer',
+        :'bedrooms' => :'Integer',
+        :'beds' => :'Integer',
+        :'bathrooms' => :'String',
+        :'has_availability' => :'Boolean',
+        :'check_in_option' => :'Hash<String, Object>',
+        :'listing_nickname' => :'String',
+        :'locked_fields' => :'Array<String>',
+        :'updated_at' => :'Time'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'name',
+        :'property_type_group',
+        :'property_type_category',
+        :'room_type_category',
+        :'person_capacity',
+        :'bedrooms',
+        :'beds',
+        :'bathrooms',
+        :'has_availability',
+        :'check_in_option',
+        :'listing_nickname',
+        :'updated_at'
       ])
     end
 
@@ -67,34 +119,76 @@ module Repull
     # @param [Hash] attributes Model attributes in the form of hash
     def initialize(attributes = {})
       if (!attributes.is_a?(Hash))
-        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::CreateAirbnbAlterationRequest` initialize method"
+        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::AirbnbListingDetailsResponse` initialize method"
       end
 
       # check to see if the attribute exists and convert string to symbol for hash key
       acceptable_attribute_map = self.class.acceptable_attribute_map
       attributes = attributes.each_with_object({}) { |(k, v), h|
         if (!acceptable_attribute_map.key?(k.to_sym))
-          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::CreateAirbnbAlterationRequest`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
+          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::AirbnbListingDetailsResponse`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
         end
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'confirmation_code')
-        self.confirmation_code = attributes[:'confirmation_code']
-      else
-        self.confirmation_code = nil
+      if attributes.key?(:'listing_airbnb_id')
+        self.listing_airbnb_id = attributes[:'listing_airbnb_id']
       end
 
-      if attributes.key?(:'check_in')
-        self.check_in = attributes[:'check_in']
+      if attributes.key?(:'name')
+        self.name = attributes[:'name']
       end
 
-      if attributes.key?(:'check_out')
-        self.check_out = attributes[:'check_out']
+      if attributes.key?(:'property_type_group')
+        self.property_type_group = attributes[:'property_type_group']
       end
 
-      if attributes.key?(:'number_of_guests')
-        self.number_of_guests = attributes[:'number_of_guests']
+      if attributes.key?(:'property_type_category')
+        self.property_type_category = attributes[:'property_type_category']
+      end
+
+      if attributes.key?(:'room_type_category')
+        self.room_type_category = attributes[:'room_type_category']
+      end
+
+      if attributes.key?(:'person_capacity')
+        self.person_capacity = attributes[:'person_capacity']
+      end
+
+      if attributes.key?(:'bedrooms')
+        self.bedrooms = attributes[:'bedrooms']
+      end
+
+      if attributes.key?(:'beds')
+        self.beds = attributes[:'beds']
+      end
+
+      if attributes.key?(:'bathrooms')
+        self.bathrooms = attributes[:'bathrooms']
+      end
+
+      if attributes.key?(:'has_availability')
+        self.has_availability = attributes[:'has_availability']
+      end
+
+      if attributes.key?(:'check_in_option')
+        if (value = attributes[:'check_in_option']).is_a?(Hash)
+          self.check_in_option = value
+        end
+      end
+
+      if attributes.key?(:'listing_nickname')
+        self.listing_nickname = attributes[:'listing_nickname']
+      end
+
+      if attributes.key?(:'locked_fields')
+        if (value = attributes[:'locked_fields']).is_a?(Array)
+          self.locked_fields = value
+        end
+      end
+
+      if attributes.key?(:'updated_at')
+        self.updated_at = attributes[:'updated_at']
       end
     end
 
@@ -103,10 +197,6 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
-      if @confirmation_code.nil?
-        invalid_properties.push('invalid value for "confirmation_code", confirmation_code cannot be nil.')
-      end
-
       invalid_properties
     end
 
@@ -114,18 +204,7 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
-      return false if @confirmation_code.nil?
       true
-    end
-
-    # Custom attribute writer method with validation
-    # @param [Object] confirmation_code Value to be assigned
-    def confirmation_code=(confirmation_code)
-      if confirmation_code.nil?
-        fail ArgumentError, 'confirmation_code cannot be nil'
-      end
-
-      @confirmation_code = confirmation_code
     end
 
     # Checks equality by comparing each attribute.
@@ -133,10 +212,20 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          confirmation_code == o.confirmation_code &&
-          check_in == o.check_in &&
-          check_out == o.check_out &&
-          number_of_guests == o.number_of_guests
+          listing_airbnb_id == o.listing_airbnb_id &&
+          name == o.name &&
+          property_type_group == o.property_type_group &&
+          property_type_category == o.property_type_category &&
+          room_type_category == o.room_type_category &&
+          person_capacity == o.person_capacity &&
+          bedrooms == o.bedrooms &&
+          beds == o.beds &&
+          bathrooms == o.bathrooms &&
+          has_availability == o.has_availability &&
+          check_in_option == o.check_in_option &&
+          listing_nickname == o.listing_nickname &&
+          locked_fields == o.locked_fields &&
+          updated_at == o.updated_at
     end
 
     # @see the `==` method
@@ -148,7 +237,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [confirmation_code, check_in, check_out, number_of_guests].hash
+      [listing_airbnb_id, name, property_type_group, property_type_category, room_type_category, person_capacity, bedrooms, beds, bathrooms, has_availability, check_in_option, listing_nickname, locked_fields, updated_at].hash
     end
 
     # Builds the object from hash

@@ -16,6 +16,9 @@
 | **endpoint** | **String** | The endpoint path that produced the error. Present on &#x60;code: \&quot;unknown_params\&quot;&#x60; so consumers can match validation failures to the operation they invoked. | [optional] |
 | **did_you_mean** | **String** | Suggestion for typos and near-matches. Present when the server can guess the intent. | [optional] |
 | **listing_ids** | **Array&lt;String&gt;** | Every inactive listing the request involved. Present on &#x60;code: \&quot;listing_inactive\&quot;&#x60; (HTTP 403) — activate these ids and retry. | [optional] |
+| **listing_id** | **String** | The single Repull listing the error is about. Present on &#x60;code: \&quot;listing_not_api_connected\&quot;&#x60; (HTTP 403). | [optional] |
+| **airbnb_listing_id** | **String** | Airbnb&#39;s own id for that listing, so the host can find it in Airbnb. Present on &#x60;code: \&quot;listing_not_api_connected\&quot;&#x60; (HTTP 403). | [optional] |
+| **sync_category** | **String** | The listing&#39;s current Airbnb API sync category — why the write was refused. Present on &#x60;code: \&quot;listing_not_api_connected\&quot;&#x60; (HTTP 403). | [optional] |
 | **retry_after** | **Integer** | Seconds the client should wait before retrying. Mirrors the &#x60;Retry-After&#x60; HTTP header. Present on rate-limit responses and on transient upstream failures that are safe to retry. | [optional] |
 | **support** | [**ErrorErrorSupport**](ErrorErrorSupport.md) |  | [optional] |
 
@@ -37,6 +40,9 @@ instance = Repull::ErrorError.new(
   endpoint: /v1/guests,
   did_you_mean: check_in_after,
   listing_ids: [&quot;4118&quot;],
+  listing_id: 23901,
+  airbnb_listing_id: 22616426,
+  sync_category: none,
   retry_after: 60,
   support: null
 )

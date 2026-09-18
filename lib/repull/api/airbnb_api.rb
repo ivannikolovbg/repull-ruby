@@ -89,23 +89,25 @@ module Repull
       return data, status_code, headers
     end
 
-    # Listing action (delete/push/publish)
-    # Apply a state action to a listing by id. The path `id` is the canonical Repull listing id.  `delete` is a **deactivate of the Repull record only** — it sets the listing inactive and KEEPS the row; it does NOT touch the upstream Airbnb listing (Repull never deletes or deactivates on Airbnb's side). Use it to exclude a listing / trim back under the plan-listings cap; reactivate via `PATCH /v1/listings/{id}` with `{ \"active\": true }`. Idempotent.  `push` / `publish` push the listing's content to Airbnb via the same host-side sync orchestrator as `POST /v1/listings/{id}/publish/airbnb` — pass `airbnbConnectionId` to update an already-mapped Airbnb listing, or `hostId` to create + publish a new one under that host. `force` re-pushes every field, ignoring dirty-field tracking.  Any other action (e.g. `pull`, `unlist`) returns a structured 422 naming the supported actions.  Returns `403 listing_inactive` for `push`/`publish` when the listing is inactive. `delete` (deactivation) is always accepted.
+    # Listing action (delete/push/publish/unlist/relist)
+    # Apply a state action to a listing by id. The path `id` is the canonical Repull listing id.  **Deactivating in Repull and unlisting on Airbnb are different operations.**  `delete` is a **deactivate of the Repull record only** — it sets the listing inactive and KEEPS the row; it does NOT touch the Airbnb listing, which stays live and keeps taking bookings. Use it to exclude a listing from the API / trim back under the plan-listings cap; reactivate via `PATCH /v1/listings/{id}` with `{ \"active\": true }`. Idempotent.  `unlist` calls Airbnb and **takes the live listing down**: it is deactivated with a valid deactivation reason and then READ BACK, so \"Airbnb accepted the call but the listing is still live\" is reported as a failure rather than a success. Requires `airbnbConnectionId` — a listing can be connected to more than one Airbnb listing, and taking down the wrong one is not undoable through this API. `relist` puts it back up (re-enables sync and makes the listing available again); it does not push content.  `push` / `publish` push the listing's content to Airbnb via the same host-side sync orchestrator as `POST /v1/listings/{id}/publish/airbnb` — pass `airbnbConnectionId` to update an already-mapped Airbnb listing, or `hostId` to create + publish a new one under that host. `force` re-pushes every field, ignoring dirty-field tracking. The result is per-section: see `AirbnbPublishResult`.  Any other action (e.g. `pull`) returns a structured 422 naming the supported actions.  Returns `403 listing_inactive` for `push`/`publish`/`unlist`/`relist` when the listing is inactive. `delete` (deactivation) is always accepted.
     # @param id [String] 
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable.
     # @option opts [AirbnbListingActionRequest] :airbnb_listing_action_request 
-    # @return [nil]
+    # @return [AirbnbListingAction200Response]
     def airbnb_listing_action(id, opts = {})
-      airbnb_listing_action_with_http_info(id, opts)
-      nil
+      data, _status_code, _headers = airbnb_listing_action_with_http_info(id, opts)
+      data
     end
 
-    # Listing action (delete/push/publish)
-    # Apply a state action to a listing by id. The path &#x60;id&#x60; is the canonical Repull listing id.  &#x60;delete&#x60; is a **deactivate of the Repull record only** — it sets the listing inactive and KEEPS the row; it does NOT touch the upstream Airbnb listing (Repull never deletes or deactivates on Airbnb&#39;s side). Use it to exclude a listing / trim back under the plan-listings cap; reactivate via &#x60;PATCH /v1/listings/{id}&#x60; with &#x60;{ \&quot;active\&quot;: true }&#x60;. Idempotent.  &#x60;push&#x60; / &#x60;publish&#x60; push the listing&#39;s content to Airbnb via the same host-side sync orchestrator as &#x60;POST /v1/listings/{id}/publish/airbnb&#x60; — pass &#x60;airbnbConnectionId&#x60; to update an already-mapped Airbnb listing, or &#x60;hostId&#x60; to create + publish a new one under that host. &#x60;force&#x60; re-pushes every field, ignoring dirty-field tracking.  Any other action (e.g. &#x60;pull&#x60;, &#x60;unlist&#x60;) returns a structured 422 naming the supported actions.  Returns &#x60;403 listing_inactive&#x60; for &#x60;push&#x60;/&#x60;publish&#x60; when the listing is inactive. &#x60;delete&#x60; (deactivation) is always accepted.
+    # Listing action (delete/push/publish/unlist/relist)
+    # Apply a state action to a listing by id. The path &#x60;id&#x60; is the canonical Repull listing id.  **Deactivating in Repull and unlisting on Airbnb are different operations.**  &#x60;delete&#x60; is a **deactivate of the Repull record only** — it sets the listing inactive and KEEPS the row; it does NOT touch the Airbnb listing, which stays live and keeps taking bookings. Use it to exclude a listing from the API / trim back under the plan-listings cap; reactivate via &#x60;PATCH /v1/listings/{id}&#x60; with &#x60;{ \&quot;active\&quot;: true }&#x60;. Idempotent.  &#x60;unlist&#x60; calls Airbnb and **takes the live listing down**: it is deactivated with a valid deactivation reason and then READ BACK, so \&quot;Airbnb accepted the call but the listing is still live\&quot; is reported as a failure rather than a success. Requires &#x60;airbnbConnectionId&#x60; — a listing can be connected to more than one Airbnb listing, and taking down the wrong one is not undoable through this API. &#x60;relist&#x60; puts it back up (re-enables sync and makes the listing available again); it does not push content.  &#x60;push&#x60; / &#x60;publish&#x60; push the listing&#39;s content to Airbnb via the same host-side sync orchestrator as &#x60;POST /v1/listings/{id}/publish/airbnb&#x60; — pass &#x60;airbnbConnectionId&#x60; to update an already-mapped Airbnb listing, or &#x60;hostId&#x60; to create + publish a new one under that host. &#x60;force&#x60; re-pushes every field, ignoring dirty-field tracking. The result is per-section: see &#x60;AirbnbPublishResult&#x60;.  Any other action (e.g. &#x60;pull&#x60;) returns a structured 422 naming the supported actions.  Returns &#x60;403 listing_inactive&#x60; for &#x60;push&#x60;/&#x60;publish&#x60;/&#x60;unlist&#x60;/&#x60;relist&#x60; when the listing is inactive. &#x60;delete&#x60; (deactivation) is always accepted.
     # @param id [String] 
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable.
     # @option opts [AirbnbListingActionRequest] :airbnb_listing_action_request 
-    # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
+    # @return [Array<(AirbnbListingAction200Response, Integer, Hash)>] AirbnbListingAction200Response data, response status code and response headers
     def airbnb_listing_action_with_http_info(id, opts = {})
       if @api_client.config.debugging
         @api_client.config.logger.debug 'Calling API: AirbnbApi.airbnb_listing_action ...'
@@ -114,6 +116,10 @@ module Repull
       if @api_client.config.client_side_validation && id.nil?
         fail ArgumentError, "Missing the required parameter 'id' when calling AirbnbApi.airbnb_listing_action"
       end
+      if @api_client.config.client_side_validation && !opts[:'idempotency_key'].nil? && opts[:'idempotency_key'].to_s.length > 255
+        fail ArgumentError, 'invalid value for "opts[:"idempotency_key"]" when calling AirbnbApi.airbnb_listing_action, the character length must be smaller than or equal to 255.'
+      end
+
       # resource path
       local_var_path = '/v1/channels/airbnb/listings/{id}'.sub('{id}', CGI.escape(id.to_s))
 
@@ -129,6 +135,7 @@ module Repull
       if !content_type.nil?
           header_params['Content-Type'] = content_type
       end
+      header_params[:'Idempotency-Key'] = opts[:'idempotency_key'] if !opts[:'idempotency_key'].nil?
 
       # form parameters
       form_params = opts[:form_params] || {}
@@ -137,7 +144,7 @@ module Repull
       post_body = opts[:debug_body] || @api_client.object_to_http_body(opts[:'airbnb_listing_action_request'])
 
       # return_type
-      return_type = opts[:debug_return_type]
+      return_type = opts[:debug_return_type] || 'AirbnbListingAction200Response'
 
       # auth_names
       auth_names = opts[:debug_auth_names] || ['bearerAuth']
@@ -222,28 +229,98 @@ module Repull
       return data, status_code, headers
     end
 
-    # Create Airbnb alteration
-    # Create a reservation alteration request (change dates, guest count, or price) on Airbnb. **Write-side** — calls Airbnb upstream. Requires a connected Airbnb host for the workspace, else `404 no_connection`.  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
-    # @param create_airbnb_alteration_request [CreateAirbnbAlterationRequest] 
+    # Cancel Airbnb alteration
+    # Withdraw an alteration you proposed, before the other side has answered it. **Write-side** — calls Airbnb upstream (`respondToAlteration` with status `canceled`). Use this when you sent the wrong dates, guest count, price or listing: the alteration stops being pending instead of sitting there until the guest acts on it.  This is the third of Airbnb's three answers to a pending alteration, alongside `accept` and `decline`, and behaves identically to them: requires a connected Airbnb host for the workspace (else `404 no_connection`) and that the alteration id belongs to a reservation in your workspace (else `404 not_found`). No request body is required.  Airbnb decides whether an alteration can still be withdrawn — one that has already been accepted or declined is refused upstream, and Airbnb's own reason comes back in `message`.  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # @param id [String] Airbnb alteration id (the &#x60;alterationId&#x60; from a &#x60;GET /v1/channels/airbnb/alterations&#x60; row).
     # @param [Hash] opts the optional parameters
+    # @option opts [Object] :body 
     # @return [nil]
-    def create_airbnb_alteration(create_airbnb_alteration_request, opts = {})
-      create_airbnb_alteration_with_http_info(create_airbnb_alteration_request, opts)
+    def cancel_airbnb_alteration(id, opts = {})
+      cancel_airbnb_alteration_with_http_info(id, opts)
       nil
     end
 
-    # Create Airbnb alteration
-    # Create a reservation alteration request (change dates, guest count, or price) on Airbnb. **Write-side** — calls Airbnb upstream. Requires a connected Airbnb host for the workspace, else &#x60;404 no_connection&#x60;.  Returns &#x60;403 listing_inactive&#x60; when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
-    # @param create_airbnb_alteration_request [CreateAirbnbAlterationRequest] 
+    # Cancel Airbnb alteration
+    # Withdraw an alteration you proposed, before the other side has answered it. **Write-side** — calls Airbnb upstream (&#x60;respondToAlteration&#x60; with status &#x60;canceled&#x60;). Use this when you sent the wrong dates, guest count, price or listing: the alteration stops being pending instead of sitting there until the guest acts on it.  This is the third of Airbnb&#39;s three answers to a pending alteration, alongside &#x60;accept&#x60; and &#x60;decline&#x60;, and behaves identically to them: requires a connected Airbnb host for the workspace (else &#x60;404 no_connection&#x60;) and that the alteration id belongs to a reservation in your workspace (else &#x60;404 not_found&#x60;). No request body is required.  Airbnb decides whether an alteration can still be withdrawn — one that has already been accepted or declined is refused upstream, and Airbnb&#39;s own reason comes back in &#x60;message&#x60;.  Returns &#x60;403 listing_inactive&#x60; when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # @param id [String] Airbnb alteration id (the &#x60;alterationId&#x60; from a &#x60;GET /v1/channels/airbnb/alterations&#x60; row).
     # @param [Hash] opts the optional parameters
+    # @option opts [Object] :body 
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
-    def create_airbnb_alteration_with_http_info(create_airbnb_alteration_request, opts = {})
+    def cancel_airbnb_alteration_with_http_info(id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: AirbnbApi.cancel_airbnb_alteration ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling AirbnbApi.cancel_airbnb_alteration"
+      end
+      # resource path
+      local_var_path = '/v1/channels/airbnb/alterations/{id}/cancel'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(opts[:'body'])
+
+      # return_type
+      return_type = opts[:debug_return_type]
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"AirbnbApi.cancel_airbnb_alteration",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: AirbnbApi#cancel_airbnb_alteration\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Create Airbnb alteration
+    # Propose a change to an existing Airbnb reservation: new dates, a new guest count, a new total price, or a move to a different listing. **Write-side** — calls Airbnb upstream. Requires a connected Airbnb host for the workspace, else `404 no_connection`.  The body is validated before anything reaches Airbnb. `confirmation_code` is required and **at least one** of `check_in`, `check_out`, `number_of_guests`, `total_price` or `listing_id` must be sent with it — an alteration that changes nothing is `422 invalid_params`, not a request Airbnb is asked to act on. Unknown fields are refused rather than ignored, so a misspelling can never look like a successful write.  **Listing transfer.** `listing_id` moves the reservation to another listing in your workspace. Send the **Repull** listing id (the `id` from `GET /v1/properties`); Repull checks you own it, that it is active and connected to Airbnb, translates it to the Airbnb listing id and sends it upstream. Callers who hold the Airbnb-side id instead may send `airbnb_listing_id`. **Airbnb decides** whether to honour a listing change on an alteration — Repull sends it and reports Airbnb’s answer; a refusal comes back as `422 airbnb_rejected` carrying Airbnb’s own message.  Returns `403 listing_inactive` when the reservation’s listing, or the listing it is being moved to, is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # @param airbnb_alteration_create_request [AirbnbAlterationCreateRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [AirbnbAlteration]
+    def create_airbnb_alteration(airbnb_alteration_create_request, opts = {})
+      data, _status_code, _headers = create_airbnb_alteration_with_http_info(airbnb_alteration_create_request, opts)
+      data
+    end
+
+    # Create Airbnb alteration
+    # Propose a change to an existing Airbnb reservation: new dates, a new guest count, a new total price, or a move to a different listing. **Write-side** — calls Airbnb upstream. Requires a connected Airbnb host for the workspace, else &#x60;404 no_connection&#x60;.  The body is validated before anything reaches Airbnb. &#x60;confirmation_code&#x60; is required and **at least one** of &#x60;check_in&#x60;, &#x60;check_out&#x60;, &#x60;number_of_guests&#x60;, &#x60;total_price&#x60; or &#x60;listing_id&#x60; must be sent with it — an alteration that changes nothing is &#x60;422 invalid_params&#x60;, not a request Airbnb is asked to act on. Unknown fields are refused rather than ignored, so a misspelling can never look like a successful write.  **Listing transfer.** &#x60;listing_id&#x60; moves the reservation to another listing in your workspace. Send the **Repull** listing id (the &#x60;id&#x60; from &#x60;GET /v1/properties&#x60;); Repull checks you own it, that it is active and connected to Airbnb, translates it to the Airbnb listing id and sends it upstream. Callers who hold the Airbnb-side id instead may send &#x60;airbnb_listing_id&#x60;. **Airbnb decides** whether to honour a listing change on an alteration — Repull sends it and reports Airbnb’s answer; a refusal comes back as &#x60;422 airbnb_rejected&#x60; carrying Airbnb’s own message.  Returns &#x60;403 listing_inactive&#x60; when the reservation’s listing, or the listing it is being moved to, is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # @param airbnb_alteration_create_request [AirbnbAlterationCreateRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(AirbnbAlteration, Integer, Hash)>] AirbnbAlteration data, response status code and response headers
+    def create_airbnb_alteration_with_http_info(airbnb_alteration_create_request, opts = {})
       if @api_client.config.debugging
         @api_client.config.logger.debug 'Calling API: AirbnbApi.create_airbnb_alteration ...'
       end
-      # verify the required parameter 'create_airbnb_alteration_request' is set
-      if @api_client.config.client_side_validation && create_airbnb_alteration_request.nil?
-        fail ArgumentError, "Missing the required parameter 'create_airbnb_alteration_request' when calling AirbnbApi.create_airbnb_alteration"
+      # verify the required parameter 'airbnb_alteration_create_request' is set
+      if @api_client.config.client_side_validation && airbnb_alteration_create_request.nil?
+        fail ArgumentError, "Missing the required parameter 'airbnb_alteration_create_request' when calling AirbnbApi.create_airbnb_alteration"
       end
       # resource path
       local_var_path = '/v1/channels/airbnb/alterations'
@@ -265,10 +342,10 @@ module Repull
       form_params = opts[:form_params] || {}
 
       # http body (model)
-      post_body = opts[:debug_body] || @api_client.object_to_http_body(create_airbnb_alteration_request)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(airbnb_alteration_create_request)
 
       # return_type
-      return_type = opts[:debug_return_type]
+      return_type = opts[:debug_return_type] || 'AirbnbAlteration'
 
       # auth_names
       auth_names = opts[:debug_auth_names] || ['bearerAuth']
@@ -291,23 +368,23 @@ module Repull
     end
 
     # Create an Airbnb room
-    # Create a new room on an Airbnb listing. **Write-side** — calls Airbnb upstream. Body is the full room object minus `room_id`. Requires a connected Airbnb host, else `404 no_connection`.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # Create a new room on an Airbnb listing, with its sleeping arrangement. **Write-side** — calls Airbnb upstream. Requires a connected Airbnb host, else `404 no_connection`.  The response is the room object as Airbnb returned it. The new room is also seeded into our own copy, so the very next `GET /rooms` shows it rather than waiting for the sync.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Repull listing id (numeric string).
-    # @param request_body [Hash<String, Object>] 
+    # @param create_airbnb_listing_room_request [CreateAirbnbListingRoomRequest] 
     # @param [Hash] opts the optional parameters
     # @return [nil]
-    def create_airbnb_listing_room(id, request_body, opts = {})
-      create_airbnb_listing_room_with_http_info(id, request_body, opts)
+    def create_airbnb_listing_room(id, create_airbnb_listing_room_request, opts = {})
+      create_airbnb_listing_room_with_http_info(id, create_airbnb_listing_room_request, opts)
       nil
     end
 
     # Create an Airbnb room
-    # Create a new room on an Airbnb listing. **Write-side** — calls Airbnb upstream. Body is the full room object minus &#x60;room_id&#x60;. Requires a connected Airbnb host, else &#x60;404 no_connection&#x60;.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # Create a new room on an Airbnb listing, with its sleeping arrangement. **Write-side** — calls Airbnb upstream. Requires a connected Airbnb host, else &#x60;404 no_connection&#x60;.  The response is the room object as Airbnb returned it. The new room is also seeded into our own copy, so the very next &#x60;GET /rooms&#x60; shows it rather than waiting for the sync.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Repull listing id (numeric string).
-    # @param request_body [Hash<String, Object>] 
+    # @param create_airbnb_listing_room_request [CreateAirbnbListingRoomRequest] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
-    def create_airbnb_listing_room_with_http_info(id, request_body, opts = {})
+    def create_airbnb_listing_room_with_http_info(id, create_airbnb_listing_room_request, opts = {})
       if @api_client.config.debugging
         @api_client.config.logger.debug 'Calling API: AirbnbApi.create_airbnb_listing_room ...'
       end
@@ -315,9 +392,9 @@ module Repull
       if @api_client.config.client_side_validation && id.nil?
         fail ArgumentError, "Missing the required parameter 'id' when calling AirbnbApi.create_airbnb_listing_room"
       end
-      # verify the required parameter 'request_body' is set
-      if @api_client.config.client_side_validation && request_body.nil?
-        fail ArgumentError, "Missing the required parameter 'request_body' when calling AirbnbApi.create_airbnb_listing_room"
+      # verify the required parameter 'create_airbnb_listing_room_request' is set
+      if @api_client.config.client_side_validation && create_airbnb_listing_room_request.nil?
+        fail ArgumentError, "Missing the required parameter 'create_airbnb_listing_room_request' when calling AirbnbApi.create_airbnb_listing_room"
       end
       # resource path
       local_var_path = '/v1/channels/airbnb/listings/{id}/rooms'.sub('{id}', CGI.escape(id.to_s))
@@ -339,7 +416,7 @@ module Repull
       form_params = opts[:form_params] || {}
 
       # http body (model)
-      post_body = opts[:debug_body] || @api_client.object_to_http_body(request_body)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(create_airbnb_listing_room_request)
 
       # return_type
       return_type = opts[:debug_return_type]
@@ -503,7 +580,7 @@ module Repull
     end
 
     # Delete an Airbnb photo
-    # Remove a single photo from an Airbnb listing. Pass the Airbnb-side photo id as `?photoId=`. Write-side — calls Airbnb upstream; the local photo cache is reconciled by the sync worker afterwards.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # Remove a single photo from an Airbnb listing. Pass the Airbnb-side photo id as `?photoId=`. **Write-side** — calls Airbnb upstream.  The photo is proven to belong to the listing named in the path first; a photo from another listing returns `404`. Airbnb refuses to delete a listing's last photo. Both stored copies drop the photo on success — `stored` reports whether that succeeded.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] 
     # @param photo_id [String] Airbnb-side photo id to delete.
     # @param [Hash] opts the optional parameters
@@ -514,7 +591,7 @@ module Repull
     end
 
     # Delete an Airbnb photo
-    # Remove a single photo from an Airbnb listing. Pass the Airbnb-side photo id as &#x60;?photoId&#x3D;&#x60;. Write-side — calls Airbnb upstream; the local photo cache is reconciled by the sync worker afterwards.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # Remove a single photo from an Airbnb listing. Pass the Airbnb-side photo id as &#x60;?photoId&#x3D;&#x60;. **Write-side** — calls Airbnb upstream.  The photo is proven to belong to the listing named in the path first; a photo from another listing returns &#x60;404&#x60;. Airbnb refuses to delete a listing&#39;s last photo. Both stored copies drop the photo on success — &#x60;stored&#x60; reports whether that succeeded.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] 
     # @param photo_id [String] Airbnb-side photo id to delete.
     # @param [Hash] opts the optional parameters
@@ -573,22 +650,22 @@ module Repull
     end
 
     # Delete an Airbnb room
-    # Delete a room from an Airbnb listing. **Write-side** — calls Airbnb upstream. Pass the Airbnb-side room id as `?roomId=`. Requires a connected Airbnb host, else `404 no_connection`.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # Delete a room from an Airbnb listing, and its beds with it. **Write-side** — calls Airbnb upstream. Pass the Airbnb-side room id as `?roomId=`. Requires a connected Airbnb host, else `404 no_connection`.  The room is proven to belong to the listing named in the path first; a room from another listing returns `404`. Both stored copies drop the room on success — `stored` reports whether that succeeded.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Repull listing id (numeric string).
     # @param room_id [String] Airbnb-side room id to delete.
     # @param [Hash] opts the optional parameters
-    # @return [DeleteAirbnbListingPhoto200Response]
+    # @return [DeleteAirbnbListingRoom200Response]
     def delete_airbnb_listing_room(id, room_id, opts = {})
       data, _status_code, _headers = delete_airbnb_listing_room_with_http_info(id, room_id, opts)
       data
     end
 
     # Delete an Airbnb room
-    # Delete a room from an Airbnb listing. **Write-side** — calls Airbnb upstream. Pass the Airbnb-side room id as &#x60;?roomId&#x3D;&#x60;. Requires a connected Airbnb host, else &#x60;404 no_connection&#x60;.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # Delete a room from an Airbnb listing, and its beds with it. **Write-side** — calls Airbnb upstream. Pass the Airbnb-side room id as &#x60;?roomId&#x3D;&#x60;. Requires a connected Airbnb host, else &#x60;404 no_connection&#x60;.  The room is proven to belong to the listing named in the path first; a room from another listing returns &#x60;404&#x60;. Both stored copies drop the room on success — &#x60;stored&#x60; reports whether that succeeded.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Repull listing id (numeric string).
     # @param room_id [String] Airbnb-side room id to delete.
     # @param [Hash] opts the optional parameters
-    # @return [Array<(DeleteAirbnbListingPhoto200Response, Integer, Hash)>] DeleteAirbnbListingPhoto200Response data, response status code and response headers
+    # @return [Array<(DeleteAirbnbListingRoom200Response, Integer, Hash)>] DeleteAirbnbListingRoom200Response data, response status code and response headers
     def delete_airbnb_listing_room_with_http_info(id, room_id, opts = {})
       if @api_client.config.debugging
         @api_client.config.logger.debug 'Calling API: AirbnbApi.delete_airbnb_listing_room ...'
@@ -620,7 +697,7 @@ module Repull
       post_body = opts[:debug_body]
 
       # return_type
-      return_type = opts[:debug_return_type] || 'DeleteAirbnbListingPhoto200Response'
+      return_type = opts[:debug_return_type] || 'DeleteAirbnbListingRoom200Response'
 
       # auth_names
       auth_names = opts[:debug_auth_names] || ['bearerAuth']
@@ -775,6 +852,69 @@ module Repull
       data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: AirbnbApi#get_airbnb_alteration\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Get Airbnb booking settings
+    # Read how an Airbnb listing takes bookings and what happens when a guest cancels: booking mode, Instant Book state, the good-track-record requirement, check-in/check-out times, advance notice, preparation time, booking window, the short-stay and long-stay cancellation policies, and the non-refundable option.  **This is Repull's stored copy, not a live call to Airbnb.** Values come from the local Airbnb mirror that the sync workers fill, so the response always carries `dataFreshness` — check `dataFreshness.stale` (and `dataFreshness.accounts[]` when the workspace has several Airbnb accounts) before treating a value as current.  **Not exposed by Airbnb.** The pre-reservation message and automatic stay extension have no field on Airbnb's `booking_settings` resource, so neither can be read or written here; set the pre-reservation message in the Airbnb host dashboard, and handle extensions through `/v1/channels/airbnb/alterations`. Airbnb also expresses the same-day cutoff only as whole hours of advance notice, so `advanceNotice.hours` is as precise as the cutoff gets.  Returns `404` when the listing has no Airbnb connection in this workspace, and `403 listing_inactive` when the listing is inactive — an inactive listing keeps syncing but cannot be read or changed through the API until it is activated.
+    # @param id [String] Repull listing id (numeric string), not the Airbnb listing id.
+    # @param [Hash] opts the optional parameters
+    # @return [GetAirbnbBookingSettings200Response]
+    def get_airbnb_booking_settings(id, opts = {})
+      data, _status_code, _headers = get_airbnb_booking_settings_with_http_info(id, opts)
+      data
+    end
+
+    # Get Airbnb booking settings
+    # Read how an Airbnb listing takes bookings and what happens when a guest cancels: booking mode, Instant Book state, the good-track-record requirement, check-in/check-out times, advance notice, preparation time, booking window, the short-stay and long-stay cancellation policies, and the non-refundable option.  **This is Repull&#39;s stored copy, not a live call to Airbnb.** Values come from the local Airbnb mirror that the sync workers fill, so the response always carries &#x60;dataFreshness&#x60; — check &#x60;dataFreshness.stale&#x60; (and &#x60;dataFreshness.accounts[]&#x60; when the workspace has several Airbnb accounts) before treating a value as current.  **Not exposed by Airbnb.** The pre-reservation message and automatic stay extension have no field on Airbnb&#39;s &#x60;booking_settings&#x60; resource, so neither can be read or written here; set the pre-reservation message in the Airbnb host dashboard, and handle extensions through &#x60;/v1/channels/airbnb/alterations&#x60;. Airbnb also expresses the same-day cutoff only as whole hours of advance notice, so &#x60;advanceNotice.hours&#x60; is as precise as the cutoff gets.  Returns &#x60;404&#x60; when the listing has no Airbnb connection in this workspace, and &#x60;403 listing_inactive&#x60; when the listing is inactive — an inactive listing keeps syncing but cannot be read or changed through the API until it is activated.
+    # @param id [String] Repull listing id (numeric string), not the Airbnb listing id.
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(GetAirbnbBookingSettings200Response, Integer, Hash)>] GetAirbnbBookingSettings200Response data, response status code and response headers
+    def get_airbnb_booking_settings_with_http_info(id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: AirbnbApi.get_airbnb_booking_settings ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling AirbnbApi.get_airbnb_booking_settings"
+      end
+      # resource path
+      local_var_path = '/v1/channels/airbnb/listings/{id}/booking-settings'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'GetAirbnbBookingSettings200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"AirbnbApi.get_airbnb_booking_settings",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: AirbnbApi#get_airbnb_booking_settings\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end
@@ -966,7 +1106,7 @@ module Repull
     end
 
     # Get Airbnb listing
-    # Fetch all Airbnb connection rows for a single Vanio listing id. A property may be linked from multiple Airbnb hosts — every match is returned. Pass `?include=amenities` to enrich each row with its current Airbnb amenities.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # Fetch all Airbnb connection rows for a single Vanio listing id. A property may be linked from multiple Airbnb hosts — every match is returned. Pass `?include=amenities` to enrich each row with its current Airbnb amenities.  Each row carries `syncCategory` — Airbnb's own per-listing API sync decision (`sync_all`, `sync_rates_and_availability`, or `none`) — and `writable`, which is `false` exactly when that category is `none`, meaning Airbnb refuses every write to the listing and Repull returns `403 listing_not_api_connected` without sending anything. `GET /v1/channels/airbnb/listings` reports both fields for the whole portfolio in one call.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] 
     # @param [Hash] opts the optional parameters
     # @option opts [String] :include Comma-separated expansions. Currently supported: &#x60;amenities&#x60;.
@@ -977,7 +1117,7 @@ module Repull
     end
 
     # Get Airbnb listing
-    # Fetch all Airbnb connection rows for a single Vanio listing id. A property may be linked from multiple Airbnb hosts — every match is returned. Pass &#x60;?include&#x3D;amenities&#x60; to enrich each row with its current Airbnb amenities.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # Fetch all Airbnb connection rows for a single Vanio listing id. A property may be linked from multiple Airbnb hosts — every match is returned. Pass &#x60;?include&#x3D;amenities&#x60; to enrich each row with its current Airbnb amenities.  Each row carries &#x60;syncCategory&#x60; — Airbnb&#39;s own per-listing API sync decision (&#x60;sync_all&#x60;, &#x60;sync_rates_and_availability&#x60;, or &#x60;none&#x60;) — and &#x60;writable&#x60;, which is &#x60;false&#x60; exactly when that category is &#x60;none&#x60;, meaning Airbnb refuses every write to the listing and Repull returns &#x60;403 listing_not_api_connected&#x60; without sending anything. &#x60;GET /v1/channels/airbnb/listings&#x60; reports both fields for the whole portfolio in one call.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] 
     # @param [Hash] opts the optional parameters
     # @option opts [String] :include Comma-separated expansions. Currently supported: &#x60;amenities&#x60;.
@@ -1090,6 +1230,69 @@ module Repull
       data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: AirbnbApi#get_airbnb_listing_availability\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Get Airbnb listing details
+    # What kind of property Airbnb thinks this is — property type group and category, room type, capacity — plus the check-in method (`checkInOption`), whether the listing is live (`hasAvailability`), and **`lockedFields`: the attributes Airbnb refuses to change on this listing**.  **Pure DB read** from the local mirror, one entry per Airbnb connection.  Read `lockedFields` before a content write. Airbnb does not refuse a write to a locked attribute: it returns 200, reports the attribute as locked, and applies nothing — which is why a write can look successful and change nothing. 1,180 of 5,917 synced listings carry at least one locked attribute.  Returns `404` when the listing has no Airbnb connection in this workspace, and `403 listing_inactive` when the listing is inactive.
+    # @param id [String] Repull listing id (numeric string).
+    # @param [Hash] opts the optional parameters
+    # @return [GetAirbnbListingDetails200Response]
+    def get_airbnb_listing_details(id, opts = {})
+      data, _status_code, _headers = get_airbnb_listing_details_with_http_info(id, opts)
+      data
+    end
+
+    # Get Airbnb listing details
+    # What kind of property Airbnb thinks this is — property type group and category, room type, capacity — plus the check-in method (&#x60;checkInOption&#x60;), whether the listing is live (&#x60;hasAvailability&#x60;), and **&#x60;lockedFields&#x60;: the attributes Airbnb refuses to change on this listing**.  **Pure DB read** from the local mirror, one entry per Airbnb connection.  Read &#x60;lockedFields&#x60; before a content write. Airbnb does not refuse a write to a locked attribute: it returns 200, reports the attribute as locked, and applies nothing — which is why a write can look successful and change nothing. 1,180 of 5,917 synced listings carry at least one locked attribute.  Returns &#x60;404&#x60; when the listing has no Airbnb connection in this workspace, and &#x60;403 listing_inactive&#x60; when the listing is inactive.
+    # @param id [String] Repull listing id (numeric string).
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(GetAirbnbListingDetails200Response, Integer, Hash)>] GetAirbnbListingDetails200Response data, response status code and response headers
+    def get_airbnb_listing_details_with_http_info(id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: AirbnbApi.get_airbnb_listing_details ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling AirbnbApi.get_airbnb_listing_details"
+      end
+      # resource path
+      local_var_path = '/v1/channels/airbnb/listings/{id}/details'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'GetAirbnbListingDetails200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"AirbnbApi.get_airbnb_listing_details",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: AirbnbApi#get_airbnb_listing_details\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end
@@ -1424,8 +1627,9 @@ module Repull
     end
 
     # List Airbnb alterations
-    # List reservation alteration requests for Airbnb reservations in this workspace. **Pure DB read** from the local `reservation_alterations` mirror — never calls Airbnb upstream — scoped to your workspace via the reservations join.  Default returns only pending alterations; pass `?type=all` for the full history. Filter to a single reservation with `?reservation_code=<confirmation code>`. Every response carries the `dataFreshness` envelope.  Alterations of reservations on inactive listings are left out. Filtering by a reservation on an inactive listing (`reservation_code`) returns `403 listing_inactive`.
+    # List reservation alteration requests for Airbnb reservations in this workspace. **Pure DB read** from the local `reservation_alterations` mirror — never calls Airbnb upstream — scoped to your workspace via the reservations join.  Default returns only pending alterations; pass `?type=all` for the full history. Filter to a single reservation with `?reservation_code=<confirmation code>`. Every response carries the `dataFreshness` envelope.  Each row carries the proposed change in its `new*` fields. A **listing transfer** shows up as `newListingId` (Repull listing id) and `newAirbnbListingId` (Airbnb's own id); both are `null` when the alteration does not move the reservation.  Alterations of reservations on inactive listings are left out. Filtering by a reservation on an inactive listing (`reservation_code`) returns `403 listing_inactive`.  **Several Airbnb accounts?** A workspace can connect more than one. By default this returns every connected account's rows; pass `?account_id=<airbnb host id>` to scope to one. Every row carries `accountId` + `accountName` either way, and `dataFreshness.accounts[]` reports each account's freshness separately, so one disconnected host no longer marks the whole response stale.
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :account_id Scope the response to ONE connected Airbnb account. The value is the Airbnb host id — the same &#x60;accounts[].externalAccountId&#x60; that &#x60;GET /v1/connect/airbnb&#x60; returns and &#x60;DELETE /v1/connect/airbnb?accountId&#x3D;&#x60; accepts.  A workspace can connect several Airbnb accounts. Omit this and you get every account&#39;s rows (the default, unchanged). Every row carries &#x60;accountId&#x60; + &#x60;accountName&#x60; either way, so you can group without a second call.  An id that is not connected to THIS workspace returns &#x60;404 not_found&#x60; with your own ids in &#x60;valid_values&#x60; — we do not distinguish \&quot;no such host\&quot; from \&quot;someone else&#39;s host\&quot;, because confirming the latter would leak another workspace&#39;s account.  Note this is NOT the &#x60;X-Account-Id&#x60; header, which carries a connection id and cannot tell two Airbnb hosts apart.
     # @option opts [String] :type Scope: &#x60;pending&#x60; (default) returns only alterations awaiting a decision; &#x60;all&#x60; returns every alteration. (default to 'pending')
     # @option opts [String] :reservation_code Airbnb confirmation code — restricts results to a single reservation. Returns an empty array when no reservation matches within your workspace.
     # @return [ListAirbnbAlterations200Response]
@@ -1435,8 +1639,9 @@ module Repull
     end
 
     # List Airbnb alterations
-    # List reservation alteration requests for Airbnb reservations in this workspace. **Pure DB read** from the local &#x60;reservation_alterations&#x60; mirror — never calls Airbnb upstream — scoped to your workspace via the reservations join.  Default returns only pending alterations; pass &#x60;?type&#x3D;all&#x60; for the full history. Filter to a single reservation with &#x60;?reservation_code&#x3D;&lt;confirmation code&gt;&#x60;. Every response carries the &#x60;dataFreshness&#x60; envelope.  Alterations of reservations on inactive listings are left out. Filtering by a reservation on an inactive listing (&#x60;reservation_code&#x60;) returns &#x60;403 listing_inactive&#x60;.
+    # List reservation alteration requests for Airbnb reservations in this workspace. **Pure DB read** from the local &#x60;reservation_alterations&#x60; mirror — never calls Airbnb upstream — scoped to your workspace via the reservations join.  Default returns only pending alterations; pass &#x60;?type&#x3D;all&#x60; for the full history. Filter to a single reservation with &#x60;?reservation_code&#x3D;&lt;confirmation code&gt;&#x60;. Every response carries the &#x60;dataFreshness&#x60; envelope.  Each row carries the proposed change in its &#x60;new*&#x60; fields. A **listing transfer** shows up as &#x60;newListingId&#x60; (Repull listing id) and &#x60;newAirbnbListingId&#x60; (Airbnb&#39;s own id); both are &#x60;null&#x60; when the alteration does not move the reservation.  Alterations of reservations on inactive listings are left out. Filtering by a reservation on an inactive listing (&#x60;reservation_code&#x60;) returns &#x60;403 listing_inactive&#x60;.  **Several Airbnb accounts?** A workspace can connect more than one. By default this returns every connected account&#39;s rows; pass &#x60;?account_id&#x3D;&lt;airbnb host id&gt;&#x60; to scope to one. Every row carries &#x60;accountId&#x60; + &#x60;accountName&#x60; either way, and &#x60;dataFreshness.accounts[]&#x60; reports each account&#39;s freshness separately, so one disconnected host no longer marks the whole response stale.
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :account_id Scope the response to ONE connected Airbnb account. The value is the Airbnb host id — the same &#x60;accounts[].externalAccountId&#x60; that &#x60;GET /v1/connect/airbnb&#x60; returns and &#x60;DELETE /v1/connect/airbnb?accountId&#x3D;&#x60; accepts.  A workspace can connect several Airbnb accounts. Omit this and you get every account&#39;s rows (the default, unchanged). Every row carries &#x60;accountId&#x60; + &#x60;accountName&#x60; either way, so you can group without a second call.  An id that is not connected to THIS workspace returns &#x60;404 not_found&#x60; with your own ids in &#x60;valid_values&#x60; — we do not distinguish \&quot;no such host\&quot; from \&quot;someone else&#39;s host\&quot;, because confirming the latter would leak another workspace&#39;s account.  Note this is NOT the &#x60;X-Account-Id&#x60; header, which carries a connection id and cannot tell two Airbnb hosts apart.
     # @option opts [String] :type Scope: &#x60;pending&#x60; (default) returns only alterations awaiting a decision; &#x60;all&#x60; returns every alteration. (default to 'pending')
     # @option opts [String] :reservation_code Airbnb confirmation code — restricts results to a single reservation. Returns an empty array when no reservation matches within your workspace.
     # @return [Array<(ListAirbnbAlterations200Response, Integer, Hash)>] ListAirbnbAlterations200Response data, response status code and response headers
@@ -1453,6 +1658,7 @@ module Repull
 
       # query parameters
       query_params = opts[:query_params] || {}
+      query_params[:'account_id'] = opts[:'account_id'] if !opts[:'account_id'].nil?
       query_params[:'type'] = opts[:'type'] if !opts[:'type'].nil?
       query_params[:'reservation_code'] = opts[:'reservation_code'] if !opts[:'reservation_code'].nil?
 
@@ -1622,6 +1828,76 @@ module Repull
       return data, status_code, headers
     end
 
+    # List Airbnb permits and licences
+    # The regulatory permits, licences and registration numbers attached to an Airbnb listing.  **DB-only by default.** `?source=cache` (the default) returns the permits as last mirrored by the sync worker — regulatory body, regulation type, status, permit number — with no upstream call.  **`?source=live` also returns the QUESTIONS.** The mirror stores the RESULT of a permit, not what Airbnb asks for it, so a caller that is about to write needs `?source=live` once: it returns each permit flow with the `question_key`, `answer_type` and `options` of every question, and the answers already on file. Airbnb refuses a `question_key` it did not ask for on this listing, so this is not optional guesswork you can skip.  Returns `404` when the listing has no Airbnb connection in this workspace, and `403 listing_inactive` when the listing is inactive.
+    # @param id [String] Repull listing id (numeric string).
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :source &#x60;cache&#x60; (default) reads the local mirror only. &#x60;live&#x60; additionally asks Airbnb for the permit questions. (default to 'cache')
+    # @return [ListAirbnbListingPermits200Response]
+    def list_airbnb_listing_permits(id, opts = {})
+      data, _status_code, _headers = list_airbnb_listing_permits_with_http_info(id, opts)
+      data
+    end
+
+    # List Airbnb permits and licences
+    # The regulatory permits, licences and registration numbers attached to an Airbnb listing.  **DB-only by default.** &#x60;?source&#x3D;cache&#x60; (the default) returns the permits as last mirrored by the sync worker — regulatory body, regulation type, status, permit number — with no upstream call.  **&#x60;?source&#x3D;live&#x60; also returns the QUESTIONS.** The mirror stores the RESULT of a permit, not what Airbnb asks for it, so a caller that is about to write needs &#x60;?source&#x3D;live&#x60; once: it returns each permit flow with the &#x60;question_key&#x60;, &#x60;answer_type&#x60; and &#x60;options&#x60; of every question, and the answers already on file. Airbnb refuses a &#x60;question_key&#x60; it did not ask for on this listing, so this is not optional guesswork you can skip.  Returns &#x60;404&#x60; when the listing has no Airbnb connection in this workspace, and &#x60;403 listing_inactive&#x60; when the listing is inactive.
+    # @param id [String] Repull listing id (numeric string).
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :source &#x60;cache&#x60; (default) reads the local mirror only. &#x60;live&#x60; additionally asks Airbnb for the permit questions. (default to 'cache')
+    # @return [Array<(ListAirbnbListingPermits200Response, Integer, Hash)>] ListAirbnbListingPermits200Response data, response status code and response headers
+    def list_airbnb_listing_permits_with_http_info(id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: AirbnbApi.list_airbnb_listing_permits ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling AirbnbApi.list_airbnb_listing_permits"
+      end
+      allowable_values = ["cache", "live"]
+      if @api_client.config.client_side_validation && opts[:'source'] && !allowable_values.include?(opts[:'source'])
+        fail ArgumentError, "invalid value for \"source\", must be one of #{allowable_values}"
+      end
+      # resource path
+      local_var_path = '/v1/channels/airbnb/listings/{id}/permits'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+      query_params[:'source'] = opts[:'source'] if !opts[:'source'].nil?
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'ListAirbnbListingPermits200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"AirbnbApi.list_airbnb_listing_permits",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: AirbnbApi#list_airbnb_listing_permits\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # List Airbnb photos
     # List photos attached to an Airbnb listing in display order. Returns the public CDN URL plus Airbnb-side metadata (id, caption, room).  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] 
@@ -1686,7 +1962,7 @@ module Repull
     end
 
     # List Airbnb rooms
-    # List the rooms configured on an Airbnb listing, ordered by room number. **Pure DB read** from `listings_airbnb_rooms`. Returns `404` when the listing has no Airbnb connection in this workspace.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # List the rooms configured on an Airbnb listing, ordered by room number, each with its sleeping arrangement in `beds`. **Pure DB read** from `listings_airbnb_rooms` + `listings_airbnb_beds`. Returns `404` when the listing has no Airbnb connection in this workspace.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Repull listing id (numeric string).
     # @param [Hash] opts the optional parameters
     # @return [GetAirbnbCheckinGuide200Response]
@@ -1696,7 +1972,7 @@ module Repull
     end
 
     # List Airbnb rooms
-    # List the rooms configured on an Airbnb listing, ordered by room number. **Pure DB read** from &#x60;listings_airbnb_rooms&#x60;. Returns &#x60;404&#x60; when the listing has no Airbnb connection in this workspace.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # List the rooms configured on an Airbnb listing, ordered by room number, each with its sleeping arrangement in &#x60;beds&#x60;. **Pure DB read** from &#x60;listings_airbnb_rooms&#x60; + &#x60;listings_airbnb_beds&#x60;. Returns &#x60;404&#x60; when the listing has no Airbnb connection in this workspace.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Repull listing id (numeric string).
     # @param [Hash] opts the optional parameters
     # @return [Array<(GetAirbnbCheckinGuide200Response, Integer, Hash)>] GetAirbnbCheckinGuide200Response data, response status code and response headers
@@ -1748,10 +2024,74 @@ module Repull
       return data, status_code, headers
     end
 
-    # List Airbnb listings
-    # List every Airbnb listing this workspace has access to via the connected Airbnb account. **Pure DB read — never calls Airbnb upstream.** The connect flow is what populates the local cache; the API serves what's already there. Customers with a disconnected host still see their last-synced data, with the top-level `dataFreshness` envelope flagging the staleness and pointing at the reconnect URL.  Pass `?include=amenities` to enrich each connection with its locally-cached amenity set. Returns `null` per connection when the cache is empty.  Inactive listings are left out; they keep syncing and reappear once activated. Use `GET /v1/listings?status=inactive` to find them.
+    # List guest-safety disclosures
+    # What a guest is told about the property before they book — exterior security cameras, a decibel noise monitor, pets on the property, stairs, a pool with no fence, weapons, shared spaces, limited parking. Airbnb calls them `listing_expectations_for_guests` and shows them at booking time.  **Pure DB read** from the local mirror. EVERY supported disclosure type is returned, including the ones this listing has not declared (`value: false`), so \"does this property have cameras?\" has an answer rather than a missing key — `declared` tells you whether Airbnb holds an explicit answer. Types Airbnb returns that are not in the documented set are passed through rather than dropped.  Where a listing is connected to several Airbnb listings, a disclosure declared on any of them is reported as true of the property.  Returns `404` when the listing has no Airbnb connection in this workspace, and `403 listing_inactive` when the listing is inactive.
+    # @param id [String] Repull listing id (numeric string).
     # @param [Hash] opts the optional parameters
-    # @option opts [String] :include Comma-separated expansions. Currently supported: &#x60;amenities&#x60; (adds &#x60;amenities&#x60; and &#x60;accessibility_amenities&#x60; arrays to each connection, sourced from the local &#x60;listings_airbnb_amenities&#x60; cache).
+    # @return [ListAirbnbListingSafetyDisclosures200Response]
+    def list_airbnb_listing_safety_disclosures(id, opts = {})
+      data, _status_code, _headers = list_airbnb_listing_safety_disclosures_with_http_info(id, opts)
+      data
+    end
+
+    # List guest-safety disclosures
+    # What a guest is told about the property before they book — exterior security cameras, a decibel noise monitor, pets on the property, stairs, a pool with no fence, weapons, shared spaces, limited parking. Airbnb calls them &#x60;listing_expectations_for_guests&#x60; and shows them at booking time.  **Pure DB read** from the local mirror. EVERY supported disclosure type is returned, including the ones this listing has not declared (&#x60;value: false&#x60;), so \&quot;does this property have cameras?\&quot; has an answer rather than a missing key — &#x60;declared&#x60; tells you whether Airbnb holds an explicit answer. Types Airbnb returns that are not in the documented set are passed through rather than dropped.  Where a listing is connected to several Airbnb listings, a disclosure declared on any of them is reported as true of the property.  Returns &#x60;404&#x60; when the listing has no Airbnb connection in this workspace, and &#x60;403 listing_inactive&#x60; when the listing is inactive.
+    # @param id [String] Repull listing id (numeric string).
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(ListAirbnbListingSafetyDisclosures200Response, Integer, Hash)>] ListAirbnbListingSafetyDisclosures200Response data, response status code and response headers
+    def list_airbnb_listing_safety_disclosures_with_http_info(id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: AirbnbApi.list_airbnb_listing_safety_disclosures ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling AirbnbApi.list_airbnb_listing_safety_disclosures"
+      end
+      # resource path
+      local_var_path = '/v1/channels/airbnb/listings/{id}/safety-disclosures'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'ListAirbnbListingSafetyDisclosures200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"AirbnbApi.list_airbnb_listing_safety_disclosures",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: AirbnbApi#list_airbnb_listing_safety_disclosures\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # List Airbnb listings
+    # List every Airbnb listing this workspace has access to via the connected Airbnb account. **Pure DB read — never calls Airbnb upstream.** The connect flow is what populates the local cache; the API serves what's already there. Customers with a disconnected host still see their last-synced data, with the top-level `dataFreshness` envelope flagging the staleness and pointing at the reconnect URL.  Pass `?include=amenities` to enrich each connection with its locally-cached amenity set. Returns `null` per connection when the cache is empty.  Pass `?include=thumbnail` to add `thumbnailUrl` to each listing — one extra column on the query that already runs, so a selection screen renders from a single request instead of one call per listing. `null` when the listing has no thumbnail stored. Combine comma-separated, e.g. `?include=amenities,thumbnail`.  **Can this listing be written to?** Every connection carries `syncCategory` — Airbnb's own per-listing API sync decision (`sync_all`, `sync_rates_and_availability`, or `none`) — and `writable`, which is `false` exactly when that category is `none`. Airbnb authorises sync one listing at a time, so a connected account can still hold listings Airbnb refuses every write to; a write to one of those returns `403 listing_not_api_connected` before anything is sent, and reconnecting the account does not change it (the host must switch the listing on in Airbnb). Check `writable` here before a portfolio-wide push instead of discovering it one 403 at a time.  Inactive listings are left out; they keep syncing and reappear once activated. Use `GET /v1/listings?status=inactive` to find them.  **Several Airbnb accounts?** A workspace can connect more than one. By default this returns every connected account's rows; pass `?account_id=<airbnb host id>` to scope to one. Every row carries `accountId` + `accountName` either way, and `dataFreshness.accounts[]` reports each account's freshness separately, so one disconnected host no longer marks the whole response stale.
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :account_id Scope the response to ONE connected Airbnb account. The value is the Airbnb host id — the same &#x60;accounts[].externalAccountId&#x60; that &#x60;GET /v1/connect/airbnb&#x60; returns and &#x60;DELETE /v1/connect/airbnb?accountId&#x3D;&#x60; accepts.  A workspace can connect several Airbnb accounts. Omit this and you get every account&#39;s rows (the default, unchanged). Every row carries &#x60;accountId&#x60; + &#x60;accountName&#x60; either way, so you can group without a second call.  An id that is not connected to THIS workspace returns &#x60;404 not_found&#x60; with your own ids in &#x60;valid_values&#x60; — we do not distinguish \&quot;no such host\&quot; from \&quot;someone else&#39;s host\&quot;, because confirming the latter would leak another workspace&#39;s account.  Note this is NOT the &#x60;X-Account-Id&#x60; header, which carries a connection id and cannot tell two Airbnb hosts apart.
+    # @option opts [String] :include Comma-separated expansions. Currently supported: &#x60;amenities&#x60; (adds &#x60;amenities&#x60; and &#x60;accessibility_amenities&#x60; arrays to each connection, sourced from the local &#x60;listings_airbnb_amenities&#x60; cache) and &#x60;thumbnail&#x60; (adds &#x60;thumbnailUrl&#x60; to each listing). Unknown values return 422 with a &#x60;valid_values&#x60; envelope.
     # @return [AirbnbListingListResponse]
     def list_airbnb_listings(opts = {})
       data, _status_code, _headers = list_airbnb_listings_with_http_info(opts)
@@ -1759,9 +2099,10 @@ module Repull
     end
 
     # List Airbnb listings
-    # List every Airbnb listing this workspace has access to via the connected Airbnb account. **Pure DB read — never calls Airbnb upstream.** The connect flow is what populates the local cache; the API serves what&#39;s already there. Customers with a disconnected host still see their last-synced data, with the top-level &#x60;dataFreshness&#x60; envelope flagging the staleness and pointing at the reconnect URL.  Pass &#x60;?include&#x3D;amenities&#x60; to enrich each connection with its locally-cached amenity set. Returns &#x60;null&#x60; per connection when the cache is empty.  Inactive listings are left out; they keep syncing and reappear once activated. Use &#x60;GET /v1/listings?status&#x3D;inactive&#x60; to find them.
+    # List every Airbnb listing this workspace has access to via the connected Airbnb account. **Pure DB read — never calls Airbnb upstream.** The connect flow is what populates the local cache; the API serves what&#39;s already there. Customers with a disconnected host still see their last-synced data, with the top-level &#x60;dataFreshness&#x60; envelope flagging the staleness and pointing at the reconnect URL.  Pass &#x60;?include&#x3D;amenities&#x60; to enrich each connection with its locally-cached amenity set. Returns &#x60;null&#x60; per connection when the cache is empty.  Pass &#x60;?include&#x3D;thumbnail&#x60; to add &#x60;thumbnailUrl&#x60; to each listing — one extra column on the query that already runs, so a selection screen renders from a single request instead of one call per listing. &#x60;null&#x60; when the listing has no thumbnail stored. Combine comma-separated, e.g. &#x60;?include&#x3D;amenities,thumbnail&#x60;.  **Can this listing be written to?** Every connection carries &#x60;syncCategory&#x60; — Airbnb&#39;s own per-listing API sync decision (&#x60;sync_all&#x60;, &#x60;sync_rates_and_availability&#x60;, or &#x60;none&#x60;) — and &#x60;writable&#x60;, which is &#x60;false&#x60; exactly when that category is &#x60;none&#x60;. Airbnb authorises sync one listing at a time, so a connected account can still hold listings Airbnb refuses every write to; a write to one of those returns &#x60;403 listing_not_api_connected&#x60; before anything is sent, and reconnecting the account does not change it (the host must switch the listing on in Airbnb). Check &#x60;writable&#x60; here before a portfolio-wide push instead of discovering it one 403 at a time.  Inactive listings are left out; they keep syncing and reappear once activated. Use &#x60;GET /v1/listings?status&#x3D;inactive&#x60; to find them.  **Several Airbnb accounts?** A workspace can connect more than one. By default this returns every connected account&#39;s rows; pass &#x60;?account_id&#x3D;&lt;airbnb host id&gt;&#x60; to scope to one. Every row carries &#x60;accountId&#x60; + &#x60;accountName&#x60; either way, and &#x60;dataFreshness.accounts[]&#x60; reports each account&#39;s freshness separately, so one disconnected host no longer marks the whole response stale.
     # @param [Hash] opts the optional parameters
-    # @option opts [String] :include Comma-separated expansions. Currently supported: &#x60;amenities&#x60; (adds &#x60;amenities&#x60; and &#x60;accessibility_amenities&#x60; arrays to each connection, sourced from the local &#x60;listings_airbnb_amenities&#x60; cache).
+    # @option opts [String] :account_id Scope the response to ONE connected Airbnb account. The value is the Airbnb host id — the same &#x60;accounts[].externalAccountId&#x60; that &#x60;GET /v1/connect/airbnb&#x60; returns and &#x60;DELETE /v1/connect/airbnb?accountId&#x3D;&#x60; accepts.  A workspace can connect several Airbnb accounts. Omit this and you get every account&#39;s rows (the default, unchanged). Every row carries &#x60;accountId&#x60; + &#x60;accountName&#x60; either way, so you can group without a second call.  An id that is not connected to THIS workspace returns &#x60;404 not_found&#x60; with your own ids in &#x60;valid_values&#x60; — we do not distinguish \&quot;no such host\&quot; from \&quot;someone else&#39;s host\&quot;, because confirming the latter would leak another workspace&#39;s account.  Note this is NOT the &#x60;X-Account-Id&#x60; header, which carries a connection id and cannot tell two Airbnb hosts apart.
+    # @option opts [String] :include Comma-separated expansions. Currently supported: &#x60;amenities&#x60; (adds &#x60;amenities&#x60; and &#x60;accessibility_amenities&#x60; arrays to each connection, sourced from the local &#x60;listings_airbnb_amenities&#x60; cache) and &#x60;thumbnail&#x60; (adds &#x60;thumbnailUrl&#x60; to each listing). Unknown values return 422 with a &#x60;valid_values&#x60; envelope.
     # @return [Array<(AirbnbListingListResponse, Integer, Hash)>] AirbnbListingListResponse data, response status code and response headers
     def list_airbnb_listings_with_http_info(opts = {})
       if @api_client.config.debugging
@@ -1772,6 +2113,7 @@ module Repull
 
       # query parameters
       query_params = opts[:query_params] || {}
+      query_params[:'account_id'] = opts[:'account_id'] if !opts[:'account_id'].nil?
       query_params[:'include'] = opts[:'include'] if !opts[:'include'].nil?
 
       # header parameters
@@ -1809,8 +2151,9 @@ module Repull
     end
 
     # List Airbnb reservations
-    # Cursor-paginated list of reservations sourced directly from Airbnb. Use this when you need Airbnb-specific fields (guest payout split, cancellation policy snapshot) that the unified `/v1/reservations` endpoint flattens away.  Walk pages with `?cursor=<pagination.nextCursor>` until `pagination.hasMore` is `false`. The cursor is opaque — never construct or parse it client-side.  `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) — see the `offset` parameter below. Mutually exclusive with `cursor`. Internally this walks upstream Airbnb cursor pages to skip rows, so deep offsets cost N/limit upstream round-trips; cursor remains the better choice for deep pagination.  When `status` is omitted, all statuses are returned (Airbnb defaults to `accepted` only on its own surface, but this endpoint normalises to \"all\"). Pass `?status=accepted` to scope.  Reservations on inactive listings are left out (counts and cursors included); they keep syncing and reappear once the listing is activated. Filtering by an inactive listing (`listing_id`) returns `403 listing_inactive`.
+    # Cursor-paginated list of reservations sourced directly from Airbnb. Use this when you need Airbnb-specific fields (guest payout split, cancellation policy snapshot) that the unified `/v1/reservations` endpoint flattens away.  Walk pages with `?cursor=<pagination.nextCursor>` until `pagination.hasMore` is `false`. The cursor is opaque — never construct or parse it client-side.  `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) — see the `offset` parameter below. Mutually exclusive with `cursor`. Internally this walks upstream Airbnb cursor pages to skip rows, so deep offsets cost N/limit upstream round-trips; cursor remains the better choice for deep pagination.  When `status` is omitted, all statuses are returned (Airbnb defaults to `accepted` only on its own surface, but this endpoint normalises to \"all\"). Pass `?status=accepted` to scope.  Reservations on inactive listings are left out (counts and cursors included); they keep syncing and reappear once the listing is activated. Filtering by an inactive listing (`listing_id`) returns `403 listing_inactive`.  **Several Airbnb accounts?** A workspace can connect more than one. By default this returns every connected account's rows; pass `?account_id=<airbnb host id>` to scope to one. Every row carries `accountId` + `accountName` either way, and `dataFreshness.accounts[]` reports each account's freshness separately, so one disconnected host no longer marks the whole response stale.
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :account_id Scope the response to ONE connected Airbnb account. The value is the Airbnb host id — the same &#x60;accounts[].externalAccountId&#x60; that &#x60;GET /v1/connect/airbnb&#x60; returns and &#x60;DELETE /v1/connect/airbnb?accountId&#x3D;&#x60; accepts.  A workspace can connect several Airbnb accounts. Omit this and you get every account&#39;s rows (the default, unchanged). Every row carries &#x60;accountId&#x60; + &#x60;accountName&#x60; either way, so you can group without a second call.  An id that is not connected to THIS workspace returns &#x60;404 not_found&#x60; with your own ids in &#x60;valid_values&#x60; — we do not distinguish \&quot;no such host\&quot; from \&quot;someone else&#39;s host\&quot;, because confirming the latter would leak another workspace&#39;s account.  Note this is NOT the &#x60;X-Account-Id&#x60; header, which carries a connection id and cannot tell two Airbnb hosts apart.
     # @option opts [String] :cursor Opaque cursor returned by the previous response&#39;s &#x60;pagination.nextCursor&#x60;. Omit to fetch the first page.
     # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.nextCursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
     # @option opts [Integer] :limit Max items per page. Hard cap is 100. (default to 50)
@@ -1826,8 +2169,9 @@ module Repull
     end
 
     # List Airbnb reservations
-    # Cursor-paginated list of reservations sourced directly from Airbnb. Use this when you need Airbnb-specific fields (guest payout split, cancellation policy snapshot) that the unified &#x60;/v1/reservations&#x60; endpoint flattens away.  Walk pages with &#x60;?cursor&#x3D;&lt;pagination.nextCursor&gt;&#x60; until &#x60;pagination.hasMore&#x60; is &#x60;false&#x60;. The cursor is opaque — never construct or parse it client-side.  &#x60;?offset&#x3D;&#x60; is also accepted as a first-class alias for shallow paging (0..10000) — see the &#x60;offset&#x60; parameter below. Mutually exclusive with &#x60;cursor&#x60;. Internally this walks upstream Airbnb cursor pages to skip rows, so deep offsets cost N/limit upstream round-trips; cursor remains the better choice for deep pagination.  When &#x60;status&#x60; is omitted, all statuses are returned (Airbnb defaults to &#x60;accepted&#x60; only on its own surface, but this endpoint normalises to \&quot;all\&quot;). Pass &#x60;?status&#x3D;accepted&#x60; to scope.  Reservations on inactive listings are left out (counts and cursors included); they keep syncing and reappear once the listing is activated. Filtering by an inactive listing (&#x60;listing_id&#x60;) returns &#x60;403 listing_inactive&#x60;.
+    # Cursor-paginated list of reservations sourced directly from Airbnb. Use this when you need Airbnb-specific fields (guest payout split, cancellation policy snapshot) that the unified &#x60;/v1/reservations&#x60; endpoint flattens away.  Walk pages with &#x60;?cursor&#x3D;&lt;pagination.nextCursor&gt;&#x60; until &#x60;pagination.hasMore&#x60; is &#x60;false&#x60;. The cursor is opaque — never construct or parse it client-side.  &#x60;?offset&#x3D;&#x60; is also accepted as a first-class alias for shallow paging (0..10000) — see the &#x60;offset&#x60; parameter below. Mutually exclusive with &#x60;cursor&#x60;. Internally this walks upstream Airbnb cursor pages to skip rows, so deep offsets cost N/limit upstream round-trips; cursor remains the better choice for deep pagination.  When &#x60;status&#x60; is omitted, all statuses are returned (Airbnb defaults to &#x60;accepted&#x60; only on its own surface, but this endpoint normalises to \&quot;all\&quot;). Pass &#x60;?status&#x3D;accepted&#x60; to scope.  Reservations on inactive listings are left out (counts and cursors included); they keep syncing and reappear once the listing is activated. Filtering by an inactive listing (&#x60;listing_id&#x60;) returns &#x60;403 listing_inactive&#x60;.  **Several Airbnb accounts?** A workspace can connect more than one. By default this returns every connected account&#39;s rows; pass &#x60;?account_id&#x3D;&lt;airbnb host id&gt;&#x60; to scope to one. Every row carries &#x60;accountId&#x60; + &#x60;accountName&#x60; either way, and &#x60;dataFreshness.accounts[]&#x60; reports each account&#39;s freshness separately, so one disconnected host no longer marks the whole response stale.
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :account_id Scope the response to ONE connected Airbnb account. The value is the Airbnb host id — the same &#x60;accounts[].externalAccountId&#x60; that &#x60;GET /v1/connect/airbnb&#x60; returns and &#x60;DELETE /v1/connect/airbnb?accountId&#x3D;&#x60; accepts.  A workspace can connect several Airbnb accounts. Omit this and you get every account&#39;s rows (the default, unchanged). Every row carries &#x60;accountId&#x60; + &#x60;accountName&#x60; either way, so you can group without a second call.  An id that is not connected to THIS workspace returns &#x60;404 not_found&#x60; with your own ids in &#x60;valid_values&#x60; — we do not distinguish \&quot;no such host\&quot; from \&quot;someone else&#39;s host\&quot;, because confirming the latter would leak another workspace&#39;s account.  Note this is NOT the &#x60;X-Account-Id&#x60; header, which carries a connection id and cannot tell two Airbnb hosts apart.
     # @option opts [String] :cursor Opaque cursor returned by the previous response&#39;s &#x60;pagination.nextCursor&#x60;. Omit to fetch the first page.
     # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.nextCursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
     # @option opts [Integer] :limit Max items per page. Hard cap is 100. (default to 50)
@@ -1866,6 +2210,7 @@ module Repull
 
       # query parameters
       query_params = opts[:query_params] || {}
+      query_params[:'account_id'] = opts[:'account_id'] if !opts[:'account_id'].nil?
       query_params[:'cursor'] = opts[:'cursor'] if !opts[:'cursor'].nil?
       query_params[:'offset'] = opts[:'offset'] if !opts[:'offset'].nil?
       query_params[:'limit'] = opts[:'limit'] if !opts[:'limit'].nil?
@@ -1910,8 +2255,9 @@ module Repull
     end
 
     # List Airbnb reviews
-    # List reviews left by guests on Airbnb listings in this workspace. Includes both reviews of the host and reviews of the guest (where the host has not yet submitted theirs).  Reviews of inactive listings are left out; they keep syncing and reappear once the listing is activated. Filtering by an inactive listing (`listing_id`) returns `403 listing_inactive`.
+    # List reviews left by guests on Airbnb listings in this workspace. Includes both reviews of the host and reviews of the guest (where the host has not yet submitted theirs).  Reviews of inactive listings are left out; they keep syncing and reappear once the listing is activated. Filtering by an inactive listing (`listing_id`) returns `403 listing_inactive`.  **Several Airbnb accounts?** A workspace can connect more than one. By default this returns every connected account's rows; pass `?account_id=<airbnb host id>` to scope to one. Every row carries `accountId` + `accountName` either way, and `dataFreshness.accounts[]` reports each account's freshness separately, so one disconnected host no longer marks the whole response stale.
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :account_id Scope the response to ONE connected Airbnb account. The value is the Airbnb host id — the same &#x60;accounts[].externalAccountId&#x60; that &#x60;GET /v1/connect/airbnb&#x60; returns and &#x60;DELETE /v1/connect/airbnb?accountId&#x3D;&#x60; accepts.  A workspace can connect several Airbnb accounts. Omit this and you get every account&#39;s rows (the default, unchanged). Every row carries &#x60;accountId&#x60; + &#x60;accountName&#x60; either way, so you can group without a second call.  An id that is not connected to THIS workspace returns &#x60;404 not_found&#x60; with your own ids in &#x60;valid_values&#x60; — we do not distinguish \&quot;no such host\&quot; from \&quot;someone else&#39;s host\&quot;, because confirming the latter would leak another workspace&#39;s account.  Note this is NOT the &#x60;X-Account-Id&#x60; header, which carries a connection id and cannot tell two Airbnb hosts apart.
     # @return [AirbnbReviewListResponse]
     def list_airbnb_reviews(opts = {})
       data, _status_code, _headers = list_airbnb_reviews_with_http_info(opts)
@@ -1919,8 +2265,9 @@ module Repull
     end
 
     # List Airbnb reviews
-    # List reviews left by guests on Airbnb listings in this workspace. Includes both reviews of the host and reviews of the guest (where the host has not yet submitted theirs).  Reviews of inactive listings are left out; they keep syncing and reappear once the listing is activated. Filtering by an inactive listing (&#x60;listing_id&#x60;) returns &#x60;403 listing_inactive&#x60;.
+    # List reviews left by guests on Airbnb listings in this workspace. Includes both reviews of the host and reviews of the guest (where the host has not yet submitted theirs).  Reviews of inactive listings are left out; they keep syncing and reappear once the listing is activated. Filtering by an inactive listing (&#x60;listing_id&#x60;) returns &#x60;403 listing_inactive&#x60;.  **Several Airbnb accounts?** A workspace can connect more than one. By default this returns every connected account&#39;s rows; pass &#x60;?account_id&#x3D;&lt;airbnb host id&gt;&#x60; to scope to one. Every row carries &#x60;accountId&#x60; + &#x60;accountName&#x60; either way, and &#x60;dataFreshness.accounts[]&#x60; reports each account&#39;s freshness separately, so one disconnected host no longer marks the whole response stale.
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :account_id Scope the response to ONE connected Airbnb account. The value is the Airbnb host id — the same &#x60;accounts[].externalAccountId&#x60; that &#x60;GET /v1/connect/airbnb&#x60; returns and &#x60;DELETE /v1/connect/airbnb?accountId&#x3D;&#x60; accepts.  A workspace can connect several Airbnb accounts. Omit this and you get every account&#39;s rows (the default, unchanged). Every row carries &#x60;accountId&#x60; + &#x60;accountName&#x60; either way, so you can group without a second call.  An id that is not connected to THIS workspace returns &#x60;404 not_found&#x60; with your own ids in &#x60;valid_values&#x60; — we do not distinguish \&quot;no such host\&quot; from \&quot;someone else&#39;s host\&quot;, because confirming the latter would leak another workspace&#39;s account.  Note this is NOT the &#x60;X-Account-Id&#x60; header, which carries a connection id and cannot tell two Airbnb hosts apart.
     # @return [Array<(AirbnbReviewListResponse, Integer, Hash)>] AirbnbReviewListResponse data, response status code and response headers
     def list_airbnb_reviews_with_http_info(opts = {})
       if @api_client.config.debugging
@@ -1931,6 +2278,7 @@ module Repull
 
       # query parameters
       query_params = opts[:query_params] || {}
+      query_params[:'account_id'] = opts[:'account_id'] if !opts[:'account_id'].nil?
 
       # header parameters
       header_params = opts[:header_params] || {}
@@ -2030,8 +2378,9 @@ module Repull
     end
 
     # List Airbnb message threads
-    # List Airbnb message threads (one per guest conversation). Cursor-paginated. Each thread includes a preview of the latest message.  Threads on inactive listings are left out; they keep syncing and reappear once the listing is activated. Filtering by an inactive listing (`listing_id`) returns `403 listing_inactive`.
+    # List Airbnb message threads (one per guest conversation). Cursor-paginated. Each thread includes a preview of the latest message.  Threads on inactive listings are left out; they keep syncing and reappear once the listing is activated. Filtering by an inactive listing (`listing_id`) returns `403 listing_inactive`.  **Several Airbnb accounts?** A workspace can connect more than one. By default this returns every connected account's rows; pass `?account_id=<airbnb host id>` to scope to one. Every row carries `accountId` + `accountName` either way, and `dataFreshness.accounts[]` reports each account's freshness separately, so one disconnected host no longer marks the whole response stale.
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :account_id Scope the response to ONE connected Airbnb account. The value is the Airbnb host id — the same &#x60;accounts[].externalAccountId&#x60; that &#x60;GET /v1/connect/airbnb&#x60; returns and &#x60;DELETE /v1/connect/airbnb?accountId&#x3D;&#x60; accepts.  A workspace can connect several Airbnb accounts. Omit this and you get every account&#39;s rows (the default, unchanged). Every row carries &#x60;accountId&#x60; + &#x60;accountName&#x60; either way, so you can group without a second call.  An id that is not connected to THIS workspace returns &#x60;404 not_found&#x60; with your own ids in &#x60;valid_values&#x60; — we do not distinguish \&quot;no such host\&quot; from \&quot;someone else&#39;s host\&quot;, because confirming the latter would leak another workspace&#39;s account.  Note this is NOT the &#x60;X-Account-Id&#x60; header, which carries a connection id and cannot tell two Airbnb hosts apart.
     # @return [AirbnbThreadListResponse]
     def list_airbnb_threads(opts = {})
       data, _status_code, _headers = list_airbnb_threads_with_http_info(opts)
@@ -2039,8 +2388,9 @@ module Repull
     end
 
     # List Airbnb message threads
-    # List Airbnb message threads (one per guest conversation). Cursor-paginated. Each thread includes a preview of the latest message.  Threads on inactive listings are left out; they keep syncing and reappear once the listing is activated. Filtering by an inactive listing (&#x60;listing_id&#x60;) returns &#x60;403 listing_inactive&#x60;.
+    # List Airbnb message threads (one per guest conversation). Cursor-paginated. Each thread includes a preview of the latest message.  Threads on inactive listings are left out; they keep syncing and reappear once the listing is activated. Filtering by an inactive listing (&#x60;listing_id&#x60;) returns &#x60;403 listing_inactive&#x60;.  **Several Airbnb accounts?** A workspace can connect more than one. By default this returns every connected account&#39;s rows; pass &#x60;?account_id&#x3D;&lt;airbnb host id&gt;&#x60; to scope to one. Every row carries &#x60;accountId&#x60; + &#x60;accountName&#x60; either way, and &#x60;dataFreshness.accounts[]&#x60; reports each account&#39;s freshness separately, so one disconnected host no longer marks the whole response stale.
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :account_id Scope the response to ONE connected Airbnb account. The value is the Airbnb host id — the same &#x60;accounts[].externalAccountId&#x60; that &#x60;GET /v1/connect/airbnb&#x60; returns and &#x60;DELETE /v1/connect/airbnb?accountId&#x3D;&#x60; accepts.  A workspace can connect several Airbnb accounts. Omit this and you get every account&#39;s rows (the default, unchanged). Every row carries &#x60;accountId&#x60; + &#x60;accountName&#x60; either way, so you can group without a second call.  An id that is not connected to THIS workspace returns &#x60;404 not_found&#x60; with your own ids in &#x60;valid_values&#x60; — we do not distinguish \&quot;no such host\&quot; from \&quot;someone else&#39;s host\&quot;, because confirming the latter would leak another workspace&#39;s account.  Note this is NOT the &#x60;X-Account-Id&#x60; header, which carries a connection id and cannot tell two Airbnb hosts apart.
     # @return [Array<(AirbnbThreadListResponse, Integer, Hash)>] AirbnbThreadListResponse data, response status code and response headers
     def list_airbnb_threads_with_http_info(opts = {})
       if @api_client.config.debugging
@@ -2051,6 +2401,7 @@ module Repull
 
       # query parameters
       query_params = opts[:query_params] || {}
+      query_params[:'account_id'] = opts[:'account_id'] if !opts[:'account_id'].nil?
 
       # header parameters
       header_params = opts[:header_params] || {}
@@ -2087,8 +2438,9 @@ module Repull
     end
 
     # List Airbnb transactions
-    # List Airbnb host transactions (reservation earnings, payouts, resolution adjustments) for this workspace, newest first. **Pure DB read** — customer-facing reads never call Airbnb upstream; they serve the `airbnb_transactions` mirror. Each row carries the genuine host- and guest-side financial breakdown (accommodation subtotal, cleaning fee, host + guest service fees split base/VAT, tax buckets, expected/actual host payout with settlement status). Trigger a refresh with `POST` on this path. When the mirror is empty or the host disconnected, `dataFreshness.stale = true` with a `reason` (`never_synced`, `host_disconnected_<iso>`, `sync_lag_>_24h`).  Transactions of reservations on inactive listings are left out; payout rows, which belong to no listing, are always included.
+    # List Airbnb host transactions (reservation earnings, payouts, resolution adjustments) for this workspace, newest first. **Pure DB read** — customer-facing reads never call Airbnb upstream; they serve the `airbnb_transactions` mirror. Each row carries the genuine host- and guest-side financial breakdown (accommodation subtotal, cleaning fee, host + guest service fees split base/VAT, tax buckets, expected/actual host payout with settlement status). Trigger a refresh with `POST` on this path. When the mirror is empty or the host disconnected, `dataFreshness.stale = true` with a `reason` (`never_synced`, `host_disconnected_<iso>`, `sync_lag_>_24h`).  Transactions of reservations on inactive listings are left out; payout rows, which belong to no listing, are always included.  **Several Airbnb accounts?** A workspace can connect more than one. By default this returns every connected account's rows; pass `?account_id=<airbnb host id>` to scope to one. Every row carries `accountId` + `accountName` either way, and `dataFreshness.accounts[]` reports each account's freshness separately, so one disconnected host no longer marks the whole response stale.
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :account_id Scope the response to ONE connected Airbnb account. The value is the Airbnb host id — the same &#x60;accounts[].externalAccountId&#x60; that &#x60;GET /v1/connect/airbnb&#x60; returns and &#x60;DELETE /v1/connect/airbnb?accountId&#x3D;&#x60; accepts.  A workspace can connect several Airbnb accounts. Omit this and you get every account&#39;s rows (the default, unchanged). Every row carries &#x60;accountId&#x60; + &#x60;accountName&#x60; either way, so you can group without a second call.  An id that is not connected to THIS workspace returns &#x60;404 not_found&#x60; with your own ids in &#x60;valid_values&#x60; — we do not distinguish \&quot;no such host\&quot; from \&quot;someone else&#39;s host\&quot;, because confirming the latter would leak another workspace&#39;s account.  Note this is NOT the &#x60;X-Account-Id&#x60; header, which carries a connection id and cannot tell two Airbnb hosts apart.
     # @return [ListAirbnbTransactions200Response]
     def list_airbnb_transactions(opts = {})
       data, _status_code, _headers = list_airbnb_transactions_with_http_info(opts)
@@ -2096,8 +2448,9 @@ module Repull
     end
 
     # List Airbnb transactions
-    # List Airbnb host transactions (reservation earnings, payouts, resolution adjustments) for this workspace, newest first. **Pure DB read** — customer-facing reads never call Airbnb upstream; they serve the &#x60;airbnb_transactions&#x60; mirror. Each row carries the genuine host- and guest-side financial breakdown (accommodation subtotal, cleaning fee, host + guest service fees split base/VAT, tax buckets, expected/actual host payout with settlement status). Trigger a refresh with &#x60;POST&#x60; on this path. When the mirror is empty or the host disconnected, &#x60;dataFreshness.stale &#x3D; true&#x60; with a &#x60;reason&#x60; (&#x60;never_synced&#x60;, &#x60;host_disconnected_&lt;iso&gt;&#x60;, &#x60;sync_lag_&gt;_24h&#x60;).  Transactions of reservations on inactive listings are left out; payout rows, which belong to no listing, are always included.
+    # List Airbnb host transactions (reservation earnings, payouts, resolution adjustments) for this workspace, newest first. **Pure DB read** — customer-facing reads never call Airbnb upstream; they serve the &#x60;airbnb_transactions&#x60; mirror. Each row carries the genuine host- and guest-side financial breakdown (accommodation subtotal, cleaning fee, host + guest service fees split base/VAT, tax buckets, expected/actual host payout with settlement status). Trigger a refresh with &#x60;POST&#x60; on this path. When the mirror is empty or the host disconnected, &#x60;dataFreshness.stale &#x3D; true&#x60; with a &#x60;reason&#x60; (&#x60;never_synced&#x60;, &#x60;host_disconnected_&lt;iso&gt;&#x60;, &#x60;sync_lag_&gt;_24h&#x60;).  Transactions of reservations on inactive listings are left out; payout rows, which belong to no listing, are always included.  **Several Airbnb accounts?** A workspace can connect more than one. By default this returns every connected account&#39;s rows; pass &#x60;?account_id&#x3D;&lt;airbnb host id&gt;&#x60; to scope to one. Every row carries &#x60;accountId&#x60; + &#x60;accountName&#x60; either way, and &#x60;dataFreshness.accounts[]&#x60; reports each account&#39;s freshness separately, so one disconnected host no longer marks the whole response stale.
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :account_id Scope the response to ONE connected Airbnb account. The value is the Airbnb host id — the same &#x60;accounts[].externalAccountId&#x60; that &#x60;GET /v1/connect/airbnb&#x60; returns and &#x60;DELETE /v1/connect/airbnb?accountId&#x3D;&#x60; accepts.  A workspace can connect several Airbnb accounts. Omit this and you get every account&#39;s rows (the default, unchanged). Every row carries &#x60;accountId&#x60; + &#x60;accountName&#x60; either way, so you can group without a second call.  An id that is not connected to THIS workspace returns &#x60;404 not_found&#x60; with your own ids in &#x60;valid_values&#x60; — we do not distinguish \&quot;no such host\&quot; from \&quot;someone else&#39;s host\&quot;, because confirming the latter would leak another workspace&#39;s account.  Note this is NOT the &#x60;X-Account-Id&#x60; header, which carries a connection id and cannot tell two Airbnb hosts apart.
     # @return [Array<(ListAirbnbTransactions200Response, Integer, Hash)>] ListAirbnbTransactions200Response data, response status code and response headers
     def list_airbnb_transactions_with_http_info(opts = {})
       if @api_client.config.debugging
@@ -2108,6 +2461,7 @@ module Repull
 
       # query parameters
       query_params = opts[:query_params] || {}
+      query_params[:'account_id'] = opts[:'account_id'] if !opts[:'account_id'].nil?
 
       # header parameters
       header_params = opts[:header_params] || {}
@@ -2207,6 +2561,80 @@ module Repull
       data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: AirbnbApi#map_airbnb_listing\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Reorder the Airbnb photo tour
+    # Set the order of a listing's photo tour in one call. **Write-side** — calls Airbnb upstream.  Send the photo ids in the order you want them shown, first photo first. Ids you leave out keep their current relative order behind the ones you list, so moving one photo to the front is `{\"photo_ids\": [\"<id>\"]}`. Positions are then written as a dense run starting at 1.  Airbnb has no bulk photo endpoint — order is one `sort_order` per photo — so this saves a loop of up to 200 requests against your rate limit and makes the partial-failure case reportable. How much is atomic:  - Everything is validated before anything is written. A duplicate id, an id that is not on this listing, an inactive listing or a missing connection all fail with **zero** upstream writes. - Only photos whose position actually changes are written; re-sending the order you already have writes nothing. - On the first upstream failure the run stops — nothing after it is attempted. The error carries `applied`, `failed_photo_id` and `not_attempted`, uses Airbnb's own status (`422` rejected / `403` reauth / `429` / `502`), and the operation is idempotent: re-send the identical body to finish the run. - Our stored copy records what actually landed, never the intent.  Validation is against our cached copy of the tour, so a listing whose photos have never synced returns `404` — use `PATCH /photos` (which needs no cache) until the first sync lands.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # @param id [String] Repull listing id (numeric string).
+    # @param reorder_airbnb_listing_photos_request [ReorderAirbnbListingPhotosRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [ReorderAirbnbListingPhotos200Response]
+    def reorder_airbnb_listing_photos(id, reorder_airbnb_listing_photos_request, opts = {})
+      data, _status_code, _headers = reorder_airbnb_listing_photos_with_http_info(id, reorder_airbnb_listing_photos_request, opts)
+      data
+    end
+
+    # Reorder the Airbnb photo tour
+    # Set the order of a listing&#39;s photo tour in one call. **Write-side** — calls Airbnb upstream.  Send the photo ids in the order you want them shown, first photo first. Ids you leave out keep their current relative order behind the ones you list, so moving one photo to the front is &#x60;{\&quot;photo_ids\&quot;: [\&quot;&lt;id&gt;\&quot;]}&#x60;. Positions are then written as a dense run starting at 1.  Airbnb has no bulk photo endpoint — order is one &#x60;sort_order&#x60; per photo — so this saves a loop of up to 200 requests against your rate limit and makes the partial-failure case reportable. How much is atomic:  - Everything is validated before anything is written. A duplicate id, an id that is not on this listing, an inactive listing or a missing connection all fail with **zero** upstream writes. - Only photos whose position actually changes are written; re-sending the order you already have writes nothing. - On the first upstream failure the run stops — nothing after it is attempted. The error carries &#x60;applied&#x60;, &#x60;failed_photo_id&#x60; and &#x60;not_attempted&#x60;, uses Airbnb&#39;s own status (&#x60;422&#x60; rejected / &#x60;403&#x60; reauth / &#x60;429&#x60; / &#x60;502&#x60;), and the operation is idempotent: re-send the identical body to finish the run. - Our stored copy records what actually landed, never the intent.  Validation is against our cached copy of the tour, so a listing whose photos have never synced returns &#x60;404&#x60; — use &#x60;PATCH /photos&#x60; (which needs no cache) until the first sync lands.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # @param id [String] Repull listing id (numeric string).
+    # @param reorder_airbnb_listing_photos_request [ReorderAirbnbListingPhotosRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(ReorderAirbnbListingPhotos200Response, Integer, Hash)>] ReorderAirbnbListingPhotos200Response data, response status code and response headers
+    def reorder_airbnb_listing_photos_with_http_info(id, reorder_airbnb_listing_photos_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: AirbnbApi.reorder_airbnb_listing_photos ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling AirbnbApi.reorder_airbnb_listing_photos"
+      end
+      # verify the required parameter 'reorder_airbnb_listing_photos_request' is set
+      if @api_client.config.client_side_validation && reorder_airbnb_listing_photos_request.nil?
+        fail ArgumentError, "Missing the required parameter 'reorder_airbnb_listing_photos_request' when calling AirbnbApi.reorder_airbnb_listing_photos"
+      end
+      # resource path
+      local_var_path = '/v1/channels/airbnb/listings/{id}/photos/order'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(reorder_airbnb_listing_photos_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'ReorderAirbnbListingPhotos200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"AirbnbApi.reorder_airbnb_listing_photos",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:PUT, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: AirbnbApi#reorder_airbnb_listing_photos\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end
@@ -2416,6 +2844,80 @@ module Repull
       return data, status_code, headers
     end
 
+    # Set the Airbnb cover photo
+    # Choose which photo leads the listing. **Write-side** — calls Airbnb upstream.  Airbnb has no \"cover\" field: the cover is the first photo of the tour, so this is a position write. Usually it is a single upstream request — the chosen photo takes a position below the current first one and nothing else moves. When the tour already starts at position 1 and there is no room below it, the tour is renumbered instead, one request per photo whose position actually changes, with the same stop-at-first-failure reporting as `PUT /photos/order` (`applied`, `failed_photo_id`, `not_attempted`; re-send the identical body to finish).  The listing thumbnail — what every list view renders — is repointed at the new cover, so the change is not visible only inside the photo tour.  The photo must already be in our cached copy of the tour; one uploaded since the last sync returns `404`, and `PATCH /photos` can set its position in the meantime.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # @param id [String] Repull listing id (numeric string).
+    # @param set_airbnb_listing_cover_photo_request [SetAirbnbListingCoverPhotoRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [SetAirbnbListingCoverPhoto200Response]
+    def set_airbnb_listing_cover_photo(id, set_airbnb_listing_cover_photo_request, opts = {})
+      data, _status_code, _headers = set_airbnb_listing_cover_photo_with_http_info(id, set_airbnb_listing_cover_photo_request, opts)
+      data
+    end
+
+    # Set the Airbnb cover photo
+    # Choose which photo leads the listing. **Write-side** — calls Airbnb upstream.  Airbnb has no \&quot;cover\&quot; field: the cover is the first photo of the tour, so this is a position write. Usually it is a single upstream request — the chosen photo takes a position below the current first one and nothing else moves. When the tour already starts at position 1 and there is no room below it, the tour is renumbered instead, one request per photo whose position actually changes, with the same stop-at-first-failure reporting as &#x60;PUT /photos/order&#x60; (&#x60;applied&#x60;, &#x60;failed_photo_id&#x60;, &#x60;not_attempted&#x60;; re-send the identical body to finish).  The listing thumbnail — what every list view renders — is repointed at the new cover, so the change is not visible only inside the photo tour.  The photo must already be in our cached copy of the tour; one uploaded since the last sync returns &#x60;404&#x60;, and &#x60;PATCH /photos&#x60; can set its position in the meantime.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # @param id [String] Repull listing id (numeric string).
+    # @param set_airbnb_listing_cover_photo_request [SetAirbnbListingCoverPhotoRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(SetAirbnbListingCoverPhoto200Response, Integer, Hash)>] SetAirbnbListingCoverPhoto200Response data, response status code and response headers
+    def set_airbnb_listing_cover_photo_with_http_info(id, set_airbnb_listing_cover_photo_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: AirbnbApi.set_airbnb_listing_cover_photo ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling AirbnbApi.set_airbnb_listing_cover_photo"
+      end
+      # verify the required parameter 'set_airbnb_listing_cover_photo_request' is set
+      if @api_client.config.client_side_validation && set_airbnb_listing_cover_photo_request.nil?
+        fail ArgumentError, "Missing the required parameter 'set_airbnb_listing_cover_photo_request' when calling AirbnbApi.set_airbnb_listing_cover_photo"
+      end
+      # resource path
+      local_var_path = '/v1/channels/airbnb/listings/{id}/photos/cover'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(set_airbnb_listing_cover_photo_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'SetAirbnbListingCoverPhoto200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"AirbnbApi.set_airbnb_listing_cover_photo",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:PUT, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: AirbnbApi#set_airbnb_listing_cover_photo\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # Sync Airbnb transactions
     # Refresh the Airbnb transactions mirror for this workspace by pulling from Airbnb upstream and upserting the breakdown that `GET` serves. Optional JSON body `{ start_date, end_date, transaction_type }` (`transaction_type` is `COMPLETED` or `UPCOMING`; both are synced when omitted). Returns `{ synced, count }`.
     # @param [Hash] opts the optional parameters
@@ -2476,6 +2978,80 @@ module Repull
       data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: AirbnbApi#sync_airbnb_transactions\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Update Airbnb booking settings
+    # Set any subset of a listing's booking settings on Airbnb. Partial — a field you do not send is left as it is.  `{id}` is the **Repull listing id** (from `GET /v1/properties` or `GET /v1/channels/airbnb/listings`), not the Airbnb listing id; Repull translates it before calling Airbnb.  The body is validated before anything reaches Airbnb, so a bad value is a `422` naming the field rather than a failed upstream call. Unknown fields are refused rather than dropped.  **Two groups, applied in order.** Instant Book, check-in/out and the cancellation fields go to Airbnb's booking-settings resource. Advance notice, preparation time and booking window go to Airbnb's availability rules — Airbnb replaces that whole document, so Repull reads the current rules first and merges your change onto them, which is why setting a preparation time does not blank the listing's min/max nights. The response's `applied` array names the groups that were written.  **Non-refundable is a percentage here, a factor on Airbnb.** Airbnb stores `non_refundable_price_factor` between 0.7 and 1.0; send `cancellation.nonRefundable.discountPercent` (0-30) and Repull converts — 10% becomes 0.9. `enabled: false` sets the factor to 1.0.  **Not exposed by Airbnb:** `preReservationMessage` and `automaticStayExtension`. Sending either returns a `422` explaining where to set it instead.  **Errors:** `403 connection_reauth_required` — Airbnb no longer accepts the connection for this listing (reconnect; retrying won't help). `403 listing_inactive` — the listing is inactive. `404 not_found` — no Airbnb-connected listing with this id in the workspace. `422 invalid_params` — the body is wrong; `field` names it. `422 airbnb_rejected` — Airbnb refused the change; `message` carries its reason. `429 airbnb_rate_limited` — back off. `502 airbnb_error` — Airbnb outage or timeout; retry.
+    # @param id [String] Repull listing id (numeric string), not the Airbnb listing id.
+    # @param update_airbnb_booking_settings_request [UpdateAirbnbBookingSettingsRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [UpdateAirbnbBookingSettings200Response]
+    def update_airbnb_booking_settings(id, update_airbnb_booking_settings_request, opts = {})
+      data, _status_code, _headers = update_airbnb_booking_settings_with_http_info(id, update_airbnb_booking_settings_request, opts)
+      data
+    end
+
+    # Update Airbnb booking settings
+    # Set any subset of a listing&#39;s booking settings on Airbnb. Partial — a field you do not send is left as it is.  &#x60;{id}&#x60; is the **Repull listing id** (from &#x60;GET /v1/properties&#x60; or &#x60;GET /v1/channels/airbnb/listings&#x60;), not the Airbnb listing id; Repull translates it before calling Airbnb.  The body is validated before anything reaches Airbnb, so a bad value is a &#x60;422&#x60; naming the field rather than a failed upstream call. Unknown fields are refused rather than dropped.  **Two groups, applied in order.** Instant Book, check-in/out and the cancellation fields go to Airbnb&#39;s booking-settings resource. Advance notice, preparation time and booking window go to Airbnb&#39;s availability rules — Airbnb replaces that whole document, so Repull reads the current rules first and merges your change onto them, which is why setting a preparation time does not blank the listing&#39;s min/max nights. The response&#39;s &#x60;applied&#x60; array names the groups that were written.  **Non-refundable is a percentage here, a factor on Airbnb.** Airbnb stores &#x60;non_refundable_price_factor&#x60; between 0.7 and 1.0; send &#x60;cancellation.nonRefundable.discountPercent&#x60; (0-30) and Repull converts — 10% becomes 0.9. &#x60;enabled: false&#x60; sets the factor to 1.0.  **Not exposed by Airbnb:** &#x60;preReservationMessage&#x60; and &#x60;automaticStayExtension&#x60;. Sending either returns a &#x60;422&#x60; explaining where to set it instead.  **Errors:** &#x60;403 connection_reauth_required&#x60; — Airbnb no longer accepts the connection for this listing (reconnect; retrying won&#39;t help). &#x60;403 listing_inactive&#x60; — the listing is inactive. &#x60;404 not_found&#x60; — no Airbnb-connected listing with this id in the workspace. &#x60;422 invalid_params&#x60; — the body is wrong; &#x60;field&#x60; names it. &#x60;422 airbnb_rejected&#x60; — Airbnb refused the change; &#x60;message&#x60; carries its reason. &#x60;429 airbnb_rate_limited&#x60; — back off. &#x60;502 airbnb_error&#x60; — Airbnb outage or timeout; retry.
+    # @param id [String] Repull listing id (numeric string), not the Airbnb listing id.
+    # @param update_airbnb_booking_settings_request [UpdateAirbnbBookingSettingsRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(UpdateAirbnbBookingSettings200Response, Integer, Hash)>] UpdateAirbnbBookingSettings200Response data, response status code and response headers
+    def update_airbnb_booking_settings_with_http_info(id, update_airbnb_booking_settings_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: AirbnbApi.update_airbnb_booking_settings ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling AirbnbApi.update_airbnb_booking_settings"
+      end
+      # verify the required parameter 'update_airbnb_booking_settings_request' is set
+      if @api_client.config.client_side_validation && update_airbnb_booking_settings_request.nil?
+        fail ArgumentError, "Missing the required parameter 'update_airbnb_booking_settings_request' when calling AirbnbApi.update_airbnb_booking_settings"
+      end
+      # resource path
+      local_var_path = '/v1/channels/airbnb/listings/{id}/booking-settings'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(update_airbnb_booking_settings_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'UpdateAirbnbBookingSettings200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"AirbnbApi.update_airbnb_booking_settings",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:PUT, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: AirbnbApi#update_airbnb_booking_settings\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end
@@ -2546,8 +3122,82 @@ module Repull
       return data, status_code, headers
     end
 
+    # Update Airbnb amenities
+    # Set amenities on an Airbnb listing. **Write-side** — calls Airbnb upstream.  **Partial by design**: only the amenities you name change, so turning one off is a one-line body and nothing else on the listing moves. Ids are the `id` values `GET /amenities` returns (e.g. `wireless_internet`, `ac`, `kitchen`); case is ignored. Airbnb refuses ids outside its vocabulary — that comes back as `422 airbnb_rejected` carrying Airbnb's own message.  `accessibility_amenities` go to Airbnb's separate accessibility resource, which has **no read side at all** — Airbnb offers no endpoint to fetch them back, and the combined amenities GET 404s on production listings. What you can read back is our own copy: this endpoint updates it on success, and `GET /amenities` returns it under `accessibilityAmenities`. Airbnb may also hold an accessibility claim for review until photo evidence is attached; pass `photo_ids` to supply it.  Our Airbnb copy is updated on success so a read straight after this write returns the new values. The platform-neutral copy behind `GET /v1/listings/{id}?include=amenities` uses a different amenity vocabulary and is refreshed by the next sync, except where an id happens to be identical in both.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # @param id [String] Repull listing id (numeric string).
+    # @param update_airbnb_listing_amenities_request [UpdateAirbnbListingAmenitiesRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [UpdateAirbnbListingAmenities200Response]
+    def update_airbnb_listing_amenities(id, update_airbnb_listing_amenities_request, opts = {})
+      data, _status_code, _headers = update_airbnb_listing_amenities_with_http_info(id, update_airbnb_listing_amenities_request, opts)
+      data
+    end
+
+    # Update Airbnb amenities
+    # Set amenities on an Airbnb listing. **Write-side** — calls Airbnb upstream.  **Partial by design**: only the amenities you name change, so turning one off is a one-line body and nothing else on the listing moves. Ids are the &#x60;id&#x60; values &#x60;GET /amenities&#x60; returns (e.g. &#x60;wireless_internet&#x60;, &#x60;ac&#x60;, &#x60;kitchen&#x60;); case is ignored. Airbnb refuses ids outside its vocabulary — that comes back as &#x60;422 airbnb_rejected&#x60; carrying Airbnb&#39;s own message.  &#x60;accessibility_amenities&#x60; go to Airbnb&#39;s separate accessibility resource, which has **no read side at all** — Airbnb offers no endpoint to fetch them back, and the combined amenities GET 404s on production listings. What you can read back is our own copy: this endpoint updates it on success, and &#x60;GET /amenities&#x60; returns it under &#x60;accessibilityAmenities&#x60;. Airbnb may also hold an accessibility claim for review until photo evidence is attached; pass &#x60;photo_ids&#x60; to supply it.  Our Airbnb copy is updated on success so a read straight after this write returns the new values. The platform-neutral copy behind &#x60;GET /v1/listings/{id}?include&#x3D;amenities&#x60; uses a different amenity vocabulary and is refreshed by the next sync, except where an id happens to be identical in both.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # @param id [String] Repull listing id (numeric string).
+    # @param update_airbnb_listing_amenities_request [UpdateAirbnbListingAmenitiesRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(UpdateAirbnbListingAmenities200Response, Integer, Hash)>] UpdateAirbnbListingAmenities200Response data, response status code and response headers
+    def update_airbnb_listing_amenities_with_http_info(id, update_airbnb_listing_amenities_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: AirbnbApi.update_airbnb_listing_amenities ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling AirbnbApi.update_airbnb_listing_amenities"
+      end
+      # verify the required parameter 'update_airbnb_listing_amenities_request' is set
+      if @api_client.config.client_side_validation && update_airbnb_listing_amenities_request.nil?
+        fail ArgumentError, "Missing the required parameter 'update_airbnb_listing_amenities_request' when calling AirbnbApi.update_airbnb_listing_amenities"
+      end
+      # resource path
+      local_var_path = '/v1/channels/airbnb/listings/{id}/amenities'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(update_airbnb_listing_amenities_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'UpdateAirbnbListingAmenities200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"AirbnbApi.update_airbnb_listing_amenities",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:PUT, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: AirbnbApi#update_airbnb_listing_amenities\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # Update Airbnb availability
-    # Push availability + restrictions to Airbnb. `type: \"calendar\"` writes per-date restrictions — min/max nights, closed-to-arrival, closed-to-departure, and stop-sell (`availability: \"unavailable\"`) — via a batch of operations that each target either a date range or an explicit date list. `type: \"rules\"` writes listing-level availability rules (default min/max nights, booking lead time, turnover days, seasonal/day-of-week min nights). Restrictions never leak across channels — this endpoint writes only to Airbnb.  `{id}` is the **Repull listing id** (from `GET /v1/properties` or `GET /v1/channels/airbnb/listings`), not the Airbnb listing id — Repull translates it before calling Airbnb.  The body is validated before anything reaches Airbnb: a malformed body is `422 invalid_params` naming the `field`. Calendar operations accept only the documented fields.  **Blocking dates:** Airbnb requires a `busy_subtype` whenever `availability` is `\"unavailable\"`. If an operation leaves it out, Repull sends `busy_subtype: \"BLOCKED_BY_HOST\"`; send `\"OUTSIDE_RESERVATION\"` for dates held by a booking made on another channel.  **Errors:** `403 connection_reauth_required` — Airbnb no longer accepts the connection for this listing (reconnect; retrying won't help). `403 listing_inactive` — the listing is inactive. `404 not_found` — no Airbnb-connected listing with this id in the workspace. `422 airbnb_rejected` — Airbnb refused the change; `message` carries its reason. `429 airbnb_rate_limited` — back off. `502 airbnb_error` — Airbnb outage or timeout; retry.
+    # Push availability + restrictions to Airbnb. `type: \"calendar\"` writes per-date restrictions — min/max nights, closed-to-arrival, closed-to-departure, and stop-sell (`availability: \"unavailable\"`) — via a batch of operations that each target either a date range or an explicit date list. `type: \"rules\"` writes listing-level availability rules (default min/max nights, booking lead time, turnover days, seasonal/day-of-week min nights). Restrictions never leak across channels — this endpoint writes only to Airbnb.  `{id}` is the **Repull listing id** (from `GET /v1/properties` or `GET /v1/channels/airbnb/listings`), not the Airbnb listing id — Repull translates it before calling Airbnb.  The body is validated before anything reaches Airbnb: a malformed body is `422 invalid_params` naming the `field`. Calendar operations accept only the documented fields.  **Blocking dates:** Airbnb requires a `busy_subtype` whenever `availability` is `\"unavailable\"`. If an operation leaves it out, Repull sends `busy_subtype: \"BLOCKED_BY_HOST\"`; send `\"OUTSIDE_RESERVATION\"` for dates held by a booking made on another channel.  **Errors:** `403 listing_not_api_connected` — Airbnb was never told to sync this listing (its `syncCategory` is `none`); the host must switch API sync on for it in Airbnb, reconnecting the account will not help. `403 connection_reauth_required` — Airbnb no longer accepts the connection at all (reconnect; retrying won't help). `403 listing_inactive` — the listing is inactive. `404 not_found` — no Airbnb-connected listing with this id in the workspace. `422 airbnb_rejected` — Airbnb refused the change; `message` carries its reason. `429 airbnb_rate_limited` — back off. `502 airbnb_error` — Airbnb outage or timeout; retry.
     # @param id [String] 
     # @param airbnb_availability_write_request [AirbnbAvailabilityWriteRequest] 
     # @param [Hash] opts the optional parameters
@@ -2558,7 +3208,7 @@ module Repull
     end
 
     # Update Airbnb availability
-    # Push availability + restrictions to Airbnb. &#x60;type: \&quot;calendar\&quot;&#x60; writes per-date restrictions — min/max nights, closed-to-arrival, closed-to-departure, and stop-sell (&#x60;availability: \&quot;unavailable\&quot;&#x60;) — via a batch of operations that each target either a date range or an explicit date list. &#x60;type: \&quot;rules\&quot;&#x60; writes listing-level availability rules (default min/max nights, booking lead time, turnover days, seasonal/day-of-week min nights). Restrictions never leak across channels — this endpoint writes only to Airbnb.  &#x60;{id}&#x60; is the **Repull listing id** (from &#x60;GET /v1/properties&#x60; or &#x60;GET /v1/channels/airbnb/listings&#x60;), not the Airbnb listing id — Repull translates it before calling Airbnb.  The body is validated before anything reaches Airbnb: a malformed body is &#x60;422 invalid_params&#x60; naming the &#x60;field&#x60;. Calendar operations accept only the documented fields.  **Blocking dates:** Airbnb requires a &#x60;busy_subtype&#x60; whenever &#x60;availability&#x60; is &#x60;\&quot;unavailable\&quot;&#x60;. If an operation leaves it out, Repull sends &#x60;busy_subtype: \&quot;BLOCKED_BY_HOST\&quot;&#x60;; send &#x60;\&quot;OUTSIDE_RESERVATION\&quot;&#x60; for dates held by a booking made on another channel.  **Errors:** &#x60;403 connection_reauth_required&#x60; — Airbnb no longer accepts the connection for this listing (reconnect; retrying won&#39;t help). &#x60;403 listing_inactive&#x60; — the listing is inactive. &#x60;404 not_found&#x60; — no Airbnb-connected listing with this id in the workspace. &#x60;422 airbnb_rejected&#x60; — Airbnb refused the change; &#x60;message&#x60; carries its reason. &#x60;429 airbnb_rate_limited&#x60; — back off. &#x60;502 airbnb_error&#x60; — Airbnb outage or timeout; retry.
+    # Push availability + restrictions to Airbnb. &#x60;type: \&quot;calendar\&quot;&#x60; writes per-date restrictions — min/max nights, closed-to-arrival, closed-to-departure, and stop-sell (&#x60;availability: \&quot;unavailable\&quot;&#x60;) — via a batch of operations that each target either a date range or an explicit date list. &#x60;type: \&quot;rules\&quot;&#x60; writes listing-level availability rules (default min/max nights, booking lead time, turnover days, seasonal/day-of-week min nights). Restrictions never leak across channels — this endpoint writes only to Airbnb.  &#x60;{id}&#x60; is the **Repull listing id** (from &#x60;GET /v1/properties&#x60; or &#x60;GET /v1/channels/airbnb/listings&#x60;), not the Airbnb listing id — Repull translates it before calling Airbnb.  The body is validated before anything reaches Airbnb: a malformed body is &#x60;422 invalid_params&#x60; naming the &#x60;field&#x60;. Calendar operations accept only the documented fields.  **Blocking dates:** Airbnb requires a &#x60;busy_subtype&#x60; whenever &#x60;availability&#x60; is &#x60;\&quot;unavailable\&quot;&#x60;. If an operation leaves it out, Repull sends &#x60;busy_subtype: \&quot;BLOCKED_BY_HOST\&quot;&#x60;; send &#x60;\&quot;OUTSIDE_RESERVATION\&quot;&#x60; for dates held by a booking made on another channel.  **Errors:** &#x60;403 listing_not_api_connected&#x60; — Airbnb was never told to sync this listing (its &#x60;syncCategory&#x60; is &#x60;none&#x60;); the host must switch API sync on for it in Airbnb, reconnecting the account will not help. &#x60;403 connection_reauth_required&#x60; — Airbnb no longer accepts the connection at all (reconnect; retrying won&#39;t help). &#x60;403 listing_inactive&#x60; — the listing is inactive. &#x60;404 not_found&#x60; — no Airbnb-connected listing with this id in the workspace. &#x60;422 airbnb_rejected&#x60; — Airbnb refused the change; &#x60;message&#x60; carries its reason. &#x60;429 airbnb_rate_limited&#x60; — back off. &#x60;502 airbnb_error&#x60; — Airbnb outage or timeout; retry.
     # @param id [String] 
     # @param airbnb_availability_write_request [AirbnbAvailabilityWriteRequest] 
     # @param [Hash] opts the optional parameters
@@ -2620,8 +3270,325 @@ module Repull
       return data, status_code, headers
     end
 
+    # Update an Airbnb description for one locale
+    # Write one locale's copy to the live Airbnb listing.  Airbnb keeps a SEPARATE description per locale (`PUT /v2/listing_descriptions/{listingId}/{locale}`), which is why `locale` is part of the request and not a guess: a listing can carry twelve of them, and writing Italian copy into the English row is how a translation gets lost. Only the fields you send are written; Airbnb keeps the rest. `GET /v1/channels/airbnb/listings/{id}/settings?type=locales` lists the locales already synced for the listing.  `description` is not an accepted field: Airbnb composes the public description from the sections (`summary`, `space`, `access`, …) and ignores a directly-supplied one.  **A 200 does not by itself mean the change was applied.** On an established listing Airbnb LOCKS host-managed description fields — the write returns 200, reports them as locked, and applies nothing for them. The response reports `blockedFields`: the fields YOU sent that Airbnb dropped. `blockedFields: []` is what a landed write looks like; a non-empty list is still a 200 (the other fields really were written) with a `message` naming what was not. Reporting that as a clean success is the bug behind \"the description does not push to Airbnb\".  This writes to AIRBNB. To write Repull's own canonical copy — the content a later publish distributes — use `PUT /v1/listings/{id}/content` with `locale`.  Send `Idempotency-Key` to make a retry safe.  Returns `403 listing_inactive` when the listing is inactive.
+    # @param id [String] Repull listing id (numeric string).
+    # @param airbnb_description_write_request [AirbnbDescriptionWriteRequest] 
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable.
+    # @return [AirbnbContentWriteResponse]
+    def update_airbnb_listing_description(id, airbnb_description_write_request, opts = {})
+      data, _status_code, _headers = update_airbnb_listing_description_with_http_info(id, airbnb_description_write_request, opts)
+      data
+    end
+
+    # Update an Airbnb description for one locale
+    # Write one locale&#39;s copy to the live Airbnb listing.  Airbnb keeps a SEPARATE description per locale (&#x60;PUT /v2/listing_descriptions/{listingId}/{locale}&#x60;), which is why &#x60;locale&#x60; is part of the request and not a guess: a listing can carry twelve of them, and writing Italian copy into the English row is how a translation gets lost. Only the fields you send are written; Airbnb keeps the rest. &#x60;GET /v1/channels/airbnb/listings/{id}/settings?type&#x3D;locales&#x60; lists the locales already synced for the listing.  &#x60;description&#x60; is not an accepted field: Airbnb composes the public description from the sections (&#x60;summary&#x60;, &#x60;space&#x60;, &#x60;access&#x60;, …) and ignores a directly-supplied one.  **A 200 does not by itself mean the change was applied.** On an established listing Airbnb LOCKS host-managed description fields — the write returns 200, reports them as locked, and applies nothing for them. The response reports &#x60;blockedFields&#x60;: the fields YOU sent that Airbnb dropped. &#x60;blockedFields: []&#x60; is what a landed write looks like; a non-empty list is still a 200 (the other fields really were written) with a &#x60;message&#x60; naming what was not. Reporting that as a clean success is the bug behind \&quot;the description does not push to Airbnb\&quot;.  This writes to AIRBNB. To write Repull&#39;s own canonical copy — the content a later publish distributes — use &#x60;PUT /v1/listings/{id}/content&#x60; with &#x60;locale&#x60;.  Send &#x60;Idempotency-Key&#x60; to make a retry safe.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive.
+    # @param id [String] Repull listing id (numeric string).
+    # @param airbnb_description_write_request [AirbnbDescriptionWriteRequest] 
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable.
+    # @return [Array<(AirbnbContentWriteResponse, Integer, Hash)>] AirbnbContentWriteResponse data, response status code and response headers
+    def update_airbnb_listing_description_with_http_info(id, airbnb_description_write_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: AirbnbApi.update_airbnb_listing_description ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling AirbnbApi.update_airbnb_listing_description"
+      end
+      # verify the required parameter 'airbnb_description_write_request' is set
+      if @api_client.config.client_side_validation && airbnb_description_write_request.nil?
+        fail ArgumentError, "Missing the required parameter 'airbnb_description_write_request' when calling AirbnbApi.update_airbnb_listing_description"
+      end
+      if @api_client.config.client_side_validation && !opts[:'idempotency_key'].nil? && opts[:'idempotency_key'].to_s.length > 255
+        fail ArgumentError, 'invalid value for "opts[:"idempotency_key"]" when calling AirbnbApi.update_airbnb_listing_description, the character length must be smaller than or equal to 255.'
+      end
+
+      # resource path
+      local_var_path = '/v1/channels/airbnb/listings/{id}/descriptions'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+      header_params[:'Idempotency-Key'] = opts[:'idempotency_key'] if !opts[:'idempotency_key'].nil?
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(airbnb_description_write_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'AirbnbContentWriteResponse'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"AirbnbApi.update_airbnb_listing_description",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:PUT, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: AirbnbApi#update_airbnb_listing_description\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Update property type, room type, quiet hours or check-in method
+    # Change what kind of property the Airbnb listing is, when its quiet hours are, or how the guest gets in. Partial: only the fields you send are written. At least one required; an unknown field is refused by name rather than dropped.  This is the UPDATE path for fields that previously had none. `POST /v1/listings` accepts a `propertyType` when a listing is CREATED and nothing could change it afterwards, so a listing mis-typed at import stayed mis-typed; the check-in method was mirrored and never exposed at all.  **A 200 does not by itself mean the change was applied.** `property_type_category`, `property_type_group` and `check_in_option` are among the attributes Airbnb locks on established listings: the write returns 200, and Airbnb applies nothing for the locked ones. The response reports `blockedFields` — the fields YOU sent that Airbnb dropped — and `blockedFields: []` is what a landed write looks like. `GET …/details` reports the same list as `lockedFields` so you can check first.  Canonical property type (the value Repull keeps and republishes) is set with `PUT /v1/listings/{id}/content` under `details`; this endpoint writes straight to Airbnb.  Send `Idempotency-Key` to make a retry safe.
+    # @param id [String] Repull listing id (numeric string).
+    # @param airbnb_listing_details_write_request [AirbnbListingDetailsWriteRequest] 
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable.
+    # @return [AirbnbContentWriteResponse]
+    def update_airbnb_listing_details(id, airbnb_listing_details_write_request, opts = {})
+      data, _status_code, _headers = update_airbnb_listing_details_with_http_info(id, airbnb_listing_details_write_request, opts)
+      data
+    end
+
+    # Update property type, room type, quiet hours or check-in method
+    # Change what kind of property the Airbnb listing is, when its quiet hours are, or how the guest gets in. Partial: only the fields you send are written. At least one required; an unknown field is refused by name rather than dropped.  This is the UPDATE path for fields that previously had none. &#x60;POST /v1/listings&#x60; accepts a &#x60;propertyType&#x60; when a listing is CREATED and nothing could change it afterwards, so a listing mis-typed at import stayed mis-typed; the check-in method was mirrored and never exposed at all.  **A 200 does not by itself mean the change was applied.** &#x60;property_type_category&#x60;, &#x60;property_type_group&#x60; and &#x60;check_in_option&#x60; are among the attributes Airbnb locks on established listings: the write returns 200, and Airbnb applies nothing for the locked ones. The response reports &#x60;blockedFields&#x60; — the fields YOU sent that Airbnb dropped — and &#x60;blockedFields: []&#x60; is what a landed write looks like. &#x60;GET …/details&#x60; reports the same list as &#x60;lockedFields&#x60; so you can check first.  Canonical property type (the value Repull keeps and republishes) is set with &#x60;PUT /v1/listings/{id}/content&#x60; under &#x60;details&#x60;; this endpoint writes straight to Airbnb.  Send &#x60;Idempotency-Key&#x60; to make a retry safe.
+    # @param id [String] Repull listing id (numeric string).
+    # @param airbnb_listing_details_write_request [AirbnbListingDetailsWriteRequest] 
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable.
+    # @return [Array<(AirbnbContentWriteResponse, Integer, Hash)>] AirbnbContentWriteResponse data, response status code and response headers
+    def update_airbnb_listing_details_with_http_info(id, airbnb_listing_details_write_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: AirbnbApi.update_airbnb_listing_details ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling AirbnbApi.update_airbnb_listing_details"
+      end
+      # verify the required parameter 'airbnb_listing_details_write_request' is set
+      if @api_client.config.client_side_validation && airbnb_listing_details_write_request.nil?
+        fail ArgumentError, "Missing the required parameter 'airbnb_listing_details_write_request' when calling AirbnbApi.update_airbnb_listing_details"
+      end
+      if @api_client.config.client_side_validation && !opts[:'idempotency_key'].nil? && opts[:'idempotency_key'].to_s.length > 255
+        fail ArgumentError, 'invalid value for "opts[:"idempotency_key"]" when calling AirbnbApi.update_airbnb_listing_details, the character length must be smaller than or equal to 255.'
+      end
+
+      # resource path
+      local_var_path = '/v1/channels/airbnb/listings/{id}/details'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+      header_params[:'Idempotency-Key'] = opts[:'idempotency_key'] if !opts[:'idempotency_key'].nil?
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(airbnb_listing_details_write_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'AirbnbContentWriteResponse'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"AirbnbApi.update_airbnb_listing_details",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:PUT, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: AirbnbApi#update_airbnb_listing_details\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Answer Airbnb permit questions
+    # Answer the regulatory permit questions for a listing — the licence or registration number a city requires to keep the listing up.  Read the questions first with `GET …/permits?source=live`: every answer is keyed by a `question_key` Airbnb asks for THIS listing, and the question's `answer_type` decides which value field applies (`text_value`, `date_value`, or `selected_options_value`). Answers are forwarded verbatim — nothing is defaulted or inferred, because a wrong licence number can take a listing down in a regulated city.  Send `Idempotency-Key`: a timeout here leaves you unable to tell \"never arrived\" from \"arrived, response lost\", and this is a compliance filing.  Airbnb refusing the answers (an unknown question key, a malformed licence number) is `422 airbnb_rejected` carrying Airbnb's own reason. An expired or revoked Airbnb connection is `403 connection_reauth_required`.
+    # @param id [String] Repull listing id (numeric string).
+    # @param airbnb_permits_write_request [AirbnbPermitsWriteRequest] 
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable.
+    # @return [UpdateAirbnbListingPermits200Response]
+    def update_airbnb_listing_permits(id, airbnb_permits_write_request, opts = {})
+      data, _status_code, _headers = update_airbnb_listing_permits_with_http_info(id, airbnb_permits_write_request, opts)
+      data
+    end
+
+    # Answer Airbnb permit questions
+    # Answer the regulatory permit questions for a listing — the licence or registration number a city requires to keep the listing up.  Read the questions first with &#x60;GET …/permits?source&#x3D;live&#x60;: every answer is keyed by a &#x60;question_key&#x60; Airbnb asks for THIS listing, and the question&#39;s &#x60;answer_type&#x60; decides which value field applies (&#x60;text_value&#x60;, &#x60;date_value&#x60;, or &#x60;selected_options_value&#x60;). Answers are forwarded verbatim — nothing is defaulted or inferred, because a wrong licence number can take a listing down in a regulated city.  Send &#x60;Idempotency-Key&#x60;: a timeout here leaves you unable to tell \&quot;never arrived\&quot; from \&quot;arrived, response lost\&quot;, and this is a compliance filing.  Airbnb refusing the answers (an unknown question key, a malformed licence number) is &#x60;422 airbnb_rejected&#x60; carrying Airbnb&#39;s own reason. An expired or revoked Airbnb connection is &#x60;403 connection_reauth_required&#x60;.
+    # @param id [String] Repull listing id (numeric string).
+    # @param airbnb_permits_write_request [AirbnbPermitsWriteRequest] 
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable.
+    # @return [Array<(UpdateAirbnbListingPermits200Response, Integer, Hash)>] UpdateAirbnbListingPermits200Response data, response status code and response headers
+    def update_airbnb_listing_permits_with_http_info(id, airbnb_permits_write_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: AirbnbApi.update_airbnb_listing_permits ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling AirbnbApi.update_airbnb_listing_permits"
+      end
+      # verify the required parameter 'airbnb_permits_write_request' is set
+      if @api_client.config.client_side_validation && airbnb_permits_write_request.nil?
+        fail ArgumentError, "Missing the required parameter 'airbnb_permits_write_request' when calling AirbnbApi.update_airbnb_listing_permits"
+      end
+      if @api_client.config.client_side_validation && !opts[:'idempotency_key'].nil? && opts[:'idempotency_key'].to_s.length > 255
+        fail ArgumentError, 'invalid value for "opts[:"idempotency_key"]" when calling AirbnbApi.update_airbnb_listing_permits, the character length must be smaller than or equal to 255.'
+      end
+
+      # resource path
+      local_var_path = '/v1/channels/airbnb/listings/{id}/permits'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+      header_params[:'Idempotency-Key'] = opts[:'idempotency_key'] if !opts[:'idempotency_key'].nil?
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(airbnb_permits_write_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'UpdateAirbnbListingPermits200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"AirbnbApi.update_airbnb_listing_permits",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:PUT, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: AirbnbApi#update_airbnb_listing_permits\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Update an Airbnb photo
+    # Change one photo's caption, its position in the tour, the room it is filed under, or its metadata. **Write-side** — calls Airbnb upstream.  Airbnb's photo endpoints are keyed by photo id alone, so the photo is proven to belong to the listing named in the path before anything is sent; a photo from another listing returns `404`, the same answer a photo that does not exist gets.  On success both stored copies are updated — the Airbnb mirror `GET /photos` serves AND the canonical photo tour behind `GET /v1/listings/{id}` — so a read straight after this write returns the new value instead of waiting for the next sync. `stored` says whether that succeeded; `false` means Airbnb accepted the change but our copy will only catch up at the next sync.  To move several photos at once use `PUT /photos/order`: it is one call instead of N, it validates the whole order before writing anything, and it reports exactly what landed if Airbnb refuses part-way.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # @param id [String] Repull listing id (numeric string).
+    # @param update_airbnb_listing_photo_request [UpdateAirbnbListingPhotoRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [UpdateAirbnbListingPhoto200Response]
+    def update_airbnb_listing_photo(id, update_airbnb_listing_photo_request, opts = {})
+      data, _status_code, _headers = update_airbnb_listing_photo_with_http_info(id, update_airbnb_listing_photo_request, opts)
+      data
+    end
+
+    # Update an Airbnb photo
+    # Change one photo&#39;s caption, its position in the tour, the room it is filed under, or its metadata. **Write-side** — calls Airbnb upstream.  Airbnb&#39;s photo endpoints are keyed by photo id alone, so the photo is proven to belong to the listing named in the path before anything is sent; a photo from another listing returns &#x60;404&#x60;, the same answer a photo that does not exist gets.  On success both stored copies are updated — the Airbnb mirror &#x60;GET /photos&#x60; serves AND the canonical photo tour behind &#x60;GET /v1/listings/{id}&#x60; — so a read straight after this write returns the new value instead of waiting for the next sync. &#x60;stored&#x60; says whether that succeeded; &#x60;false&#x60; means Airbnb accepted the change but our copy will only catch up at the next sync.  To move several photos at once use &#x60;PUT /photos/order&#x60;: it is one call instead of N, it validates the whole order before writing anything, and it reports exactly what landed if Airbnb refuses part-way.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # @param id [String] Repull listing id (numeric string).
+    # @param update_airbnb_listing_photo_request [UpdateAirbnbListingPhotoRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(UpdateAirbnbListingPhoto200Response, Integer, Hash)>] UpdateAirbnbListingPhoto200Response data, response status code and response headers
+    def update_airbnb_listing_photo_with_http_info(id, update_airbnb_listing_photo_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: AirbnbApi.update_airbnb_listing_photo ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling AirbnbApi.update_airbnb_listing_photo"
+      end
+      # verify the required parameter 'update_airbnb_listing_photo_request' is set
+      if @api_client.config.client_side_validation && update_airbnb_listing_photo_request.nil?
+        fail ArgumentError, "Missing the required parameter 'update_airbnb_listing_photo_request' when calling AirbnbApi.update_airbnb_listing_photo"
+      end
+      # resource path
+      local_var_path = '/v1/channels/airbnb/listings/{id}/photos'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(update_airbnb_listing_photo_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'UpdateAirbnbListingPhoto200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"AirbnbApi.update_airbnb_listing_photo",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:PATCH, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: AirbnbApi#update_airbnb_listing_photo\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # Update Airbnb pricing
-    # Push pricing changes to Airbnb. The `type` discriminator selects the sub-resource (model, standard settings, LOS, rate-plan, fees, currency, rule, or per-date `calendar`). `type: \"calendar\"` carries the full per-date restriction set — nightly price, min/max nights, closed-to-arrival, closed-to-departure, and stop-sell (`availability: \"unavailable\"`). For settings sub-resources the full object is replaced — GET first, mutate locally, then PUT the whole object.  `{id}` is the **Repull listing id** (from `GET /v1/properties` or `GET /v1/channels/airbnb/listings`), not the Airbnb listing id — Repull translates it before calling Airbnb.  The body is validated before anything reaches Airbnb: a malformed body is `422 invalid_params` naming the `field`. Calendar operations accept only the documented fields.  **Blocking dates:** Airbnb requires a `busy_subtype` whenever `availability` is `\"unavailable\"`. If an operation leaves it out, Repull sends `busy_subtype: \"BLOCKED_BY_HOST\"`; send `\"OUTSIDE_RESERVATION\"` for dates held by a booking made on another channel.  **Errors:** `403 connection_reauth_required` — Airbnb no longer accepts the connection for this listing (reconnect; retrying won't help). `403 listing_inactive` — the listing is inactive. `404 not_found` — no Airbnb-connected listing with this id in the workspace. `422 airbnb_rejected` — Airbnb refused the change; `message` carries its reason. `429 airbnb_rate_limited` — back off. `502 airbnb_error` — Airbnb outage or timeout; retry.
+    # Push pricing changes to Airbnb. The `type` discriminator selects the sub-resource (model, standard settings, LOS, rate-plan, fees, currency, rule, or per-date `calendar`). `type: \"calendar\"` carries the full per-date restriction set — nightly price, min/max nights, closed-to-arrival, closed-to-departure, and stop-sell (`availability: \"unavailable\"`). For settings sub-resources the full object is replaced — GET first, mutate locally, then PUT the whole object.  `{id}` is the **Repull listing id** (from `GET /v1/properties` or `GET /v1/channels/airbnb/listings`), not the Airbnb listing id — Repull translates it before calling Airbnb.  The body is validated before anything reaches Airbnb: a malformed body is `422 invalid_params` naming the `field`. Calendar operations accept only the documented fields.  **Blocking dates:** Airbnb requires a `busy_subtype` whenever `availability` is `\"unavailable\"`. If an operation leaves it out, Repull sends `busy_subtype: \"BLOCKED_BY_HOST\"`; send `\"OUTSIDE_RESERVATION\"` for dates held by a booking made on another channel.  **Errors:** `403 listing_not_api_connected` — Airbnb was never told to sync this listing (its `syncCategory` is `none`); the host must switch API sync on for it in Airbnb, reconnecting the account will not help. `403 connection_reauth_required` — Airbnb no longer accepts the connection at all (reconnect; retrying won't help). `403 listing_inactive` — the listing is inactive. `404 not_found` — no Airbnb-connected listing with this id in the workspace. `422 airbnb_rejected` — Airbnb refused the change; `message` carries its reason. `429 airbnb_rate_limited` — back off. `502 airbnb_error` — Airbnb outage or timeout; retry.
     # @param id [String] 
     # @param airbnb_pricing_write_request [AirbnbPricingWriteRequest] 
     # @param [Hash] opts the optional parameters
@@ -2632,7 +3599,7 @@ module Repull
     end
 
     # Update Airbnb pricing
-    # Push pricing changes to Airbnb. The &#x60;type&#x60; discriminator selects the sub-resource (model, standard settings, LOS, rate-plan, fees, currency, rule, or per-date &#x60;calendar&#x60;). &#x60;type: \&quot;calendar\&quot;&#x60; carries the full per-date restriction set — nightly price, min/max nights, closed-to-arrival, closed-to-departure, and stop-sell (&#x60;availability: \&quot;unavailable\&quot;&#x60;). For settings sub-resources the full object is replaced — GET first, mutate locally, then PUT the whole object.  &#x60;{id}&#x60; is the **Repull listing id** (from &#x60;GET /v1/properties&#x60; or &#x60;GET /v1/channels/airbnb/listings&#x60;), not the Airbnb listing id — Repull translates it before calling Airbnb.  The body is validated before anything reaches Airbnb: a malformed body is &#x60;422 invalid_params&#x60; naming the &#x60;field&#x60;. Calendar operations accept only the documented fields.  **Blocking dates:** Airbnb requires a &#x60;busy_subtype&#x60; whenever &#x60;availability&#x60; is &#x60;\&quot;unavailable\&quot;&#x60;. If an operation leaves it out, Repull sends &#x60;busy_subtype: \&quot;BLOCKED_BY_HOST\&quot;&#x60;; send &#x60;\&quot;OUTSIDE_RESERVATION\&quot;&#x60; for dates held by a booking made on another channel.  **Errors:** &#x60;403 connection_reauth_required&#x60; — Airbnb no longer accepts the connection for this listing (reconnect; retrying won&#39;t help). &#x60;403 listing_inactive&#x60; — the listing is inactive. &#x60;404 not_found&#x60; — no Airbnb-connected listing with this id in the workspace. &#x60;422 airbnb_rejected&#x60; — Airbnb refused the change; &#x60;message&#x60; carries its reason. &#x60;429 airbnb_rate_limited&#x60; — back off. &#x60;502 airbnb_error&#x60; — Airbnb outage or timeout; retry.
+    # Push pricing changes to Airbnb. The &#x60;type&#x60; discriminator selects the sub-resource (model, standard settings, LOS, rate-plan, fees, currency, rule, or per-date &#x60;calendar&#x60;). &#x60;type: \&quot;calendar\&quot;&#x60; carries the full per-date restriction set — nightly price, min/max nights, closed-to-arrival, closed-to-departure, and stop-sell (&#x60;availability: \&quot;unavailable\&quot;&#x60;). For settings sub-resources the full object is replaced — GET first, mutate locally, then PUT the whole object.  &#x60;{id}&#x60; is the **Repull listing id** (from &#x60;GET /v1/properties&#x60; or &#x60;GET /v1/channels/airbnb/listings&#x60;), not the Airbnb listing id — Repull translates it before calling Airbnb.  The body is validated before anything reaches Airbnb: a malformed body is &#x60;422 invalid_params&#x60; naming the &#x60;field&#x60;. Calendar operations accept only the documented fields.  **Blocking dates:** Airbnb requires a &#x60;busy_subtype&#x60; whenever &#x60;availability&#x60; is &#x60;\&quot;unavailable\&quot;&#x60;. If an operation leaves it out, Repull sends &#x60;busy_subtype: \&quot;BLOCKED_BY_HOST\&quot;&#x60;; send &#x60;\&quot;OUTSIDE_RESERVATION\&quot;&#x60; for dates held by a booking made on another channel.  **Errors:** &#x60;403 listing_not_api_connected&#x60; — Airbnb was never told to sync this listing (its &#x60;syncCategory&#x60; is &#x60;none&#x60;); the host must switch API sync on for it in Airbnb, reconnecting the account will not help. &#x60;403 connection_reauth_required&#x60; — Airbnb no longer accepts the connection at all (reconnect; retrying won&#39;t help). &#x60;403 listing_inactive&#x60; — the listing is inactive. &#x60;404 not_found&#x60; — no Airbnb-connected listing with this id in the workspace. &#x60;422 airbnb_rejected&#x60; — Airbnb refused the change; &#x60;message&#x60; carries its reason. &#x60;429 airbnb_rate_limited&#x60; — back off. &#x60;502 airbnb_error&#x60; — Airbnb outage or timeout; retry.
     # @param id [String] 
     # @param airbnb_pricing_write_request [AirbnbPricingWriteRequest] 
     # @param [Hash] opts the optional parameters
@@ -2690,6 +3657,168 @@ module Repull
       data, status_code, headers = @api_client.call_api(:PUT, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: AirbnbApi#update_airbnb_listing_pricing\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Update an Airbnb room
+    # Change a room's type, number, privacy or sleeping arrangement. **Write-side** — calls Airbnb upstream. Pass the Airbnb-side room id as `?roomId=` and send only the fields you want to change.  `beds` REPLACES the room's whole arrangement — that is Airbnb's semantics for the field — so send every bed the room has, not just the changed one.  Airbnb's room endpoints are keyed by room id alone, so the room is proven to belong to the listing named in the path before anything is sent; a room from another listing returns `404`, the same answer a room that does not exist gets.  On success both stored copies are rebuilt to match, so a read straight after this write returns the new arrangement. `stored` says whether that succeeded.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # @param id [String] Repull listing id (numeric string).
+    # @param room_id [String] Airbnb-side room id to update.
+    # @param update_airbnb_listing_room_request [UpdateAirbnbListingRoomRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [UpdateAirbnbListingRoom200Response]
+    def update_airbnb_listing_room(id, room_id, update_airbnb_listing_room_request, opts = {})
+      data, _status_code, _headers = update_airbnb_listing_room_with_http_info(id, room_id, update_airbnb_listing_room_request, opts)
+      data
+    end
+
+    # Update an Airbnb room
+    # Change a room&#39;s type, number, privacy or sleeping arrangement. **Write-side** — calls Airbnb upstream. Pass the Airbnb-side room id as &#x60;?roomId&#x3D;&#x60; and send only the fields you want to change.  &#x60;beds&#x60; REPLACES the room&#39;s whole arrangement — that is Airbnb&#39;s semantics for the field — so send every bed the room has, not just the changed one.  Airbnb&#39;s room endpoints are keyed by room id alone, so the room is proven to belong to the listing named in the path before anything is sent; a room from another listing returns &#x60;404&#x60;, the same answer a room that does not exist gets.  On success both stored copies are rebuilt to match, so a read straight after this write returns the new arrangement. &#x60;stored&#x60; says whether that succeeded.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # @param id [String] Repull listing id (numeric string).
+    # @param room_id [String] Airbnb-side room id to update.
+    # @param update_airbnb_listing_room_request [UpdateAirbnbListingRoomRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(UpdateAirbnbListingRoom200Response, Integer, Hash)>] UpdateAirbnbListingRoom200Response data, response status code and response headers
+    def update_airbnb_listing_room_with_http_info(id, room_id, update_airbnb_listing_room_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: AirbnbApi.update_airbnb_listing_room ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling AirbnbApi.update_airbnb_listing_room"
+      end
+      # verify the required parameter 'room_id' is set
+      if @api_client.config.client_side_validation && room_id.nil?
+        fail ArgumentError, "Missing the required parameter 'room_id' when calling AirbnbApi.update_airbnb_listing_room"
+      end
+      # verify the required parameter 'update_airbnb_listing_room_request' is set
+      if @api_client.config.client_side_validation && update_airbnb_listing_room_request.nil?
+        fail ArgumentError, "Missing the required parameter 'update_airbnb_listing_room_request' when calling AirbnbApi.update_airbnb_listing_room"
+      end
+      # resource path
+      local_var_path = '/v1/channels/airbnb/listings/{id}/rooms'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+      query_params[:'roomId'] = room_id
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(update_airbnb_listing_room_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'UpdateAirbnbListingRoom200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"AirbnbApi.update_airbnb_listing_room",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:PUT, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: AirbnbApi#update_airbnb_listing_room\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Update guest-safety disclosures
+    # Declare or retract the guest-safety disclosures on the live Airbnb listing.  **This is a MERGE, not a replacement.** Airbnb keeps one value per disclosure type: a type you leave out keeps the value it has, and to retract one you send it with `value: false`. A full replacement would let a partial request silently un-declare a security camera — a guest-safety statement, not a preference.  Only the disclosures are sent upstream. The same Airbnb endpoint carries the cancellation policy and instant-book settings, and this endpoint never touches them.  Send `Idempotency-Key` to make a retry safe.  Airbnb refusing the change is `422 airbnb_rejected` with Airbnb's own reason; an expired or revoked connection is `403 connection_reauth_required`.
+    # @param id [String] Repull listing id (numeric string).
+    # @param airbnb_safety_disclosures_write_request [AirbnbSafetyDisclosuresWriteRequest] 
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable.
+    # @return [UpdateAirbnbListingSafetyDisclosures200Response]
+    def update_airbnb_listing_safety_disclosures(id, airbnb_safety_disclosures_write_request, opts = {})
+      data, _status_code, _headers = update_airbnb_listing_safety_disclosures_with_http_info(id, airbnb_safety_disclosures_write_request, opts)
+      data
+    end
+
+    # Update guest-safety disclosures
+    # Declare or retract the guest-safety disclosures on the live Airbnb listing.  **This is a MERGE, not a replacement.** Airbnb keeps one value per disclosure type: a type you leave out keeps the value it has, and to retract one you send it with &#x60;value: false&#x60;. A full replacement would let a partial request silently un-declare a security camera — a guest-safety statement, not a preference.  Only the disclosures are sent upstream. The same Airbnb endpoint carries the cancellation policy and instant-book settings, and this endpoint never touches them.  Send &#x60;Idempotency-Key&#x60; to make a retry safe.  Airbnb refusing the change is &#x60;422 airbnb_rejected&#x60; with Airbnb&#39;s own reason; an expired or revoked connection is &#x60;403 connection_reauth_required&#x60;.
+    # @param id [String] Repull listing id (numeric string).
+    # @param airbnb_safety_disclosures_write_request [AirbnbSafetyDisclosuresWriteRequest] 
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable.
+    # @return [Array<(UpdateAirbnbListingSafetyDisclosures200Response, Integer, Hash)>] UpdateAirbnbListingSafetyDisclosures200Response data, response status code and response headers
+    def update_airbnb_listing_safety_disclosures_with_http_info(id, airbnb_safety_disclosures_write_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: AirbnbApi.update_airbnb_listing_safety_disclosures ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling AirbnbApi.update_airbnb_listing_safety_disclosures"
+      end
+      # verify the required parameter 'airbnb_safety_disclosures_write_request' is set
+      if @api_client.config.client_side_validation && airbnb_safety_disclosures_write_request.nil?
+        fail ArgumentError, "Missing the required parameter 'airbnb_safety_disclosures_write_request' when calling AirbnbApi.update_airbnb_listing_safety_disclosures"
+      end
+      if @api_client.config.client_side_validation && !opts[:'idempotency_key'].nil? && opts[:'idempotency_key'].to_s.length > 255
+        fail ArgumentError, 'invalid value for "opts[:"idempotency_key"]" when calling AirbnbApi.update_airbnb_listing_safety_disclosures, the character length must be smaller than or equal to 255.'
+      end
+
+      # resource path
+      local_var_path = '/v1/channels/airbnb/listings/{id}/safety-disclosures'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+      header_params[:'Idempotency-Key'] = opts[:'idempotency_key'] if !opts[:'idempotency_key'].nil?
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(airbnb_safety_disclosures_write_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'UpdateAirbnbListingSafetyDisclosures200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"AirbnbApi.update_airbnb_listing_safety_disclosures",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:PUT, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: AirbnbApi#update_airbnb_listing_safety_disclosures\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end
@@ -2775,27 +3904,33 @@ module Repull
     end
 
     # Upload photos to Airbnb
-    # Upload one or more photos to an Airbnb listing. Accepts public image URLs (Airbnb fetches them) — direct binary upload is not supported on this endpoint.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # Upload one or more photos to an Airbnb listing.  `image` is base64 image DATA, not a url — a `data:image/jpeg;base64,…` prefix is accepted and stripped, and the decoded image must be under 25 MB. (This operation previously documented public image urls that Airbnb would fetch. It never did: a url arrived at Airbnb as a ~60-byte image.)  Airbnb assigns the photo id and CDN urls, so the newly uploaded photos appear in `GET /photos` after the next sync. Caption, order and room assignment can be set straight away with `PATCH /photos`, `PUT /photos/order` and `PUT /photos/cover`.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] 
+    # @param upload_airbnb_listing_photos_request [UploadAirbnbListingPhotosRequest] 
     # @param [Hash] opts the optional parameters
     # @return [nil]
-    def upload_airbnb_listing_photos(id, opts = {})
-      upload_airbnb_listing_photos_with_http_info(id, opts)
+    def upload_airbnb_listing_photos(id, upload_airbnb_listing_photos_request, opts = {})
+      upload_airbnb_listing_photos_with_http_info(id, upload_airbnb_listing_photos_request, opts)
       nil
     end
 
     # Upload photos to Airbnb
-    # Upload one or more photos to an Airbnb listing. Accepts public image URLs (Airbnb fetches them) — direct binary upload is not supported on this endpoint.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # Upload one or more photos to an Airbnb listing.  &#x60;image&#x60; is base64 image DATA, not a url — a &#x60;data:image/jpeg;base64,…&#x60; prefix is accepted and stripped, and the decoded image must be under 25 MB. (This operation previously documented public image urls that Airbnb would fetch. It never did: a url arrived at Airbnb as a ~60-byte image.)  Airbnb assigns the photo id and CDN urls, so the newly uploaded photos appear in &#x60;GET /photos&#x60; after the next sync. Caption, order and room assignment can be set straight away with &#x60;PATCH /photos&#x60;, &#x60;PUT /photos/order&#x60; and &#x60;PUT /photos/cover&#x60;.  Returns &#x60;403 listing_inactive&#x60; when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] 
+    # @param upload_airbnb_listing_photos_request [UploadAirbnbListingPhotosRequest] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
-    def upload_airbnb_listing_photos_with_http_info(id, opts = {})
+    def upload_airbnb_listing_photos_with_http_info(id, upload_airbnb_listing_photos_request, opts = {})
       if @api_client.config.debugging
         @api_client.config.logger.debug 'Calling API: AirbnbApi.upload_airbnb_listing_photos ...'
       end
       # verify the required parameter 'id' is set
       if @api_client.config.client_side_validation && id.nil?
         fail ArgumentError, "Missing the required parameter 'id' when calling AirbnbApi.upload_airbnb_listing_photos"
+      end
+      # verify the required parameter 'upload_airbnb_listing_photos_request' is set
+      if @api_client.config.client_side_validation && upload_airbnb_listing_photos_request.nil?
+        fail ArgumentError, "Missing the required parameter 'upload_airbnb_listing_photos_request' when calling AirbnbApi.upload_airbnb_listing_photos"
       end
       # resource path
       local_var_path = '/v1/channels/airbnb/listings/{id}/photos'.sub('{id}', CGI.escape(id.to_s))
@@ -2807,12 +3942,17 @@ module Repull
       header_params = opts[:header_params] || {}
       # HTTP header 'Accept' (if needed)
       header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
 
       # form parameters
       form_params = opts[:form_params] || {}
 
       # http body (model)
-      post_body = opts[:debug_body]
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(upload_airbnb_listing_photos_request)
 
       # return_type
       return_type = opts[:debug_return_type]

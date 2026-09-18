@@ -9,6 +9,8 @@
 | **guest_id** | **String** | DEPRECATED — use &#x60;primaryGuest.id&#x60;. Internal Repull guest ID. Kept populated for back-compat. | [optional] |
 | **check_in** | **Date** |  |  |
 | **check_out** | **Date** |  |  |
+| **check_in_time** | **String** | Local check-in time for this stay, &#x60;HH:MM&#x60; on a 24-hour clock in the **property&#39;s own timezone** — not UTC. Usually inherited from the listing policy, overridden per reservation where an early check-in was agreed. &#x60;null&#x60; when unknown. This is the same field &#x60;PATCH /v1/reservations/{id}&#x60; writes. | [optional] |
+| **check_out_time** | **String** | Local check-out time for this stay, &#x60;HH:MM&#x60; on a 24-hour clock in the property&#39;s own timezone. Pair with &#x60;checkOut&#x60; to schedule the turnover clean. &#x60;null&#x60; when unknown. This is the same field &#x60;PATCH /v1/reservations/{id}&#x60; writes. | [optional] |
 | **status** | **String** | Lifecycle status. The API normalises a multi-decade internal taxonomy down to these four buckets, so the value you receive is always one of the enum constants. &#x60;completed&#x60; is derived from &#x60;checkOut &lt; today&#x60;. |  |
 | **source** | **String** | Booking source / channel. Lowercase. May be null on legacy rows. Canonical name as of 2026-05; &#x60;platform&#x60; is kept as an alias. | [optional] |
 | **platform** | **String** | DEPRECATED alias for &#x60;source&#x60;. Same value, kept for back-compat. | [optional] |
@@ -35,6 +37,8 @@ instance = Repull::Reservation.new(
   guest_id: null,
   check_in: Wed Apr 15 00:00:00 UTC 2026,
   check_out: Mon Apr 20 00:00:00 UTC 2026,
+  check_in_time: 16:00,
+  check_out_time: 10:00,
   status: confirmed,
   source: airbnb,
   platform: airbnb,

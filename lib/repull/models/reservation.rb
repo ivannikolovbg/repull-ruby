@@ -29,6 +29,12 @@ module Repull
 
     attr_accessor :check_out
 
+    # Local check-in time for this stay, `HH:MM` on a 24-hour clock in the **property's own timezone** — not UTC. Usually inherited from the listing policy, overridden per reservation where an early check-in was agreed. `null` when unknown. This is the same field `PATCH /v1/reservations/{id}` writes.
+    attr_accessor :check_in_time
+
+    # Local check-out time for this stay, `HH:MM` on a 24-hour clock in the property's own timezone. Pair with `checkOut` to schedule the turnover clean. `null` when unknown. This is the same field `PATCH /v1/reservations/{id}` writes.
+    attr_accessor :check_out_time
+
     # Lifecycle status. The API normalises a multi-decade internal taxonomy down to these four buckets, so the value you receive is always one of the enum constants. `completed` is derived from `checkOut < today`.
     attr_accessor :status
 
@@ -79,6 +85,8 @@ module Repull
         :'guest_id' => :'guestId',
         :'check_in' => :'checkIn',
         :'check_out' => :'checkOut',
+        :'check_in_time' => :'checkInTime',
+        :'check_out_time' => :'checkOutTime',
         :'status' => :'status',
         :'source' => :'source',
         :'platform' => :'platform',
@@ -114,6 +122,8 @@ module Repull
         :'guest_id' => :'String',
         :'check_in' => :'Date',
         :'check_out' => :'Date',
+        :'check_in_time' => :'String',
+        :'check_out_time' => :'String',
         :'status' => :'String',
         :'source' => :'String',
         :'platform' => :'String',
@@ -134,6 +144,8 @@ module Repull
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'check_in_time',
+        :'check_out_time',
         :'source',
         :'platform',
         :'booked_at',
@@ -183,6 +195,14 @@ module Repull
         self.check_out = attributes[:'check_out']
       else
         self.check_out = nil
+      end
+
+      if attributes.key?(:'check_in_time')
+        self.check_in_time = attributes[:'check_in_time']
+      end
+
+      if attributes.key?(:'check_out_time')
+        self.check_out_time = attributes[:'check_out_time']
       end
 
       if attributes.key?(:'status')
@@ -397,6 +417,8 @@ module Repull
           guest_id == o.guest_id &&
           check_in == o.check_in &&
           check_out == o.check_out &&
+          check_in_time == o.check_in_time &&
+          check_out_time == o.check_out_time &&
           status == o.status &&
           source == o.source &&
           platform == o.platform &&
@@ -422,7 +444,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, listing_id, guest_id, check_in, check_out, status, source, platform, confirmation_code, primary_guest, occupancy, financials, total_price, currency, guest_details, created_at, updated_at, booked_at, guest_name].hash
+      [id, listing_id, guest_id, check_in, check_out, check_in_time, check_out_time, status, source, platform, confirmation_code, primary_guest, occupancy, financials, total_price, currency, guest_details, created_at, updated_at, booked_at, guest_name].hash
     end
 
     # Builds the object from hash

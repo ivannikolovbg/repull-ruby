@@ -16,8 +16,11 @@ require 'time'
 module Repull
   # Rich multilingual content slab for a listing — guest-facing copy sourced from `listings_descriptions` (the `en` row when surfaced via `?include=content`). Also returned as the AI-generated payload from `POST /v1/listings/{id}/generate-content` (where `title` and `amenities` are populated). All fields are individually nullable.
   class ListingContent < ApiModelBase
-    # Public listing title. Populated only by `generate-content`; not stored on `listings_descriptions`.
+    # Public listing title as proposed by `POST /v1/listings/{id}/generate-content`. The STORED title is `name` — read that one.
     attr_accessor :title
+
+    # The listing's stored public title, and the one a channel pull writes — after `POST /v1/listings/{id}/pull/airbnb` this is the title as it stands on Airbnb.
+    attr_accessor :name
 
     attr_accessor :summary
 
@@ -51,6 +54,7 @@ module Repull
     def self.attribute_map
       {
         :'title' => :'title',
+        :'name' => :'name',
         :'summary' => :'summary',
         :'description' => :'description',
         :'space' => :'space',
@@ -80,6 +84,7 @@ module Repull
     def self.openapi_types
       {
         :'title' => :'String',
+        :'name' => :'String',
         :'summary' => :'String',
         :'description' => :'String',
         :'space' => :'String',
@@ -99,6 +104,7 @@ module Repull
     def self.openapi_nullable
       Set.new([
         :'title',
+        :'name',
         :'summary',
         :'description',
         :'space',
@@ -131,6 +137,10 @@ module Repull
 
       if attributes.key?(:'title')
         self.title = attributes[:'title']
+      end
+
+      if attributes.key?(:'name')
+        self.name = attributes[:'name']
       end
 
       if attributes.key?(:'summary')
@@ -220,6 +230,7 @@ module Repull
       return true if self.equal?(o)
       self.class == o.class &&
           title == o.title &&
+          name == o.name &&
           summary == o.summary &&
           description == o.description &&
           space == o.space &&
@@ -243,7 +254,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [title, summary, description, space, guest_access, neighborhood_overview, getting_around, transit, house_rules, additional_rules, notes, interaction_with_guests, amenities].hash
+      [title, name, summary, description, space, guest_access, neighborhood_overview, getting_around, transit, house_rules, additional_rules, notes, interaction_with_guests, amenities].hash
     end
 
     # Builds the object from hash

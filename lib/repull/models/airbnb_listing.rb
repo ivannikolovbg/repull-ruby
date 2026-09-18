@@ -24,6 +24,9 @@ module Repull
 
     attr_accessor :city
 
+    # Cover photo URL for the Vanio listing. **Only present when the caller passes `?include=thumbnail`.** `null` when the listing has no cover photo stored — the listing is still returned.
+    attr_accessor :thumbnail_url
+
     attr_accessor :connections
 
     # Attribute mapping from ruby-style variable name to JSON key.
@@ -32,6 +35,7 @@ module Repull
         :'listing_id' => :'listingId',
         :'name' => :'name',
         :'city' => :'city',
+        :'thumbnail_url' => :'thumbnailUrl',
         :'connections' => :'connections'
       }
     end
@@ -52,6 +56,7 @@ module Repull
         :'listing_id' => :'String',
         :'name' => :'String',
         :'city' => :'String',
+        :'thumbnail_url' => :'String',
         :'connections' => :'Array<AirbnbConnection>'
       }
     end
@@ -60,6 +65,7 @@ module Repull
     def self.openapi_nullable
       Set.new([
         :'city',
+        :'thumbnail_url',
       ])
     end
 
@@ -89,6 +95,10 @@ module Repull
 
       if attributes.key?(:'city')
         self.city = attributes[:'city']
+      end
+
+      if attributes.key?(:'thumbnail_url')
+        self.thumbnail_url = attributes[:'thumbnail_url']
       end
 
       if attributes.key?(:'connections')
@@ -121,6 +131,7 @@ module Repull
           listing_id == o.listing_id &&
           name == o.name &&
           city == o.city &&
+          thumbnail_url == o.thumbnail_url &&
           connections == o.connections
     end
 
@@ -133,7 +144,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [listing_id, name, city, connections].hash
+      [listing_id, name, city, thumbnail_url, connections].hash
     end
 
     # Builds the object from hash

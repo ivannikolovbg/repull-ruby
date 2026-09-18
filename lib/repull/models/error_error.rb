@@ -51,6 +51,15 @@ module Repull
     # Every inactive listing the request involved. Present on `code: \"listing_inactive\"` (HTTP 403) — activate these ids and retry.
     attr_accessor :listing_ids
 
+    # The single Repull listing the error is about. Present on `code: \"listing_not_api_connected\"` (HTTP 403).
+    attr_accessor :listing_id
+
+    # Airbnb's own id for that listing, so the host can find it in Airbnb. Present on `code: \"listing_not_api_connected\"` (HTTP 403).
+    attr_accessor :airbnb_listing_id
+
+    # The listing's current Airbnb API sync category — why the write was refused. Present on `code: \"listing_not_api_connected\"` (HTTP 403).
+    attr_accessor :sync_category
+
     # Seconds the client should wait before retrying. Mirrors the `Retry-After` HTTP header. Present on rate-limit responses and on transient upstream failures that are safe to retry.
     attr_accessor :retry_after
 
@@ -71,6 +80,9 @@ module Repull
         :'endpoint' => :'endpoint',
         :'did_you_mean' => :'did_you_mean',
         :'listing_ids' => :'listing_ids',
+        :'listing_id' => :'listing_id',
+        :'airbnb_listing_id' => :'airbnb_listing_id',
+        :'sync_category' => :'sync_category',
         :'retry_after' => :'retry_after',
         :'support' => :'support'
       }
@@ -101,6 +113,9 @@ module Repull
         :'endpoint' => :'String',
         :'did_you_mean' => :'String',
         :'listing_ids' => :'Array<String>',
+        :'listing_id' => :'String',
+        :'airbnb_listing_id' => :'String',
+        :'sync_category' => :'String',
         :'retry_after' => :'Integer',
         :'support' => :'ErrorErrorSupport'
       }
@@ -191,6 +206,18 @@ module Repull
         if (value = attributes[:'listing_ids']).is_a?(Array)
           self.listing_ids = value
         end
+      end
+
+      if attributes.key?(:'listing_id')
+        self.listing_id = attributes[:'listing_id']
+      end
+
+      if attributes.key?(:'airbnb_listing_id')
+        self.airbnb_listing_id = attributes[:'airbnb_listing_id']
+      end
+
+      if attributes.key?(:'sync_category')
+        self.sync_category = attributes[:'sync_category']
       end
 
       if attributes.key?(:'retry_after')
@@ -309,6 +336,9 @@ module Repull
           endpoint == o.endpoint &&
           did_you_mean == o.did_you_mean &&
           listing_ids == o.listing_ids &&
+          listing_id == o.listing_id &&
+          airbnb_listing_id == o.airbnb_listing_id &&
+          sync_category == o.sync_category &&
           retry_after == o.retry_after &&
           support == o.support
     end
@@ -322,7 +352,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [code, message, fix, docs_url, request_id, field, value_received, valid_values, valid_params, endpoint, did_you_mean, listing_ids, retry_after, support].hash
+      [code, message, fix, docs_url, request_id, field, value_received, valid_values, valid_params, endpoint, did_you_mean, listing_ids, listing_id, airbnb_listing_id, sync_category, retry_after, support].hash
     end
 
     # Builds the object from hash

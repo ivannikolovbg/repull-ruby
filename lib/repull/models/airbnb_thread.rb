@@ -20,6 +20,12 @@ module Repull
 
     attr_accessor :listing_id
 
+    # Which connected Airbnb account this row belongs to — the Airbnb host id, as a string (they exceed 2^53). The same value `?account_id=` accepts and `GET /v1/connect/airbnb` returns as `accounts[].externalAccountId`.
+    attr_accessor :account_id
+
+    # Display name of that connected Airbnb account.
+    attr_accessor :account_name
+
     attr_accessor :guest_name
 
     attr_accessor :last_message_at
@@ -31,6 +37,8 @@ module Repull
       {
         :'id' => :'id',
         :'listing_id' => :'listingId',
+        :'account_id' => :'accountId',
+        :'account_name' => :'accountName',
         :'guest_name' => :'guestName',
         :'last_message_at' => :'lastMessageAt',
         :'unread_count' => :'unreadCount'
@@ -52,6 +60,8 @@ module Repull
       {
         :'id' => :'String',
         :'listing_id' => :'String',
+        :'account_id' => :'String',
+        :'account_name' => :'String',
         :'guest_name' => :'String',
         :'last_message_at' => :'Time',
         :'unread_count' => :'Integer'
@@ -62,6 +72,8 @@ module Repull
     def self.openapi_nullable
       Set.new([
         :'listing_id',
+        :'account_id',
+        :'account_name',
         :'guest_name',
         :'last_message_at',
         :'unread_count'
@@ -90,6 +102,14 @@ module Repull
 
       if attributes.key?(:'listing_id')
         self.listing_id = attributes[:'listing_id']
+      end
+
+      if attributes.key?(:'account_id')
+        self.account_id = attributes[:'account_id']
+      end
+
+      if attributes.key?(:'account_name')
+        self.account_name = attributes[:'account_name']
       end
 
       if attributes.key?(:'guest_name')
@@ -127,6 +147,8 @@ module Repull
       self.class == o.class &&
           id == o.id &&
           listing_id == o.listing_id &&
+          account_id == o.account_id &&
+          account_name == o.account_name &&
           guest_name == o.guest_name &&
           last_message_at == o.last_message_at &&
           unread_count == o.unread_count
@@ -141,7 +163,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, listing_id, guest_name, last_message_at, unread_count].hash
+      [id, listing_id, account_id, account_name, guest_name, last_message_at, unread_count].hash
     end
 
     # Builds the object from hash

@@ -4,7 +4,8 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **title** | **String** | Public listing title. Populated only by &#x60;generate-content&#x60;; not stored on &#x60;listings_descriptions&#x60;. | [optional] |
+| **title** | **String** | Public listing title as proposed by &#x60;POST /v1/listings/{id}/generate-content&#x60;. The STORED title is &#x60;name&#x60; — read that one. | [optional] |
+| **name** | **String** | The listing&#39;s stored public title, and the one a channel pull writes — after &#x60;POST /v1/listings/{id}/pull/airbnb&#x60; this is the title as it stands on Airbnb. | [optional] |
 | **summary** | **String** |  | [optional] |
 | **description** | **String** |  | [optional] |
 | **space** | **String** |  | [optional] |
@@ -25,6 +26,7 @@ require 'repull'
 
 instance = Repull::ListingContent.new(
   title: null,
+  name: null,
   summary: null,
   description: null,
   space: null,

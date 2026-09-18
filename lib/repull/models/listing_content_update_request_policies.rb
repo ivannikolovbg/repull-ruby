@@ -42,6 +42,42 @@ module Repull
 
     attr_accessor :allows_events
 
+    # Quiet-hours window start, e.g. \"22:00\". Distributed to Airbnb by the publish path.
+    attr_accessor :quiet_hours_start
+
+    attr_accessor :quiet_hours_end
+
+    # How the guest lets themselves in. Canonical storage only — distributing it to Airbnb is `PUT /v1/channels/airbnb/listings/{id}/details` with `check_in_option`.
+    attr_accessor :check_in_method
+
+    # Instruction shown with the check-in method.
+    attr_accessor :check_in_instruction
+
+    # Guest-safety disclosures — exterior cameras, noise monitors, stairs, pets, an unfenced pool. FULL replacement of the canonical set: omit to leave untouched, send `[]` to clear. Canonical storage only — distributing them to Airbnb is `PUT /v1/channels/airbnb/listings/{id}/safety-disclosures`, which merges rather than replaces.
+    attr_accessor :guest_safety_disclosures
+
+    class EnumAttributeValidator
+      attr_reader :datatype
+      attr_reader :allowable_values
+
+      def initialize(datatype, allowable_values)
+        @allowable_values = allowable_values.map do |value|
+          case datatype.to_s
+          when /Integer/i
+            value.to_i
+          when /Float/i
+            value.to_f
+          else
+            value
+          end
+        end
+      end
+
+      def valid?(value)
+        !value || allowable_values.include?(value)
+      end
+    end
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
@@ -55,7 +91,12 @@ module Repull
         :'allows_infants' => :'allowsInfants',
         :'allows_pets' => :'allowsPets',
         :'allows_smoking' => :'allowsSmoking',
-        :'allows_events' => :'allowsEvents'
+        :'allows_events' => :'allowsEvents',
+        :'quiet_hours_start' => :'quietHoursStart',
+        :'quiet_hours_end' => :'quietHoursEnd',
+        :'check_in_method' => :'checkInMethod',
+        :'check_in_instruction' => :'checkInInstruction',
+        :'guest_safety_disclosures' => :'guestSafetyDisclosures'
       }
     end
 
@@ -82,7 +123,12 @@ module Repull
         :'allows_infants' => :'Boolean',
         :'allows_pets' => :'Boolean',
         :'allows_smoking' => :'Boolean',
-        :'allows_events' => :'Boolean'
+        :'allows_events' => :'Boolean',
+        :'quiet_hours_start' => :'String',
+        :'quiet_hours_end' => :'String',
+        :'check_in_method' => :'String',
+        :'check_in_instruction' => :'String',
+        :'guest_safety_disclosures' => :'Array<AirbnbSafetyDisclosure>'
       }
     end
 
@@ -99,7 +145,12 @@ module Repull
         :'allows_infants',
         :'allows_pets',
         :'allows_smoking',
-        :'allows_events'
+        :'allows_events',
+        :'quiet_hours_start',
+        :'quiet_hours_end',
+        :'check_in_method',
+        :'check_in_instruction',
+        :'guest_safety_disclosures'
       ])
     end
 
@@ -162,6 +213,28 @@ module Repull
       if attributes.key?(:'allows_events')
         self.allows_events = attributes[:'allows_events']
       end
+
+      if attributes.key?(:'quiet_hours_start')
+        self.quiet_hours_start = attributes[:'quiet_hours_start']
+      end
+
+      if attributes.key?(:'quiet_hours_end')
+        self.quiet_hours_end = attributes[:'quiet_hours_end']
+      end
+
+      if attributes.key?(:'check_in_method')
+        self.check_in_method = attributes[:'check_in_method']
+      end
+
+      if attributes.key?(:'check_in_instruction')
+        self.check_in_instruction = attributes[:'check_in_instruction']
+      end
+
+      if attributes.key?(:'guest_safety_disclosures')
+        if (value = attributes[:'guest_safety_disclosures']).is_a?(Array)
+          self.guest_safety_disclosures = value
+        end
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -176,7 +249,19 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
+      check_in_method_validator = EnumAttributeValidator.new('String', ["lockbox", "smartlock", "keypad", "host_checkin", "doorman_entry", "other_checkin"])
+      return false unless check_in_method_validator.valid?(@check_in_method)
       true
+    end
+
+    # Custom attribute writer method checking allowed values (enum).
+    # @param [Object] check_in_method Object to be assigned
+    def check_in_method=(check_in_method)
+      validator = EnumAttributeValidator.new('String', ["lockbox", "smartlock", "keypad", "host_checkin", "doorman_entry", "other_checkin"])
+      unless validator.valid?(check_in_method)
+        fail ArgumentError, "invalid value for \"check_in_method\", must be one of #{validator.allowable_values}."
+      end
+      @check_in_method = check_in_method
     end
 
     # Checks equality by comparing each attribute.
@@ -194,7 +279,12 @@ module Repull
           allows_infants == o.allows_infants &&
           allows_pets == o.allows_pets &&
           allows_smoking == o.allows_smoking &&
-          allows_events == o.allows_events
+          allows_events == o.allows_events &&
+          quiet_hours_start == o.quiet_hours_start &&
+          quiet_hours_end == o.quiet_hours_end &&
+          check_in_method == o.check_in_method &&
+          check_in_instruction == o.check_in_instruction &&
+          guest_safety_disclosures == o.guest_safety_disclosures
     end
 
     # @see the `==` method
@@ -206,7 +296,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [check_in_time_start, check_in_time_end, check_out_time, house_rules, cancellation_policy, cancellation, allows_children, allows_infants, allows_pets, allows_smoking, allows_events].hash
+      [check_in_time_start, check_in_time_end, check_out_time, house_rules, cancellation_policy, cancellation, allows_children, allows_infants, allows_pets, allows_smoking, allows_events, quiet_hours_start, quiet_hours_end, check_in_method, check_in_instruction, guest_safety_disclosures].hash
     end
 
     # Builds the object from hash

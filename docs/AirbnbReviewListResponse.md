@@ -6,6 +6,7 @@
 | ---- | ---- | ----------- | ----- |
 | **data** | [**Array&lt;AirbnbReview&gt;**](AirbnbReview.md) |  | [optional] |
 | **pagination** | [**Pagination**](Pagination.md) |  | [optional] |
+| **data_freshness** | [**AirbnbDataFreshness**](AirbnbDataFreshness.md) |  | [optional] |
 
 ## Example
 
@@ -14,7 +15,8 @@ require 'repull'
 
 instance = Repull::AirbnbReviewListResponse.new(
   data: null,
-  pagination: null
+  pagination: null,
+  data_freshness: null
 )
 ```
 

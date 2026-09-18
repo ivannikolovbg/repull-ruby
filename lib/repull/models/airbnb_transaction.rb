@@ -33,6 +33,12 @@ module Repull
     # Resolved Vanio reservation id when the confirmation code matched a reservation in this workspace; null otherwise.
     attr_accessor :reservation_id
 
+    # Which connected Airbnb account this transaction belongs to — the Airbnb host id, as a string (they exceed 2^53). `null` on rows that name no listing (payouts).
+    attr_accessor :account_id
+
+    # Display name of that connected Airbnb account.
+    attr_accessor :account_name
+
     # Airbnb listing id.
     attr_accessor :listing_id
 
@@ -90,6 +96,8 @@ module Repull
         :'date' => :'date',
         :'confirmation_code' => :'confirmation_code',
         :'reservation_id' => :'reservation_id',
+        :'account_id' => :'account_id',
+        :'account_name' => :'account_name',
         :'listing_id' => :'listing_id',
         :'thread_id' => :'thread_id',
         :'nights' => :'nights',
@@ -133,6 +141,8 @@ module Repull
         :'date' => :'Date',
         :'confirmation_code' => :'String',
         :'reservation_id' => :'Integer',
+        :'account_id' => :'String',
+        :'account_name' => :'String',
         :'listing_id' => :'String',
         :'thread_id' => :'String',
         :'nights' => :'Integer',
@@ -165,6 +175,8 @@ module Repull
         :'date',
         :'confirmation_code',
         :'reservation_id',
+        :'account_id',
+        :'account_name',
         :'listing_id',
         :'thread_id',
         :'nights',
@@ -225,6 +237,14 @@ module Repull
 
       if attributes.key?(:'reservation_id')
         self.reservation_id = attributes[:'reservation_id']
+      end
+
+      if attributes.key?(:'account_id')
+        self.account_id = attributes[:'account_id']
+      end
+
+      if attributes.key?(:'account_name')
+        self.account_name = attributes[:'account_name']
       end
 
       if attributes.key?(:'listing_id')
@@ -423,6 +443,8 @@ module Repull
           date == o.date &&
           confirmation_code == o.confirmation_code &&
           reservation_id == o.reservation_id &&
+          account_id == o.account_id &&
+          account_name == o.account_name &&
           listing_id == o.listing_id &&
           thread_id == o.thread_id &&
           nights == o.nights &&
@@ -455,7 +477,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [transaction_id, type, reference, date, confirmation_code, reservation_id, listing_id, thread_id, nights, reservation_start_date, booked_at, check_in, check_out, time_zone, guest_name, status, status_type, payout, currency, host_currency, amount, host_breakdown, guest_breakdown, unavailable_fields, standard_fees, tax_details, synced_at].hash
+      [transaction_id, type, reference, date, confirmation_code, reservation_id, account_id, account_name, listing_id, thread_id, nights, reservation_start_date, booked_at, check_in, check_out, time_zone, guest_name, status, status_type, payout, currency, host_currency, amount, host_breakdown, guest_breakdown, unavailable_fields, standard_fees, tax_details, synced_at].hash
     end
 
     # Builds the object from hash

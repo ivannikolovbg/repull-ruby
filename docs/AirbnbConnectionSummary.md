@@ -18,7 +18,7 @@ instance = Repull::AirbnbConnectionSummary.new(
   status: null,
   host_count: 2,
   hosts: null,
-  fix_url: https://repull.dev/dashboard/connections/airbnb
+  fix_url: https://repull.dev/dashboard/connections
 )
 ```
 

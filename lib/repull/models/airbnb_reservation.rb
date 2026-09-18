@@ -20,6 +20,12 @@ module Repull
 
     attr_accessor :listing_id
 
+    # Which connected Airbnb account this row belongs to — the Airbnb host id, as a string (they exceed 2^53). The same value `?account_id=` accepts and `GET /v1/connect/airbnb` returns as `accounts[].externalAccountId`.
+    attr_accessor :account_id
+
+    # Display name of that connected Airbnb account.
+    attr_accessor :account_name
+
     attr_accessor :status
 
     attr_accessor :check_in
@@ -39,6 +45,8 @@ module Repull
       {
         :'confirmation_code' => :'confirmationCode',
         :'listing_id' => :'listingId',
+        :'account_id' => :'accountId',
+        :'account_name' => :'accountName',
         :'status' => :'status',
         :'check_in' => :'checkIn',
         :'check_out' => :'checkOut',
@@ -64,6 +72,8 @@ module Repull
       {
         :'confirmation_code' => :'String',
         :'listing_id' => :'String',
+        :'account_id' => :'String',
+        :'account_name' => :'String',
         :'status' => :'String',
         :'check_in' => :'Date',
         :'check_out' => :'Date',
@@ -77,6 +87,8 @@ module Repull
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'account_id',
+        :'account_name',
         :'guest_name',
         :'guest_count',
         :'total_price',
@@ -106,6 +118,14 @@ module Repull
 
       if attributes.key?(:'listing_id')
         self.listing_id = attributes[:'listing_id']
+      end
+
+      if attributes.key?(:'account_id')
+        self.account_id = attributes[:'account_id']
+      end
+
+      if attributes.key?(:'account_name')
+        self.account_name = attributes[:'account_name']
       end
 
       if attributes.key?(:'status')
@@ -159,6 +179,8 @@ module Repull
       self.class == o.class &&
           confirmation_code == o.confirmation_code &&
           listing_id == o.listing_id &&
+          account_id == o.account_id &&
+          account_name == o.account_name &&
           status == o.status &&
           check_in == o.check_in &&
           check_out == o.check_out &&
@@ -177,7 +199,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [confirmation_code, listing_id, status, check_in, check_out, guest_name, guest_count, total_price, currency].hash
+      [confirmation_code, listing_id, account_id, account_name, status, check_in, check_out, guest_name, guest_count, total_price, currency].hash
     end
 
     # Builds the object from hash

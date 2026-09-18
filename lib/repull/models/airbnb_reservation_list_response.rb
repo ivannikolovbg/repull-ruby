@@ -20,11 +20,14 @@ module Repull
 
     attr_accessor :pagination
 
+    attr_accessor :data_freshness
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
         :'data' => :'data',
-        :'pagination' => :'pagination'
+        :'pagination' => :'pagination',
+        :'data_freshness' => :'dataFreshness'
       }
     end
 
@@ -42,7 +45,8 @@ module Repull
     def self.openapi_types
       {
         :'data' => :'Array<AirbnbReservation>',
-        :'pagination' => :'Pagination'
+        :'pagination' => :'Pagination',
+        :'data_freshness' => :'AirbnbDataFreshness'
       }
     end
 
@@ -77,6 +81,10 @@ module Repull
       if attributes.key?(:'pagination')
         self.pagination = attributes[:'pagination']
       end
+
+      if attributes.key?(:'data_freshness')
+        self.data_freshness = attributes[:'data_freshness']
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -100,7 +108,8 @@ module Repull
       return true if self.equal?(o)
       self.class == o.class &&
           data == o.data &&
-          pagination == o.pagination
+          pagination == o.pagination &&
+          data_freshness == o.data_freshness
     end
 
     # @see the `==` method
@@ -112,7 +121,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [data, pagination].hash
+      [data, pagination, data_freshness].hash
     end
 
     # Builds the object from hash

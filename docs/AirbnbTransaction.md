@@ -10,6 +10,8 @@
 | **date** | **Date** | Transaction date. | [optional] |
 | **confirmation_code** | **String** | Airbnb confirmation code — links this transaction to a reservation. | [optional] |
 | **reservation_id** | **Integer** | Resolved Vanio reservation id when the confirmation code matched a reservation in this workspace; null otherwise. | [optional] |
+| **account_id** | **String** | Which connected Airbnb account this transaction belongs to — the Airbnb host id, as a string (they exceed 2^53). &#x60;null&#x60; on rows that name no listing (payouts). | [optional] |
+| **account_name** | **String** | Display name of that connected Airbnb account. | [optional] |
 | **listing_id** | **String** | Airbnb listing id. | [optional] |
 | **thread_id** | **String** |  | [optional] |
 | **nights** | **Integer** |  | [optional] |
@@ -44,6 +46,8 @@ instance = Repull::AirbnbTransaction.new(
   date: null,
   confirmation_code: null,
   reservation_id: null,
+  account_id: 1772489413932732258,
+  account_name: Pomello,
   listing_id: null,
   thread_id: null,
   nights: null,

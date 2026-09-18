@@ -16,10 +16,10 @@ require 'time'
 module Repull
   # Body for `POST /v1/channels/airbnb/listings/{id}`.
   class AirbnbListingActionRequest < ApiModelBase
-    # `delete` deactivates the Repull record. `push`/`publish` push content to Airbnb.
+    # `delete` deactivates the REPULL RECORD — billing and API visibility — and never calls Airbnb. `push`/`publish` push content to Airbnb. `unlist` takes the LIVE AIRBNB LISTING down so it stops taking bookings; `relist` puts it back up. Deactivating and unlisting are different operations with different blast radii and are deliberately different action names.
     attr_accessor :action
 
-    # For `push`/`publish`: the Airbnb connection to update (from `GET /v1/channels/airbnb/listings/{id}`). Pass this OR `hostId`.
+    # For `push`/`publish`: the Airbnb connection to update (from `GET /v1/channels/airbnb/listings/{id}`). Pass this OR `hostId`. REQUIRED for `unlist`/`relist`: a listing can be connected to more than one Airbnb listing and the wrong one cannot be un-taken-down through this API.
     attr_accessor :airbnb_connection_id
 
     # For `push`/`publish`: create + publish a new Airbnb listing under this host. Pass this OR `airbnbConnectionId`.

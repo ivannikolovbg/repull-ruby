@@ -24,7 +24,7 @@ module Repull
 
     attr_accessor :is_connected
 
-    # When the host record was last touched (token refresh / activation / restriction). Closest available proxy for \"last successful sync\".
+    # When this account last COMPLETED an Airbnb import. `null` when it never has. A run that failed or was rate-limited does not move it, and neither does anything other than a sync.
     attr_accessor :last_synced_at
 
     # When the host was last marked inactive. Null on currently-connected hosts.

@@ -7,7 +7,7 @@
 | **id** | **String** | Repull listing id | [optional] |
 | **name** | **String** |  | [optional] |
 | **address** | [**ListingAddress**](ListingAddress.md) |  | [optional] |
-| **thumbnail_url** | **String** |  | [optional] |
+| **thumbnail_url** | **String** | Cover photo URL. Always present on an active listing. On an **inactive** one it is present only when the caller passes &#x60;?include&#x3D;thumbnail&#x60;; &#x60;null&#x60; means the listing has no cover photo stored, absent means the expansion was not requested. | [optional] |
 | **status** | **String** |  | [optional] |
 | **channels** | [**Array&lt;ListingChannel&gt;**](ListingChannel.md) | Channels (Airbnb, Booking, VRBO, etc.) the listing is connected to. | [optional] |
 | **amenities** | [**Array&lt;ListingAmenity&gt;**](ListingAmenity.md) | Amenity rows for the listing. **Only present when the caller passes &#x60;?include&#x3D;amenities&#x60;.** Empty array (&#x60;[]&#x60;) when the listing has no amenity rows. | [optional] |

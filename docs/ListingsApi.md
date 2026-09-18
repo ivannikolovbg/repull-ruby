@@ -15,6 +15,7 @@ All URIs are relative to *https://api.repull.dev*
 | [**list_listings**](ListingsApi.md#list_listings) | **GET** /v1/listings | List listings |
 | [**publish_listing_to_airbnb**](ListingsApi.md#publish_listing_to_airbnb) | **POST** /v1/listings/{id}/publish/airbnb | Publish a listing to Airbnb |
 | [**publish_listing_to_booking**](ListingsApi.md#publish_listing_to_booking) | **POST** /v1/listings/{id}/publish/booking | Publish a listing to Booking.com |
+| [**pull_listing_from_airbnb**](ListingsApi.md#pull_listing_from_airbnb) | **POST** /v1/listings/{id}/pull/airbnb | Refresh a listing from Airbnb |
 | [**set_listings_status**](ListingsApi.md#set_listings_status) | **POST** /v1/listings/status | Activate or deactivate listings in bulk |
 | [**update_listing_active**](ListingsApi.md#update_listing_active) | **PATCH** /v1/listings/{id} | Deactivate or reactivate a listing |
 | [**update_listing_content**](ListingsApi.md#update_listing_content) | **PUT** /v1/listings/{id}/content | Update canonical listing content |
@@ -592,7 +593,7 @@ end
 
 List listings
 
-Cursor-paginated list of listings owned by the authenticated workspace. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request to walk the full set. `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) — see the `offset` parameter below. Mutually exclusive with `cursor`. Filters: `q` (substring on name/street/city), `status`, `channel`.  **Optional expansions:** Pass `?include=content` to enrich each row with the rich content slab (summary, description, space, house rules, etc. — sourced from `listings_descriptions` for the `en` locale). Pass `?include=details` for the structural slab (bedrooms, bathrooms, person capacity, check-in window, wifi, house manual, etc.). Both default to `null` per row when the underlying `listings_descriptions` / `listings_details` row is missing — distinct from the field being absent (which signals the expansion was not requested). Combine comma-separated, e.g. `?include=content,details`. The default response stays lean; consumers must opt in.  **Inactive listings:** by default only active listings are returned. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated, so when `status` asks for inactive ones they carry only `id`, `name`, `status` and `channels` — enough to choose what to activate with `PATCH /v1/listings/{id}`. `?include=` expansions are not applied to them.
+Cursor-paginated list of listings owned by the authenticated workspace. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request to walk the full set. `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) — see the `offset` parameter below. Mutually exclusive with `cursor`. Filters: `q` (substring on name/street/city), `status`, `channel`.  **Optional expansions:** Pass `?include=content` to enrich each row with the rich content slab (summary, description, space, house rules, etc. — sourced from `listings_descriptions` for the `en` locale). Pass `?include=details` for the structural slab (bedrooms, bathrooms, person capacity, check-in window, wifi, house manual, etc.). Both default to `null` per row when the underlying `listings_descriptions` / `listings_details` row is missing — distinct from the field being absent (which signals the expansion was not requested). Pass `?include=thumbnail` to guarantee `thumbnailUrl` on every returned row — including the reduced inactive ones. Combine comma-separated, e.g. `?include=content,thumbnail`. The default response stays lean; consumers must opt in.  **Inactive listings:** by default only active listings are returned. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated, so when `status` asks for inactive ones they carry only `id`, `name`, `status` and `channels` — enough to choose what to activate with `PATCH /v1/listings/{id}`. The `content` and `details` expansions are not applied to them. `?include=thumbnail` is the one exception: it adds `thumbnailUrl` to an inactive row so a single request can render an active/inactive selection screen with pictures, instead of one follow-up call per listing (which an inactive listing would answer with `403 listing_inactive` anyway).
 
 ### Examples
 
@@ -612,9 +613,9 @@ opts = {
   offset: 56, # Integer | First-class alias for cursor-based pagination. Mutually exclusive with `cursor` — passing both returns 422. Accepts integers in `[0, 10000]`; deeper walks must use `cursor` (constant per-page cost). The response always includes `pagination.nextCursor` so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying.
   limit: 56, # Integer | Max items per page. Hard cap is 100.
   q: 'q_example', # String | Case-insensitive substring search on name, street, or city.
-  status: 'active', # String | Filter by listing status. Defaults to `active`. Pass `inactive` to list the listings you can activate, `archived` for archived ones, or `all` for every status. Inactive listings are returned with identity fields only — `id`, `name`, `status` and `channels` — and never with `address`, `thumbnailUrl`, `content` or `details`; activate one to see the rest.
+  status: 'active', # String | Filter by listing status. Defaults to `active`. Pass `inactive` to list the listings you can activate, `archived` for archived ones, or `all` for every status. Inactive listings are returned with identity fields only — `id`, `name`, `status` and `channels` — and never with `address`, `content` or `details`; activate one to see the rest. The only field you can add to an inactive row is `thumbnailUrl`, via `?include=thumbnail`.
   channel: 'airbnb', # String | Restrict to listings published on the given channel (`airbnb`, `booking`, `vrbo`, etc.). Joins through `listing_platform_links` and matches active links only.
-  include: 'content,details' # String | Comma-separated optional expansions. Currently supported: `content`, `details`. Unknown values return 422 with a `valid_values` envelope. (Note: `amenities` is not yet supported on the list endpoint — use the detail endpoint to fetch amenity rows for a single listing.)
+  include: 'content,thumbnail' # String | Comma-separated optional expansions. Currently supported: `content`, `details`, `thumbnail`. `thumbnail` guarantees `thumbnailUrl` on every row and is the only expansion that applies to inactive listings. Unknown values return 422 with a `valid_values` envelope. (Note: `amenities` is not yet supported on the list endpoint — use the detail endpoint to fetch amenity rows for a single listing.)
 }
 
 begin
@@ -653,9 +654,9 @@ end
 | **offset** | **Integer** | First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.nextCursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. | [optional][default to 0] |
 | **limit** | **Integer** | Max items per page. Hard cap is 100. | [optional][default to 20] |
 | **q** | **String** | Case-insensitive substring search on name, street, or city. | [optional] |
-| **status** | **String** | Filter by listing status. Defaults to &#x60;active&#x60;. Pass &#x60;inactive&#x60; to list the listings you can activate, &#x60;archived&#x60; for archived ones, or &#x60;all&#x60; for every status. Inactive listings are returned with identity fields only — &#x60;id&#x60;, &#x60;name&#x60;, &#x60;status&#x60; and &#x60;channels&#x60; — and never with &#x60;address&#x60;, &#x60;thumbnailUrl&#x60;, &#x60;content&#x60; or &#x60;details&#x60;; activate one to see the rest. | [optional][default to &#39;active&#39;] |
+| **status** | **String** | Filter by listing status. Defaults to &#x60;active&#x60;. Pass &#x60;inactive&#x60; to list the listings you can activate, &#x60;archived&#x60; for archived ones, or &#x60;all&#x60; for every status. Inactive listings are returned with identity fields only — &#x60;id&#x60;, &#x60;name&#x60;, &#x60;status&#x60; and &#x60;channels&#x60; — and never with &#x60;address&#x60;, &#x60;content&#x60; or &#x60;details&#x60;; activate one to see the rest. The only field you can add to an inactive row is &#x60;thumbnailUrl&#x60;, via &#x60;?include&#x3D;thumbnail&#x60;. | [optional][default to &#39;active&#39;] |
 | **channel** | **String** | Restrict to listings published on the given channel (&#x60;airbnb&#x60;, &#x60;booking&#x60;, &#x60;vrbo&#x60;, etc.). Joins through &#x60;listing_platform_links&#x60; and matches active links only. | [optional] |
-| **include** | **String** | Comma-separated optional expansions. Currently supported: &#x60;content&#x60;, &#x60;details&#x60;. Unknown values return 422 with a &#x60;valid_values&#x60; envelope. (Note: &#x60;amenities&#x60; is not yet supported on the list endpoint — use the detail endpoint to fetch amenity rows for a single listing.) | [optional] |
+| **include** | **String** | Comma-separated optional expansions. Currently supported: &#x60;content&#x60;, &#x60;details&#x60;, &#x60;thumbnail&#x60;. &#x60;thumbnail&#x60; guarantees &#x60;thumbnailUrl&#x60; on every row and is the only expansion that applies to inactive listings. Unknown values return 422 with a &#x60;valid_values&#x60; envelope. (Note: &#x60;amenities&#x60; is not yet supported on the list endpoint — use the detail endpoint to fetch amenity rows for a single listing.) | [optional] |
 
 ### Return type
 
@@ -673,11 +674,11 @@ end
 
 ## publish_listing_to_airbnb
 
-> <ListingPublishResponse> publish_listing_to_airbnb(id, opts)
+> <ListingPublishAirbnbResponse> publish_listing_to_airbnb(id, opts)
 
 Publish a listing to Airbnb
 
-Push a Repull listing to Airbnb. Pass `airbnbConnectionId` to update an already-mapped Airbnb listing, or `hostId` to create a brand-new Airbnb listing under that host.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+Push a Repull listing's canonical content to Airbnb. Pass `airbnbConnectionId` to update an already-mapped Airbnb listing, or `hostId` to create a brand-new Airbnb listing under that host.  **A publish is not one call to Airbnb.** It is up to eight independent ones — details, description, amenities, rooms, policies, photos, pricing, checkout_tasks — and each can fail on its own. `result.published` is true only when every attempted section landed; `result.sections` lists the ones that did and `result.errors[]` carries Airbnb's own reason, per section, for the ones that did not. **A partial publish is normal and is not rolled back**: what succeeded stays applied. Publish again once you have fixed the failing sections — a re-publish of an unchanged section is harmless.  `result.lockedFields` names the fields Airbnb will not let this listing change at all. They are not retryable by anyone: Airbnb answers 200 and applies nothing. `GET /v1/channels/airbnb/listings/{id}` reports the same list up front.  **Which fields this pushes** — title, description sections and house rules (English/primary locale), amenities, rooms and beds, photos, nightly price and fees, cancellation policy and guest controls, check-in/out times, quiet hours, property and room type, checkout tasks. **Not pushed by this endpoint:** non-primary locales (`PUT /v1/channels/airbnb/listings/{id}/descriptions`), guest-safety disclosures (`PUT …/safety-disclosures`), check-in method (`PUT …/details`), permits (`PUT …/permits`), and the calendar (`PUT …/availability`).  `force: true` re-pushes every section, ignoring dirty-field tracking. Without it only the sections changed since the last successful publish are sent.  Send `Idempotency-Key` to make a retry safe: a timeout on a publish otherwise leaves you unable to tell whether it ran.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -693,6 +694,7 @@ end
 api_instance = Repull::ListingsApi.new
 id = 56 # Integer | 
 opts = {
+  idempotency_key: '9f1c2f7e-4a3b-4f2e-9c8d-1b6a0e5d7c31', # String | Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged `Idempotency-Status: cached` — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → `409 idempotency_key_in_use`. - Same key with a DIFFERENT payload → `422 idempotency_key_reused`. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status >= 500 are deliberately not stored, so a server error stays retryable.
   listing_publish_airbnb_request: Repull::ListingPublishAirbnbRequest.new # ListingPublishAirbnbRequest | 
 }
 
@@ -709,7 +711,7 @@ end
 
 This returns an Array which contains the response data, status code and headers.
 
-> <Array(<ListingPublishResponse>, Integer, Hash)> publish_listing_to_airbnb_with_http_info(id, opts)
+> <Array(<ListingPublishAirbnbResponse>, Integer, Hash)> publish_listing_to_airbnb_with_http_info(id, opts)
 
 ```ruby
 begin
@@ -717,7 +719,7 @@ begin
   data, status_code, headers = api_instance.publish_listing_to_airbnb_with_http_info(id, opts)
   p status_code # => 2xx
   p headers # => { ... }
-  p data # => <ListingPublishResponse>
+  p data # => <ListingPublishAirbnbResponse>
 rescue Repull::ApiError => e
   puts "Error when calling ListingsApi->publish_listing_to_airbnb_with_http_info: #{e}"
 end
@@ -728,11 +730,12 @@ end
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **id** | **Integer** |  |  |
+| **idempotency_key** | **String** | Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable. | [optional] |
 | **listing_publish_airbnb_request** | [**ListingPublishAirbnbRequest**](ListingPublishAirbnbRequest.md) |  | [optional] |
 
 ### Return type
 
-[**ListingPublishResponse**](ListingPublishResponse.md)
+[**ListingPublishAirbnbResponse**](ListingPublishAirbnbResponse.md)
 
 ### Authorization
 
@@ -810,6 +813,79 @@ end
 ### HTTP request headers
 
 - **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## pull_listing_from_airbnb
+
+> <ListingPullResponse> pull_listing_from_airbnb(id, opts)
+
+Refresh a listing from Airbnb
+
+Re-read this listing from Airbnb and update your stored copy, then report what was refreshed and when. The mirror image of `POST /v1/listings/{id}/publish/airbnb`.  Every other Airbnb read on this API is served from our database. This endpoint is the one that goes and asks Airbnb — use it after a push, to see the values Airbnb actually kept, or when a host has changed something in the Airbnb app.  **What it refreshes:** basic listing facts (property type, bedrooms, beds, bathrooms, capacity), descriptions, photos, rooms and beds, amenities, booking settings (check-in/check-out windows, guest controls, cancellation policy), stay rules (min/max nights, advance-booking window, turnover buffer), pricing settings and standard fees, permits, checkout tasks and the check-in guide. After it returns, those values are what `GET /v1/listings/{id}?include=content,details` and the `/v1/channels/airbnb/**` routes serve.  **What it does NOT refresh:** the calendar (nightly rates and availability — see `GET /v1/channels/airbnb/listings/{id}/availability`), reservations, messages, reviews or payouts. Those arrive continuously through the channel's own sync and never need a manual pull.  **Runs synchronously** — the response is the result, not a job id. Expect several seconds.  **One pull per listing per 15 minutes.** A pull is roughly a dozen Airbnb calls; a second call inside the window returns `429 rate_limit_exceeded` with `Retry-After` and `nextPullAvailableAt`, and makes no Airbnb calls. Two simultaneous calls cannot both run.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ListingsApi.new
+id = 56 # Integer | 
+opts = {
+  listing_pull_airbnb_request: Repull::ListingPullAirbnbRequest.new # ListingPullAirbnbRequest | 
+}
+
+begin
+  # Refresh a listing from Airbnb
+  result = api_instance.pull_listing_from_airbnb(id, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ListingsApi->pull_listing_from_airbnb: #{e}"
+end
+```
+
+#### Using the pull_listing_from_airbnb_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<ListingPullResponse>, Integer, Hash)> pull_listing_from_airbnb_with_http_info(id, opts)
+
+```ruby
+begin
+  # Refresh a listing from Airbnb
+  data, status_code, headers = api_instance.pull_listing_from_airbnb_with_http_info(id, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <ListingPullResponse>
+rescue Repull::ApiError => e
+  puts "Error when calling ListingsApi->pull_listing_from_airbnb_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **Integer** |  |  |
+| **listing_pull_airbnb_request** | [**ListingPullAirbnbRequest**](ListingPullAirbnbRequest.md) |  | [optional] |
+
+### Return type
+
+[**ListingPullResponse**](ListingPullResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 
@@ -955,11 +1031,11 @@ end
 
 ## update_listing_content
 
-> <ListingContentUpdateResponse> update_listing_content(id, listing_content_update_request)
+> <ListingContentUpdateResponse> update_listing_content(id, listing_content_update_request, opts)
 
 Update canonical listing content
 
-Write your PMS's canonical listing content — title, description, amenities, address, occupancy, and policies — into a Repull listing, making it the source of truth. This is the flagship \"the PMS owns listing content, Repull distributes it\" enabler.  **Partial update:** every field is optional. Only the fields you send are written; absent fields are left untouched. `amenities` is a FULL replacement of the amenity set (omit to leave untouched, send `[]` to clear).  **Local write only — NOT a channel publish.** This mutates Repull's own copy of the content. It does NOT push to Airbnb / Booking.com; it marks the channels dirty so a later publish knows what changed. Distribution stays a separate explicit step.  **Photos are deferred:** a provided `photos` array is echoed back in the `deferred` field and NOT persisted (media ingestion is a follow-up).  Cross-tenant access (a listing that belongs to a different workspace) returns 404 — never 403. This endpoint is served even when the account is over the plan-listings cap, since editing content on a listing you already own never grows the portfolio.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+Write your PMS's canonical listing content — title, description, amenities, address, occupancy, and policies — into a Repull listing, making it the source of truth. This is the flagship \"the PMS owns listing content, Repull distributes it\" enabler.  **Partial update:** every field is optional. Only the fields you send are written; absent fields are left untouched. `amenities` is a FULL replacement of the amenity set (omit to leave untouched, send `[]` to clear).  **Multilingual:** send `locale` to say which language this copy is in (`it`, `pt-BR`, …). Canonical content is stored per locale, so each language keeps its own row instead of overwriting the English one. Omit it for English.  **Local write only — NOT a channel publish.** This mutates Repull's own copy of the content. It does NOT push to Airbnb / Booking.com; it marks the channels dirty so a later publish knows what changed. Distribution stays a separate explicit step.  **Photos are deferred:** a provided `photos` array is echoed back in the `deferred` field and NOT persisted (media ingestion is a follow-up).  Cross-tenant access (a listing that belongs to a different workspace) returns 404 — never 403. This endpoint is served even when the account is over the plan-listings cap, since editing content on a listing you already own never grows the portfolio.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -975,10 +1051,13 @@ end
 api_instance = Repull::ListingsApi.new
 id = 56 # Integer | Repull listing id
 listing_content_update_request = Repull::ListingContentUpdateRequest.new # ListingContentUpdateRequest | 
+opts = {
+  idempotency_key: '9f1c2f7e-4a3b-4f2e-9c8d-1b6a0e5d7c31' # String | Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged `Idempotency-Status: cached` — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → `409 idempotency_key_in_use`. - Same key with a DIFFERENT payload → `422 idempotency_key_reused`. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status >= 500 are deliberately not stored, so a server error stays retryable.
+}
 
 begin
   # Update canonical listing content
-  result = api_instance.update_listing_content(id, listing_content_update_request)
+  result = api_instance.update_listing_content(id, listing_content_update_request, opts)
   p result
 rescue Repull::ApiError => e
   puts "Error when calling ListingsApi->update_listing_content: #{e}"
@@ -989,12 +1068,12 @@ end
 
 This returns an Array which contains the response data, status code and headers.
 
-> <Array(<ListingContentUpdateResponse>, Integer, Hash)> update_listing_content_with_http_info(id, listing_content_update_request)
+> <Array(<ListingContentUpdateResponse>, Integer, Hash)> update_listing_content_with_http_info(id, listing_content_update_request, opts)
 
 ```ruby
 begin
   # Update canonical listing content
-  data, status_code, headers = api_instance.update_listing_content_with_http_info(id, listing_content_update_request)
+  data, status_code, headers = api_instance.update_listing_content_with_http_info(id, listing_content_update_request, opts)
   p status_code # => 2xx
   p headers # => { ... }
   p data # => <ListingContentUpdateResponse>
@@ -1009,6 +1088,7 @@ end
 | ---- | ---- | ----------- | ----- |
 | **id** | **Integer** | Repull listing id |  |
 | **listing_content_update_request** | [**ListingContentUpdateRequest**](ListingContentUpdateRequest.md) |  |  |
+| **idempotency_key** | **String** | Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable. | [optional] |
 
 ### Return type
 

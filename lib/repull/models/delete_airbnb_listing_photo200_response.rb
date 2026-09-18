@@ -17,10 +17,14 @@ module Repull
   class DeleteAirbnbListingPhoto200Response < ApiModelBase
     attr_accessor :deleted
 
+    # Whether our own copy dropped the photo too.
+    attr_accessor :stored
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'deleted' => :'deleted'
+        :'deleted' => :'deleted',
+        :'stored' => :'stored'
       }
     end
 
@@ -37,7 +41,8 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'deleted' => :'Boolean'
+        :'deleted' => :'Boolean',
+        :'stored' => :'Boolean'
       }
     end
 
@@ -66,6 +71,10 @@ module Repull
       if attributes.key?(:'deleted')
         self.deleted = attributes[:'deleted']
       end
+
+      if attributes.key?(:'stored')
+        self.stored = attributes[:'stored']
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -88,7 +97,8 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          deleted == o.deleted
+          deleted == o.deleted &&
+          stored == o.stored
     end
 
     # @see the `==` method
@@ -100,7 +110,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [deleted].hash
+      [deleted, stored].hash
     end
 
     # Builds the object from hash

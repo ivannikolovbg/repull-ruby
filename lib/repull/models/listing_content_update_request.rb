@@ -16,7 +16,10 @@ require 'time'
 module Repull
   # Canonical PMS-owned listing content. Every field is optional — this is a partial update, only the fields you send are written; absent fields are left untouched. This is a LOCAL write only: it does NOT push to Airbnb/Booking.com. Distribution is a separate explicit publish step. `photos` are ingested by URL and attached to the listing in order (full-replace by default, or append via `photosMode`).
   class ListingContentUpdateRequest < ApiModelBase
-    # Guest-facing title. Written to the listing name and the `en` description.
+    # Which language the `title` / `description` / `summary` / `policies.houseRules` in THIS request are written in. Defaults to `en`. Canonical content is stored per locale — one row per (listing, locale) — so sending Italian copy with `locale: \"it\"` creates or updates the Italian row instead of overwriting the English one. Distribution of a non-primary locale to Airbnb is a separate call: `PUT /v1/channels/airbnb/listings/{id}/descriptions`.
+    attr_accessor :locale
+
+    # Guest-facing title. Written to the listing name and the description row for `locale`.
     attr_accessor :title
 
     # Alias for `title`.
@@ -32,6 +35,8 @@ module Repull
 
     attr_accessor :address
 
+    attr_accessor :details
+
     attr_accessor :occupancy
 
     attr_accessor :policies
@@ -45,12 +50,14 @@ module Repull
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
+        :'locale' => :'locale',
         :'title' => :'title',
         :'name' => :'name',
         :'description' => :'description',
         :'summary' => :'summary',
         :'amenities' => :'amenities',
         :'address' => :'address',
+        :'details' => :'details',
         :'occupancy' => :'occupancy',
         :'policies' => :'policies',
         :'photos' => :'photos',
@@ -71,12 +78,14 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
+        :'locale' => :'String',
         :'title' => :'String',
         :'name' => :'String',
         :'description' => :'String',
         :'summary' => :'String',
         :'amenities' => :'ListingContentUpdateRequestAmenities',
         :'address' => :'ListingContentUpdateRequestAddress',
+        :'details' => :'ListingContentUpdateRequestDetails',
         :'occupancy' => :'ListingContentUpdateRequestOccupancy',
         :'policies' => :'ListingContentUpdateRequestPolicies',
         :'photos' => :'Array<ListingContentUpdateRequestPhotosInner>',
@@ -110,6 +119,10 @@ module Repull
         h[k.to_sym] = v
       }
 
+      if attributes.key?(:'locale')
+        self.locale = attributes[:'locale']
+      end
+
       if attributes.key?(:'title')
         self.title = attributes[:'title']
       end
@@ -132,6 +145,10 @@ module Repull
 
       if attributes.key?(:'address')
         self.address = attributes[:'address']
+      end
+
+      if attributes.key?(:'details')
+        self.details = attributes[:'details']
       end
 
       if attributes.key?(:'occupancy')
@@ -175,12 +192,14 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
+          locale == o.locale &&
           title == o.title &&
           name == o.name &&
           description == o.description &&
           summary == o.summary &&
           amenities == o.amenities &&
           address == o.address &&
+          details == o.details &&
           occupancy == o.occupancy &&
           policies == o.policies &&
           photos == o.photos &&
@@ -196,7 +215,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [title, name, description, summary, amenities, address, occupancy, policies, photos, photos_mode].hash
+      [locale, title, name, description, summary, amenities, address, details, occupancy, policies, photos, photos_mode].hash
     end
 
     # Builds the object from hash

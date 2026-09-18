@@ -20,6 +20,12 @@ module Repull
 
     attr_accessor :reservation_code
 
+    # Which connected Airbnb account this row belongs to — the Airbnb host id, as a string (they exceed 2^53). The same value `?account_id=` accepts and `GET /v1/connect/airbnb` returns as `accounts[].externalAccountId`.
+    attr_accessor :account_id
+
+    # Display name of that connected Airbnb account.
+    attr_accessor :account_name
+
     attr_accessor :rating
 
     attr_accessor :comment
@@ -33,6 +39,8 @@ module Repull
       {
         :'id' => :'id',
         :'reservation_code' => :'reservationCode',
+        :'account_id' => :'accountId',
+        :'account_name' => :'accountName',
         :'rating' => :'rating',
         :'comment' => :'comment',
         :'response' => :'response',
@@ -55,6 +63,8 @@ module Repull
       {
         :'id' => :'String',
         :'reservation_code' => :'String',
+        :'account_id' => :'String',
+        :'account_name' => :'String',
         :'rating' => :'Integer',
         :'comment' => :'String',
         :'response' => :'String',
@@ -66,6 +76,8 @@ module Repull
     def self.openapi_nullable
       Set.new([
         :'reservation_code',
+        :'account_id',
+        :'account_name',
         :'rating',
         :'comment',
         :'response',
@@ -95,6 +107,14 @@ module Repull
 
       if attributes.key?(:'reservation_code')
         self.reservation_code = attributes[:'reservation_code']
+      end
+
+      if attributes.key?(:'account_id')
+        self.account_id = attributes[:'account_id']
+      end
+
+      if attributes.key?(:'account_name')
+        self.account_name = attributes[:'account_name']
       end
 
       if attributes.key?(:'rating')
@@ -160,6 +180,8 @@ module Repull
       self.class == o.class &&
           id == o.id &&
           reservation_code == o.reservation_code &&
+          account_id == o.account_id &&
+          account_name == o.account_name &&
           rating == o.rating &&
           comment == o.comment &&
           response == o.response &&
@@ -175,7 +197,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, reservation_code, rating, comment, response, created_at].hash
+      [id, reservation_code, account_id, account_name, rating, comment, response, created_at].hash
     end
 
     # Builds the object from hash

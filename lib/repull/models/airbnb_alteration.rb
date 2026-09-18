@@ -14,7 +14,7 @@ require 'date'
 require 'time'
 
 module Repull
-  # An Airbnb reservation alteration request (date change, guest-count change, or price change), mirrored locally in `reservation_alterations`. Fields prefixed `original*` describe the reservation as it stands today; `new*` fields describe the proposed change. Compare them to render a diff and decide whether to accept (`POST .../{id}/accept`) or decline (`POST .../{id}/decline`).
+  # An Airbnb reservation alteration request (date change, guest-count change, price change, or a move to another listing), mirrored locally in `reservation_alterations`. Fields prefixed `original*` describe the reservation as it stands today; `new*` fields describe the proposed change. Compare them to render a diff and decide whether to accept (`POST .../{id}/accept`) or decline (`POST .../{id}/decline`) — or, for one you proposed yourself, to withdraw it (`POST .../{id}/cancel`).
   class AirbnbAlteration < ApiModelBase
     # Internal Repull mirror-row id (not the Airbnb alteration id — use `alterationId` for the `{id}` path param on the get / accept / decline routes).
     attr_accessor :id
@@ -24,6 +24,12 @@ module Repull
 
     # Repull reservation id the alteration belongs to.
     attr_accessor :reservation_id
+
+    # Which connected Airbnb account this row belongs to — the Airbnb host id, as a string (they exceed 2^53). The same value `?account_id=` accepts and `GET /v1/connect/airbnb` returns as `accounts[].externalAccountId`.
+    attr_accessor :account_id
+
+    # Display name of that connected Airbnb account.
+    attr_accessor :account_name
 
     # Always `airbnb` on this surface.
     attr_accessor :platform
@@ -64,6 +70,12 @@ module Repull
     # Proposed new total price (decimal string).
     attr_accessor :new_total_price
 
+    # Repull listing id the alteration moves the reservation to — a **listing transfer**. `null` when the alteration does not change the listing, which is the usual case. Compare it with the reservation's current `listingId` to render the move. Like every id on this API it is a string.
+    attr_accessor :new_listing_id
+
+    # The same transfer target as Airbnb spells it (the Airbnb listing id). Present alongside `newListingId`; it is also the only one of the two that is set when the destination listing has not been imported into this workspace.
+    attr_accessor :new_airbnb_listing_id
+
     # When the alteration was first mirrored locally.
     attr_accessor :created_at
 
@@ -76,6 +88,8 @@ module Repull
         :'id' => :'id',
         :'alteration_id' => :'alterationId',
         :'reservation_id' => :'reservationId',
+        :'account_id' => :'accountId',
+        :'account_name' => :'accountName',
         :'platform' => :'platform',
         :'status' => :'status',
         :'initiator' => :'initiator',
@@ -89,6 +103,8 @@ module Repull
         :'new_check_out' => :'newCheckOut',
         :'new_guest_count' => :'newGuestCount',
         :'new_total_price' => :'newTotalPrice',
+        :'new_listing_id' => :'newListingId',
+        :'new_airbnb_listing_id' => :'newAirbnbListingId',
         :'created_at' => :'createdAt',
         :'updated_at' => :'updatedAt'
       }
@@ -110,6 +126,8 @@ module Repull
         :'id' => :'String',
         :'alteration_id' => :'String',
         :'reservation_id' => :'String',
+        :'account_id' => :'String',
+        :'account_name' => :'String',
         :'platform' => :'String',
         :'status' => :'String',
         :'initiator' => :'String',
@@ -123,6 +141,8 @@ module Repull
         :'new_check_out' => :'Time',
         :'new_guest_count' => :'Integer',
         :'new_total_price' => :'String',
+        :'new_listing_id' => :'String',
+        :'new_airbnb_listing_id' => :'String',
         :'created_at' => :'Time',
         :'updated_at' => :'Time'
       }
@@ -133,6 +153,8 @@ module Repull
       Set.new([
         :'alteration_id',
         :'reservation_id',
+        :'account_id',
+        :'account_name',
         :'status',
         :'initiator',
         :'reason',
@@ -145,6 +167,8 @@ module Repull
         :'new_check_out',
         :'new_guest_count',
         :'new_total_price',
+        :'new_listing_id',
+        :'new_airbnb_listing_id',
         :'created_at',
         :'updated_at'
       ])
@@ -176,6 +200,14 @@ module Repull
 
       if attributes.key?(:'reservation_id')
         self.reservation_id = attributes[:'reservation_id']
+      end
+
+      if attributes.key?(:'account_id')
+        self.account_id = attributes[:'account_id']
+      end
+
+      if attributes.key?(:'account_name')
+        self.account_name = attributes[:'account_name']
       end
 
       if attributes.key?(:'platform')
@@ -230,6 +262,14 @@ module Repull
         self.new_total_price = attributes[:'new_total_price']
       end
 
+      if attributes.key?(:'new_listing_id')
+        self.new_listing_id = attributes[:'new_listing_id']
+      end
+
+      if attributes.key?(:'new_airbnb_listing_id')
+        self.new_airbnb_listing_id = attributes[:'new_airbnb_listing_id']
+      end
+
       if attributes.key?(:'created_at')
         self.created_at = attributes[:'created_at']
       end
@@ -262,6 +302,8 @@ module Repull
           id == o.id &&
           alteration_id == o.alteration_id &&
           reservation_id == o.reservation_id &&
+          account_id == o.account_id &&
+          account_name == o.account_name &&
           platform == o.platform &&
           status == o.status &&
           initiator == o.initiator &&
@@ -275,6 +317,8 @@ module Repull
           new_check_out == o.new_check_out &&
           new_guest_count == o.new_guest_count &&
           new_total_price == o.new_total_price &&
+          new_listing_id == o.new_listing_id &&
+          new_airbnb_listing_id == o.new_airbnb_listing_id &&
           created_at == o.created_at &&
           updated_at == o.updated_at
     end
@@ -288,7 +332,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, alteration_id, reservation_id, platform, status, initiator, reason, notes, original_check_in, original_check_out, original_guest_count, original_total_price, new_check_in, new_check_out, new_guest_count, new_total_price, created_at, updated_at].hash
+      [id, alteration_id, reservation_id, account_id, account_name, platform, status, initiator, reason, notes, original_check_in, original_check_out, original_guest_count, original_total_price, new_check_in, new_check_out, new_guest_count, new_total_price, new_listing_id, new_airbnb_listing_id, created_at, updated_at].hash
     end
 
     # Builds the object from hash
