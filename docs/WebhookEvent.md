@@ -21,6 +21,8 @@ Repull::WebhookEvent.openapi_one_of
 #   :'CalendarUpdatedEvent',
 #   :'ListingCreatedEvent',
 #   :'ListingDeletedEvent',
+#   :'ListingReactivatedEvent',
+#   :'ListingSuspendedEvent',
 #   :'ListingUpdatedEvent',
 #   :'PaymentCompletedEvent',
 #   :'PaymentRefundedEvent',
@@ -69,6 +71,8 @@ Repull::WebhookEvent.openapi_discriminator_mapping
 #   :'calendar.updated' => :'CalendarUpdatedEvent',
 #   :'listing.created' => :'ListingCreatedEvent',
 #   :'listing.deleted' => :'ListingDeletedEvent',
+#   :'listing.reactivated' => :'ListingReactivatedEvent',
+#   :'listing.suspended' => :'ListingSuspendedEvent',
 #   :'listing.updated' => :'ListingUpdatedEvent',
 #   :'payment.completed' => :'PaymentCompletedEvent',
 #   :'payment.refunded' => :'PaymentRefundedEvent',
@@ -116,6 +120,8 @@ Repull::WebhookEvent.build(data_that_doesnt_match)
 - `CalendarUpdatedEvent`
 - `ListingCreatedEvent`
 - `ListingDeletedEvent`
+- `ListingReactivatedEvent`
+- `ListingSuspendedEvent`
 - `ListingUpdatedEvent`
 - `PaymentCompletedEvent`
 - `PaymentRefundedEvent`

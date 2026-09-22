@@ -14,20 +14,49 @@ require 'date'
 require 'time'
 
 module Repull
-  # Payload for `listing.deleted`. The listing is no longer reachable on the channel — usually because the host unlinked it.
-  class ListingDeletedPayload < ApiModelBase
-    attr_accessor :object
+  # The listing, in the shape `GET /v1/listings/{id}` returns. Hydrated at delivery, so a receiver gets the listing rather than a reason to fetch one.
+  class ListingWebhookObject < ApiModelBase
+    attr_accessor :id
 
-    attr_accessor :reason
+    attr_accessor :customer_id
 
-    attr_accessor :deleted_at
+    attr_accessor :channel
+
+    # The channel's own listing id. Airbnb's exceed 2^53, so always a string.
+    attr_accessor :external_listing_id
+
+    attr_accessor :name
+
+    attr_accessor :active
+
+    attr_accessor :status
+
+    attr_accessor :address
+
+    attr_accessor :thumbnail_url
+
+    # Which channels this listing is on and whether each still accepts writes. `syncEnabled: false` means the channel refuses every write for this listing — the difference between a failing integration and a suspended listing.
+    attr_accessor :channels
+
+    attr_accessor :created_at
+
+    attr_accessor :updated_at
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'object' => :'object',
-        :'reason' => :'reason',
-        :'deleted_at' => :'deletedAt'
+        :'id' => :'id',
+        :'customer_id' => :'customerId',
+        :'channel' => :'channel',
+        :'external_listing_id' => :'externalListingId',
+        :'name' => :'name',
+        :'active' => :'active',
+        :'status' => :'status',
+        :'address' => :'address',
+        :'thumbnail_url' => :'thumbnailUrl',
+        :'channels' => :'channels',
+        :'created_at' => :'createdAt',
+        :'updated_at' => :'updatedAt'
       }
     end
 
@@ -44,16 +73,30 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'object' => :'ListingWebhookObject',
-        :'reason' => :'String',
-        :'deleted_at' => :'Time'
+        :'id' => :'String',
+        :'customer_id' => :'Integer',
+        :'channel' => :'String',
+        :'external_listing_id' => :'String',
+        :'name' => :'String',
+        :'active' => :'Boolean',
+        :'status' => :'String',
+        :'address' => :'ListingWebhookObjectAddress',
+        :'thumbnail_url' => :'String',
+        :'channels' => :'Array<ListingWebhookObjectChannelsInner>',
+        :'created_at' => :'Time',
+        :'updated_at' => :'Time'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
-        :'reason',
+        :'channel',
+        :'external_listing_id',
+        :'name',
+        :'thumbnail_url',
+        :'created_at',
+        :'updated_at'
       ])
     end
 
@@ -61,32 +104,70 @@ module Repull
     # @param [Hash] attributes Model attributes in the form of hash
     def initialize(attributes = {})
       if (!attributes.is_a?(Hash))
-        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::ListingDeletedPayload` initialize method"
+        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::ListingWebhookObject` initialize method"
       end
 
       # check to see if the attribute exists and convert string to symbol for hash key
       acceptable_attribute_map = self.class.acceptable_attribute_map
       attributes = attributes.each_with_object({}) { |(k, v), h|
         if (!acceptable_attribute_map.key?(k.to_sym))
-          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::ListingDeletedPayload`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
+          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::ListingWebhookObject`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
         end
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'object')
-        self.object = attributes[:'object']
+      if attributes.key?(:'id')
+        self.id = attributes[:'id']
       else
-        self.object = nil
+        self.id = nil
       end
 
-      if attributes.key?(:'reason')
-        self.reason = attributes[:'reason']
+      if attributes.key?(:'customer_id')
+        self.customer_id = attributes[:'customer_id']
+      else
+        self.customer_id = nil
       end
 
-      if attributes.key?(:'deleted_at')
-        self.deleted_at = attributes[:'deleted_at']
-      else
-        self.deleted_at = nil
+      if attributes.key?(:'channel')
+        self.channel = attributes[:'channel']
+      end
+
+      if attributes.key?(:'external_listing_id')
+        self.external_listing_id = attributes[:'external_listing_id']
+      end
+
+      if attributes.key?(:'name')
+        self.name = attributes[:'name']
+      end
+
+      if attributes.key?(:'active')
+        self.active = attributes[:'active']
+      end
+
+      if attributes.key?(:'status')
+        self.status = attributes[:'status']
+      end
+
+      if attributes.key?(:'address')
+        self.address = attributes[:'address']
+      end
+
+      if attributes.key?(:'thumbnail_url')
+        self.thumbnail_url = attributes[:'thumbnail_url']
+      end
+
+      if attributes.key?(:'channels')
+        if (value = attributes[:'channels']).is_a?(Array)
+          self.channels = value
+        end
+      end
+
+      if attributes.key?(:'created_at')
+        self.created_at = attributes[:'created_at']
+      end
+
+      if attributes.key?(:'updated_at')
+        self.updated_at = attributes[:'updated_at']
       end
     end
 
@@ -95,12 +176,12 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
-      if @object.nil?
-        invalid_properties.push('invalid value for "object", object cannot be nil.')
+      if @id.nil?
+        invalid_properties.push('invalid value for "id", id cannot be nil.')
       end
 
-      if @deleted_at.nil?
-        invalid_properties.push('invalid value for "deleted_at", deleted_at cannot be nil.')
+      if @customer_id.nil?
+        invalid_properties.push('invalid value for "customer_id", customer_id cannot be nil.')
       end
 
       invalid_properties
@@ -110,29 +191,29 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
-      return false if @object.nil?
-      return false if @deleted_at.nil?
+      return false if @id.nil?
+      return false if @customer_id.nil?
       true
     end
 
     # Custom attribute writer method with validation
-    # @param [Object] object Value to be assigned
-    def object=(object)
-      if object.nil?
-        fail ArgumentError, 'object cannot be nil'
+    # @param [Object] id Value to be assigned
+    def id=(id)
+      if id.nil?
+        fail ArgumentError, 'id cannot be nil'
       end
 
-      @object = object
+      @id = id
     end
 
     # Custom attribute writer method with validation
-    # @param [Object] deleted_at Value to be assigned
-    def deleted_at=(deleted_at)
-      if deleted_at.nil?
-        fail ArgumentError, 'deleted_at cannot be nil'
+    # @param [Object] customer_id Value to be assigned
+    def customer_id=(customer_id)
+      if customer_id.nil?
+        fail ArgumentError, 'customer_id cannot be nil'
       end
 
-      @deleted_at = deleted_at
+      @customer_id = customer_id
     end
 
     # Checks equality by comparing each attribute.
@@ -140,9 +221,18 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          object == o.object &&
-          reason == o.reason &&
-          deleted_at == o.deleted_at
+          id == o.id &&
+          customer_id == o.customer_id &&
+          channel == o.channel &&
+          external_listing_id == o.external_listing_id &&
+          name == o.name &&
+          active == o.active &&
+          status == o.status &&
+          address == o.address &&
+          thumbnail_url == o.thumbnail_url &&
+          channels == o.channels &&
+          created_at == o.created_at &&
+          updated_at == o.updated_at
     end
 
     # @see the `==` method
@@ -154,7 +244,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [object, reason, deleted_at].hash
+      [id, customer_id, channel, external_listing_id, name, active, status, address, thumbnail_url, channels, created_at, updated_at].hash
     end
 
     # Builds the object from hash

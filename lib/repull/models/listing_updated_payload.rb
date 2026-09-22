@@ -14,21 +14,25 @@ require 'date'
 require 'time'
 
 module Repull
-  # Payload for `listing.updated`. Listing content, amenities, photos, or status changed.
+  # Payload for `listing.updated`. Something about the listing changed on the channel — content, pricing, booking settings, house rules, availability or sync settings.
   class ListingUpdatedPayload < ApiModelBase
-    attr_accessor :id
+    attr_accessor :object
 
-    # Map of `field` → `{ from, to }` pairs describing what changed.
-    attr_accessor :changes
+    # Which part moved. Airbnb sends one notification per area rather than a diff, so this is the signal for what to re-read.
+    attr_accessor :area
 
-    attr_accessor :updated_at
+    # Fields that changed and their prior values, when the source reports them.
+    attr_accessor :previous_attributes
+
+    attr_accessor :revision
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'id' => :'id',
-        :'changes' => :'changes',
-        :'updated_at' => :'updatedAt'
+        :'object' => :'object',
+        :'area' => :'area',
+        :'previous_attributes' => :'previousAttributes',
+        :'revision' => :'revision'
       }
     end
 
@@ -45,15 +49,17 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'id' => :'Integer',
-        :'changes' => :'Hash<String, Object>',
-        :'updated_at' => :'Time'
+        :'object' => :'ListingWebhookObject',
+        :'area' => :'String',
+        :'previous_attributes' => :'Hash<String, Object>',
+        :'revision' => :'Time'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'revision'
       ])
     end
 
@@ -73,18 +79,24 @@ module Repull
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'id')
-        self.id = attributes[:'id']
+      if attributes.key?(:'object')
+        self.object = attributes[:'object']
+      else
+        self.object = nil
       end
 
-      if attributes.key?(:'changes')
-        if (value = attributes[:'changes']).is_a?(Hash)
-          self.changes = value
+      if attributes.key?(:'area')
+        self.area = attributes[:'area']
+      end
+
+      if attributes.key?(:'previous_attributes')
+        if (value = attributes[:'previous_attributes']).is_a?(Hash)
+          self.previous_attributes = value
         end
       end
 
-      if attributes.key?(:'updated_at')
-        self.updated_at = attributes[:'updated_at']
+      if attributes.key?(:'revision')
+        self.revision = attributes[:'revision']
       end
     end
 
@@ -93,6 +105,10 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
+      if @object.nil?
+        invalid_properties.push('invalid value for "object", object cannot be nil.')
+      end
+
       invalid_properties
     end
 
@@ -100,7 +116,18 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
+      return false if @object.nil?
       true
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] object Value to be assigned
+    def object=(object)
+      if object.nil?
+        fail ArgumentError, 'object cannot be nil'
+      end
+
+      @object = object
     end
 
     # Checks equality by comparing each attribute.
@@ -108,9 +135,10 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          id == o.id &&
-          changes == o.changes &&
-          updated_at == o.updated_at
+          object == o.object &&
+          area == o.area &&
+          previous_attributes == o.previous_attributes &&
+          revision == o.revision
     end
 
     # @see the `==` method
@@ -122,7 +150,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, changes, updated_at].hash
+      [object, area, previous_attributes, revision].hash
     end
 
     # Builds the object from hash

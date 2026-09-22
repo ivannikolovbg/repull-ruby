@@ -4,9 +4,9 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **id** | **Integer** |  | [optional] |
-| **deleted_at** | **Time** |  | [optional] |
+| **object** | [**ListingWebhookObject**](ListingWebhookObject.md) |  |  |
 | **reason** | **String** |  | [optional] |
+| **deleted_at** | **Time** |  |  |
 
 ## Example
 
@@ -14,9 +14,9 @@
 require 'repull'
 
 instance = Repull::ListingDeletedPayload.new(
-  id: 6250,
-  deleted_at: 2026-05-01T16:00Z,
-  reason: deactivated_by_owner
+  object: null,
+  reason: unlinked,
+  deleted_at: null
 )
 ```
 

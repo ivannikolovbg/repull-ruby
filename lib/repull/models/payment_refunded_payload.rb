@@ -14,29 +14,23 @@ require 'date'
 require 'time'
 
 module Repull
-  # Payload for `payment.refunded`. A previous payment was refunded in part or in full.
+  # Payload for `payment.refunded`. Money went back. Covers both a refund-typed movement and any adjustment with a negative amount — the sign on `object.amount` is preserved so the direction never has to be inferred.
   class PaymentRefundedPayload < ApiModelBase
-    attr_accessor :id
-
-    attr_accessor :refund_id
-
-    attr_accessor :reservation_id
-
-    attr_accessor :amount
-
-    attr_accessor :currency
+    attr_accessor :object
 
     attr_accessor :refunded_at
+
+    attr_accessor :reason
+
+    attr_accessor :revision
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'id' => :'id',
-        :'refund_id' => :'refundId',
-        :'reservation_id' => :'reservationId',
-        :'amount' => :'amount',
-        :'currency' => :'currency',
-        :'refunded_at' => :'refundedAt'
+        :'object' => :'object',
+        :'refunded_at' => :'refundedAt',
+        :'reason' => :'reason',
+        :'revision' => :'revision'
       }
     end
 
@@ -53,18 +47,19 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'id' => :'String',
-        :'refund_id' => :'String',
-        :'reservation_id' => :'Integer',
-        :'amount' => :'String',
-        :'currency' => :'String',
-        :'refunded_at' => :'Time'
+        :'object' => :'PaymentWebhookObject',
+        :'refunded_at' => :'Time',
+        :'reason' => :'String',
+        :'revision' => :'Time'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'refunded_at',
+        :'reason',
+        :'revision'
       ])
     end
 
@@ -84,28 +79,22 @@ module Repull
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'id')
-        self.id = attributes[:'id']
-      end
-
-      if attributes.key?(:'refund_id')
-        self.refund_id = attributes[:'refund_id']
-      end
-
-      if attributes.key?(:'reservation_id')
-        self.reservation_id = attributes[:'reservation_id']
-      end
-
-      if attributes.key?(:'amount')
-        self.amount = attributes[:'amount']
-      end
-
-      if attributes.key?(:'currency')
-        self.currency = attributes[:'currency']
+      if attributes.key?(:'object')
+        self.object = attributes[:'object']
+      else
+        self.object = nil
       end
 
       if attributes.key?(:'refunded_at')
         self.refunded_at = attributes[:'refunded_at']
+      end
+
+      if attributes.key?(:'reason')
+        self.reason = attributes[:'reason']
+      end
+
+      if attributes.key?(:'revision')
+        self.revision = attributes[:'revision']
       end
     end
 
@@ -114,6 +103,10 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
+      if @object.nil?
+        invalid_properties.push('invalid value for "object", object cannot be nil.')
+      end
+
       invalid_properties
     end
 
@@ -121,7 +114,18 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
+      return false if @object.nil?
       true
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] object Value to be assigned
+    def object=(object)
+      if object.nil?
+        fail ArgumentError, 'object cannot be nil'
+      end
+
+      @object = object
     end
 
     # Checks equality by comparing each attribute.
@@ -129,12 +133,10 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          id == o.id &&
-          refund_id == o.refund_id &&
-          reservation_id == o.reservation_id &&
-          amount == o.amount &&
-          currency == o.currency &&
-          refunded_at == o.refunded_at
+          object == o.object &&
+          refunded_at == o.refunded_at &&
+          reason == o.reason &&
+          revision == o.revision
     end
 
     # @see the `==` method
@@ -146,7 +148,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, refund_id, reservation_id, amount, currency, refunded_at].hash
+      [object, refunded_at, reason, revision].hash
     end
 
     # Builds the object from hash

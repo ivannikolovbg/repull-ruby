@@ -14,29 +14,23 @@ require 'date'
 require 'time'
 
 module Repull
-  # Payload for `payment.completed`. A guest payment was successfully captured.
+  # Payload for `payment.completed`. Money moved and settled — a guest charge, a host payout, a tourist-tax pass-through or a resolution payout. Fires only on a completed movement; scheduled intent is not an event.
   class PaymentCompletedPayload < ApiModelBase
-    attr_accessor :id
+    attr_accessor :object
 
-    attr_accessor :reservation_id
+    attr_accessor :completed_at
 
-    attr_accessor :amount
+    attr_accessor :reason
 
-    attr_accessor :currency
-
-    attr_accessor :method
-
-    attr_accessor :captured_at
+    attr_accessor :revision
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'id' => :'id',
-        :'reservation_id' => :'reservationId',
-        :'amount' => :'amount',
-        :'currency' => :'currency',
-        :'method' => :'method',
-        :'captured_at' => :'capturedAt'
+        :'object' => :'object',
+        :'completed_at' => :'completedAt',
+        :'reason' => :'reason',
+        :'revision' => :'revision'
       }
     end
 
@@ -53,18 +47,19 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'id' => :'String',
-        :'reservation_id' => :'Integer',
-        :'amount' => :'String',
-        :'currency' => :'String',
-        :'method' => :'String',
-        :'captured_at' => :'Time'
+        :'object' => :'PaymentWebhookObject',
+        :'completed_at' => :'Time',
+        :'reason' => :'String',
+        :'revision' => :'Time'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'completed_at',
+        :'reason',
+        :'revision'
       ])
     end
 
@@ -84,28 +79,22 @@ module Repull
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'id')
-        self.id = attributes[:'id']
+      if attributes.key?(:'object')
+        self.object = attributes[:'object']
+      else
+        self.object = nil
       end
 
-      if attributes.key?(:'reservation_id')
-        self.reservation_id = attributes[:'reservation_id']
+      if attributes.key?(:'completed_at')
+        self.completed_at = attributes[:'completed_at']
       end
 
-      if attributes.key?(:'amount')
-        self.amount = attributes[:'amount']
+      if attributes.key?(:'reason')
+        self.reason = attributes[:'reason']
       end
 
-      if attributes.key?(:'currency')
-        self.currency = attributes[:'currency']
-      end
-
-      if attributes.key?(:'method')
-        self.method = attributes[:'method']
-      end
-
-      if attributes.key?(:'captured_at')
-        self.captured_at = attributes[:'captured_at']
+      if attributes.key?(:'revision')
+        self.revision = attributes[:'revision']
       end
     end
 
@@ -114,6 +103,10 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
+      if @object.nil?
+        invalid_properties.push('invalid value for "object", object cannot be nil.')
+      end
+
       invalid_properties
     end
 
@@ -121,7 +114,18 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
+      return false if @object.nil?
       true
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] object Value to be assigned
+    def object=(object)
+      if object.nil?
+        fail ArgumentError, 'object cannot be nil'
+      end
+
+      @object = object
     end
 
     # Checks equality by comparing each attribute.
@@ -129,12 +133,10 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          id == o.id &&
-          reservation_id == o.reservation_id &&
-          amount == o.amount &&
-          currency == o.currency &&
-          method == o.method &&
-          captured_at == o.captured_at
+          object == o.object &&
+          completed_at == o.completed_at &&
+          reason == o.reason &&
+          revision == o.revision
     end
 
     # @see the `==` method
@@ -146,7 +148,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, reservation_id, amount, currency, method, captured_at].hash
+      [object, completed_at, reason, revision].hash
     end
 
     # Builds the object from hash

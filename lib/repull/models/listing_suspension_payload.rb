@@ -14,20 +14,21 @@ require 'date'
 require 'time'
 
 module Repull
-  # Payload for `listing.deleted`. The listing is no longer reachable on the channel — usually because the host unlinked it.
-  class ListingDeletedPayload < ApiModelBase
+  # Payload for `listing.suspended` and `listing.reactivated`. A suspended listing keeps accepting calendar and pricing writes and silently applies none of them, which is indistinguishable from an API fault unless you are told. It is also the one listing change a host cannot reverse alone.
+  class ListingSuspensionPayload < ApiModelBase
     attr_accessor :object
 
+    # The channel's stated reason, verbatim, when it gives one.
     attr_accessor :reason
 
-    attr_accessor :deleted_at
+    attr_accessor :occurred_at
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
         :'object' => :'object',
         :'reason' => :'reason',
-        :'deleted_at' => :'deletedAt'
+        :'occurred_at' => :'occurredAt'
       }
     end
 
@@ -46,7 +47,7 @@ module Repull
       {
         :'object' => :'ListingWebhookObject',
         :'reason' => :'String',
-        :'deleted_at' => :'Time'
+        :'occurred_at' => :'Time'
       }
     end
 
@@ -61,14 +62,14 @@ module Repull
     # @param [Hash] attributes Model attributes in the form of hash
     def initialize(attributes = {})
       if (!attributes.is_a?(Hash))
-        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::ListingDeletedPayload` initialize method"
+        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::ListingSuspensionPayload` initialize method"
       end
 
       # check to see if the attribute exists and convert string to symbol for hash key
       acceptable_attribute_map = self.class.acceptable_attribute_map
       attributes = attributes.each_with_object({}) { |(k, v), h|
         if (!acceptable_attribute_map.key?(k.to_sym))
-          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::ListingDeletedPayload`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
+          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::ListingSuspensionPayload`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
         end
         h[k.to_sym] = v
       }
@@ -83,10 +84,10 @@ module Repull
         self.reason = attributes[:'reason']
       end
 
-      if attributes.key?(:'deleted_at')
-        self.deleted_at = attributes[:'deleted_at']
+      if attributes.key?(:'occurred_at')
+        self.occurred_at = attributes[:'occurred_at']
       else
-        self.deleted_at = nil
+        self.occurred_at = nil
       end
     end
 
@@ -99,8 +100,8 @@ module Repull
         invalid_properties.push('invalid value for "object", object cannot be nil.')
       end
 
-      if @deleted_at.nil?
-        invalid_properties.push('invalid value for "deleted_at", deleted_at cannot be nil.')
+      if @occurred_at.nil?
+        invalid_properties.push('invalid value for "occurred_at", occurred_at cannot be nil.')
       end
 
       invalid_properties
@@ -111,7 +112,7 @@ module Repull
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
       return false if @object.nil?
-      return false if @deleted_at.nil?
+      return false if @occurred_at.nil?
       true
     end
 
@@ -126,13 +127,13 @@ module Repull
     end
 
     # Custom attribute writer method with validation
-    # @param [Object] deleted_at Value to be assigned
-    def deleted_at=(deleted_at)
-      if deleted_at.nil?
-        fail ArgumentError, 'deleted_at cannot be nil'
+    # @param [Object] occurred_at Value to be assigned
+    def occurred_at=(occurred_at)
+      if occurred_at.nil?
+        fail ArgumentError, 'occurred_at cannot be nil'
       end
 
-      @deleted_at = deleted_at
+      @occurred_at = occurred_at
     end
 
     # Checks equality by comparing each attribute.
@@ -142,7 +143,7 @@ module Repull
       self.class == o.class &&
           object == o.object &&
           reason == o.reason &&
-          deleted_at == o.deleted_at
+          occurred_at == o.occurred_at
     end
 
     # @see the `==` method
@@ -154,7 +155,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [object, reason, deleted_at].hash
+      [object, reason, occurred_at].hash
     end
 
     # Builds the object from hash

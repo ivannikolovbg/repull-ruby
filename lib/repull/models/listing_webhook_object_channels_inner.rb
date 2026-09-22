@@ -14,20 +14,25 @@ require 'date'
 require 'time'
 
 module Repull
-  # Payload for `listing.deleted`. The listing is no longer reachable on the channel — usually because the host unlinked it.
-  class ListingDeletedPayload < ApiModelBase
-    attr_accessor :object
+  class ListingWebhookObjectChannelsInner < ApiModelBase
+    attr_accessor :platform
 
-    attr_accessor :reason
+    attr_accessor :external_id
 
-    attr_accessor :deleted_at
+    attr_accessor :active
+
+    attr_accessor :sync_enabled
+
+    attr_accessor :sync_category
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'object' => :'object',
-        :'reason' => :'reason',
-        :'deleted_at' => :'deletedAt'
+        :'platform' => :'platform',
+        :'external_id' => :'externalId',
+        :'active' => :'active',
+        :'sync_enabled' => :'syncEnabled',
+        :'sync_category' => :'syncCategory'
       }
     end
 
@@ -44,16 +49,18 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'object' => :'ListingWebhookObject',
-        :'reason' => :'String',
-        :'deleted_at' => :'Time'
+        :'platform' => :'String',
+        :'external_id' => :'String',
+        :'active' => :'Boolean',
+        :'sync_enabled' => :'Boolean',
+        :'sync_category' => :'String'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
-        :'reason',
+        :'sync_category'
       ])
     end
 
@@ -61,32 +68,36 @@ module Repull
     # @param [Hash] attributes Model attributes in the form of hash
     def initialize(attributes = {})
       if (!attributes.is_a?(Hash))
-        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::ListingDeletedPayload` initialize method"
+        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::ListingWebhookObjectChannelsInner` initialize method"
       end
 
       # check to see if the attribute exists and convert string to symbol for hash key
       acceptable_attribute_map = self.class.acceptable_attribute_map
       attributes = attributes.each_with_object({}) { |(k, v), h|
         if (!acceptable_attribute_map.key?(k.to_sym))
-          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::ListingDeletedPayload`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
+          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::ListingWebhookObjectChannelsInner`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
         end
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'object')
-        self.object = attributes[:'object']
-      else
-        self.object = nil
+      if attributes.key?(:'platform')
+        self.platform = attributes[:'platform']
       end
 
-      if attributes.key?(:'reason')
-        self.reason = attributes[:'reason']
+      if attributes.key?(:'external_id')
+        self.external_id = attributes[:'external_id']
       end
 
-      if attributes.key?(:'deleted_at')
-        self.deleted_at = attributes[:'deleted_at']
-      else
-        self.deleted_at = nil
+      if attributes.key?(:'active')
+        self.active = attributes[:'active']
+      end
+
+      if attributes.key?(:'sync_enabled')
+        self.sync_enabled = attributes[:'sync_enabled']
+      end
+
+      if attributes.key?(:'sync_category')
+        self.sync_category = attributes[:'sync_category']
       end
     end
 
@@ -95,14 +106,6 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
-      if @object.nil?
-        invalid_properties.push('invalid value for "object", object cannot be nil.')
-      end
-
-      if @deleted_at.nil?
-        invalid_properties.push('invalid value for "deleted_at", deleted_at cannot be nil.')
-      end
-
       invalid_properties
     end
 
@@ -110,29 +113,7 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
-      return false if @object.nil?
-      return false if @deleted_at.nil?
       true
-    end
-
-    # Custom attribute writer method with validation
-    # @param [Object] object Value to be assigned
-    def object=(object)
-      if object.nil?
-        fail ArgumentError, 'object cannot be nil'
-      end
-
-      @object = object
-    end
-
-    # Custom attribute writer method with validation
-    # @param [Object] deleted_at Value to be assigned
-    def deleted_at=(deleted_at)
-      if deleted_at.nil?
-        fail ArgumentError, 'deleted_at cannot be nil'
-      end
-
-      @deleted_at = deleted_at
     end
 
     # Checks equality by comparing each attribute.
@@ -140,9 +121,11 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          object == o.object &&
-          reason == o.reason &&
-          deleted_at == o.deleted_at
+          platform == o.platform &&
+          external_id == o.external_id &&
+          active == o.active &&
+          sync_enabled == o.sync_enabled &&
+          sync_category == o.sync_category
     end
 
     # @see the `==` method
@@ -154,7 +137,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [object, reason, deleted_at].hash
+      [platform, external_id, active, sync_enabled, sync_category].hash
     end
 
     # Builds the object from hash

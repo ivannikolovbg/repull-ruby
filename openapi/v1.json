@@ -1854,6 +1854,8 @@
           "listing.created",
           "listing.updated",
           "listing.deleted",
+          "listing.suspended",
+          "listing.reactivated",
           "calendar.updated",
           "account.created",
           "account.disconnected",
@@ -2199,49 +2201,257 @@
           }
         }
       },
-      "ListingUpdatedPayload": {
+      "ListingWebhookObject": {
         "type": "object",
-        "description": "Payload for `listing.updated`. Listing content, amenities, photos, or status changed.",
+        "description": "The listing, in the shape `GET /v1/listings/{id}` returns. Hydrated at delivery, so a receiver gets the listing rather than a reason to fetch one.",
+        "required": [
+          "id",
+          "customerId"
+        ],
         "properties": {
           "id": {
-            "type": "integer",
-            "example": 6250
+            "type": "string",
+            "example": "6250"
           },
-          "changes": {
+          "customerId": {
+            "type": "integer",
+            "example": 1
+          },
+          "channel": {
+            "type": "string",
+            "nullable": true,
+            "example": "airbnb"
+          },
+          "externalListingId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The channel's own listing id. Airbnb's exceed 2^53, so always a string.",
+            "example": "1234567890123456789"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "example": "R-Sable 1302 \u2014 Radium Hot Springs"
+          },
+          "active": {
+            "type": "boolean",
+            "example": true
+          },
+          "status": {
+            "type": "string",
+            "example": "active"
+          },
+          "address": {
             "type": "object",
-            "additionalProperties": true,
-            "description": "Map of `field` \u2192 `{ from, to }` pairs describing what changed.",
-            "example": {
-              "title": {
-                "from": "R-Sable 1302",
-                "to": "R-Sable 1302 \u2014 Radium Hot Springs"
+            "properties": {
+              "street": {
+                "type": "string",
+                "nullable": true
+              },
+              "city": {
+                "type": "string",
+                "nullable": true
+              },
+              "region": {
+                "type": "string",
+                "nullable": true
               }
             }
+          },
+          "thumbnailUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "channels": {
+            "type": "array",
+            "description": "Which channels this listing is on and whether each still accepts writes. `syncEnabled: false` means the channel refuses every write for this listing \u2014 the difference between a failing integration and a suspended listing.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "platform": {
+                  "type": "string",
+                  "example": "airbnb"
+                },
+                "externalId": {
+                  "type": "string",
+                  "example": "21466093"
+                },
+                "active": {
+                  "type": "boolean"
+                },
+                "syncEnabled": {
+                  "type": "boolean"
+                },
+                "syncCategory": {
+                  "type": "string",
+                  "nullable": true,
+                  "example": "sync_all"
+                }
+              }
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
           },
           "updatedAt": {
             "type": "string",
             "format": "date-time",
-            "example": "2026-05-01T12:30:00.000Z"
+            "nullable": true
+          }
+        }
+      },
+      "PaymentWebhookObject": {
+        "type": "object",
+        "description": "A money movement: a guest charge, a host payout, a refund, a tourist-tax pass-through, a resolution payout, or an adjustment that claws money back.",
+        "required": [
+          "id",
+          "customerId",
+          "transactionType",
+          "amount"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 277919
+          },
+          "customerId": {
+            "type": "integer",
+            "example": 1
+          },
+          "transactionType": {
+            "type": "string",
+            "description": "Repull's normalised vocabulary for what this movement is.",
+            "example": "payout"
+          },
+          "sourceType": {
+            "type": "string",
+            "nullable": true,
+            "description": "The source system's own type string, unmapped, for reconciling against the dashboard.",
+            "example": "Payout"
+          },
+          "status": {
+            "type": "string",
+            "nullable": true,
+            "example": "completed"
+          },
+          "amount": {
+            "type": "string",
+            "description": "Gross amount. Negative on adjustments and clawbacks \u2014 the sign is preserved so the direction never has to be inferred.",
+            "example": "1792.17"
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true,
+            "example": "CAD"
+          },
+          "reservationId": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Present when the movement belongs to one reservation. Absent on batched payouts, which genuinely arrive without a reservation reference."
+          },
+          "confirmationCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "The channel's confirmation code, when resolved."
+          },
+          "listingId": {
+            "type": "integer",
+            "nullable": true
+          },
+          "platform": {
+            "type": "string",
+            "nullable": true,
+            "example": "airbnb"
+          },
+          "platformPaymentId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The platform's own id. Airbnb payout ids look like `G-FRSLYC3ZKAJDQ`.",
+            "example": "G-FRSLYC3ZKAJDQ"
+          },
+          "processingFee": {
+            "type": "string",
+            "nullable": true,
+            "description": "Emitted only where the source carries it."
+          },
+          "netAmount": {
+            "type": "string",
+            "nullable": true,
+            "description": "Emitted only where the source carries it."
+          }
+        }
+      },
+      "ListingUpdatedPayload": {
+        "type": "object",
+        "description": "Payload for `listing.updated`. Something about the listing changed on the channel \u2014 content, pricing, booking settings, house rules, availability or sync settings.",
+        "required": [
+          "object"
+        ],
+        "properties": {
+          "object": {
+            "$ref": "#/components/schemas/ListingWebhookObject"
+          },
+          "area": {
+            "type": "string",
+            "description": "Which part moved. Airbnb sends one notification per area rather than a diff, so this is the signal for what to re-read.",
+            "example": "content"
+          },
+          "previousAttributes": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Fields that changed and their prior values, when the source reports them."
+          },
+          "revision": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
           }
         }
       },
       "ListingDeletedPayload": {
         "type": "object",
-        "description": "Payload for `listing.deleted`. A property was removed from Repull or the upstream PMS.",
+        "description": "Payload for `listing.deleted`. The listing is no longer reachable on the channel \u2014 usually because the host unlinked it.",
+        "required": [
+          "object",
+          "deletedAt"
+        ],
         "properties": {
-          "id": {
-            "type": "integer",
-            "example": 6250
-          },
-          "deletedAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2026-05-01T16:00:00.000Z"
+          "object": {
+            "$ref": "#/components/schemas/ListingWebhookObject"
           },
           "reason": {
             "type": "string",
             "nullable": true,
-            "example": "deactivated_by_owner"
+            "example": "unlinked"
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ListingSuspensionPayload": {
+        "type": "object",
+        "description": "Payload for `listing.suspended` and `listing.reactivated`. A suspended listing keeps accepting calendar and pricing writes and silently applies none of them, which is indistinguishable from an API fault unless you are told. It is also the one listing change a host cannot reverse alone.",
+        "required": [
+          "object",
+          "occurredAt"
+        ],
+        "properties": {
+          "object": {
+            "$ref": "#/components/schemas/ListingWebhookObject"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "description": "The channel's stated reason, verbatim, when it gives one.",
+            "example": "quality_standards"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -2503,63 +2713,54 @@
       },
       "PaymentCompletedPayload": {
         "type": "object",
-        "description": "Payload for `payment.completed`. A guest payment was successfully captured.",
+        "description": "Payload for `payment.completed`. Money moved and settled \u2014 a guest charge, a host payout, a tourist-tax pass-through or a resolution payout. Fires only on a completed movement; scheduled intent is not an event.",
+        "required": [
+          "object"
+        ],
         "properties": {
-          "id": {
-            "type": "string",
-            "example": "pay_01HX5XPQ2K"
+          "object": {
+            "$ref": "#/components/schemas/PaymentWebhookObject"
           },
-          "reservationId": {
-            "type": "integer",
-            "example": 215906
-          },
-          "amount": {
-            "type": "string",
-            "example": "1320.00"
-          },
-          "currency": {
-            "type": "string",
-            "example": "USD"
-          },
-          "method": {
-            "type": "string",
-            "example": "card"
-          },
-          "capturedAt": {
+          "completedAt": {
             "type": "string",
             "format": "date-time",
-            "example": "2026-05-01T12:35:00.000Z"
+            "nullable": true
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          },
+          "revision": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
           }
         }
       },
       "PaymentRefundedPayload": {
         "type": "object",
-        "description": "Payload for `payment.refunded`. A previous payment was refunded in part or in full.",
+        "description": "Payload for `payment.refunded`. Money went back. Covers both a refund-typed movement and any adjustment with a negative amount \u2014 the sign on `object.amount` is preserved so the direction never has to be inferred.",
+        "required": [
+          "object"
+        ],
         "properties": {
-          "id": {
-            "type": "string",
-            "example": "pay_01HX5XPQ2K"
-          },
-          "refundId": {
-            "type": "string",
-            "example": "rfn_01HX5XPQ2K"
-          },
-          "reservationId": {
-            "type": "integer",
-            "example": 215906
-          },
-          "amount": {
-            "type": "string",
-            "example": "1320.00"
-          },
-          "currency": {
-            "type": "string",
-            "example": "USD"
+          "object": {
+            "$ref": "#/components/schemas/PaymentWebhookObject"
           },
           "refundedAt": {
             "type": "string",
             "format": "date-time",
-            "example": "2026-05-01T19:00:00.000Z"
+            "nullable": true
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "example": "Resolution centre adjustment"
+          },
+          "revision": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
           }
         }
       },
@@ -2979,6 +3180,78 @@
           },
           "data": {
             "$ref": "#/components/schemas/ListingDeletedPayload"
+          }
+        }
+      },
+      "ListingSuspendedEvent": {
+        "type": "object",
+        "required": [
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
+          "data"
+        ],
+        "properties": {
+          "event": {
+            "type": "string",
+            "description": "The event name. This field is `event`, not `type`."
+          },
+          "eventId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
+          },
+          "apiVersion": {
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this delivery was built."
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ListingSuspensionPayload"
+          }
+        }
+      },
+      "ListingReactivatedEvent": {
+        "type": "object",
+        "required": [
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
+          "data"
+        ],
+        "properties": {
+          "event": {
+            "type": "string",
+            "description": "The event name. This field is `event`, not `type`."
+          },
+          "eventId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
+          },
+          "apiVersion": {
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this delivery was built."
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ListingSuspensionPayload"
           }
         }
       },
@@ -3408,6 +3681,12 @@
             "$ref": "#/components/schemas/ListingDeletedEvent"
           },
           {
+            "$ref": "#/components/schemas/ListingSuspendedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/ListingReactivatedEvent"
+          },
+          {
             "$ref": "#/components/schemas/CalendarUpdatedEvent"
           },
           {
@@ -3453,6 +3732,8 @@
             "listing.created": "#/components/schemas/ListingCreatedEvent",
             "listing.updated": "#/components/schemas/ListingUpdatedEvent",
             "listing.deleted": "#/components/schemas/ListingDeletedEvent",
+            "listing.suspended": "#/components/schemas/ListingSuspendedEvent",
+            "listing.reactivated": "#/components/schemas/ListingReactivatedEvent",
             "calendar.updated": "#/components/schemas/CalendarUpdatedEvent",
             "account.created": "#/components/schemas/AccountCreatedEvent",
             "account.disconnected": "#/components/schemas/AccountDisconnectedEvent",
