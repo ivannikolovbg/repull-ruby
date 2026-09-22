@@ -5,6 +5,7 @@
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **monthly** | **Integer** |  | [optional] |
+| **daily** | **Integer** |  | [optional] |
 | **daily_ai** | **Integer** |  | [optional] |
 
 ## Example
@@ -14,6 +15,7 @@ require 'repull'
 
 instance = Repull::GetUsageSummary200ResponseRemaining.new(
   monthly: null,
+  daily: null,
   daily_ai: null
 )
 ```

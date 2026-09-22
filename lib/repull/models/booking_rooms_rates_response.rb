@@ -14,21 +14,34 @@ require 'date'
 require 'time'
 
 module Repull
-  # Returned by `GET /v1/channels/booking/properties/{id}/rooms`. Exposes the Booking.com room + rate-plan mapping ids for a listing so a caller can assemble a `PUT /v1/channels/booking/availability` restriction write (which requires `roomId` + `rateId` on every update). Sourced from Booking's B.XML roomrates feed.
+  # Returned by `GET /v1/channels/booking/properties/{id}/rooms`. Exposes the Booking.com room + rate-plan mapping ids for a listing so a caller can assemble a `PUT /v1/channels/booking/availability` restriction write (which requires `roomId` + `rateId` on every update). Read live from Booking's B.XML roomrates feed; `source` says so, and says when the answer came from the last import instead.
   class BookingRoomsRatesResponse < ApiModelBase
-    # Booking.com hotel/property id the rooms belong to.
+    # Booking.com hotel/property id the rooms belong to — the one the mapping resolved to.
     attr_accessor :hotel_id
 
-    # Vanio listing id echoed back.
+    # Repull listing id echoed back.
     attr_accessor :listing_id
 
+    # Other Booking.com properties this listing is also published under. Empty in the normal case. Pass one as `?hotel_id=` to read its rooms instead.
+    attr_accessor :other_hotel_ids
+
+    # Where the rooms came from. `booking` — read live from Booking.com just now. `mirror` — Booking.com returned nothing usable, so these are the rooms and rate plans recorded at the last import; the ids are Booking.com's own and are safe to write against, but they can be stale and `maxPersons`, `policy`, `policyId`, `pricingType` and `isChildRate` come back `null` because only the live feed states them.
+    attr_accessor :source
+
+    # Why the live read was not used. Null when `source` is `booking`.
+    attr_accessor :mirror_reason
+
+    # Empty only when Booking.com reports no rooms for this property AND nothing was recorded at the last import. A failed read is never an empty list — it is an error.
     attr_accessor :rooms
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'hotel_id' => :'hotel_id',
-        :'listing_id' => :'listing_id',
+        :'hotel_id' => :'hotelId',
+        :'listing_id' => :'listingId',
+        :'other_hotel_ids' => :'otherHotelIds',
+        :'source' => :'source',
+        :'mirror_reason' => :'mirrorReason',
         :'rooms' => :'rooms'
       }
     end
@@ -47,7 +60,10 @@ module Repull
     def self.openapi_types
       {
         :'hotel_id' => :'String',
-        :'listing_id' => :'Integer',
+        :'listing_id' => :'String',
+        :'other_hotel_ids' => :'Array<String>',
+        :'source' => :'String',
+        :'mirror_reason' => :'String',
         :'rooms' => :'Array<BookingRoomsRatesResponseRoomsInner>'
       }
     end
@@ -55,6 +71,7 @@ module Repull
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'mirror_reason',
       ])
     end
 
@@ -80,6 +97,20 @@ module Repull
 
       if attributes.key?(:'listing_id')
         self.listing_id = attributes[:'listing_id']
+      end
+
+      if attributes.key?(:'other_hotel_ids')
+        if (value = attributes[:'other_hotel_ids']).is_a?(Array)
+          self.other_hotel_ids = value
+        end
+      end
+
+      if attributes.key?(:'source')
+        self.source = attributes[:'source']
+      end
+
+      if attributes.key?(:'mirror_reason')
+        self.mirror_reason = attributes[:'mirror_reason']
       end
 
       if attributes.key?(:'rooms')
@@ -111,6 +142,9 @@ module Repull
       self.class == o.class &&
           hotel_id == o.hotel_id &&
           listing_id == o.listing_id &&
+          other_hotel_ids == o.other_hotel_ids &&
+          source == o.source &&
+          mirror_reason == o.mirror_reason &&
           rooms == o.rooms
     end
 
@@ -123,7 +157,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [hotel_id, listing_id, rooms].hash
+      [hotel_id, listing_id, other_hotel_ids, source, mirror_reason, rooms].hash
     end
 
     # Builds the object from hash

@@ -577,11 +577,11 @@ nil (empty response body)
 
 ## replay_webhook_delivery
 
-> replay_webhook_delivery(id, delivery_id)
+> replay_webhook_delivery(id, delivery_id, opts)
 
 Replay webhook delivery
 
-Re-sends the original payload (same eventId, fresh deliveryId, attempt + 1). A delivery about a listing that is inactive now is not re-sent and answers `403 listing_inactive`; activate the listing first.
+Re-sends the original payload (same eventId, fresh deliveryId, attempt + 1).  A delivery may be replayed at most **3 times per rolling 60 minutes**; the 4th inside that window answers `409 replay_limit_reached` and names the time the next one is allowed. The limit is charged to the original delivery, so replaying the delivery a replay produced draws on the same budget. It is not a lifetime cap — a delivery that has not been replayed for an hour starts fresh.  A delivery your endpoint already accepted is not re-sent (it would be a duplicate) and answers `409 delivery_already_succeeded`; send `{\"force\": true}` to replay it anyway, which still counts against the limit.  A delivery about a listing that is inactive now is not re-sent and answers `403 listing_inactive`; activate the listing first.
 
 ### Examples
 
@@ -597,10 +597,13 @@ end
 api_instance = Repull::WebhooksApi.new
 id = '38400000-8cf0-11bd-b23e-10b96e4ef00d' # String | 
 delivery_id = '38400000-8cf0-11bd-b23e-10b96e4ef00d' # String | 
+opts = {
+  replay_webhook_delivery_request: Repull::ReplayWebhookDeliveryRequest.new # ReplayWebhookDeliveryRequest | 
+}
 
 begin
   # Replay webhook delivery
-  api_instance.replay_webhook_delivery(id, delivery_id)
+  api_instance.replay_webhook_delivery(id, delivery_id, opts)
 rescue Repull::ApiError => e
   puts "Error when calling WebhooksApi->replay_webhook_delivery: #{e}"
 end
@@ -610,12 +613,12 @@ end
 
 This returns an Array which contains the response data (`nil` in this case), status code and headers.
 
-> <Array(nil, Integer, Hash)> replay_webhook_delivery_with_http_info(id, delivery_id)
+> <Array(nil, Integer, Hash)> replay_webhook_delivery_with_http_info(id, delivery_id, opts)
 
 ```ruby
 begin
   # Replay webhook delivery
-  data, status_code, headers = api_instance.replay_webhook_delivery_with_http_info(id, delivery_id)
+  data, status_code, headers = api_instance.replay_webhook_delivery_with_http_info(id, delivery_id, opts)
   p status_code # => 2xx
   p headers # => { ... }
   p data # => nil
@@ -630,6 +633,7 @@ end
 | ---- | ---- | ----------- | ----- |
 | **id** | **String** |  |  |
 | **delivery_id** | **String** |  |  |
+| **replay_webhook_delivery_request** | [**ReplayWebhookDeliveryRequest**](ReplayWebhookDeliveryRequest.md) |  | [optional] |
 
 ### Return type
 
@@ -641,7 +645,7 @@ nil (empty response body)
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 

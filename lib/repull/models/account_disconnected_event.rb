@@ -15,23 +15,29 @@ require 'time'
 
 module Repull
   class AccountDisconnectedEvent < ApiModelBase
-    attr_accessor :id
+    # The event name. This field is `event`, not `type`.
+    attr_accessor :event
 
-    attr_accessor :type
-
-    attr_accessor :created_at
+    # Stable across every delivery and replay of this logical event — dedupe on it.
+    attr_accessor :event_id
 
     attr_accessor :api_version
+
+    # When this delivery was built.
+    attr_accessor :timestamp
+
+    attr_accessor :account
 
     attr_accessor :data
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'id' => :'id',
-        :'type' => :'type',
-        :'created_at' => :'createdAt',
+        :'event' => :'event',
+        :'event_id' => :'eventId',
         :'api_version' => :'apiVersion',
+        :'timestamp' => :'timestamp',
+        :'account' => :'account',
         :'data' => :'data'
       }
     end
@@ -49,10 +55,11 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'id' => :'String',
-        :'type' => :'String',
-        :'created_at' => :'Time',
+        :'event' => :'String',
+        :'event_id' => :'String',
         :'api_version' => :'String',
+        :'timestamp' => :'Time',
+        :'account' => :'WebhookEventAccount',
         :'data' => :'AccountDisconnectedPayload'
       }
     end
@@ -60,6 +67,7 @@ module Repull
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'account',
       ])
     end
 
@@ -79,22 +87,32 @@ module Repull
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'id')
-        self.id = attributes[:'id']
-      end
-
-      if attributes.key?(:'type')
-        self.type = attributes[:'type']
+      if attributes.key?(:'event')
+        self.event = attributes[:'event']
       else
-        self.type = nil
+        self.event = nil
       end
 
-      if attributes.key?(:'created_at')
-        self.created_at = attributes[:'created_at']
+      if attributes.key?(:'event_id')
+        self.event_id = attributes[:'event_id']
+      else
+        self.event_id = nil
       end
 
       if attributes.key?(:'api_version')
         self.api_version = attributes[:'api_version']
+      else
+        self.api_version = nil
+      end
+
+      if attributes.key?(:'timestamp')
+        self.timestamp = attributes[:'timestamp']
+      else
+        self.timestamp = nil
+      end
+
+      if attributes.key?(:'account')
+        self.account = attributes[:'account']
       end
 
       if attributes.key?(:'data')
@@ -109,8 +127,20 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
-      if @type.nil?
-        invalid_properties.push('invalid value for "type", type cannot be nil.')
+      if @event.nil?
+        invalid_properties.push('invalid value for "event", event cannot be nil.')
+      end
+
+      if @event_id.nil?
+        invalid_properties.push('invalid value for "event_id", event_id cannot be nil.')
+      end
+
+      if @api_version.nil?
+        invalid_properties.push('invalid value for "api_version", api_version cannot be nil.')
+      end
+
+      if @timestamp.nil?
+        invalid_properties.push('invalid value for "timestamp", timestamp cannot be nil.')
       end
 
       if @data.nil?
@@ -124,19 +154,52 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
-      return false if @type.nil?
+      return false if @event.nil?
+      return false if @event_id.nil?
+      return false if @api_version.nil?
+      return false if @timestamp.nil?
       return false if @data.nil?
       true
     end
 
     # Custom attribute writer method with validation
-    # @param [Object] type Value to be assigned
-    def type=(type)
-      if type.nil?
-        fail ArgumentError, 'type cannot be nil'
+    # @param [Object] event Value to be assigned
+    def event=(event)
+      if event.nil?
+        fail ArgumentError, 'event cannot be nil'
       end
 
-      @type = type
+      @event = event
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] event_id Value to be assigned
+    def event_id=(event_id)
+      if event_id.nil?
+        fail ArgumentError, 'event_id cannot be nil'
+      end
+
+      @event_id = event_id
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] api_version Value to be assigned
+    def api_version=(api_version)
+      if api_version.nil?
+        fail ArgumentError, 'api_version cannot be nil'
+      end
+
+      @api_version = api_version
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] timestamp Value to be assigned
+    def timestamp=(timestamp)
+      if timestamp.nil?
+        fail ArgumentError, 'timestamp cannot be nil'
+      end
+
+      @timestamp = timestamp
     end
 
     # Custom attribute writer method with validation
@@ -154,10 +217,11 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          id == o.id &&
-          type == o.type &&
-          created_at == o.created_at &&
+          event == o.event &&
+          event_id == o.event_id &&
           api_version == o.api_version &&
+          timestamp == o.timestamp &&
+          account == o.account &&
           data == o.data
     end
 
@@ -170,7 +234,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, type, created_at, api_version, data].hash
+      [event, event_id, api_version, timestamp, account, data].hash
     end
 
     # Builds the object from hash

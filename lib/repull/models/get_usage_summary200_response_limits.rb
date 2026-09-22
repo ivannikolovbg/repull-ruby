@@ -17,12 +17,15 @@ module Repull
   class GetUsageSummary200ResponseLimits < ApiModelBase
     attr_accessor :monthly_requests
 
+    attr_accessor :daily_requests
+
     attr_accessor :daily_ai_requests
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
         :'monthly_requests' => :'monthlyRequests',
+        :'daily_requests' => :'dailyRequests',
         :'daily_ai_requests' => :'dailyAiRequests'
       }
     end
@@ -41,6 +44,7 @@ module Repull
     def self.openapi_types
       {
         :'monthly_requests' => :'Integer',
+        :'daily_requests' => :'Integer',
         :'daily_ai_requests' => :'Integer'
       }
     end
@@ -49,6 +53,7 @@ module Repull
     def self.openapi_nullable
       Set.new([
         :'monthly_requests',
+        :'daily_requests',
         :'daily_ai_requests'
       ])
     end
@@ -71,6 +76,10 @@ module Repull
 
       if attributes.key?(:'monthly_requests')
         self.monthly_requests = attributes[:'monthly_requests']
+      end
+
+      if attributes.key?(:'daily_requests')
+        self.daily_requests = attributes[:'daily_requests']
       end
 
       if attributes.key?(:'daily_ai_requests')
@@ -99,6 +108,7 @@ module Repull
       return true if self.equal?(o)
       self.class == o.class &&
           monthly_requests == o.monthly_requests &&
+          daily_requests == o.daily_requests &&
           daily_ai_requests == o.daily_ai_requests
     end
 
@@ -111,7 +121,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [monthly_requests, daily_ai_requests].hash
+      [monthly_requests, daily_requests, daily_ai_requests].hash
     end
 
     # Builds the object from hash

@@ -547,10 +547,11 @@ module Repull
     end
 
     # Replay webhook delivery
-    # Re-sends the original payload (same eventId, fresh deliveryId, attempt + 1). A delivery about a listing that is inactive now is not re-sent and answers `403 listing_inactive`; activate the listing first.
+    # Re-sends the original payload (same eventId, fresh deliveryId, attempt + 1).  A delivery may be replayed at most **3 times per rolling 60 minutes**; the 4th inside that window answers `409 replay_limit_reached` and names the time the next one is allowed. The limit is charged to the original delivery, so replaying the delivery a replay produced draws on the same budget. It is not a lifetime cap — a delivery that has not been replayed for an hour starts fresh.  A delivery your endpoint already accepted is not re-sent (it would be a duplicate) and answers `409 delivery_already_succeeded`; send `{\"force\": true}` to replay it anyway, which still counts against the limit.  A delivery about a listing that is inactive now is not re-sent and answers `403 listing_inactive`; activate the listing first.
     # @param id [String] 
     # @param delivery_id [String] 
     # @param [Hash] opts the optional parameters
+    # @option opts [ReplayWebhookDeliveryRequest] :replay_webhook_delivery_request 
     # @return [nil]
     def replay_webhook_delivery(id, delivery_id, opts = {})
       replay_webhook_delivery_with_http_info(id, delivery_id, opts)
@@ -558,10 +559,11 @@ module Repull
     end
 
     # Replay webhook delivery
-    # Re-sends the original payload (same eventId, fresh deliveryId, attempt + 1). A delivery about a listing that is inactive now is not re-sent and answers &#x60;403 listing_inactive&#x60;; activate the listing first.
+    # Re-sends the original payload (same eventId, fresh deliveryId, attempt + 1).  A delivery may be replayed at most **3 times per rolling 60 minutes**; the 4th inside that window answers &#x60;409 replay_limit_reached&#x60; and names the time the next one is allowed. The limit is charged to the original delivery, so replaying the delivery a replay produced draws on the same budget. It is not a lifetime cap — a delivery that has not been replayed for an hour starts fresh.  A delivery your endpoint already accepted is not re-sent (it would be a duplicate) and answers &#x60;409 delivery_already_succeeded&#x60;; send &#x60;{\&quot;force\&quot;: true}&#x60; to replay it anyway, which still counts against the limit.  A delivery about a listing that is inactive now is not re-sent and answers &#x60;403 listing_inactive&#x60;; activate the listing first.
     # @param id [String] 
     # @param delivery_id [String] 
     # @param [Hash] opts the optional parameters
+    # @option opts [ReplayWebhookDeliveryRequest] :replay_webhook_delivery_request 
     # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
     def replay_webhook_delivery_with_http_info(id, delivery_id, opts = {})
       if @api_client.config.debugging
@@ -585,12 +587,17 @@ module Repull
       header_params = opts[:header_params] || {}
       # HTTP header 'Accept' (if needed)
       header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
 
       # form parameters
       form_params = opts[:form_params] || {}
 
       # http body (model)
-      post_body = opts[:debug_body]
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(opts[:'replay_webhook_delivery_request'])
 
       # return_type
       return_type = opts[:debug_return_type]

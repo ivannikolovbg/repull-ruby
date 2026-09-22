@@ -14,9 +14,12 @@ require 'date'
 require 'time'
 
 module Repull
+  # The nights this update applies to. **Both ends are inclusive**: `{ \"start\": \"2026-11-04\", \"end\": \"2026-11-04\" }` writes exactly one night.
   class BookingPricingRateUpdateDateRange < ApiModelBase
+    # First night, YYYY-MM-DD.
     attr_accessor :start
 
+    # Last night, YYYY-MM-DD, inclusive — the same date as `start` for a single night.
     attr_accessor :_end
 
     # Attribute mapping from ruby-style variable name to JSON key.

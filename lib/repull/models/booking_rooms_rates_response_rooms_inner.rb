@@ -20,6 +20,9 @@ module Repull
 
     attr_accessor :room_name
 
+    # Booking.com's capacity for this room, as imported. The occupancy a rate write falls back to when the rate plan states no `maxPersons`. Null when Booking.com never stated one.
+    attr_accessor :max_adults
+
     attr_accessor :rates
 
     # Attribute mapping from ruby-style variable name to JSON key.
@@ -27,6 +30,7 @@ module Repull
       {
         :'room_id' => :'roomId',
         :'room_name' => :'roomName',
+        :'max_adults' => :'maxAdults',
         :'rates' => :'rates'
       }
     end
@@ -46,6 +50,7 @@ module Repull
       {
         :'room_id' => :'String',
         :'room_name' => :'String',
+        :'max_adults' => :'Integer',
         :'rates' => :'Array<BookingRoomsRatesResponseRoomsInnerRatesInner>'
       }
     end
@@ -55,6 +60,7 @@ module Repull
       Set.new([
         :'room_id',
         :'room_name',
+        :'max_adults',
       ])
     end
 
@@ -80,6 +86,10 @@ module Repull
 
       if attributes.key?(:'room_name')
         self.room_name = attributes[:'room_name']
+      end
+
+      if attributes.key?(:'max_adults')
+        self.max_adults = attributes[:'max_adults']
       end
 
       if attributes.key?(:'rates')
@@ -111,6 +121,7 @@ module Repull
       self.class == o.class &&
           room_id == o.room_id &&
           room_name == o.room_name &&
+          max_adults == o.max_adults &&
           rates == o.rates
     end
 
@@ -123,7 +134,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [room_id, room_name, rates].hash
+      [room_id, room_name, max_adults, rates].hash
     end
 
     # Builds the object from hash

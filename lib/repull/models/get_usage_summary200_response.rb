@@ -23,6 +23,8 @@ module Repull
 
     attr_accessor :remaining
 
+    attr_accessor :daily_resets_at
+
     attr_accessor :resets_at
 
     attr_accessor :breakdown
@@ -42,6 +44,7 @@ module Repull
         :'limits' => :'limits',
         :'used' => :'used',
         :'remaining' => :'remaining',
+        :'daily_resets_at' => :'dailyResetsAt',
         :'resets_at' => :'resetsAt',
         :'breakdown' => :'breakdown',
         :'timeline' => :'timeline',
@@ -68,6 +71,7 @@ module Repull
         :'limits' => :'GetUsageSummary200ResponseLimits',
         :'used' => :'GetUsageSummary200ResponseUsed',
         :'remaining' => :'GetUsageSummary200ResponseRemaining',
+        :'daily_resets_at' => :'Time',
         :'resets_at' => :'Time',
         :'breakdown' => :'Array<GetUsageSummary200ResponseBreakdownInner>',
         :'timeline' => :'Array<GetUsageSummary200ResponseTimelineInner>',
@@ -113,6 +117,10 @@ module Repull
 
       if attributes.key?(:'remaining')
         self.remaining = attributes[:'remaining']
+      end
+
+      if attributes.key?(:'daily_resets_at')
+        self.daily_resets_at = attributes[:'daily_resets_at']
       end
 
       if attributes.key?(:'resets_at')
@@ -168,6 +176,7 @@ module Repull
           limits == o.limits &&
           used == o.used &&
           remaining == o.remaining &&
+          daily_resets_at == o.daily_resets_at &&
           resets_at == o.resets_at &&
           breakdown == o.breakdown &&
           timeline == o.timeline &&
@@ -185,7 +194,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [tier, limits, used, remaining, resets_at, breakdown, timeline, status_distribution, totals, range].hash
+      [tier, limits, used, remaining, daily_resets_at, resets_at, breakdown, timeline, status_distribution, totals, range].hash
     end
 
     # Builds the object from hash

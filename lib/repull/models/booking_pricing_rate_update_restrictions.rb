@@ -14,33 +14,33 @@ require 'date'
 require 'time'
 
 module Repull
-  # Optional length-of-stay / availability restrictions for one rate update. Every field here is forwarded verbatim into Booking.com's rates XML (`minimumstay`, `maximumstay`, `closedonarrival`, `closedondeparture`, …) — omit a field to leave that restriction untouched.
+  # Length-of-stay and arrival restrictions for the nights in this update. Omit a field to leave that restriction untouched — nothing you do not state is changed.  These are written on Booking.com's availability notification, which is the wire that carries a restriction when no inventory changes hands. Sending them alongside a price is supported: the prices and the restrictions are two writes, and the response reports each one separately (`price` and `restrictions`), so a half that lands is never reported as a failure and a half that is refused is never reported as applied.  Three restrictions are refused with `422 restriction_not_supported` naming the field: Booking.com's notification has no element for them, and dropping a restriction you stated would be worse than refusing it. Set those on the rate plan in the Booking.com Extranet.
   class BookingPricingRateUpdateRestrictions < ApiModelBase
-    # Minimum length of stay (`minimumstay`).
+    # Minimum length of stay. Booking.com stores a 1-night minimum as no minimum at all, so `minStay: 1` reads back as `0` and is reported as applied.
     attr_accessor :min_stay
 
-    # Maximum length of stay (`maximumstay`).
+    # Maximum length of stay.
     attr_accessor :max_stay
 
-    # Closed-to-arrival — guests may not check in on the affected dates (`closedonarrival`).
+    # Closed-to-arrival — guests may not check in on these nights. `false` clears the flag; omit the field to leave it as it is.
     attr_accessor :closed_to_arrival
 
-    # Closed-to-departure — guests may not check out on the affected dates (`closedondeparture`).
+    # Closed-to-departure — guests may not check out on these nights. `false` clears the flag; omit the field to leave it as it is.
     attr_accessor :closed_to_departure
 
-    # Arrival-based minimum length of stay (`minimumstay_arrival`).
+    # Arrival-based minimum length of stay — applies to stays that START on these nights, rather than any stay covering them.
     attr_accessor :min_stay_arrival
 
-    # Arrival-based maximum length of stay (`maximumstay_arrival`).
+    # Arrival-based maximum length of stay.
     attr_accessor :max_stay_arrival
 
-    # Arrival-based exact length of stay (`exactstay_arrival`).
+    # Refused. Booking.com's restriction notification has no element for an exact arrival-based stay length, so it cannot be written through the API; sending it returns `422 restriction_not_supported` naming `updates[N].restrictions.exactStayArrival`. Set it on the rate plan in the Booking.com Extranet.
     attr_accessor :exact_stay_arrival
 
-    # Minimum advance-reservation window, format `XDY` (X days Y hours) — `min_advance_res`.
+    # Refused, for the same reason as `exactStayArrival` — returns `422 restriction_not_supported`. Set the minimum advance-reservation window on the rate plan in the Booking.com Extranet.
     attr_accessor :min_advance_res
 
-    # Maximum advance-reservation window, format `XDY` (X days Y hours) — `max_advance_res`.
+    # Refused, for the same reason as `exactStayArrival` — returns `422 restriction_not_supported`. Set the maximum advance-reservation window on the rate plan in the Booking.com Extranet.
     attr_accessor :max_advance_res
 
     # Attribute mapping from ruby-style variable name to JSON key.

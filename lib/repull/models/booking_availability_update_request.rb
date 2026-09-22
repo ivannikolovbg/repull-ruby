@@ -14,10 +14,13 @@ require 'date'
 require 'time'
 
 module Repull
-  # Body for `PUT /v1/channels/booking/availability`. Selects one of Booking's three ARI write paths via `type` and forwards `updates` verbatim to the connector.
+  # Body for `PUT /v1/channels/booking/availability`. `type` selects which of Booking.com's writes to perform. Date ranges are inclusive at both ends everywhere in this body.
   class BookingAvailabilityUpdateRequest < ApiModelBase
-    # `rates` → price + restrictions (`updateRates`); `availability` → inventory + stop-sell + restrictions (`updateAvailability`); `derived-pricing` → occupancy-derived pricing rules (`updateDerivedPricing`).
+    # `rates` → nightly prices (+ any restrictions sent with them), written at an explicit `occupancy`; `availability` → inventory, stop-sell and restrictions; `derived-pricing` → occupancy-derived pricing rules. A rates update may not carry `roomsToSell`: inventory is an `availability` write.
     attr_accessor :type
+
+    # Only for `type: \"rates\"`. Default `true`: after the write the affected nights are read back off Booking.com so `applied` can say `verified` or `mismatch`. Send `false` to skip the read (one fewer Booking.com call); the response then reports `applied: \"unverified\"`.
+    attr_accessor :verify
 
     attr_accessor :property_id
 
@@ -28,6 +31,7 @@ module Repull
     def self.attribute_map
       {
         :'type' => :'type',
+        :'verify' => :'verify',
         :'property_id' => :'property_id',
         :'updates' => :'updates'
       }
@@ -47,6 +51,7 @@ module Repull
     def self.openapi_types
       {
         :'type' => :'String',
+        :'verify' => :'Boolean',
         :'property_id' => :'BookingAvailabilityUpdateRequestPropertyId',
         :'updates' => :'Array<BookingAvailabilityUpdateRequestUpdatesInner>'
       }
@@ -55,6 +60,7 @@ module Repull
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'verify',
       ])
     end
 
@@ -78,6 +84,10 @@ module Repull
         self.type = attributes[:'type']
       else
         self.type = nil
+      end
+
+      if attributes.key?(:'verify')
+        self.verify = attributes[:'verify']
       end
 
       if attributes.key?(:'property_id')
@@ -170,6 +180,7 @@ module Repull
       return true if self.equal?(o)
       self.class == o.class &&
           type == o.type &&
+          verify == o.verify &&
           property_id == o.property_id &&
           updates == o.updates
     end
@@ -183,7 +194,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [type, property_id, updates].hash
+      [type, verify, property_id, updates].hash
     end
 
     # Builds the object from hash

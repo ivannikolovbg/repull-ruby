@@ -187,7 +187,7 @@ module Repull
     end
 
     # Get usage summary
-    # Aggregated usage over the requested `range` — tier + plan limits, quota used/remaining, next reset, a per-operation breakdown (request/error counts, error rate, avg latency), a daily timeline, status-class distribution, and range totals.
+    # Aggregated usage over the requested `range` — tier + plan limits, quota used/remaining, next reset, a per-operation breakdown (request/error counts, error rate, avg latency), a daily timeline, status-class distribution, and range totals. Two request quotas are reported and they reset at different times: `dailyRequests` is the daily circuit breaker that stops runaway client loops (resets at `dailyResetsAt`, the next UTC midnight) and `monthlyRequests` is the billing quota (resets at `resetsAt`). `null` limits mean unlimited on that dimension.
     # @param [Hash] opts the optional parameters
     # @option opts [String] :range Aggregation window ending now. (default to '30d')
     # @return [GetUsageSummary200Response]
@@ -197,7 +197,7 @@ module Repull
     end
 
     # Get usage summary
-    # Aggregated usage over the requested &#x60;range&#x60; — tier + plan limits, quota used/remaining, next reset, a per-operation breakdown (request/error counts, error rate, avg latency), a daily timeline, status-class distribution, and range totals.
+    # Aggregated usage over the requested &#x60;range&#x60; — tier + plan limits, quota used/remaining, next reset, a per-operation breakdown (request/error counts, error rate, avg latency), a daily timeline, status-class distribution, and range totals. Two request quotas are reported and they reset at different times: &#x60;dailyRequests&#x60; is the daily circuit breaker that stops runaway client loops (resets at &#x60;dailyResetsAt&#x60;, the next UTC midnight) and &#x60;monthlyRequests&#x60; is the billing quota (resets at &#x60;resetsAt&#x60;). &#x60;null&#x60; limits mean unlimited on that dimension.
     # @param [Hash] opts the optional parameters
     # @option opts [String] :range Aggregation window ending now. (default to '30d')
     # @return [Array<(GetUsageSummary200Response, Integer, Hash)>] GetUsageSummary200Response data, response status code and response headers
@@ -251,7 +251,7 @@ module Repull
     end
 
     # Get tier and quota
-    # Lightweight current-tier snapshot for status badges and quota meters — plan limits (monthly requests, daily AI requests, dynamic-pricing listings), the amount used, the amount remaining, and the next reset. `null` limits mean unlimited on that dimension.
+    # Lightweight current-tier snapshot for status badges and quota meters — plan limits (daily requests, monthly requests, daily AI requests, dynamic-pricing listings), the amount used, the amount remaining, and the next reset. Two request quotas are reported and they reset at different times: `dailyRequests` is the daily circuit breaker that stops runaway client loops (resets at `dailyResetsAt`, the next UTC midnight) and `monthlyRequests` is the billing quota (resets at `resetsAt`). Exceeding the daily cap returns 429 `daily_limit_exceeded`; exceeding the monthly one returns 429 `rate_limit_exceeded`. `null` limits mean unlimited on that dimension.
     # @param [Hash] opts the optional parameters
     # @return [GetUsageTier200Response]
     def get_usage_tier(opts = {})
@@ -260,7 +260,7 @@ module Repull
     end
 
     # Get tier and quota
-    # Lightweight current-tier snapshot for status badges and quota meters — plan limits (monthly requests, daily AI requests, dynamic-pricing listings), the amount used, the amount remaining, and the next reset. &#x60;null&#x60; limits mean unlimited on that dimension.
+    # Lightweight current-tier snapshot for status badges and quota meters — plan limits (daily requests, monthly requests, daily AI requests, dynamic-pricing listings), the amount used, the amount remaining, and the next reset. Two request quotas are reported and they reset at different times: &#x60;dailyRequests&#x60; is the daily circuit breaker that stops runaway client loops (resets at &#x60;dailyResetsAt&#x60;, the next UTC midnight) and &#x60;monthlyRequests&#x60; is the billing quota (resets at &#x60;resetsAt&#x60;). Exceeding the daily cap returns 429 &#x60;daily_limit_exceeded&#x60;; exceeding the monthly one returns 429 &#x60;rate_limit_exceeded&#x60;. &#x60;null&#x60; limits mean unlimited on that dimension.
     # @param [Hash] opts the optional parameters
     # @return [Array<(GetUsageTier200Response, Integer, Hash)>] GetUsageTier200Response data, response status code and response headers
     def get_usage_tier_with_http_info(opts = {})

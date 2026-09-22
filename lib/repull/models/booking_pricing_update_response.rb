@@ -14,31 +14,53 @@ require 'date'
 require 'time'
 
 module Repull
+  # What a Booking.com rate write actually did. Returned by `PUT /v1/channels/booking/listings/{id}/pricing` and by `PUT /v1/channels/booking/availability` with `type: \"rates\"`.  Prices and restrictions are two writes on two of Booking.com's wires, and Booking.com can take one and refuse the other. The response says so: `price` and `restrictions` each carry their own state, their own read-back and — when refused — Booking.com's own reason. The top-level `applied` summarises them, and is `partial` when they disagree. A half that landed is never reported as a failure.
   class BookingPricingUpdateResponse < ApiModelBase
     attr_accessor :hotel_id
 
     attr_accessor :listing_id
 
-    # Number of updates Booking.com accepted as `success`. Falls back to total update count when Booking omits per-update status on full success.
-    attr_accessor :pushed
+    # Echoed back by `PUT /v1/channels/booking/availability`.
+    attr_accessor :property_id
 
+    # How many updates were sent.
     attr_accessor :requested
 
-    # Per-update failure rows from Booking — shape mirrors the Booking rates API response.
+    attr_accessor :occupancy
+
+    # What is known about the nights now. `verified` — read back, every night carries what was sent. `mismatch` — read back, some do not (`verification.rows` / `restrictions.verification.rows` name them). `rejected` — Booking.com refused everything that was sent. `partial` — one half landed and the other did not; read `price.applied` and `restrictions.applied` to see which, and `restrictions.rejection.message` for Booking.com's reason. `unverified` — Booking.com acknowledged the request and no read-back ran: an unknown, not a success. A bare acknowledgement is never reported as \"all applied\".
+    attr_accessor :applied
+
+    attr_accessor :price
+
+    attr_accessor :restrictions
+
+    attr_accessor :verification
+
+    # Booking.com's own answers, verbatim: `rates` (the rate-amount notification) and `restrictions` (the availability notification, when the updates carried any restriction).
+    attr_accessor :booking
+
+    # Failures Booking.com named, across both wires. Empty means Booking.com named none — not that the nights changed; that is what `applied` is for.
     attr_accessor :errors
 
-    # Verbatim Booking response envelope for debugging.
-    attr_accessor :raw
+    # Present when Booking.com's rate-plan read did not complete, so an occupancy fell back to the room definition.
+    attr_accessor :rate_plan_read_error
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
         :'hotel_id' => :'hotelId',
         :'listing_id' => :'listingId',
-        :'pushed' => :'pushed',
+        :'property_id' => :'propertyId',
         :'requested' => :'requested',
+        :'occupancy' => :'occupancy',
+        :'applied' => :'applied',
+        :'price' => :'price',
+        :'restrictions' => :'restrictions',
+        :'verification' => :'verification',
+        :'booking' => :'booking',
         :'errors' => :'errors',
-        :'raw' => :'raw'
+        :'rate_plan_read_error' => :'ratePlanReadError'
       }
     end
 
@@ -57,16 +79,26 @@ module Repull
       {
         :'hotel_id' => :'String',
         :'listing_id' => :'String',
-        :'pushed' => :'Integer',
+        :'property_id' => :'String',
         :'requested' => :'Integer',
+        :'occupancy' => :'Array<BookingRateWriteOccupancy>',
+        :'applied' => :'String',
+        :'price' => :'BookingRateWritePriceHalf',
+        :'restrictions' => :'BookingRateWriteRestrictionHalf',
+        :'verification' => :'BookingRateWriteVerification',
+        :'booking' => :'Hash<String, Object>',
         :'errors' => :'Array<Hash<String, Object>>',
-        :'raw' => :'Hash<String, Object>'
+        :'rate_plan_read_error' => :'String'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'hotel_id',
+        :'listing_id',
+        :'property_id',
+        :'rate_plan_read_error'
       ])
     end
 
@@ -94,12 +126,40 @@ module Repull
         self.listing_id = attributes[:'listing_id']
       end
 
-      if attributes.key?(:'pushed')
-        self.pushed = attributes[:'pushed']
+      if attributes.key?(:'property_id')
+        self.property_id = attributes[:'property_id']
       end
 
       if attributes.key?(:'requested')
         self.requested = attributes[:'requested']
+      end
+
+      if attributes.key?(:'occupancy')
+        if (value = attributes[:'occupancy']).is_a?(Array)
+          self.occupancy = value
+        end
+      end
+
+      if attributes.key?(:'applied')
+        self.applied = attributes[:'applied']
+      end
+
+      if attributes.key?(:'price')
+        self.price = attributes[:'price']
+      end
+
+      if attributes.key?(:'restrictions')
+        self.restrictions = attributes[:'restrictions']
+      end
+
+      if attributes.key?(:'verification')
+        self.verification = attributes[:'verification']
+      end
+
+      if attributes.key?(:'booking')
+        if (value = attributes[:'booking']).is_a?(Hash)
+          self.booking = value
+        end
       end
 
       if attributes.key?(:'errors')
@@ -108,10 +168,8 @@ module Repull
         end
       end
 
-      if attributes.key?(:'raw')
-        if (value = attributes[:'raw']).is_a?(Hash)
-          self.raw = value
-        end
+      if attributes.key?(:'rate_plan_read_error')
+        self.rate_plan_read_error = attributes[:'rate_plan_read_error']
       end
     end
 
@@ -137,10 +195,16 @@ module Repull
       self.class == o.class &&
           hotel_id == o.hotel_id &&
           listing_id == o.listing_id &&
-          pushed == o.pushed &&
+          property_id == o.property_id &&
           requested == o.requested &&
+          occupancy == o.occupancy &&
+          applied == o.applied &&
+          price == o.price &&
+          restrictions == o.restrictions &&
+          verification == o.verification &&
+          booking == o.booking &&
           errors == o.errors &&
-          raw == o.raw
+          rate_plan_read_error == o.rate_plan_read_error
     end
 
     # @see the `==` method
@@ -152,7 +216,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [hotel_id, listing_id, pushed, requested, errors, raw].hash
+      [hotel_id, listing_id, property_id, requested, occupancy, applied, price, restrictions, verification, booking, errors, rate_plan_read_error].hash
     end
 
     # Builds the object from hash

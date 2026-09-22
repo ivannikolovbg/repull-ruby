@@ -8,6 +8,7 @@
 | **limits** | [**GetUsageTier200ResponseLimits**](GetUsageTier200ResponseLimits.md) |  | [optional] |
 | **used** | [**GetUsageTier200ResponseUsed**](GetUsageTier200ResponseUsed.md) |  | [optional] |
 | **remaining** | [**GetUsageTier200ResponseRemaining**](GetUsageTier200ResponseRemaining.md) |  | [optional] |
+| **daily_resets_at** | **Time** |  | [optional] |
 | **resets_at** | **Time** |  | [optional] |
 
 ## Example
@@ -20,6 +21,7 @@ instance = Repull::GetUsageTier200Response.new(
   limits: null,
   used: null,
   remaining: null,
+  daily_resets_at: null,
   resets_at: null
 )
 ```

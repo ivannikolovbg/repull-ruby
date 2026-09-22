@@ -38,13 +38,14 @@ module Repull
           :'ReservationMessageReceivedEvent',
           :'ReservationUpdatedEvent',
           :'ReviewCreatedEvent',
-          :'ReviewRespondedEvent'
+          :'ReviewRespondedEvent',
+          :'UsageQuotaWarningEvent'
         ]
       end
 
       # Discriminator's property name (OpenAPI v3)
       def openapi_discriminator_name
-        :'type'
+        :'event'
       end
 
       # Discriminator's mapping (OpenAPI v3)
@@ -68,7 +69,8 @@ module Repull
           :'reservation.message.received' => :'ReservationMessageReceivedEvent',
           :'reservation.updated' => :'ReservationUpdatedEvent',
           :'review.created' => :'ReviewCreatedEvent',
-          :'review.responded' => :'ReviewRespondedEvent'
+          :'review.responded' => :'ReviewRespondedEvent',
+          :'usage.quota.warning' => :'UsageQuotaWarningEvent'
         }
       end
 

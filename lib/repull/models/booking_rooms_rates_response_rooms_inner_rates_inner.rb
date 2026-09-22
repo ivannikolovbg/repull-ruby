@@ -25,6 +25,7 @@ module Repull
 
     attr_accessor :policy_id
 
+    # The party size this rate plan prices. A rate amount must be written at this number: above it Booking.com declines the price in silence, below it answers 400. Null when `source` is `mirror`.
     attr_accessor :max_persons
 
     # Pricing model: `Standard`, `RLO`, `OBP`, or `LOS`.

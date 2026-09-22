@@ -17,12 +17,15 @@ module Repull
   class GetUsageSummary200ResponseUsed < ApiModelBase
     attr_accessor :monthly
 
+    attr_accessor :daily
+
     attr_accessor :daily_ai
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
         :'monthly' => :'monthly',
+        :'daily' => :'daily',
         :'daily_ai' => :'dailyAi'
       }
     end
@@ -41,6 +44,7 @@ module Repull
     def self.openapi_types
       {
         :'monthly' => :'Integer',
+        :'daily' => :'Integer',
         :'daily_ai' => :'Integer'
       }
     end
@@ -71,6 +75,10 @@ module Repull
         self.monthly = attributes[:'monthly']
       end
 
+      if attributes.key?(:'daily')
+        self.daily = attributes[:'daily']
+      end
+
       if attributes.key?(:'daily_ai')
         self.daily_ai = attributes[:'daily_ai']
       end
@@ -97,6 +105,7 @@ module Repull
       return true if self.equal?(o)
       self.class == o.class &&
           monthly == o.monthly &&
+          daily == o.daily &&
           daily_ai == o.daily_ai
     end
 
@@ -109,7 +118,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [monthly, daily_ai].hash
+      [monthly, daily, daily_ai].hash
     end
 
     # Builds the object from hash

@@ -20,11 +20,15 @@ module Repull
 
     attr_accessor :listing_id
 
+    # Other Booking.com properties this listing is also published under. Empty in the normal case. Pass one as `?hotel_id=` to read its pricing instead.
+    attr_accessor :other_hotel_ids
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
         :'hotel_id' => :'hotelId',
-        :'listing_id' => :'listingId'
+        :'listing_id' => :'listingId',
+        :'other_hotel_ids' => :'otherHotelIds'
       }
     end
 
@@ -42,7 +46,8 @@ module Repull
     def self.openapi_types
       {
         :'hotel_id' => :'String',
-        :'listing_id' => :'String'
+        :'listing_id' => :'String',
+        :'other_hotel_ids' => :'Array<String>'
       }
     end
 
@@ -75,6 +80,12 @@ module Repull
       if attributes.key?(:'listing_id')
         self.listing_id = attributes[:'listing_id']
       end
+
+      if attributes.key?(:'other_hotel_ids')
+        if (value = attributes[:'other_hotel_ids']).is_a?(Array)
+          self.other_hotel_ids = value
+        end
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -98,7 +109,8 @@ module Repull
       return true if self.equal?(o)
       self.class == o.class &&
           hotel_id == o.hotel_id &&
-          listing_id == o.listing_id
+          listing_id == o.listing_id &&
+          other_hotel_ids == o.other_hotel_ids
     end
 
     # @see the `==` method
@@ -110,7 +122,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [hotel_id, listing_id].hash
+      [hotel_id, listing_id, other_hotel_ids].hash
     end
 
     # Builds the object from hash

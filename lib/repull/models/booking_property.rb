@@ -14,27 +14,51 @@ require 'date'
 require 'time'
 
 module Repull
-  # A property registered in the Booking.com extranet for the connected hotel ID.
+  # A Booking.com property this workspace holds, with the Repull listings mapped under it. A property is a building; its rooms are what guests book, and each room maps to one Repull listing — so one property commonly carries many listings.
   class BookingProperty < ApiModelBase
-    # Booking.com hotel/property ID
-    attr_accessor :id
+    # Repull-side id for this Booking.com connection.
+    attr_accessor :connection_id
 
-    attr_accessor :name
+    # Booking.com hotel/property id. This is what `/v1/channels/booking/availability` takes as `property_id`.
+    attr_accessor :hotel_id
 
-    attr_accessor :status
+    attr_accessor :active
 
-    attr_accessor :country
+    attr_accessor :sync_enabled
 
-    attr_accessor :city
+    attr_accessor :booking_url
+
+    attr_accessor :markup
+
+    attr_accessor :sync_category
+
+    attr_accessor :suspended_at
+
+    attr_accessor :suspension_reason
+
+    attr_accessor :created_at
+
+    # `mapped` — at least one room points at a listing. `unmapped` — the property is claimed but its rooms are not mapped yet, so `listings` is empty; finish `POST /v1/connect/booking/map-rooms`. An unmapped property is listed rather than hidden, so a half-finished connection is visible instead of looking like no connection at all.
+    attr_accessor :mapping_status
+
+    # The Repull listings mapped under this property. Empty when `mappingStatus` is `unmapped`. Inactive listings are left out.
+    attr_accessor :listings
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'id' => :'id',
-        :'name' => :'name',
-        :'status' => :'status',
-        :'country' => :'country',
-        :'city' => :'city'
+        :'connection_id' => :'connectionId',
+        :'hotel_id' => :'hotelId',
+        :'active' => :'active',
+        :'sync_enabled' => :'syncEnabled',
+        :'booking_url' => :'bookingUrl',
+        :'markup' => :'markup',
+        :'sync_category' => :'syncCategory',
+        :'suspended_at' => :'suspendedAt',
+        :'suspension_reason' => :'suspensionReason',
+        :'created_at' => :'createdAt',
+        :'mapping_status' => :'mappingStatus',
+        :'listings' => :'listings'
       }
     end
 
@@ -51,20 +75,30 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'id' => :'String',
-        :'name' => :'String',
-        :'status' => :'String',
-        :'country' => :'String',
-        :'city' => :'String'
+        :'connection_id' => :'String',
+        :'hotel_id' => :'String',
+        :'active' => :'Boolean',
+        :'sync_enabled' => :'Boolean',
+        :'booking_url' => :'String',
+        :'markup' => :'String',
+        :'sync_category' => :'String',
+        :'suspended_at' => :'Time',
+        :'suspension_reason' => :'String',
+        :'created_at' => :'Time',
+        :'mapping_status' => :'String',
+        :'listings' => :'Array<BookingPropertyListingsInner>'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
-        :'status',
-        :'country',
-        :'city'
+        :'booking_url',
+        :'markup',
+        :'sync_category',
+        :'suspended_at',
+        :'suspension_reason',
+        :'created_at',
       ])
     end
 
@@ -84,24 +118,54 @@ module Repull
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'id')
-        self.id = attributes[:'id']
+      if attributes.key?(:'connection_id')
+        self.connection_id = attributes[:'connection_id']
       end
 
-      if attributes.key?(:'name')
-        self.name = attributes[:'name']
+      if attributes.key?(:'hotel_id')
+        self.hotel_id = attributes[:'hotel_id']
       end
 
-      if attributes.key?(:'status')
-        self.status = attributes[:'status']
+      if attributes.key?(:'active')
+        self.active = attributes[:'active']
       end
 
-      if attributes.key?(:'country')
-        self.country = attributes[:'country']
+      if attributes.key?(:'sync_enabled')
+        self.sync_enabled = attributes[:'sync_enabled']
       end
 
-      if attributes.key?(:'city')
-        self.city = attributes[:'city']
+      if attributes.key?(:'booking_url')
+        self.booking_url = attributes[:'booking_url']
+      end
+
+      if attributes.key?(:'markup')
+        self.markup = attributes[:'markup']
+      end
+
+      if attributes.key?(:'sync_category')
+        self.sync_category = attributes[:'sync_category']
+      end
+
+      if attributes.key?(:'suspended_at')
+        self.suspended_at = attributes[:'suspended_at']
+      end
+
+      if attributes.key?(:'suspension_reason')
+        self.suspension_reason = attributes[:'suspension_reason']
+      end
+
+      if attributes.key?(:'created_at')
+        self.created_at = attributes[:'created_at']
+      end
+
+      if attributes.key?(:'mapping_status')
+        self.mapping_status = attributes[:'mapping_status']
+      end
+
+      if attributes.key?(:'listings')
+        if (value = attributes[:'listings']).is_a?(Array)
+          self.listings = value
+        end
       end
     end
 
@@ -125,11 +189,18 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          id == o.id &&
-          name == o.name &&
-          status == o.status &&
-          country == o.country &&
-          city == o.city
+          connection_id == o.connection_id &&
+          hotel_id == o.hotel_id &&
+          active == o.active &&
+          sync_enabled == o.sync_enabled &&
+          booking_url == o.booking_url &&
+          markup == o.markup &&
+          sync_category == o.sync_category &&
+          suspended_at == o.suspended_at &&
+          suspension_reason == o.suspension_reason &&
+          created_at == o.created_at &&
+          mapping_status == o.mapping_status &&
+          listings == o.listings
     end
 
     # @see the `==` method
@@ -141,7 +212,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, name, status, country, city].hash
+      [connection_id, hotel_id, active, sync_enabled, booking_url, markup, sync_category, suspended_at, suspension_reason, created_at, mapping_status, listings].hash
     end
 
     # Builds the object from hash

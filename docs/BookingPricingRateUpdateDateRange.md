@@ -4,8 +4,8 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **start** | **Date** |  |  |
-| **_end** | **Date** |  |  |
+| **start** | **Date** | First night, YYYY-MM-DD. |  |
+| **_end** | **Date** | Last night, YYYY-MM-DD, inclusive — the same date as &#x60;start&#x60; for a single night. |  |
 
 ## Example
 

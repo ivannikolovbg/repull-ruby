@@ -14,7 +14,7 @@ require 'date'
 require 'time'
 
 module Repull
-  # One (room, rate-plan, date-range) availability update. Carries inventory (`availableRooms`), the dedicated stop-sell flag (`closed`), and the same length-of-stay / arrival restrictions as a rate update.
+  # One (room, rate-plan, date-range) availability update. Carries inventory (`availableRooms`), the dedicated stop-sell flag (`closed`), and length-of-stay / arrival restrictions. Omit `availableRooms` and `closed` for a restriction-only write — inventory is then left untouched.
   class BookingAvailabilityUpdate < ApiModelBase
     # Booking.com room id.
     attr_accessor :room_id
@@ -24,7 +24,7 @@ module Repull
 
     attr_accessor :date_range
 
-    # Rooms to sell (`roomstosell`). `0` blocks the room for the range.
+    # Rooms to sell (`roomstosell`). `0` blocks the room for the range. Omit it to leave inventory alone — `0` is a stop-sell, not a no-op.
     attr_accessor :available_rooms
 
     attr_accessor :status
@@ -62,7 +62,7 @@ module Repull
       {
         :'room_id' => :'String',
         :'rate_id' => :'String',
-        :'date_range' => :'BookingPricingRateUpdateDateRange',
+        :'date_range' => :'BookingAvailabilityUpdateDateRange',
         :'available_rooms' => :'Integer',
         :'status' => :'String',
         :'closed' => :'Boolean',
@@ -73,6 +73,7 @@ module Repull
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'available_rooms',
         :'status',
         :'closed',
       ])
@@ -114,8 +115,6 @@ module Repull
 
       if attributes.key?(:'available_rooms')
         self.available_rooms = attributes[:'available_rooms']
-      else
-        self.available_rooms = nil
       end
 
       if attributes.key?(:'status')
@@ -148,10 +147,6 @@ module Repull
         invalid_properties.push('invalid value for "date_range", date_range cannot be nil.')
       end
 
-      if @available_rooms.nil?
-        invalid_properties.push('invalid value for "available_rooms", available_rooms cannot be nil.')
-      end
-
       invalid_properties
     end
 
@@ -162,7 +157,6 @@ module Repull
       return false if @room_id.nil?
       return false if @rate_id.nil?
       return false if @date_range.nil?
-      return false if @available_rooms.nil?
       true
     end
 
@@ -194,16 +188,6 @@ module Repull
       end
 
       @date_range = date_range
-    end
-
-    # Custom attribute writer method with validation
-    # @param [Object] available_rooms Value to be assigned
-    def available_rooms=(available_rooms)
-      if available_rooms.nil?
-        fail ArgumentError, 'available_rooms cannot be nil'
-      end
-
-      @available_rooms = available_rooms
     end
 
     # Checks equality by comparing each attribute.

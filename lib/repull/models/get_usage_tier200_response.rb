@@ -23,6 +23,8 @@ module Repull
 
     attr_accessor :remaining
 
+    attr_accessor :daily_resets_at
+
     attr_accessor :resets_at
 
     # Attribute mapping from ruby-style variable name to JSON key.
@@ -32,6 +34,7 @@ module Repull
         :'limits' => :'limits',
         :'used' => :'used',
         :'remaining' => :'remaining',
+        :'daily_resets_at' => :'dailyResetsAt',
         :'resets_at' => :'resetsAt'
       }
     end
@@ -53,6 +56,7 @@ module Repull
         :'limits' => :'GetUsageTier200ResponseLimits',
         :'used' => :'GetUsageTier200ResponseUsed',
         :'remaining' => :'GetUsageTier200ResponseRemaining',
+        :'daily_resets_at' => :'Time',
         :'resets_at' => :'Time'
       }
     end
@@ -95,6 +99,10 @@ module Repull
         self.remaining = attributes[:'remaining']
       end
 
+      if attributes.key?(:'daily_resets_at')
+        self.daily_resets_at = attributes[:'daily_resets_at']
+      end
+
       if attributes.key?(:'resets_at')
         self.resets_at = attributes[:'resets_at']
       end
@@ -124,6 +132,7 @@ module Repull
           limits == o.limits &&
           used == o.used &&
           remaining == o.remaining &&
+          daily_resets_at == o.daily_resets_at &&
           resets_at == o.resets_at
     end
 
@@ -136,7 +145,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [tier, limits, used, remaining, resets_at].hash
+      [tier, limits, used, remaining, daily_resets_at, resets_at].hash
     end
 
     # Builds the object from hash

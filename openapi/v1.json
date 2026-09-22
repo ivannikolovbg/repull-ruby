@@ -1863,7 +1863,8 @@
           "ai.operation.failed",
           "payment.completed",
           "payment.refunded",
-          "repull.ping"
+          "repull.ping",
+          "usage.quota.warning"
         ]
       },
       "ReservationWebhookObject": {
@@ -2572,28 +2573,121 @@
           }
         }
       },
+      "UsageQuotaWarningPayload": {
+        "type": "object",
+        "description": "Payload for `usage.quota.warning`. Sent once per account per window when usage crosses 80% of a request quota \u2014 a heads-up, not a refusal. `topOperation` names the operation driving the traffic so a runaway loop can be found before the cap stops it.",
+        "properties": {
+          "scope": {
+            "type": "string",
+            "description": "Which quota this warning is about.",
+            "example": "daily_requests"
+          },
+          "windowKey": {
+            "type": "string",
+            "description": "The window the warning covers \u2014 the UTC date when scope is \"daily_requests\". Stable dedupe key.",
+            "example": "2026-05-01"
+          },
+          "tier": {
+            "type": "string",
+            "example": "starter"
+          },
+          "used": {
+            "type": "integer",
+            "example": 20000
+          },
+          "limit": {
+            "type": "integer",
+            "example": 25000
+          },
+          "percentUsed": {
+            "type": "integer",
+            "example": 80
+          },
+          "remaining": {
+            "type": "integer",
+            "example": 5000
+          },
+          "resetsAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the window resets and the counter returns to zero.",
+            "example": "2026-05-02T00:00:00.000Z"
+          },
+          "topOperation": {
+            "type": "object",
+            "nullable": true,
+            "description": "The operation responsible for the largest share of the window so far. Absent when it could not be determined.",
+            "properties": {
+              "operationId": {
+                "type": "string",
+                "example": "replay_webhook_delivery"
+              },
+              "requestCount": {
+                "type": "integer",
+                "example": 17000
+              },
+              "sharePercent": {
+                "type": "number",
+                "description": "Share of the window's requests, 0-100.",
+                "example": 85
+              }
+            }
+          }
+        }
+      },
+      "WebhookEventAccount": {
+        "type": "object",
+        "nullable": true,
+        "description": "Which connected account produced this event. Null when it cannot be resolved \u2014 present-but-null rather than omitted, so a receiver can tell \"unresolvable\" from \"an old event\".",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Repull connection id."
+          },
+          "provider": {
+            "type": "string",
+            "nullable": true,
+            "example": "airbnb"
+          },
+          "externalAccountId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The provider's own account id.",
+            "example": "79730216"
+          }
+        }
+      },
       "ReservationCreatedEvent": {
         "type": "object",
         "required": [
-          "type",
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
           "data"
         ],
         "properties": {
-          "id": {
+          "event": {
+            "type": "string",
+            "description": "The event name. This field is `event`, not `type`."
+          },
+          "eventId": {
             "type": "string",
             "format": "uuid",
-            "description": "Stable event id \u2014 same across delivery retries of the same logical event."
-          },
-          "type": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
+            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
           },
           "apiVersion": {
             "type": "string",
             "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this delivery was built."
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
           },
           "data": {
             "$ref": "#/components/schemas/ReservationCreatedPayload"
@@ -2603,23 +2697,33 @@
       "ReservationUpdatedEvent": {
         "type": "object",
         "required": [
-          "type",
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
           "data"
         ],
         "properties": {
-          "id": {
+          "event": {
             "type": "string",
-            "format": "uuid"
+            "description": "The event name. This field is `event`, not `type`."
           },
-          "type": {
-            "type": "string"
-          },
-          "createdAt": {
+          "eventId": {
             "type": "string",
-            "format": "date-time"
+            "format": "uuid",
+            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
           },
           "apiVersion": {
-            "type": "string"
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this delivery was built."
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
           },
           "data": {
             "$ref": "#/components/schemas/ReservationUpdatedPayload"
@@ -2629,23 +2733,33 @@
       "ReservationCancelledEvent": {
         "type": "object",
         "required": [
-          "type",
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
           "data"
         ],
         "properties": {
-          "id": {
+          "event": {
             "type": "string",
-            "format": "uuid"
+            "description": "The event name. This field is `event`, not `type`."
           },
-          "type": {
-            "type": "string"
-          },
-          "createdAt": {
+          "eventId": {
             "type": "string",
-            "format": "date-time"
+            "format": "uuid",
+            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
           },
           "apiVersion": {
-            "type": "string"
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this delivery was built."
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
           },
           "data": {
             "$ref": "#/components/schemas/ReservationCancelledPayload"
@@ -2655,23 +2769,33 @@
       "ReservationMessageReceivedEvent": {
         "type": "object",
         "required": [
-          "type",
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
           "data"
         ],
         "properties": {
-          "id": {
+          "event": {
             "type": "string",
-            "format": "uuid"
+            "description": "The event name. This field is `event`, not `type`."
           },
-          "type": {
-            "type": "string"
-          },
-          "createdAt": {
+          "eventId": {
             "type": "string",
-            "format": "date-time"
+            "format": "uuid",
+            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
           },
           "apiVersion": {
-            "type": "string"
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this delivery was built."
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
           },
           "data": {
             "$ref": "#/components/schemas/ReservationMessageReceivedPayload"
@@ -2681,23 +2805,33 @@
       "ReservationAlterationCreatedEvent": {
         "type": "object",
         "required": [
-          "type",
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
           "data"
         ],
         "properties": {
-          "id": {
+          "event": {
             "type": "string",
-            "format": "uuid"
+            "description": "The event name. This field is `event`, not `type`."
           },
-          "type": {
-            "type": "string"
-          },
-          "createdAt": {
+          "eventId": {
             "type": "string",
-            "format": "date-time"
+            "format": "uuid",
+            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
           },
           "apiVersion": {
-            "type": "string"
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this delivery was built."
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
           },
           "data": {
             "$ref": "#/components/schemas/ReservationAlterationCreatedPayload"
@@ -2707,23 +2841,33 @@
       "ReservationAlterationRespondedEvent": {
         "type": "object",
         "required": [
-          "type",
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
           "data"
         ],
         "properties": {
-          "id": {
+          "event": {
             "type": "string",
-            "format": "uuid"
+            "description": "The event name. This field is `event`, not `type`."
           },
-          "type": {
-            "type": "string"
-          },
-          "createdAt": {
+          "eventId": {
             "type": "string",
-            "format": "date-time"
+            "format": "uuid",
+            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
           },
           "apiVersion": {
-            "type": "string"
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this delivery was built."
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
           },
           "data": {
             "$ref": "#/components/schemas/ReservationAlterationRespondedPayload"
@@ -2733,23 +2877,33 @@
       "ListingCreatedEvent": {
         "type": "object",
         "required": [
-          "type",
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
           "data"
         ],
         "properties": {
-          "id": {
+          "event": {
             "type": "string",
-            "format": "uuid"
+            "description": "The event name. This field is `event`, not `type`."
           },
-          "type": {
-            "type": "string"
-          },
-          "createdAt": {
+          "eventId": {
             "type": "string",
-            "format": "date-time"
+            "format": "uuid",
+            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
           },
           "apiVersion": {
-            "type": "string"
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this delivery was built."
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
           },
           "data": {
             "$ref": "#/components/schemas/ListingCreatedPayload"
@@ -2759,23 +2913,33 @@
       "ListingUpdatedEvent": {
         "type": "object",
         "required": [
-          "type",
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
           "data"
         ],
         "properties": {
-          "id": {
+          "event": {
             "type": "string",
-            "format": "uuid"
+            "description": "The event name. This field is `event`, not `type`."
           },
-          "type": {
-            "type": "string"
-          },
-          "createdAt": {
+          "eventId": {
             "type": "string",
-            "format": "date-time"
+            "format": "uuid",
+            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
           },
           "apiVersion": {
-            "type": "string"
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this delivery was built."
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
           },
           "data": {
             "$ref": "#/components/schemas/ListingUpdatedPayload"
@@ -2785,23 +2949,33 @@
       "ListingDeletedEvent": {
         "type": "object",
         "required": [
-          "type",
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
           "data"
         ],
         "properties": {
-          "id": {
+          "event": {
             "type": "string",
-            "format": "uuid"
+            "description": "The event name. This field is `event`, not `type`."
           },
-          "type": {
-            "type": "string"
-          },
-          "createdAt": {
+          "eventId": {
             "type": "string",
-            "format": "date-time"
+            "format": "uuid",
+            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
           },
           "apiVersion": {
-            "type": "string"
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this delivery was built."
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
           },
           "data": {
             "$ref": "#/components/schemas/ListingDeletedPayload"
@@ -2811,23 +2985,33 @@
       "CalendarUpdatedEvent": {
         "type": "object",
         "required": [
-          "type",
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
           "data"
         ],
         "properties": {
-          "id": {
+          "event": {
             "type": "string",
-            "format": "uuid"
+            "description": "The event name. This field is `event`, not `type`."
           },
-          "type": {
-            "type": "string"
-          },
-          "createdAt": {
+          "eventId": {
             "type": "string",
-            "format": "date-time"
+            "format": "uuid",
+            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
           },
           "apiVersion": {
-            "type": "string"
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this delivery was built."
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
           },
           "data": {
             "$ref": "#/components/schemas/CalendarUpdatedPayload"
@@ -2837,23 +3021,33 @@
       "AccountCreatedEvent": {
         "type": "object",
         "required": [
-          "type",
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
           "data"
         ],
         "properties": {
-          "id": {
+          "event": {
             "type": "string",
-            "format": "uuid"
+            "description": "The event name. This field is `event`, not `type`."
           },
-          "type": {
-            "type": "string"
-          },
-          "createdAt": {
+          "eventId": {
             "type": "string",
-            "format": "date-time"
+            "format": "uuid",
+            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
           },
           "apiVersion": {
-            "type": "string"
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this delivery was built."
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
           },
           "data": {
             "$ref": "#/components/schemas/AccountCreatedPayload"
@@ -2863,23 +3057,33 @@
       "AccountDisconnectedEvent": {
         "type": "object",
         "required": [
-          "type",
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
           "data"
         ],
         "properties": {
-          "id": {
+          "event": {
             "type": "string",
-            "format": "uuid"
+            "description": "The event name. This field is `event`, not `type`."
           },
-          "type": {
-            "type": "string"
-          },
-          "createdAt": {
+          "eventId": {
             "type": "string",
-            "format": "date-time"
+            "format": "uuid",
+            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
           },
           "apiVersion": {
-            "type": "string"
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this delivery was built."
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
           },
           "data": {
             "$ref": "#/components/schemas/AccountDisconnectedPayload"
@@ -2889,23 +3093,33 @@
       "ReviewCreatedEvent": {
         "type": "object",
         "required": [
-          "type",
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
           "data"
         ],
         "properties": {
-          "id": {
+          "event": {
             "type": "string",
-            "format": "uuid"
+            "description": "The event name. This field is `event`, not `type`."
           },
-          "type": {
-            "type": "string"
-          },
-          "createdAt": {
+          "eventId": {
             "type": "string",
-            "format": "date-time"
+            "format": "uuid",
+            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
           },
           "apiVersion": {
-            "type": "string"
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this delivery was built."
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
           },
           "data": {
             "$ref": "#/components/schemas/ReviewCreatedPayload"
@@ -2915,23 +3129,33 @@
       "ReviewRespondedEvent": {
         "type": "object",
         "required": [
-          "type",
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
           "data"
         ],
         "properties": {
-          "id": {
+          "event": {
             "type": "string",
-            "format": "uuid"
+            "description": "The event name. This field is `event`, not `type`."
           },
-          "type": {
-            "type": "string"
-          },
-          "createdAt": {
+          "eventId": {
             "type": "string",
-            "format": "date-time"
+            "format": "uuid",
+            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
           },
           "apiVersion": {
-            "type": "string"
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this delivery was built."
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
           },
           "data": {
             "$ref": "#/components/schemas/ReviewRespondedPayload"
@@ -2941,23 +3165,33 @@
       "AiOperationCompletedEvent": {
         "type": "object",
         "required": [
-          "type",
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
           "data"
         ],
         "properties": {
-          "id": {
+          "event": {
             "type": "string",
-            "format": "uuid"
+            "description": "The event name. This field is `event`, not `type`."
           },
-          "type": {
-            "type": "string"
-          },
-          "createdAt": {
+          "eventId": {
             "type": "string",
-            "format": "date-time"
+            "format": "uuid",
+            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
           },
           "apiVersion": {
-            "type": "string"
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this delivery was built."
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
           },
           "data": {
             "$ref": "#/components/schemas/AiOperationCompletedPayload"
@@ -2967,23 +3201,33 @@
       "AiOperationFailedEvent": {
         "type": "object",
         "required": [
-          "type",
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
           "data"
         ],
         "properties": {
-          "id": {
+          "event": {
             "type": "string",
-            "format": "uuid"
+            "description": "The event name. This field is `event`, not `type`."
           },
-          "type": {
-            "type": "string"
-          },
-          "createdAt": {
+          "eventId": {
             "type": "string",
-            "format": "date-time"
+            "format": "uuid",
+            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
           },
           "apiVersion": {
-            "type": "string"
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this delivery was built."
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
           },
           "data": {
             "$ref": "#/components/schemas/AiOperationFailedPayload"
@@ -2993,23 +3237,33 @@
       "PaymentCompletedEvent": {
         "type": "object",
         "required": [
-          "type",
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
           "data"
         ],
         "properties": {
-          "id": {
+          "event": {
             "type": "string",
-            "format": "uuid"
+            "description": "The event name. This field is `event`, not `type`."
           },
-          "type": {
-            "type": "string"
-          },
-          "createdAt": {
+          "eventId": {
             "type": "string",
-            "format": "date-time"
+            "format": "uuid",
+            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
           },
           "apiVersion": {
-            "type": "string"
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this delivery was built."
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
           },
           "data": {
             "$ref": "#/components/schemas/PaymentCompletedPayload"
@@ -3019,23 +3273,33 @@
       "PaymentRefundedEvent": {
         "type": "object",
         "required": [
-          "type",
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
           "data"
         ],
         "properties": {
-          "id": {
+          "event": {
             "type": "string",
-            "format": "uuid"
+            "description": "The event name. This field is `event`, not `type`."
           },
-          "type": {
-            "type": "string"
-          },
-          "createdAt": {
+          "eventId": {
             "type": "string",
-            "format": "date-time"
+            "format": "uuid",
+            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
           },
           "apiVersion": {
-            "type": "string"
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this delivery was built."
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
           },
           "data": {
             "$ref": "#/components/schemas/PaymentRefundedPayload"
@@ -3045,26 +3309,72 @@
       "RepullPingEvent": {
         "type": "object",
         "required": [
-          "type",
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
           "data"
         ],
         "properties": {
-          "id": {
+          "event": {
             "type": "string",
-            "format": "uuid"
+            "description": "The event name. This field is `event`, not `type`."
           },
-          "type": {
-            "type": "string"
-          },
-          "createdAt": {
+          "eventId": {
             "type": "string",
-            "format": "date-time"
+            "format": "uuid",
+            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
           },
           "apiVersion": {
-            "type": "string"
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this delivery was built."
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
           },
           "data": {
             "$ref": "#/components/schemas/RepullPingPayload"
+          }
+        }
+      },
+      "UsageQuotaWarningEvent": {
+        "type": "object",
+        "required": [
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
+          "data"
+        ],
+        "properties": {
+          "event": {
+            "type": "string",
+            "description": "The event name. This field is `event`, not `type`."
+          },
+          "eventId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
+          },
+          "apiVersion": {
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this delivery was built."
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
+          },
+          "data": {
+            "$ref": "#/components/schemas/UsageQuotaWarningPayload"
           }
         }
       },
@@ -3126,10 +3436,13 @@
           },
           {
             "$ref": "#/components/schemas/RepullPingEvent"
+          },
+          {
+            "$ref": "#/components/schemas/UsageQuotaWarningEvent"
           }
         ],
         "discriminator": {
-          "propertyName": "type",
+          "propertyName": "event",
           "mapping": {
             "reservation.created": "#/components/schemas/ReservationCreatedEvent",
             "reservation.updated": "#/components/schemas/ReservationUpdatedEvent",
@@ -3149,7 +3462,8 @@
             "ai.operation.failed": "#/components/schemas/AiOperationFailedEvent",
             "payment.completed": "#/components/schemas/PaymentCompletedEvent",
             "payment.refunded": "#/components/schemas/PaymentRefundedEvent",
-            "repull.ping": "#/components/schemas/RepullPingEvent"
+            "repull.ping": "#/components/schemas/RepullPingEvent",
+            "usage.quota.warning": "#/components/schemas/UsageQuotaWarningEvent"
           }
         },
         "description": "The full event envelope POSTed to your webhook URL. Discriminated on `type` \u2014 narrow `event.data` by switching on `event.type`. Use the matching `*Event` variant directly if your SDK lacks discriminator support. Events about an inactive listing (reservations, messages, alterations, reviews, payments, calendar and listing events) are not delivered. The data keeps syncing while the listing is inactive, but its events are never sent \u2014 including after you reactivate it; webhooks resume for events that happen from reactivation on. Account-level events are always delivered."
@@ -3310,26 +3624,94 @@
       },
       "BookingProperty": {
         "type": "object",
-        "description": "A property registered in the Booking.com extranet for the connected hotel ID.",
+        "description": "A Booking.com property this workspace holds, with the Repull listings mapped under it. A property is a building; its rooms are what guests book, and each room maps to one Repull listing \u2014 so one property commonly carries many listings.",
         "properties": {
-          "id": {
+          "connectionId": {
             "type": "string",
-            "description": "Booking.com hotel/property ID"
+            "description": "Repull-side id for this Booking.com connection."
           },
-          "name": {
-            "type": "string"
+          "hotelId": {
+            "type": "string",
+            "description": "Booking.com hotel/property id. This is what `/v1/channels/booking/availability` takes as `property_id`."
           },
-          "status": {
+          "active": {
+            "type": "boolean"
+          },
+          "syncEnabled": {
+            "type": "boolean"
+          },
+          "bookingUrl": {
             "type": "string",
             "nullable": true
           },
-          "country": {
+          "markup": {
             "type": "string",
             "nullable": true
           },
-          "city": {
+          "syncCategory": {
             "type": "string",
             "nullable": true
+          },
+          "suspendedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "suspensionReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "mappingStatus": {
+            "type": "string",
+            "description": "`mapped` \u2014 at least one room points at a listing. `unmapped` \u2014 the property is claimed but its rooms are not mapped yet, so `listings` is empty; finish `POST /v1/connect/booking/map-rooms`. An unmapped property is listed rather than hidden, so a half-finished connection is visible instead of looking like no connection at all."
+          },
+          "listings": {
+            "type": "array",
+            "description": "The Repull listings mapped under this property. Empty when `mappingStatus` is `unmapped`. Inactive listings are left out.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "listingId": {
+                  "type": "string",
+                  "description": "Repull listing id \u2014 what `/v1/channels/booking/properties/{id}` and `/v1/channels/booking/listings/{id}/pricing` take."
+                },
+                "name": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "city": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "roomId": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Repull-side room row id, as used by `POST /v1/connect/booking/map-rooms`."
+                },
+                "roomBookingId": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Booking.com's own room id \u2014 the `roomId` an ARI write takes."
+                },
+                "roomName": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "mappedVia": {
+                  "type": "string",
+                  "enum": [
+                    "room",
+                    "property"
+                  ],
+                  "description": "Which record carries the mapping: the room mapping written by Connect, or the legacy property-level link."
+                }
+              }
+            }
           }
         }
       },
@@ -6786,52 +7168,55 @@
       },
       "BookingPricingRateUpdateRestrictions": {
         "type": "object",
-        "description": "Optional length-of-stay / availability restrictions for one rate update. Every field here is forwarded verbatim into Booking.com's rates XML (`minimumstay`, `maximumstay`, `closedonarrival`, `closedondeparture`, \u2026) \u2014 omit a field to leave that restriction untouched.",
+        "description": "Length-of-stay and arrival restrictions for the nights in this update. Omit a field to leave that restriction untouched \u2014 nothing you do not state is changed.\n\nThese are written on Booking.com's availability notification, which is the wire that carries a restriction when no inventory changes hands. Sending them alongside a price is supported: the prices and the restrictions are two writes, and the response reports each one separately (`price` and `restrictions`), so a half that lands is never reported as a failure and a half that is refused is never reported as applied.\n\nThree restrictions are refused with `422 restriction_not_supported` naming the field: Booking.com's notification has no element for them, and dropping a restriction you stated would be worse than refusing it. Set those on the rate plan in the Booking.com Extranet.",
         "properties": {
           "minStay": {
             "type": "integer",
             "nullable": true,
-            "description": "Minimum length of stay (`minimumstay`)."
+            "description": "Minimum length of stay. Booking.com stores a 1-night minimum as no minimum at all, so `minStay: 1` reads back as `0` and is reported as applied."
           },
           "maxStay": {
             "type": "integer",
             "nullable": true,
-            "description": "Maximum length of stay (`maximumstay`)."
+            "description": "Maximum length of stay."
           },
           "closedToArrival": {
             "type": "boolean",
             "nullable": true,
-            "description": "Closed-to-arrival \u2014 guests may not check in on the affected dates (`closedonarrival`)."
+            "description": "Closed-to-arrival \u2014 guests may not check in on these nights. `false` clears the flag; omit the field to leave it as it is."
           },
           "closedToDeparture": {
             "type": "boolean",
             "nullable": true,
-            "description": "Closed-to-departure \u2014 guests may not check out on the affected dates (`closedondeparture`)."
+            "description": "Closed-to-departure \u2014 guests may not check out on these nights. `false` clears the flag; omit the field to leave it as it is."
           },
           "minStayArrival": {
             "type": "integer",
             "nullable": true,
-            "description": "Arrival-based minimum length of stay (`minimumstay_arrival`)."
+            "description": "Arrival-based minimum length of stay \u2014 applies to stays that START on these nights, rather than any stay covering them."
           },
           "maxStayArrival": {
             "type": "integer",
             "nullable": true,
-            "description": "Arrival-based maximum length of stay (`maximumstay_arrival`)."
+            "description": "Arrival-based maximum length of stay."
           },
           "exactStayArrival": {
             "type": "integer",
             "nullable": true,
-            "description": "Arrival-based exact length of stay (`exactstay_arrival`)."
+            "deprecated": true,
+            "description": "Refused. Booking.com's restriction notification has no element for an exact arrival-based stay length, so it cannot be written through the API; sending it returns `422 restriction_not_supported` naming `updates[N].restrictions.exactStayArrival`. Set it on the rate plan in the Booking.com Extranet."
           },
           "minAdvanceRes": {
             "type": "string",
             "nullable": true,
-            "description": "Minimum advance-reservation window, format `XDY` (X days Y hours) \u2014 `min_advance_res`."
+            "deprecated": true,
+            "description": "Refused, for the same reason as `exactStayArrival` \u2014 returns `422 restriction_not_supported`. Set the minimum advance-reservation window on the rate plan in the Booking.com Extranet."
           },
           "maxAdvanceRes": {
             "type": "string",
             "nullable": true,
-            "description": "Maximum advance-reservation window, format `XDY` (X days Y hours) \u2014 `max_advance_res`."
+            "deprecated": true,
+            "description": "Refused, for the same reason as `exactStayArrival` \u2014 returns `422 restriction_not_supported`. Set the maximum advance-reservation window on the rate plan in the Booking.com Extranet."
           }
         }
       },
@@ -6844,15 +7229,15 @@
           "price",
           "currency"
         ],
-        "description": "A single (room, rate-plan, date-range) update pushed to Booking.com via the rates API.",
+        "description": "A single (room, rate-plan, date-range) price update. The amount is written against the party size in `occupancy`, for every night from `dateRange.start` to `dateRange.end` inclusive.",
         "properties": {
           "roomId": {
             "type": "string",
-            "description": "Booking.com room ID for the rate plan. Comes from `listings_booking_rooms` mapping."
+            "description": "Booking.com room id the rate plan sells. `GET /v1/channels/booking/properties/{id}/rooms` lists them."
           },
           "rateId": {
             "type": "string",
-            "description": "Booking.com rate-plan ID."
+            "description": "Booking.com rate-plan id."
           },
           "dateRange": {
             "type": "object",
@@ -6860,36 +7245,46 @@
               "start",
               "end"
             ],
+            "description": "The nights this update applies to. **Both ends are inclusive**: `{ \"start\": \"2026-11-04\", \"end\": \"2026-11-04\" }` writes exactly one night.",
             "properties": {
               "start": {
                 "type": "string",
-                "format": "date"
+                "format": "date",
+                "description": "First night, YYYY-MM-DD."
               },
               "end": {
                 "type": "string",
-                "format": "date"
+                "format": "date",
+                "description": "Last night, YYYY-MM-DD, inclusive \u2014 the same date as `start` for a single night."
               }
             }
           },
           "price": {
-            "type": "number"
+            "type": "number",
+            "minimum": 0,
+            "description": "Nightly amount, in `currency`, for a party of `occupancy`."
           },
           "currency": {
             "type": "string",
-            "example": "USD"
+            "example": "EUR",
+            "description": "Currency the rate plan is sold in."
           },
           "singlePrice": {
             "type": "number",
-            "nullable": true
+            "nullable": true,
+            "description": "Optional single-occupancy amount, written alongside the main amount."
           },
           "occupancy": {
             "type": "integer",
-            "nullable": true
+            "minimum": 1,
+            "nullable": true,
+            "description": "The party size this rate plan prices \u2014 a key, not a preference. Booking.com stores the amount against this number: above the rate plan's own maximum it declines the price in silence and the night keeps its old value; below it, it answers 400 and the old price stays published. Omit it and Repull resolves it from Booking.com's own data for this (room, rate plan) and echoes the value and its source back in `occupancy[]`. When it cannot be resolved the write is refused with `422` naming `updates[N].occupancy` \u2014 a price is never sent at a guessed party size."
           },
           "roomsToSell": {
             "type": "integer",
             "nullable": true,
-            "description": "Rooms to sell for the date range. Set to `0` to stop-sell this room/rate on the rates endpoint (Booking's dedicated `<closed>` stop-sell flag lives on the availability endpoint \u2014 see `BookingAvailabilityUpdate.closed`)."
+            "deprecated": true,
+            "description": "Refused. A rate update carries prices only; sending this returns `422 inventory_not_in_rate_update` naming `updates[N].roomsToSell`. Write inventory with `type: \"availability\"` and `availableRooms` (plus `closed: true` for a stop-sell)."
           },
           "restrictions": {
             "$ref": "#/components/schemas/BookingPricingRateUpdateRestrictions"
@@ -6912,21 +7307,349 @@
           }
         }
       },
+      "BookingRateWriteOccupancy": {
+        "type": "object",
+        "description": "The party size one update was written at, and where that number came from.",
+        "properties": {
+          "index": {
+            "type": "integer",
+            "description": "Position of the update in the request `updates[]`."
+          },
+          "roomId": {
+            "type": "string"
+          },
+          "rateId": {
+            "type": "string"
+          },
+          "value": {
+            "type": "integer",
+            "description": "The party size the amount was written against."
+          },
+          "source": {
+            "type": "string",
+            "description": "`request` \u2014 you stated it. `rate_plan` \u2014 Booking.com's maximum occupancy for this rate plan. `room` \u2014 Booking.com's room definition, used when the rate plan did not state one."
+          }
+        }
+      },
+      "BookingRateWriteVerificationRow": {
+        "type": "object",
+        "description": "One night, read back off Booking.com after the write.",
+        "properties": {
+          "roomId": {
+            "type": "string"
+          },
+          "rateId": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "expectedPrice": {
+            "type": "number",
+            "description": "The amount that was sent."
+          },
+          "bookingPrice": {
+            "type": "number",
+            "nullable": true,
+            "description": "The amount Booking.com holds for that night now; `null` when Booking.com reported nothing for it."
+          },
+          "match": {
+            "type": "boolean"
+          }
+        }
+      },
+      "BookingRateWriteVerification": {
+        "type": "object",
+        "description": "The read-back. Booking.com's answer to a rate write is an acknowledgement of the request with no per-date status, so the dates are read back to find out what is actually live.",
+        "properties": {
+          "ran": {
+            "type": "boolean",
+            "description": "Whether the read-back happened."
+          },
+          "skippedReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why it did not: `not_requested` (you sent `verify: false`), `span_too_long`, `all_dates_beyond_booking_horizon`, `read_back_failed`, `nothing_to_verify`."
+          },
+          "matched": {
+            "type": "integer"
+          },
+          "mismatched": {
+            "type": "integer"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BookingRateWriteVerificationRow"
+            }
+          },
+          "error": {
+            "type": "string",
+            "nullable": true,
+            "description": "Present when the read itself failed."
+          }
+        }
+      },
+      "BookingUpstreamFailure": {
+        "type": "object",
+        "description": "Why Booking.com refused one half of a write, in their words. Present on the half that was refused.",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Booking.com's own reason, taken from the body they answered with \u2014 never a paraphrase of their status code."
+          },
+          "upstream_status": {
+            "type": "integer",
+            "nullable": true,
+            "description": "The HTTP status Booking.com answered with."
+          },
+          "booking_code": {
+            "type": "string",
+            "nullable": true,
+            "description": "Booking.com's own error code, when their envelope named one."
+          },
+          "booking_ruid": {
+            "type": "string",
+            "nullable": true,
+            "description": "Booking.com's request id. Quote it to their connectivity support to have them trace the call."
+          },
+          "body": {
+            "type": "string",
+            "nullable": true,
+            "description": "The upstream body, trimmed and capped, for when the parsed reason is not enough."
+          },
+          "code": {
+            "type": "string",
+            "nullable": true,
+            "description": "How the failure was classified internally (e.g. `BAD_REQUEST`, `RATE_LIMITED`)."
+          }
+        }
+      },
+      "BookingRestrictionVerificationRow": {
+        "type": "object",
+        "description": "One restriction on one night, read back off Booking.com after the write.",
+        "properties": {
+          "roomId": {
+            "type": "string"
+          },
+          "rateId": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "field": {
+            "type": "string"
+          },
+          "expected": {
+            "description": "The value that was sent.",
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "bookingValue": {
+            "nullable": true,
+            "description": "What Booking.com holds for that night now; `null` when they reported nothing for the field either way.",
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "match": {
+            "type": "boolean"
+          }
+        }
+      },
+      "BookingRestrictionVerification": {
+        "type": "object",
+        "description": "The restriction read-back. It runs out of the SAME call that reads the prices back, so proving a restriction costs no extra request.",
+        "properties": {
+          "ran": {
+            "type": "boolean"
+          },
+          "skippedReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "`not_requested` (no restrictions were sent, `verify: false`, or Booking.com refused them), `span_too_long`, `all_dates_beyond_booking_horizon`, `read_back_failed`, `nothing_to_verify`."
+          },
+          "matched": {
+            "type": "integer"
+          },
+          "mismatched": {
+            "type": "integer"
+          },
+          "unreported": {
+            "type": "integer",
+            "description": "Restrictions Booking.com's read-back did not mention either way. Counted apart from `mismatched`: an unknown is not a failure."
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BookingRestrictionVerificationRow"
+            }
+          },
+          "error": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "BookingRateWritePriceHalf": {
+        "type": "object",
+        "description": "The prices: what was sent, what Booking.com said, and what is live now.",
+        "properties": {
+          "requested": {
+            "type": "integer",
+            "description": "How many updates carried a price."
+          },
+          "applied": {
+            "type": "string",
+            "description": "What is known about the amounts. Same vocabulary as the top-level `applied`, for this half alone."
+          },
+          "verification": {
+            "$ref": "#/components/schemas/BookingRateWriteVerification"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "rejection": {
+            "$ref": "#/components/schemas/BookingUpstreamFailure"
+          }
+        }
+      },
+      "BookingRestrictionRequestRow": {
+        "type": "object",
+        "description": "One update's restriction request: which nights, and which restrictions were asked for them.",
+        "properties": {
+          "index": {
+            "type": "integer",
+            "description": "Position of the update in the request `updates[]`."
+          },
+          "roomId": {
+            "type": "string"
+          },
+          "rateId": {
+            "type": "string"
+          },
+          "start": {
+            "type": "string",
+            "format": "date",
+            "description": "First night, inclusive."
+          },
+          "end": {
+            "type": "string",
+            "format": "date",
+            "description": "Last night, inclusive."
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The restrictions stated for these nights."
+          }
+        }
+      },
+      "BookingRateWriteRestrictionHalf": {
+        "type": "object",
+        "description": "The restrictions: the same report as the price half, for the other write.",
+        "properties": {
+          "requested": {
+            "type": "integer",
+            "description": "How many updates carried a restriction. `0` when none did."
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Every restriction asked for, across all updates."
+          },
+          "dates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BookingRestrictionRequestRow"
+            },
+            "description": "Per update, the nights and the restrictions asked for them \u2014 so a partial result names exactly what did and did not change."
+          },
+          "applied": {
+            "type": "string",
+            "description": "`not_requested` means no update carried a restriction and nothing was sent."
+          },
+          "verification": {
+            "$ref": "#/components/schemas/BookingRestrictionVerification"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "rejection": {
+            "$ref": "#/components/schemas/BookingUpstreamFailure"
+          }
+        }
+      },
       "BookingPricingUpdateResponse": {
         "type": "object",
+        "description": "What a Booking.com rate write actually did. Returned by `PUT /v1/channels/booking/listings/{id}/pricing` and by `PUT /v1/channels/booking/availability` with `type: \"rates\"`.\n\nPrices and restrictions are two writes on two of Booking.com's wires, and Booking.com can take one and refuse the other. The response says so: `price` and `restrictions` each carry their own state, their own read-back and \u2014 when refused \u2014 Booking.com's own reason. The top-level `applied` summarises them, and is `partial` when they disagree. A half that landed is never reported as a failure.",
         "properties": {
           "hotelId": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "listingId": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
-          "pushed": {
-            "type": "integer",
-            "description": "Number of updates Booking.com accepted as `success`. Falls back to total update count when Booking omits per-update status on full success."
+          "propertyId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Echoed back by `PUT /v1/channels/booking/availability`."
           },
           "requested": {
-            "type": "integer"
+            "type": "integer",
+            "description": "How many updates were sent."
+          },
+          "occupancy": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BookingRateWriteOccupancy"
+            }
+          },
+          "applied": {
+            "type": "string",
+            "description": "What is known about the nights now. `verified` \u2014 read back, every night carries what was sent. `mismatch` \u2014 read back, some do not (`verification.rows` / `restrictions.verification.rows` name them). `rejected` \u2014 Booking.com refused everything that was sent. `partial` \u2014 one half landed and the other did not; read `price.applied` and `restrictions.applied` to see which, and `restrictions.rejection.message` for Booking.com's reason. `unverified` \u2014 Booking.com acknowledged the request and no read-back ran: an unknown, not a success. A bare acknowledgement is never reported as \"all applied\"."
+          },
+          "price": {
+            "$ref": "#/components/schemas/BookingRateWritePriceHalf"
+          },
+          "restrictions": {
+            "$ref": "#/components/schemas/BookingRateWriteRestrictionHalf"
+          },
+          "verification": {
+            "$ref": "#/components/schemas/BookingRateWriteVerification"
+          },
+          "booking": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Booking.com's own answers, verbatim: `rates` (the rate-amount notification) and `restrictions` (the availability notification, when the updates carried any restriction)."
           },
           "errors": {
             "type": "array",
@@ -6934,12 +7657,12 @@
               "type": "object",
               "additionalProperties": true
             },
-            "description": "Per-update failure rows from Booking \u2014 shape mirrors the Booking rates API response."
+            "description": "Failures Booking.com named, across both wires. Empty means Booking.com named none \u2014 not that the nights changed; that is what `applied` is for."
           },
-          "raw": {
-            "type": "object",
-            "additionalProperties": true,
-            "description": "Verbatim Booking response envelope for debugging."
+          "ratePlanReadError": {
+            "type": "string",
+            "nullable": true,
+            "description": "Present when Booking.com's rate-plan read did not complete, so an occupancy fell back to the room definition."
           }
         }
       },
@@ -6952,24 +7675,48 @@
           },
           "listingId": {
             "type": "string"
+          },
+          "otherHotelIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Other Booking.com properties this listing is also published under. Empty in the normal case. Pass one as `?hotel_id=` to read its pricing instead."
           }
         },
         "additionalProperties": true
       },
       "BookingRoomsRatesResponse": {
         "type": "object",
-        "description": "Returned by `GET /v1/channels/booking/properties/{id}/rooms`. Exposes the Booking.com room + rate-plan mapping ids for a listing so a caller can assemble a `PUT /v1/channels/booking/availability` restriction write (which requires `roomId` + `rateId` on every update). Sourced from Booking's B.XML roomrates feed.",
+        "description": "Returned by `GET /v1/channels/booking/properties/{id}/rooms`. Exposes the Booking.com room + rate-plan mapping ids for a listing so a caller can assemble a `PUT /v1/channels/booking/availability` restriction write (which requires `roomId` + `rateId` on every update). Read live from Booking's B.XML roomrates feed; `source` says so, and says when the answer came from the last import instead.",
         "properties": {
-          "hotel_id": {
+          "hotelId": {
             "type": "string",
-            "description": "Booking.com hotel/property id the rooms belong to."
+            "description": "Booking.com hotel/property id the rooms belong to \u2014 the one the mapping resolved to."
           },
-          "listing_id": {
-            "type": "integer",
-            "description": "Vanio listing id echoed back."
+          "listingId": {
+            "type": "string",
+            "description": "Repull listing id echoed back."
+          },
+          "otherHotelIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Other Booking.com properties this listing is also published under. Empty in the normal case. Pass one as `?hotel_id=` to read its rooms instead."
+          },
+          "source": {
+            "type": "string",
+            "description": "Where the rooms came from. `booking` \u2014 read live from Booking.com just now. `mirror` \u2014 Booking.com returned nothing usable, so these are the rooms and rate plans recorded at the last import; the ids are Booking.com's own and are safe to write against, but they can be stale and `maxPersons`, `policy`, `policyId`, `pricingType` and `isChildRate` come back `null` because only the live feed states them."
+          },
+          "mirrorReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why the live read was not used. Null when `source` is `booking`."
           },
           "rooms": {
             "type": "array",
+            "description": "Empty only when Booking.com reports no rooms for this property AND nothing was recorded at the last import. A failed read is never an empty list \u2014 it is an error.",
             "items": {
               "type": "object",
               "properties": {
@@ -6981,6 +7728,11 @@
                 "roomName": {
                   "type": "string",
                   "nullable": true
+                },
+                "maxAdults": {
+                  "type": "integer",
+                  "nullable": true,
+                  "description": "Booking.com's capacity for this room, as imported. The occupancy a rate write falls back to when the rate plan states no `maxPersons`. Null when Booking.com never stated one."
                 },
                 "rates": {
                   "type": "array",
@@ -7007,7 +7759,8 @@
                       },
                       "maxPersons": {
                         "type": "integer",
-                        "nullable": true
+                        "nullable": true,
+                        "description": "The party size this rate plan prices. A rate amount must be written at this number: above it Booking.com declines the price in silence, below it answers 400. Null when `source` is `mirror`."
                       },
                       "pricingType": {
                         "type": "string",
@@ -7043,10 +7796,9 @@
         "required": [
           "roomId",
           "rateId",
-          "dateRange",
-          "availableRooms"
+          "dateRange"
         ],
-        "description": "One (room, rate-plan, date-range) availability update. Carries inventory (`availableRooms`), the dedicated stop-sell flag (`closed`), and the same length-of-stay / arrival restrictions as a rate update.",
+        "description": "One (room, rate-plan, date-range) availability update. Carries inventory (`availableRooms`), the dedicated stop-sell flag (`closed`), and length-of-stay / arrival restrictions. Omit `availableRooms` and `closed` for a restriction-only write \u2014 inventory is then left untouched.",
         "properties": {
           "roomId": {
             "type": "string",
@@ -7062,20 +7814,24 @@
               "start",
               "end"
             ],
+            "description": "The nights this update applies to. **Both ends are inclusive** \u2014 `start` equal to `end` is one night.",
             "properties": {
               "start": {
                 "type": "string",
-                "format": "date"
+                "format": "date",
+                "description": "First night, YYYY-MM-DD."
               },
               "end": {
                 "type": "string",
-                "format": "date"
+                "format": "date",
+                "description": "Last night, YYYY-MM-DD, inclusive."
               }
             }
           },
           "availableRooms": {
             "type": "integer",
-            "description": "Rooms to sell (`roomstosell`). `0` blocks the room for the range."
+            "nullable": true,
+            "description": "Rooms to sell (`roomstosell`). `0` blocks the room for the range. Omit it to leave inventory alone \u2014 `0` is a stop-sell, not a no-op."
           },
           "status": {
             "type": "string",
@@ -7098,11 +7854,16 @@
           "property_id",
           "updates"
         ],
-        "description": "Body for `PUT /v1/channels/booking/availability`. Selects one of Booking's three ARI write paths via `type` and forwards `updates` verbatim to the connector.",
+        "description": "Body for `PUT /v1/channels/booking/availability`. `type` selects which of Booking.com's writes to perform. Date ranges are inclusive at both ends everywhere in this body.",
         "properties": {
           "type": {
             "type": "string",
-            "description": "`rates` \u2192 price + restrictions (`updateRates`); `availability` \u2192 inventory + stop-sell + restrictions (`updateAvailability`); `derived-pricing` \u2192 occupancy-derived pricing rules (`updateDerivedPricing`)."
+            "description": "`rates` \u2192 nightly prices (+ any restrictions sent with them), written at an explicit `occupancy`; `availability` \u2192 inventory, stop-sell and restrictions; `derived-pricing` \u2192 occupancy-derived pricing rules. A rates update may not carry `roomsToSell`: inventory is an `availability` write."
+          },
+          "verify": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Only for `type: \"rates\"`. Default `true`: after the write the affected nights are read back off Booking.com so `applied` can say `verified` or `mismatch`. Send `false` to skip the read (one fewer Booking.com call); the response then reports `applied: \"unverified\"`."
           },
           "property_id": {
             "oneOf": [
@@ -9830,6 +10591,65 @@
                   }
                 }
               }
+            }
+          }
+        }
+      },
+      "BookingWriteRejected": {
+        "description": "The request was refused as sent; resending the same body will be refused again. Three cases:\n\n- `invalid_params` / `inventory_not_in_rate_update` \u2014 the body failed validation before anything was sent to Booking.com. `field` names the offending field.\n- `restriction_not_supported` \u2014 the body asked for a restriction Booking.com's notification has no element for. It is refused rather than dropped, so a restriction you state is never silently lost; set it on the rate plan in the Extranet.\n- `booking_rejected` \u2014 Booking.com refused the change; `message` carries their own reason and `booking_ruid` identifies the call in their support tooling.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "restrictionNotSupported": {
+                "summary": "A restriction that cannot be written through the API",
+                "value": {
+                  "error": {
+                    "code": "restriction_not_supported",
+                    "message": "`updates[0].restrictions.minAdvanceRes` cannot be written to Booking.com. Their restriction notification carries minimum/maximum stay (stay-date and arrival-date based) and closed-to-arrival / closed-to-departure; it has no element for this one. It is refused rather than dropped, so a restriction you state is never silently lost.",
+                    "fix": "Booking.com's restriction notification has no element for this restriction, so it cannot be written through the API. Set it on the rate plan in the Booking.com Extranet, then send the rest of `restrictions` without this field.",
+                    "docs_url": "https://repull.dev/docs/errors/restriction_not_supported",
+                    "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                    "field": "updates[0].restrictions.minAdvanceRes"
+                  }
+                }
+              },
+              "bookingRejected": {
+                "summary": "Booking.com refused the change",
+                "value": {
+                  "error": {
+                    "code": "booking_rejected",
+                    "message": "Rate 15436997 is not active for room 543250501",
+                    "fix": "Booking.com refused this change as sent; `message` carries their reason and `booking_ruid` identifies the call in their support tooling. Correct the request and send it again \u2014 resending the same body will be refused again.",
+                    "docs_url": "https://repull.dev/docs/errors/booking_rejected",
+                    "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                    "upstream_status": 400,
+                    "booking_ruid": "UmFuZG9tSVYkc2RlIyh9YW1"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "BookingRateLimited": {
+        "description": "Booking.com is rate-limiting this property (`booking_rate_limited`). Back off (start around 30 seconds) and retry, and put several dates into one `updates[]` array instead of one request per date.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "BookingUpstreamError": {
+        "description": "Booking.com did not complete the request \u2014 an outage, timeout or server error on their side (`booking_error`). The request itself is fine: retry with exponential backoff. `message` carries whatever Booking.com said.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
             }
           }
         }
@@ -13541,10 +14361,27 @@
       "post": {
         "operationId": "replay_webhook_delivery",
         "summary": "Replay webhook delivery",
-        "description": "Re-sends the original payload (same eventId, fresh deliveryId, attempt + 1). A delivery about a listing that is inactive now is not re-sent and answers `403 listing_inactive`; activate the listing first.",
+        "description": "Re-sends the original payload (same eventId, fresh deliveryId, attempt + 1).\n\nA delivery may be replayed at most **3 times per rolling 60 minutes**; the 4th inside that window answers `409 replay_limit_reached` and names the time the next one is allowed. The limit is charged to the original delivery, so replaying the delivery a replay produced draws on the same budget. It is not a lifetime cap \u2014 a delivery that has not been replayed for an hour starts fresh.\n\nA delivery your endpoint already accepted is not re-sent (it would be a duplicate) and answers `409 delivery_already_succeeded`; send `{\"force\": true}` to replay it anyway, which still counts against the limit.\n\nA delivery about a listing that is inactive now is not re-sent and answers `403 listing_inactive`; activate the listing first.",
         "tags": [
           "Webhooks"
         ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "force": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Replay even though this delivery already succeeded. Still counts against the 3-per-hour limit."
+                  }
+                }
+              }
+            }
+          }
+        },
         "parameters": [
           {
             "name": "id",
@@ -13567,10 +14404,30 @@
         ],
         "responses": {
           "200": {
-            "description": "Replayed"
+            "description": "Replayed. Also reports the replay budget for this delivery: `replayNumber`, `replaysRemaining`, `replayLimit` and `nextWindowResetAt` (when the count resets), plus `forced` when `{\"force\": true}` was sent."
           },
           "403": {
             "description": "`listing_inactive` \u2014 the event belongs to a listing that is inactive, so it is not delivered. The error message names it; activate it with `PATCH /v1/listings/{id}` and body `{\"active\": true}`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`replay_limit_reached` \u2014 this delivery has been replayed 3 times in the last 60 minutes. The body carries `replays_made`, `replay_limit`, `replay_window_minutes` and `next_replay_allowed_at`, and a `Retry-After` header holds the same wait in seconds. If the delivery keeps failing, replay it no further: fix the receiving endpoint, verify it with `POST /v1/webhooks/{id}/test/{event_type}`, then replay.\n\n`delivery_already_succeeded` \u2014 your endpoint already answered 2xx for this delivery, so replaying it would deliver a duplicate. The body carries `replays_made` alongside when it succeeded and the status your endpoint returned. Send `{\"force\": true}` to replay it regardless; that counts against the same limit.\n\n`invalid_state` \u2014 the webhook has no signing secret; rotate it before sending events.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`validation_error` \u2014 the request body is not a JSON object, or `force` is not a boolean.",
             "content": {
               "application/json": {
                 "schema": {
@@ -17305,7 +18162,7 @@
       "get": {
         "operationId": "list_booking_properties",
         "summary": "List Booking.com properties",
-        "description": "List Booking.com hotels claimed by this workspace. Each row includes the Booking-side hotel id and the connected room types.\n\nInactive listings are left out; they keep syncing and reappear once activated. Use `GET /v1/listings?status=inactive` to find them.",
+        "description": "List every Booking.com property this workspace holds. Each property is returned ONCE, with the Repull listings mapped under it.\n\nA Booking.com property is a building; its rooms are what guests book, and each room is mapped to one Repull listing \u2014 so one property routinely carries many listings. `listings[].roomBookingId` is the Booking.com room id an ARI write takes.\n\nA property whose rooms are not mapped yet is still listed, with `mappingStatus: \"unmapped\"` and an empty `listings` array. That is a real mid-onboarding state, not an error: finish `POST /v1/connect/booking/map-rooms` and the listings appear. Such a property used to be dropped silently, which made a mapped-but-unreadable workspace indistinguishable from one with no Booking connection at all.\n\nInactive listings are left out of `listings`; they keep syncing and reappear once activated. Use `GET /v1/listings?status=inactive` to find them.",
         "tags": [
           "Booking.com"
         ],
@@ -17404,13 +18261,16 @@
           },
           "500": {
             "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BookingUpstreamError"
           }
         }
       },
       "put": {
         "operationId": "update_booking_availability",
         "summary": "Update Booking.com rates/availability",
-        "description": "Push availability, rates, and the full restriction set to Booking.com. `type` selects the write path:\n\n- `rates` \u2014 nightly price + length-of-stay / arrival restrictions (min/max stay, closed-to-arrival, closed-to-departure, advance-reservation window).\n- `availability` \u2014 inventory (`availableRooms`), the dedicated stop-sell flag (`closed`), and the same restriction set.\n- `derived-pricing` \u2014 occupancy-derived pricing rules.\n\nRestrictions never leak across channels \u2014 this endpoint writes only to Booking.com. Errors from upstream surface as `booking_error`.\n\n`property_id` must be a Booking.com property connected to this workspace (`GET /v1/channels/booking/properties` lists them). Any other id \u2014 including one connected to a different workspace \u2014 returns `404 not_found`, the same answer as an id that does not exist.\n\nReturns `403 listing_inactive` when any listing mapped to the Booking.com property is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "description": "Write rates, availability and restrictions to a Booking.com property. `type` selects the write:\n\n- `rates` \u2014 nightly prices, plus any length-of-stay / arrival restrictions sent with them.\n- `availability` \u2014 inventory (`availableRooms`), the stop-sell flag (`closed`), and restrictions. Omit `availableRooms` and `closed` for a restriction-only write.\n- `derived-pricing` \u2014 occupancy-derived pricing rules.\n\n**Dates are inclusive at both ends.** `{ \"start\": \"2026-11-04\", \"end\": \"2026-11-04\" }` is exactly one night.\n\n**A rate amount needs an occupancy.** Booking.com stores the amount against the party size the rate plan prices: sent above that number it declines the price in silence, sent below it it answers 400. Send `occupancy`, or omit it and Repull resolves it from Booking.com's own data and echoes the value and its `source` back in `occupancy[]`. If it cannot be resolved the write is refused with `422` naming `updates[N].occupancy`.\n\n**Restrictions are sent in the same call, on their own wire.** A price and a minimum stay are two writes on Booking.com's side. Send them together and the response reports each separately: `price` and `restrictions` carry their own state, their own read-back, and \u2014 when refused \u2014 Booking.com's own reason. The top-level `applied` is `partial` when they disagree, so a price that landed is never reported as a failure. `minStay`, `maxStay`, `minStayArrival`, `maxStayArrival`, `closedToArrival` and `closedToDeparture` are written; `exactStayArrival`, `minAdvanceRes` and `maxAdvanceRes` are refused with `422 restriction_not_supported` because Booking.com's notification has no element for them \u2014 set those on the rate plan in the Extranet. Nothing you send is ever silently ignored.\n\n**Inventory is not part of a rate update.** `roomsToSell` on a `rates` update returns `422 inventory_not_in_rate_update`; send it as `type: \"availability\"` instead.\n\n**The response says what is known.** Booking.com acknowledges a write with no per-date status, so the nights are read back \u2014 prices and restrictions out of the same read: `applied` is `verified`, `mismatch`, `partial`, `rejected` or `unverified` (send `verify: false` to skip the read-back). A bare acknowledgement is never reported as \"all updates applied\". Booking.com stores a 1-night minimum as no minimum, so `minStay: 1` reads back as `0` and still counts as applied.\n\nRestrictions never leak across channels \u2014 this endpoint writes only to Booking.com. When Booking.com refuses a write outright, their own reason comes back as `422 booking_rejected` with `booking_ruid`; a genuine outage on their side is `502 booking_error`.\n\n`property_id` must be a Booking.com property connected to this workspace (`GET /v1/channels/booking/properties` lists them). Any other id \u2014 including one connected to a different workspace \u2014 returns `404 not_found`, the same answer as an id that does not exist.\n\nReturns `403 listing_inactive` when any listing mapped to the Booking.com property is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
         "tags": [
           "Booking.com"
         ],
@@ -17426,7 +18286,14 @@
         },
         "responses": {
           "200": {
-            "description": "Updated"
+            "description": "Written. For `type: \"rates\"` the body reports the occupancy each amount was written at and whether the nights were verified against Booking.com; the other types return Booking.com's answer.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingPricingUpdateResponse"
+                }
+              }
+            }
           },
           "400": {
             "$ref": "#/components/responses/BadRequest"
@@ -17440,8 +18307,17 @@
           "404": {
             "$ref": "#/components/responses/NotFound"
           },
+          "422": {
+            "$ref": "#/components/responses/BookingWriteRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/BookingRateLimited"
+          },
           "500": {
             "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BookingUpstreamError"
           }
         }
       }
@@ -17689,7 +18565,7 @@
       "get": {
         "operationId": "getBookingListingPricing",
         "summary": "Get Booking.com pricing for a listing",
-        "description": "Resolves the Vanio listing ID to its Booking.com `hotel_id` (via the `listings_booking` mapping owned by the authenticated workspace), then proxies Booking's `getRoomRateAvailability` for the requested window. Pricing on Booking is per-room/per-rate-plan, so `room_id` and `room_level` flow through query params unchanged.\n\nMirrors the per-channel `/listings/{id}/pricing` shape used by Airbnb so SDK consumers can carry a Vanio listing ID across channels.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "description": "Resolves the Repull listing id to its Booking.com `hotel_id` (via the room mapping the Connect flow records for the authenticated workspace), then proxies Booking's `getRoomRateAvailability` for the requested window. Pricing on Booking is per-room/per-rate-plan, so `room_id` and `room_level` flow through query params unchanged.\n\nMirrors the per-channel `/listings/{id}/pricing` shape used by Airbnb so SDK consumers can carry a Repull listing id across channels. `id` is a Repull listing id, never a Booking.com hotel id \u2014 the hotel-id surface is `/v1/channels/booking/availability`.\n\nA listing can be published under several Booking.com properties. GET uses the oldest and reports the rest in `otherHotelIds`; PUT refuses with `409 ambiguous_booking_mapping` rather than push rates into a property it guessed at. `?hotel_id=` names the property explicitly for either.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
         "tags": [
           "Booking.com"
         ],
@@ -17701,7 +18577,7 @@
             "schema": {
               "type": "integer"
             },
-            "description": "Vanio listing ID \u2014 resolved to a Booking.com hotel ID via the workspace mapping."
+            "description": "Repull listing id \u2014 NOT a Booking.com hotel id. Resolved to a Booking.com hotel id via the workspace mapping."
           },
           {
             "name": "startDate",
@@ -17736,6 +18612,15 @@
               "type": "boolean"
             },
             "description": "When true, returns room-level (vs rate-plan-level) availability."
+          },
+          {
+            "name": "hotel_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Booking.com hotel id, when this listing is published under more than one property. Omit it and a read uses the oldest mapping (reporting the rest in `otherHotelIds`), while a write is refused with `409 ambiguous_booking_mapping` rather than guess. `GET /v1/channels/booking/properties` lists the valid ids."
           }
         ],
         "responses": {
@@ -17763,13 +18648,16 @@
           },
           "500": {
             "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BookingUpstreamError"
           }
         }
       },
       "put": {
         "operationId": "updateBookingListingPricing",
         "summary": "Update Booking.com pricing for a listing",
-        "description": "Pushes one or more rate updates to Booking.com via `updateRates`. Each update needs `roomId` + `rateId` + `dateRange` + `price` + `currency`. Field-level validation runs up front so callers don't have to parse Booking's XML error envelope to discover a missing `roomId`.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "description": "Writes nightly prices for a listing's Booking.com room + rate plan. Each update needs `roomId` + `rateId` + `dateRange` + `price` + `currency`; `dateRange` is inclusive at both ends, so `start` equal to `end` writes exactly one night.\n\n**Occupancy.** Booking.com stores a rate amount against the party size the rate plan prices. Send `occupancy` and that is what is used; omit it and it is resolved from Booking.com's own data for that (room, rate plan) and echoed back in `occupancy[]` with its `source`. When it cannot be resolved the write is refused with `422` naming `updates[N].occupancy` \u2014 a price is never sent at a guessed party size, because Booking.com declines such an amount without saying so.\n\n**Inventory is a separate write.** `roomsToSell` on a rate update returns `422 inventory_not_in_rate_update`; use `PUT /v1/channels/booking/availability` with `type: \"availability\"`.\n\n**Restrictions ride along, on their own wire.** Send `restrictions` with the price and Booking.com receives two writes; the response reports each separately in `price` and `restrictions`, each with its own state, read-back and \u2014 when refused \u2014 Booking.com's own reason. `minStay`, `maxStay`, `minStayArrival`, `maxStayArrival`, `closedToArrival` and `closedToDeparture` are written; `exactStayArrival`, `minAdvanceRes` and `maxAdvanceRes` are refused with `422 restriction_not_supported` (Booking.com's notification has no element for them \u2014 set those on the rate plan in the Extranet). Nothing you send is silently ignored.\n\n**The response says what is known.** Booking.com acknowledges a write without per-date status, so the affected nights are read back \u2014 prices and restrictions out of the same read \u2014 and `applied` reports `verified`, `mismatch`, `partial`, `rejected` or `unverified`. `partial` means one half landed and the other did not, which is never reported as a total failure. Send `verify: false` to skip the read-back; `applied` is then `unverified`. Booking.com stores a 1-night minimum as no minimum, so `minStay: 1` reads back as `0` and still counts as applied.\n\n`id` is a Repull listing id. When it is published under several Booking.com properties this returns `409 ambiguous_booking_mapping` and pushes nothing \u2014 name the property with `?hotel_id=` instead.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
         "tags": [
           "Booking.com"
         ],
@@ -17780,7 +18668,17 @@
             "required": true,
             "schema": {
               "type": "integer"
-            }
+            },
+            "description": "Repull listing id \u2014 NOT a Booking.com hotel id."
+          },
+          {
+            "name": "hotel_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Booking.com hotel id, when this listing is published under more than one property. Omit it and a read uses the oldest mapping (reporting the rest in `otherHotelIds`), while a write is refused with `409 ambiguous_booking_mapping` rather than guess. `GET /v1/channels/booking/properties` lists the valid ids."
           }
         ],
         "requestBody": {
@@ -17795,7 +18693,7 @@
         },
         "responses": {
           "200": {
-            "description": "Updates pushed (per-update success/failure breakdown in `errors[]`)",
+            "description": "Written. `applied` says whether the nights were verified against Booking.com, and `occupancy[]` the party size each amount was written at.",
             "content": {
               "application/json": {
                 "schema": {
@@ -17816,8 +18714,20 @@
           "404": {
             "$ref": "#/components/responses/NotFound"
           },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/BookingWriteRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/BookingRateLimited"
+          },
           "500": {
             "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BookingUpstreamError"
           }
         }
       }
@@ -17923,7 +18833,7 @@
       "get": {
         "operationId": "list_booking_property_rooms",
         "summary": "List Booking.com rooms + rate-plan ids for a listing",
-        "description": "Return every Booking.com room and its rate plans for a listing, each with the `roomId` / `rateId` needed to assemble a restriction write via `PUT /v1/channels/booking/availability`.\n\n`id` is a Vanio listing id \u2014 resolved to the Booking `hotel_id` via the workspace mapping (a listing with no active Booking.com mapping returns 404). Sourced from Booking's B.XML roomrates feed, which returns rooms and rate plans together (the rooms-unit feed alone omits rate-plan ids). This is the API-key surface for the room/rate ids that were previously only reachable inside the hosted Connect room-mapping flow.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "description": "Return every Booking.com room and its rate plans for a listing, each with the `roomId` / `rateId` needed to assemble a restriction write via `PUT /v1/channels/booking/availability`.\n\n`id` is a **Repull listing id**, not a Booking.com hotel id, despite the `properties` segment \u2014 resolved to the Booking `hotel_id` through the workspace mapping, read from wherever the Connect flow recorded it (`listings_booking_rooms` for anything mapped through `POST /v1/connect/booking/map-rooms`). A listing with no active Booking.com mapping returns 404, and the message says which id space the path takes. When the listing is published under several properties the oldest is used, the rest come back in `otherHotelIds`, and `?hotel_id=` names a different one. Sourced from Booking's B.XML roomrates feed, which returns rooms and rate plans together (the rooms-unit feed alone omits rate-plan ids). This is the API-key surface for the room/rate ids that were previously only reachable inside the hosted Connect room-mapping flow.\n\n`source` says where the answer came from. `booking` means it was read live just now. If Booking.com returns nothing usable for the property, the rooms and rate plans recorded at the last import are served instead, `source` is `mirror`, and `mirrorReason` names what went wrong live \u2014 the ids are Booking.com's own and can be written against, but they can be stale, and `maxPersons`, `policy`, `policyId`, `pricingType` and `isChildRate` come back `null` because only the live feed states them. `rooms` is empty only when Booking.com and the last import both have nothing; a read that failed is an error, never an empty list.\n\nEach rate plan carries `maxPersons` \u2014 the party size that rate plan prices, which is the `occupancy` a rate amount must be written at. Each room carries `maxAdults`, Booking.com's capacity for the room, which is what a rate write falls back to when the rate plan states no `maxPersons`.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
         "tags": [
           "Booking.com"
         ],
@@ -17935,7 +18845,16 @@
             "schema": {
               "type": "integer"
             },
-            "description": "Vanio listing id \u2014 resolved to a Booking.com hotel id via the workspace mapping."
+            "description": "Repull listing id \u2014 NOT a Booking.com hotel id. Resolved to a Booking.com hotel id via the workspace mapping."
+          },
+          {
+            "name": "hotel_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Booking.com hotel id, when this listing is published under more than one property. Omit it and a read uses the oldest mapping (reporting the rest in `otherHotelIds`), while a write is refused with `409 ambiguous_booking_mapping` rather than guess. `GET /v1/channels/booking/properties` lists the valid ids."
           }
         ],
         "responses": {
@@ -17971,7 +18890,7 @@
       "get": {
         "operationId": "get_booking_property",
         "summary": "Get Booking.com connection for a listing",
-        "description": "Return the Booking.com connection record(s) for a Vanio listing \u2014 the linked Booking hotel id, sync flags, markup, sync category, and suspension state. Scoped to the authenticated workspace; a listing with no Booking.com connection returns 404.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "description": "Return the Booking.com connection record(s) for a Repull listing \u2014 the linked Booking hotel id, sync flags, markup, sync category, suspension state, and the Booking room the mapping runs through.\n\n`id` is a **Repull listing id**, not a Booking.com hotel id, despite the `properties` segment. (The hotel-id surface is `/v1/channels/booking/availability`.) The mapping is read from wherever the Connect flow recorded it \u2014 `listings_booking_rooms` for anything mapped through `POST /v1/connect/booking/map-rooms`, which is essentially every live mapping.\n\nAn ARRAY, because one listing can be published under several Booking.com properties at once; `mappedVia` says which record carries each mapping. A listing with no Booking.com mapping returns 404, and the message says which id space the path takes.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
         "tags": [
           "Booking.com"
         ],
@@ -17983,7 +18902,7 @@
             "schema": {
               "type": "integer"
             },
-            "description": "Vanio listing ID."
+            "description": "Repull listing id \u2014 NOT a Booking.com hotel id."
           }
         ],
         "responses": {
@@ -19596,7 +20515,7 @@
       "get": {
         "operationId": "get_usage_summary",
         "summary": "Get usage summary",
-        "description": "Aggregated usage over the requested `range` \u2014 tier + plan limits, quota used/remaining, next reset, a per-operation breakdown (request/error counts, error rate, avg latency), a daily timeline, status-class distribution, and range totals.",
+        "description": "Aggregated usage over the requested `range` \u2014 tier + plan limits, quota used/remaining, next reset, a per-operation breakdown (request/error counts, error rate, avg latency), a daily timeline, status-class distribution, and range totals. Two request quotas are reported and they reset at different times: `dailyRequests` is the daily circuit breaker that stops runaway client loops (resets at `dailyResetsAt`, the next UTC midnight) and `monthlyRequests` is the billing quota (resets at `resetsAt`). `null` limits mean unlimited on that dimension.",
         "tags": [
           "Billing"
         ],
@@ -19635,6 +20554,10 @@
                           "type": "integer",
                           "nullable": true
                         },
+                        "dailyRequests": {
+                          "type": "integer",
+                          "nullable": true
+                        },
                         "dailyAiRequests": {
                           "type": "integer",
                           "nullable": true
@@ -19645,6 +20568,9 @@
                       "type": "object",
                       "properties": {
                         "monthly": {
+                          "type": "integer"
+                        },
+                        "daily": {
                           "type": "integer"
                         },
                         "dailyAi": {
@@ -19659,11 +20585,19 @@
                           "type": "integer",
                           "nullable": true
                         },
+                        "daily": {
+                          "type": "integer",
+                          "nullable": true
+                        },
                         "dailyAi": {
                           "type": "integer",
                           "nullable": true
                         }
                       }
+                    },
+                    "dailyResetsAt": {
+                      "type": "string",
+                      "format": "date-time"
                     },
                     "resetsAt": {
                       "type": "string",
@@ -19761,7 +20695,7 @@
       "get": {
         "operationId": "get_usage_tier",
         "summary": "Get tier and quota",
-        "description": "Lightweight current-tier snapshot for status badges and quota meters \u2014 plan limits (monthly requests, daily AI requests, dynamic-pricing listings), the amount used, the amount remaining, and the next reset. `null` limits mean unlimited on that dimension.",
+        "description": "Lightweight current-tier snapshot for status badges and quota meters \u2014 plan limits (daily requests, monthly requests, daily AI requests, dynamic-pricing listings), the amount used, the amount remaining, and the next reset. Two request quotas are reported and they reset at different times: `dailyRequests` is the daily circuit breaker that stops runaway client loops (resets at `dailyResetsAt`, the next UTC midnight) and `monthlyRequests` is the billing quota (resets at `resetsAt`). Exceeding the daily cap returns 429 `daily_limit_exceeded`; exceeding the monthly one returns 429 `rate_limit_exceeded`. `null` limits mean unlimited on that dimension.",
         "tags": [
           "Billing"
         ],
@@ -19783,6 +20717,10 @@
                           "type": "integer",
                           "nullable": true
                         },
+                        "dailyRequests": {
+                          "type": "integer",
+                          "nullable": true
+                        },
                         "dailyAiRequests": {
                           "type": "integer",
                           "nullable": true
@@ -19797,6 +20735,9 @@
                       "type": "object",
                       "properties": {
                         "monthly": {
+                          "type": "integer"
+                        },
+                        "daily": {
                           "type": "integer"
                         },
                         "dailyAi": {
@@ -19814,6 +20755,10 @@
                           "type": "integer",
                           "nullable": true
                         },
+                        "daily": {
+                          "type": "integer",
+                          "nullable": true
+                        },
                         "dailyAi": {
                           "type": "integer",
                           "nullable": true
@@ -19823,6 +20768,10 @@
                           "nullable": true
                         }
                       }
+                    },
+                    "dailyResetsAt": {
+                      "type": "string",
+                      "format": "date-time"
                     },
                     "resetsAt": {
                       "type": "string",

@@ -8,6 +8,7 @@
 | **limits** | [**GetUsageSummary200ResponseLimits**](GetUsageSummary200ResponseLimits.md) |  | [optional] |
 | **used** | [**GetUsageSummary200ResponseUsed**](GetUsageSummary200ResponseUsed.md) |  | [optional] |
 | **remaining** | [**GetUsageSummary200ResponseRemaining**](GetUsageSummary200ResponseRemaining.md) |  | [optional] |
+| **daily_resets_at** | **Time** |  | [optional] |
 | **resets_at** | **Time** |  | [optional] |
 | **breakdown** | [**Array&lt;GetUsageSummary200ResponseBreakdownInner&gt;**](GetUsageSummary200ResponseBreakdownInner.md) |  | [optional] |
 | **timeline** | [**Array&lt;GetUsageSummary200ResponseTimelineInner&gt;**](GetUsageSummary200ResponseTimelineInner.md) |  | [optional] |
@@ -25,6 +26,7 @@ instance = Repull::GetUsageSummary200Response.new(
   limits: null,
   used: null,
   remaining: null,
+  daily_resets_at: null,
   resets_at: null,
   breakdown: null,
   timeline: null,

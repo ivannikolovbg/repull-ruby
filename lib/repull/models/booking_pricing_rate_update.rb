@@ -14,25 +14,29 @@ require 'date'
 require 'time'
 
 module Repull
-  # A single (room, rate-plan, date-range) update pushed to Booking.com via the rates API.
+  # A single (room, rate-plan, date-range) price update. The amount is written against the party size in `occupancy`, for every night from `dateRange.start` to `dateRange.end` inclusive.
   class BookingPricingRateUpdate < ApiModelBase
-    # Booking.com room ID for the rate plan. Comes from `listings_booking_rooms` mapping.
+    # Booking.com room id the rate plan sells. `GET /v1/channels/booking/properties/{id}/rooms` lists them.
     attr_accessor :room_id
 
-    # Booking.com rate-plan ID.
+    # Booking.com rate-plan id.
     attr_accessor :rate_id
 
     attr_accessor :date_range
 
+    # Nightly amount, in `currency`, for a party of `occupancy`.
     attr_accessor :price
 
+    # Currency the rate plan is sold in.
     attr_accessor :currency
 
+    # Optional single-occupancy amount, written alongside the main amount.
     attr_accessor :single_price
 
+    # The party size this rate plan prices — a key, not a preference. Booking.com stores the amount against this number: above the rate plan's own maximum it declines the price in silence and the night keeps its old value; below it, it answers 400 and the old price stays published. Omit it and Repull resolves it from Booking.com's own data for this (room, rate plan) and echoes the value and its source back in `occupancy[]`. When it cannot be resolved the write is refused with `422` naming `updates[N].occupancy` — a price is never sent at a guessed party size.
     attr_accessor :occupancy
 
-    # Rooms to sell for the date range. Set to `0` to stop-sell this room/rate on the rates endpoint (Booking's dedicated `<closed>` stop-sell flag lives on the availability endpoint — see `BookingAvailabilityUpdate.closed`).
+    # Refused. A rate update carries prices only; sending this returns `422 inventory_not_in_rate_update` naming `updates[N].roomsToSell`. Write inventory with `type: \"availability\"` and `availableRooms` (plus `closed: true` for a stop-sell).
     attr_accessor :rooms_to_sell
 
     attr_accessor :restrictions
@@ -170,8 +174,16 @@ module Repull
         invalid_properties.push('invalid value for "price", price cannot be nil.')
       end
 
+      if @price < 0
+        invalid_properties.push('invalid value for "price", must be greater than or equal to 0.')
+      end
+
       if @currency.nil?
         invalid_properties.push('invalid value for "currency", currency cannot be nil.')
+      end
+
+      if !@occupancy.nil? && @occupancy < 1
+        invalid_properties.push('invalid value for "occupancy", must be greater than or equal to 1.')
       end
 
       invalid_properties
@@ -185,7 +197,9 @@ module Repull
       return false if @rate_id.nil?
       return false if @date_range.nil?
       return false if @price.nil?
+      return false if @price < 0
       return false if @currency.nil?
+      return false if !@occupancy.nil? && @occupancy < 1
       true
     end
 
@@ -226,6 +240,10 @@ module Repull
         fail ArgumentError, 'price cannot be nil'
       end
 
+      if price < 0
+        fail ArgumentError, 'invalid value for "price", must be greater than or equal to 0.'
+      end
+
       @price = price
     end
 
@@ -237,6 +255,16 @@ module Repull
       end
 
       @currency = currency
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] occupancy Value to be assigned
+    def occupancy=(occupancy)
+      if !occupancy.nil? && occupancy < 1
+        fail ArgumentError, 'invalid value for "occupancy", must be greater than or equal to 1.'
+      end
+
+      @occupancy = occupancy
     end
 
     # Checks equality by comparing each attribute.

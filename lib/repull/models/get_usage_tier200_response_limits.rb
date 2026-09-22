@@ -17,6 +17,8 @@ module Repull
   class GetUsageTier200ResponseLimits < ApiModelBase
     attr_accessor :monthly_requests
 
+    attr_accessor :daily_requests
+
     attr_accessor :daily_ai_requests
 
     attr_accessor :dynamic_pricing_listings
@@ -25,6 +27,7 @@ module Repull
     def self.attribute_map
       {
         :'monthly_requests' => :'monthlyRequests',
+        :'daily_requests' => :'dailyRequests',
         :'daily_ai_requests' => :'dailyAiRequests',
         :'dynamic_pricing_listings' => :'dynamicPricingListings'
       }
@@ -44,6 +47,7 @@ module Repull
     def self.openapi_types
       {
         :'monthly_requests' => :'Integer',
+        :'daily_requests' => :'Integer',
         :'daily_ai_requests' => :'Integer',
         :'dynamic_pricing_listings' => :'Integer'
       }
@@ -53,6 +57,7 @@ module Repull
     def self.openapi_nullable
       Set.new([
         :'monthly_requests',
+        :'daily_requests',
         :'daily_ai_requests',
         :'dynamic_pricing_listings'
       ])
@@ -76,6 +81,10 @@ module Repull
 
       if attributes.key?(:'monthly_requests')
         self.monthly_requests = attributes[:'monthly_requests']
+      end
+
+      if attributes.key?(:'daily_requests')
+        self.daily_requests = attributes[:'daily_requests']
       end
 
       if attributes.key?(:'daily_ai_requests')
@@ -108,6 +117,7 @@ module Repull
       return true if self.equal?(o)
       self.class == o.class &&
           monthly_requests == o.monthly_requests &&
+          daily_requests == o.daily_requests &&
           daily_ai_requests == o.daily_ai_requests &&
           dynamic_pricing_listings == o.dynamic_pricing_listings
     end
@@ -121,7 +131,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [monthly_requests, daily_ai_requests, dynamic_pricing_listings].hash
+      [monthly_requests, daily_requests, daily_ai_requests, dynamic_pricing_listings].hash
     end
 
     # Builds the object from hash

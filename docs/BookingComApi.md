@@ -517,7 +517,7 @@ nil (empty response body)
 
 Get Booking.com pricing for a listing
 
-Resolves the Vanio listing ID to its Booking.com `hotel_id` (via the `listings_booking` mapping owned by the authenticated workspace), then proxies Booking's `getRoomRateAvailability` for the requested window. Pricing on Booking is per-room/per-rate-plan, so `room_id` and `room_level` flow through query params unchanged.  Mirrors the per-channel `/listings/{id}/pricing` shape used by Airbnb so SDK consumers can carry a Vanio listing ID across channels.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+Resolves the Repull listing id to its Booking.com `hotel_id` (via the room mapping the Connect flow records for the authenticated workspace), then proxies Booking's `getRoomRateAvailability` for the requested window. Pricing on Booking is per-room/per-rate-plan, so `room_id` and `room_level` flow through query params unchanged.  Mirrors the per-channel `/listings/{id}/pricing` shape used by Airbnb so SDK consumers can carry a Repull listing id across channels. `id` is a Repull listing id, never a Booking.com hotel id — the hotel-id surface is `/v1/channels/booking/availability`.  A listing can be published under several Booking.com properties. GET uses the oldest and reports the rest in `otherHotelIds`; PUT refuses with `409 ambiguous_booking_mapping` rather than push rates into a property it guessed at. `?hotel_id=` names the property explicitly for either.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -531,12 +531,13 @@ Repull.configure do |config|
 end
 
 api_instance = Repull::BookingComApi.new
-id = 56 # Integer | Vanio listing ID — resolved to a Booking.com hotel ID via the workspace mapping.
+id = 56 # Integer | Repull listing id — NOT a Booking.com hotel id. Resolved to a Booking.com hotel id via the workspace mapping.
 opts = {
   start_date: Date.parse('2013-10-20'), # Date | 
   number_of_days: 56, # Integer | 
   room_id: 'room_id_example', # String | 
-  room_level: true # Boolean | When true, returns room-level (vs rate-plan-level) availability.
+  room_level: true, # Boolean | When true, returns room-level (vs rate-plan-level) availability.
+  hotel_id: 'hotel_id_example' # String | Booking.com hotel id, when this listing is published under more than one property. Omit it and a read uses the oldest mapping (reporting the rest in `otherHotelIds`), while a write is refused with `409 ambiguous_booking_mapping` rather than guess. `GET /v1/channels/booking/properties` lists the valid ids.
 }
 
 begin
@@ -570,11 +571,12 @@ end
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **id** | **Integer** | Vanio listing ID — resolved to a Booking.com hotel ID via the workspace mapping. |  |
+| **id** | **Integer** | Repull listing id — NOT a Booking.com hotel id. Resolved to a Booking.com hotel id via the workspace mapping. |  |
 | **start_date** | **Date** |  | [optional] |
 | **number_of_days** | **Integer** |  | [optional] |
 | **room_id** | **String** |  | [optional] |
 | **room_level** | **Boolean** | When true, returns room-level (vs rate-plan-level) availability. | [optional] |
+| **hotel_id** | **String** | Booking.com hotel id, when this listing is published under more than one property. Omit it and a read uses the oldest mapping (reporting the rest in &#x60;otherHotelIds&#x60;), while a write is refused with &#x60;409 ambiguous_booking_mapping&#x60; rather than guess. &#x60;GET /v1/channels/booking/properties&#x60; lists the valid ids. | [optional] |
 
 ### Return type
 
@@ -596,7 +598,7 @@ end
 
 Get Booking.com connection for a listing
 
-Return the Booking.com connection record(s) for a Vanio listing — the linked Booking hotel id, sync flags, markup, sync category, and suspension state. Scoped to the authenticated workspace; a listing with no Booking.com connection returns 404.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+Return the Booking.com connection record(s) for a Repull listing — the linked Booking hotel id, sync flags, markup, sync category, suspension state, and the Booking room the mapping runs through.  `id` is a **Repull listing id**, not a Booking.com hotel id, despite the `properties` segment. (The hotel-id surface is `/v1/channels/booking/availability`.) The mapping is read from wherever the Connect flow recorded it — `listings_booking_rooms` for anything mapped through `POST /v1/connect/booking/map-rooms`, which is essentially every live mapping.  An ARRAY, because one listing can be published under several Booking.com properties at once; `mappedVia` says which record carries each mapping. A listing with no Booking.com mapping returns 404, and the message says which id space the path takes.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -610,7 +612,7 @@ Repull.configure do |config|
 end
 
 api_instance = Repull::BookingComApi.new
-id = 56 # Integer | Vanio listing ID.
+id = 56 # Integer | Repull listing id — NOT a Booking.com hotel id.
 
 begin
   # Get Booking.com connection for a listing
@@ -642,7 +644,7 @@ end
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **id** | **Integer** | Vanio listing ID. |  |
+| **id** | **Integer** | Repull listing id — NOT a Booking.com hotel id. |  |
 
 ### Return type
 
@@ -730,7 +732,7 @@ This endpoint does not need any parameter.
 
 List Booking.com properties
 
-List Booking.com hotels claimed by this workspace. Each row includes the Booking-side hotel id and the connected room types.  Inactive listings are left out; they keep syncing and reappear once activated. Use `GET /v1/listings?status=inactive` to find them.
+List every Booking.com property this workspace holds. Each property is returned ONCE, with the Repull listings mapped under it.  A Booking.com property is a building; its rooms are what guests book, and each room is mapped to one Repull listing — so one property routinely carries many listings. `listings[].roomBookingId` is the Booking.com room id an ARI write takes.  A property whose rooms are not mapped yet is still listed, with `mappingStatus: \"unmapped\"` and an empty `listings` array. That is a real mid-onboarding state, not an error: finish `POST /v1/connect/booking/map-rooms` and the listings appear. Such a property used to be dropped silently, which made a mapped-but-unreadable workspace indistinguishable from one with no Booking connection at all.  Inactive listings are left out of `listings`; they keep syncing and reappear once activated. Use `GET /v1/listings?status=inactive` to find them.
 
 ### Examples
 
@@ -792,11 +794,11 @@ This endpoint does not need any parameter.
 
 ## list_booking_property_rooms
 
-> <BookingRoomsRatesResponse> list_booking_property_rooms(id)
+> <BookingRoomsRatesResponse> list_booking_property_rooms(id, opts)
 
 List Booking.com rooms + rate-plan ids for a listing
 
-Return every Booking.com room and its rate plans for a listing, each with the `roomId` / `rateId` needed to assemble a restriction write via `PUT /v1/channels/booking/availability`.  `id` is a Vanio listing id — resolved to the Booking `hotel_id` via the workspace mapping (a listing with no active Booking.com mapping returns 404). Sourced from Booking's B.XML roomrates feed, which returns rooms and rate plans together (the rooms-unit feed alone omits rate-plan ids). This is the API-key surface for the room/rate ids that were previously only reachable inside the hosted Connect room-mapping flow.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+Return every Booking.com room and its rate plans for a listing, each with the `roomId` / `rateId` needed to assemble a restriction write via `PUT /v1/channels/booking/availability`.  `id` is a **Repull listing id**, not a Booking.com hotel id, despite the `properties` segment — resolved to the Booking `hotel_id` through the workspace mapping, read from wherever the Connect flow recorded it (`listings_booking_rooms` for anything mapped through `POST /v1/connect/booking/map-rooms`). A listing with no active Booking.com mapping returns 404, and the message says which id space the path takes. When the listing is published under several properties the oldest is used, the rest come back in `otherHotelIds`, and `?hotel_id=` names a different one. Sourced from Booking's B.XML roomrates feed, which returns rooms and rate plans together (the rooms-unit feed alone omits rate-plan ids). This is the API-key surface for the room/rate ids that were previously only reachable inside the hosted Connect room-mapping flow.  `source` says where the answer came from. `booking` means it was read live just now. If Booking.com returns nothing usable for the property, the rooms and rate plans recorded at the last import are served instead, `source` is `mirror`, and `mirrorReason` names what went wrong live — the ids are Booking.com's own and can be written against, but they can be stale, and `maxPersons`, `policy`, `policyId`, `pricingType` and `isChildRate` come back `null` because only the live feed states them. `rooms` is empty only when Booking.com and the last import both have nothing; a read that failed is an error, never an empty list.  Each rate plan carries `maxPersons` — the party size that rate plan prices, which is the `occupancy` a rate amount must be written at. Each room carries `maxAdults`, Booking.com's capacity for the room, which is what a rate write falls back to when the rate plan states no `maxPersons`.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -810,11 +812,14 @@ Repull.configure do |config|
 end
 
 api_instance = Repull::BookingComApi.new
-id = 56 # Integer | Vanio listing id — resolved to a Booking.com hotel id via the workspace mapping.
+id = 56 # Integer | Repull listing id — NOT a Booking.com hotel id. Resolved to a Booking.com hotel id via the workspace mapping.
+opts = {
+  hotel_id: 'hotel_id_example' # String | Booking.com hotel id, when this listing is published under more than one property. Omit it and a read uses the oldest mapping (reporting the rest in `otherHotelIds`), while a write is refused with `409 ambiguous_booking_mapping` rather than guess. `GET /v1/channels/booking/properties` lists the valid ids.
+}
 
 begin
   # List Booking.com rooms + rate-plan ids for a listing
-  result = api_instance.list_booking_property_rooms(id)
+  result = api_instance.list_booking_property_rooms(id, opts)
   p result
 rescue Repull::ApiError => e
   puts "Error when calling BookingComApi->list_booking_property_rooms: #{e}"
@@ -825,12 +830,12 @@ end
 
 This returns an Array which contains the response data, status code and headers.
 
-> <Array(<BookingRoomsRatesResponse>, Integer, Hash)> list_booking_property_rooms_with_http_info(id)
+> <Array(<BookingRoomsRatesResponse>, Integer, Hash)> list_booking_property_rooms_with_http_info(id, opts)
 
 ```ruby
 begin
   # List Booking.com rooms + rate-plan ids for a listing
-  data, status_code, headers = api_instance.list_booking_property_rooms_with_http_info(id)
+  data, status_code, headers = api_instance.list_booking_property_rooms_with_http_info(id, opts)
   p status_code # => 2xx
   p headers # => { ... }
   p data # => <BookingRoomsRatesResponse>
@@ -843,7 +848,8 @@ end
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **id** | **Integer** | Vanio listing id — resolved to a Booking.com hotel id via the workspace mapping. |  |
+| **id** | **Integer** | Repull listing id — NOT a Booking.com hotel id. Resolved to a Booking.com hotel id via the workspace mapping. |  |
+| **hotel_id** | **String** | Booking.com hotel id, when this listing is published under more than one property. Omit it and a read uses the oldest mapping (reporting the rest in &#x60;otherHotelIds&#x60;), while a write is refused with &#x60;409 ambiguous_booking_mapping&#x60; rather than guess. &#x60;GET /v1/channels/booking/properties&#x60; lists the valid ids. | [optional] |
 
 ### Return type
 
@@ -1206,11 +1212,11 @@ nil (empty response body)
 
 ## update_booking_availability
 
-> update_booking_availability(booking_availability_update_request)
+> <BookingPricingUpdateResponse> update_booking_availability(booking_availability_update_request)
 
 Update Booking.com rates/availability
 
-Push availability, rates, and the full restriction set to Booking.com. `type` selects the write path:  - `rates` — nightly price + length-of-stay / arrival restrictions (min/max stay, closed-to-arrival, closed-to-departure, advance-reservation window). - `availability` — inventory (`availableRooms`), the dedicated stop-sell flag (`closed`), and the same restriction set. - `derived-pricing` — occupancy-derived pricing rules.  Restrictions never leak across channels — this endpoint writes only to Booking.com. Errors from upstream surface as `booking_error`.  `property_id` must be a Booking.com property connected to this workspace (`GET /v1/channels/booking/properties` lists them). Any other id — including one connected to a different workspace — returns `404 not_found`, the same answer as an id that does not exist.  Returns `403 listing_inactive` when any listing mapped to the Booking.com property is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+Write rates, availability and restrictions to a Booking.com property. `type` selects the write:  - `rates` — nightly prices, plus any length-of-stay / arrival restrictions sent with them. - `availability` — inventory (`availableRooms`), the stop-sell flag (`closed`), and restrictions. Omit `availableRooms` and `closed` for a restriction-only write. - `derived-pricing` — occupancy-derived pricing rules.  **Dates are inclusive at both ends.** `{ \"start\": \"2026-11-04\", \"end\": \"2026-11-04\" }` is exactly one night.  **A rate amount needs an occupancy.** Booking.com stores the amount against the party size the rate plan prices: sent above that number it declines the price in silence, sent below it it answers 400. Send `occupancy`, or omit it and Repull resolves it from Booking.com's own data and echoes the value and its `source` back in `occupancy[]`. If it cannot be resolved the write is refused with `422` naming `updates[N].occupancy`.  **Restrictions are sent in the same call, on their own wire.** A price and a minimum stay are two writes on Booking.com's side. Send them together and the response reports each separately: `price` and `restrictions` carry their own state, their own read-back, and — when refused — Booking.com's own reason. The top-level `applied` is `partial` when they disagree, so a price that landed is never reported as a failure. `minStay`, `maxStay`, `minStayArrival`, `maxStayArrival`, `closedToArrival` and `closedToDeparture` are written; `exactStayArrival`, `minAdvanceRes` and `maxAdvanceRes` are refused with `422 restriction_not_supported` because Booking.com's notification has no element for them — set those on the rate plan in the Extranet. Nothing you send is ever silently ignored.  **Inventory is not part of a rate update.** `roomsToSell` on a `rates` update returns `422 inventory_not_in_rate_update`; send it as `type: \"availability\"` instead.  **The response says what is known.** Booking.com acknowledges a write with no per-date status, so the nights are read back — prices and restrictions out of the same read: `applied` is `verified`, `mismatch`, `partial`, `rejected` or `unverified` (send `verify: false` to skip the read-back). A bare acknowledgement is never reported as \"all updates applied\". Booking.com stores a 1-night minimum as no minimum, so `minStay: 1` reads back as `0` and still counts as applied.  Restrictions never leak across channels — this endpoint writes only to Booking.com. When Booking.com refuses a write outright, their own reason comes back as `422 booking_rejected` with `booking_ruid`; a genuine outage on their side is `502 booking_error`.  `property_id` must be a Booking.com property connected to this workspace (`GET /v1/channels/booking/properties` lists them). Any other id — including one connected to a different workspace — returns `404 not_found`, the same answer as an id that does not exist.  Returns `403 listing_inactive` when any listing mapped to the Booking.com property is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -1224,11 +1230,12 @@ Repull.configure do |config|
 end
 
 api_instance = Repull::BookingComApi.new
-booking_availability_update_request = Repull::BookingAvailabilityUpdateRequest.new({type: 'type_example', property_id: nil, updates: [Repull::BookingAvailabilityUpdate.new({room_id: 'room_id_example', rate_id: 'rate_id_example', date_range: Repull::BookingPricingRateUpdateDateRange.new({start: Date.today, _end: Date.today}), available_rooms: 37})]}) # BookingAvailabilityUpdateRequest | 
+booking_availability_update_request = Repull::BookingAvailabilityUpdateRequest.new({type: 'type_example', property_id: nil, updates: [Repull::BookingAvailabilityUpdate.new({room_id: 'room_id_example', rate_id: 'rate_id_example', date_range: Repull::BookingAvailabilityUpdateDateRange.new({start: Date.today, _end: Date.today})})]}) # BookingAvailabilityUpdateRequest | 
 
 begin
   # Update Booking.com rates/availability
-  api_instance.update_booking_availability(booking_availability_update_request)
+  result = api_instance.update_booking_availability(booking_availability_update_request)
+  p result
 rescue Repull::ApiError => e
   puts "Error when calling BookingComApi->update_booking_availability: #{e}"
 end
@@ -1236,9 +1243,9 @@ end
 
 #### Using the update_booking_availability_with_http_info variant
 
-This returns an Array which contains the response data (`nil` in this case), status code and headers.
+This returns an Array which contains the response data, status code and headers.
 
-> <Array(nil, Integer, Hash)> update_booking_availability_with_http_info(booking_availability_update_request)
+> <Array(<BookingPricingUpdateResponse>, Integer, Hash)> update_booking_availability_with_http_info(booking_availability_update_request)
 
 ```ruby
 begin
@@ -1246,7 +1253,7 @@ begin
   data, status_code, headers = api_instance.update_booking_availability_with_http_info(booking_availability_update_request)
   p status_code # => 2xx
   p headers # => { ... }
-  p data # => nil
+  p data # => <BookingPricingUpdateResponse>
 rescue Repull::ApiError => e
   puts "Error when calling BookingComApi->update_booking_availability_with_http_info: #{e}"
 end
@@ -1260,7 +1267,7 @@ end
 
 ### Return type
 
-nil (empty response body)
+[**BookingPricingUpdateResponse**](BookingPricingUpdateResponse.md)
 
 ### Authorization
 
@@ -1407,11 +1414,11 @@ nil (empty response body)
 
 ## update_booking_listing_pricing
 
-> <BookingPricingUpdateResponse> update_booking_listing_pricing(id, booking_pricing_update_request)
+> <BookingPricingUpdateResponse> update_booking_listing_pricing(id, booking_pricing_update_request, opts)
 
 Update Booking.com pricing for a listing
 
-Pushes one or more rate updates to Booking.com via `updateRates`. Each update needs `roomId` + `rateId` + `dateRange` + `price` + `currency`. Field-level validation runs up front so callers don't have to parse Booking's XML error envelope to discover a missing `roomId`.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+Writes nightly prices for a listing's Booking.com room + rate plan. Each update needs `roomId` + `rateId` + `dateRange` + `price` + `currency`; `dateRange` is inclusive at both ends, so `start` equal to `end` writes exactly one night.  **Occupancy.** Booking.com stores a rate amount against the party size the rate plan prices. Send `occupancy` and that is what is used; omit it and it is resolved from Booking.com's own data for that (room, rate plan) and echoed back in `occupancy[]` with its `source`. When it cannot be resolved the write is refused with `422` naming `updates[N].occupancy` — a price is never sent at a guessed party size, because Booking.com declines such an amount without saying so.  **Inventory is a separate write.** `roomsToSell` on a rate update returns `422 inventory_not_in_rate_update`; use `PUT /v1/channels/booking/availability` with `type: \"availability\"`.  **Restrictions ride along, on their own wire.** Send `restrictions` with the price and Booking.com receives two writes; the response reports each separately in `price` and `restrictions`, each with its own state, read-back and — when refused — Booking.com's own reason. `minStay`, `maxStay`, `minStayArrival`, `maxStayArrival`, `closedToArrival` and `closedToDeparture` are written; `exactStayArrival`, `minAdvanceRes` and `maxAdvanceRes` are refused with `422 restriction_not_supported` (Booking.com's notification has no element for them — set those on the rate plan in the Extranet). Nothing you send is silently ignored.  **The response says what is known.** Booking.com acknowledges a write without per-date status, so the affected nights are read back — prices and restrictions out of the same read — and `applied` reports `verified`, `mismatch`, `partial`, `rejected` or `unverified`. `partial` means one half landed and the other did not, which is never reported as a total failure. Send `verify: false` to skip the read-back; `applied` is then `unverified`. Booking.com stores a 1-night minimum as no minimum, so `minStay: 1` reads back as `0` and still counts as applied.  `id` is a Repull listing id. When it is published under several Booking.com properties this returns `409 ambiguous_booking_mapping` and pushes nothing — name the property with `?hotel_id=` instead.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -1425,12 +1432,15 @@ Repull.configure do |config|
 end
 
 api_instance = Repull::BookingComApi.new
-id = 56 # Integer | 
-booking_pricing_update_request = Repull::BookingPricingUpdateRequest.new({updates: [Repull::BookingPricingRateUpdate.new({room_id: 'room_id_example', rate_id: 'rate_id_example', date_range: Repull::BookingPricingRateUpdateDateRange.new({start: Date.today, _end: Date.today}), price: 3.56, currency: 'USD'})]}) # BookingPricingUpdateRequest | 
+id = 56 # Integer | Repull listing id — NOT a Booking.com hotel id.
+booking_pricing_update_request = Repull::BookingPricingUpdateRequest.new({updates: [Repull::BookingPricingRateUpdate.new({room_id: 'room_id_example', rate_id: 'rate_id_example', date_range: Repull::BookingPricingRateUpdateDateRange.new({start: Date.today, _end: Date.today}), price: 3.56, currency: 'EUR'})]}) # BookingPricingUpdateRequest | 
+opts = {
+  hotel_id: 'hotel_id_example' # String | Booking.com hotel id, when this listing is published under more than one property. Omit it and a read uses the oldest mapping (reporting the rest in `otherHotelIds`), while a write is refused with `409 ambiguous_booking_mapping` rather than guess. `GET /v1/channels/booking/properties` lists the valid ids.
+}
 
 begin
   # Update Booking.com pricing for a listing
-  result = api_instance.update_booking_listing_pricing(id, booking_pricing_update_request)
+  result = api_instance.update_booking_listing_pricing(id, booking_pricing_update_request, opts)
   p result
 rescue Repull::ApiError => e
   puts "Error when calling BookingComApi->update_booking_listing_pricing: #{e}"
@@ -1441,12 +1451,12 @@ end
 
 This returns an Array which contains the response data, status code and headers.
 
-> <Array(<BookingPricingUpdateResponse>, Integer, Hash)> update_booking_listing_pricing_with_http_info(id, booking_pricing_update_request)
+> <Array(<BookingPricingUpdateResponse>, Integer, Hash)> update_booking_listing_pricing_with_http_info(id, booking_pricing_update_request, opts)
 
 ```ruby
 begin
   # Update Booking.com pricing for a listing
-  data, status_code, headers = api_instance.update_booking_listing_pricing_with_http_info(id, booking_pricing_update_request)
+  data, status_code, headers = api_instance.update_booking_listing_pricing_with_http_info(id, booking_pricing_update_request, opts)
   p status_code # => 2xx
   p headers # => { ... }
   p data # => <BookingPricingUpdateResponse>
@@ -1459,8 +1469,9 @@ end
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **id** | **Integer** |  |  |
+| **id** | **Integer** | Repull listing id — NOT a Booking.com hotel id. |  |
 | **booking_pricing_update_request** | [**BookingPricingUpdateRequest**](BookingPricingUpdateRequest.md) |  |  |
+| **hotel_id** | **String** | Booking.com hotel id, when this listing is published under more than one property. Omit it and a read uses the oldest mapping (reporting the rest in &#x60;otherHotelIds&#x60;), while a write is refused with &#x60;409 ambiguous_booking_mapping&#x60; rather than guess. &#x60;GET /v1/channels/booking/properties&#x60; lists the valid ids. | [optional] |
 
 ### Return type
 

@@ -32,7 +32,8 @@ Repull::WebhookEvent.openapi_one_of
 #   :'ReservationMessageReceivedEvent',
 #   :'ReservationUpdatedEvent',
 #   :'ReviewCreatedEvent',
-#   :'ReviewRespondedEvent'
+#   :'ReviewRespondedEvent',
+#   :'UsageQuotaWarningEvent'
 # ]
 ```
 
@@ -46,7 +47,7 @@ Returns the discriminator's property name.
 require 'repull'
 
 Repull::WebhookEvent.openapi_discriminator_name
-# => :'type'
+# => :'event'
 ```
 
 ### `openapi_discriminator_name`
@@ -79,7 +80,8 @@ Repull::WebhookEvent.openapi_discriminator_mapping
 #   :'reservation.message.received' => :'ReservationMessageReceivedEvent',
 #   :'reservation.updated' => :'ReservationUpdatedEvent',
 #   :'review.created' => :'ReviewCreatedEvent',
-#   :'review.responded' => :'ReviewRespondedEvent'
+#   :'review.responded' => :'ReviewRespondedEvent',
+#   :'usage.quota.warning' => :'UsageQuotaWarningEvent'
 # }
 ```
 
@@ -126,5 +128,6 @@ Repull::WebhookEvent.build(data_that_doesnt_match)
 - `ReservationUpdatedEvent`
 - `ReviewCreatedEvent`
 - `ReviewRespondedEvent`
+- `UsageQuotaWarningEvent`
 - `nil` (if no type matches)
 
