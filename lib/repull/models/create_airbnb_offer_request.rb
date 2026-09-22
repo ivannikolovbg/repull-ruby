@@ -15,14 +15,28 @@ require 'time'
 
 module Repull
   class CreateAirbnbOfferRequest < ApiModelBase
-    # Which kind of offer to create.
+    # What to create.
     attr_accessor :type
 
-    # Airbnb thread id. Required when `type` is `preapproval`.
+    # Airbnb message-thread id the offer answers. (`threadId` is accepted too.)
     attr_accessor :thread_id
 
-    # For `preapproval` — whether to block instant booking.
+    # Pre-approval only: require the guest to book through the pre-approval rather than Instant Book. (`blockInstantBooking` is accepted too.)
     attr_accessor :block_instant_booking
+
+    # Offer only (required): the AIRBNB listing id, as a string.
+    attr_accessor :listing_id
+
+    # Offer only (required): first night.
+    attr_accessor :start_date
+
+    # Offer only (required).
+    attr_accessor :nights
+
+    # Offer only (required): total for the stay, in the listing’s Airbnb currency.
+    attr_accessor :total_price
+
+    attr_accessor :guest_details
 
     class EnumAttributeValidator
       attr_reader :datatype
@@ -50,8 +64,13 @@ module Repull
     def self.attribute_map
       {
         :'type' => :'type',
-        :'thread_id' => :'threadId',
-        :'block_instant_booking' => :'blockInstantBooking'
+        :'thread_id' => :'thread_id',
+        :'block_instant_booking' => :'block_instant_booking',
+        :'listing_id' => :'listing_id',
+        :'start_date' => :'start_date',
+        :'nights' => :'nights',
+        :'total_price' => :'total_price',
+        :'guest_details' => :'guest_details'
       }
     end
 
@@ -70,7 +89,12 @@ module Repull
       {
         :'type' => :'String',
         :'thread_id' => :'String',
-        :'block_instant_booking' => :'Boolean'
+        :'block_instant_booking' => :'Boolean',
+        :'listing_id' => :'String',
+        :'start_date' => :'Date',
+        :'nights' => :'Integer',
+        :'total_price' => :'Float',
+        :'guest_details' => :'CreateAirbnbOfferRequestGuestDetails'
       }
     end
 
@@ -104,12 +128,34 @@ module Repull
 
       if attributes.key?(:'thread_id')
         self.thread_id = attributes[:'thread_id']
+      else
+        self.thread_id = nil
       end
 
       if attributes.key?(:'block_instant_booking')
         self.block_instant_booking = attributes[:'block_instant_booking']
       else
         self.block_instant_booking = false
+      end
+
+      if attributes.key?(:'listing_id')
+        self.listing_id = attributes[:'listing_id']
+      end
+
+      if attributes.key?(:'start_date')
+        self.start_date = attributes[:'start_date']
+      end
+
+      if attributes.key?(:'nights')
+        self.nights = attributes[:'nights']
+      end
+
+      if attributes.key?(:'total_price')
+        self.total_price = attributes[:'total_price']
+      end
+
+      if attributes.key?(:'guest_details')
+        self.guest_details = attributes[:'guest_details']
       end
     end
 
@@ -122,6 +168,14 @@ module Repull
         invalid_properties.push('invalid value for "type", type cannot be nil.')
       end
 
+      if @thread_id.nil?
+        invalid_properties.push('invalid value for "thread_id", thread_id cannot be nil.')
+      end
+
+      if !@nights.nil? && @nights < 1
+        invalid_properties.push('invalid value for "nights", must be greater than or equal to 1.')
+      end
+
       invalid_properties
     end
 
@@ -132,6 +186,8 @@ module Repull
       return false if @type.nil?
       type_validator = EnumAttributeValidator.new('String', ["offer", "preapproval"])
       return false unless type_validator.valid?(@type)
+      return false if @thread_id.nil?
+      return false if !@nights.nil? && @nights < 1
       true
     end
 
@@ -145,6 +201,30 @@ module Repull
       @type = type
     end
 
+    # Custom attribute writer method with validation
+    # @param [Object] thread_id Value to be assigned
+    def thread_id=(thread_id)
+      if thread_id.nil?
+        fail ArgumentError, 'thread_id cannot be nil'
+      end
+
+      @thread_id = thread_id
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] nights Value to be assigned
+    def nights=(nights)
+      if nights.nil?
+        fail ArgumentError, 'nights cannot be nil'
+      end
+
+      if nights < 1
+        fail ArgumentError, 'invalid value for "nights", must be greater than or equal to 1.'
+      end
+
+      @nights = nights
+    end
+
     # Checks equality by comparing each attribute.
     # @param [Object] Object to be compared
     def ==(o)
@@ -152,7 +232,12 @@ module Repull
       self.class == o.class &&
           type == o.type &&
           thread_id == o.thread_id &&
-          block_instant_booking == o.block_instant_booking
+          block_instant_booking == o.block_instant_booking &&
+          listing_id == o.listing_id &&
+          start_date == o.start_date &&
+          nights == o.nights &&
+          total_price == o.total_price &&
+          guest_details == o.guest_details
     end
 
     # @see the `==` method
@@ -164,7 +249,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [type, thread_id, block_instant_booking].hash
+      [type, thread_id, block_instant_booking, listing_id, start_date, nights, total_price, guest_details].hash
     end
 
     # Builds the object from hash

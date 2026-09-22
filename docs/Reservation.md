@@ -11,7 +11,9 @@
 | **check_out** | **Date** |  |  |
 | **check_in_time** | **String** | Local check-in time for this stay, &#x60;HH:MM&#x60; on a 24-hour clock in the **property&#39;s own timezone** — not UTC. Usually inherited from the listing policy, overridden per reservation where an early check-in was agreed. &#x60;null&#x60; when unknown. This is the same field &#x60;PATCH /v1/reservations/{id}&#x60; writes. | [optional] |
 | **check_out_time** | **String** | Local check-out time for this stay, &#x60;HH:MM&#x60; on a 24-hour clock in the property&#39;s own timezone. Pair with &#x60;checkOut&#x60; to schedule the turnover clean. &#x60;null&#x60; when unknown. This is the same field &#x60;PATCH /v1/reservations/{id}&#x60; writes. | [optional] |
-| **status** | **String** | Lifecycle status. The API normalises a multi-decade internal taxonomy down to these four buckets, so the value you receive is always one of the enum constants. &#x60;completed&#x60; is derived from &#x60;checkOut &lt; today&#x60;. |  |
+| **status** | **String** | Lifecycle status. The API normalises a multi-decade internal taxonomy down to these four buckets, so the value you receive is always one of the enum constants. &#x60;completed&#x60; is derived from &#x60;checkOut &lt; today&#x60;. A &#x60;pending&#x60; booking request the channel already let lapse — Airbnb expires an unanswered request 24 hours after the guest asks, and no request can be answered once its check-in has passed — is reported as &#x60;cancelled&#x60; with &#x60;statusDetail: \&quot;request_expired\&quot;&#x60;, even when the channel never told us. |  |
+| **status_detail** | **String** | Present only when &#x60;status&#x60; was derived rather than reported by the channel. &#x60;request_expired&#x60; — a booking request nobody answered in time (Airbnb&#39;s 24-hour window passed, or the check-in did). Absent otherwise. | [optional] |
+| **respond_by** | **Time** | On a &#x60;pending&#x60; Airbnb booking request that can still be answered: when it lapses (24 hours after the guest asked). Accept or decline before then with &#x60;POST /v1/reservations/{id}/accept&#x60; / &#x60;/decline&#x60;. Absent on every other reservation. | [optional] |
 | **source** | **String** | Booking source / channel. Lowercase. May be null on legacy rows. Canonical name as of 2026-05; &#x60;platform&#x60; is kept as an alias. | [optional] |
 | **platform** | **String** | DEPRECATED alias for &#x60;source&#x60;. Same value, kept for back-compat. | [optional] |
 | **confirmation_code** | **String** | Channel-side confirmation code (Airbnb HMxxx, Booking.com numeric, etc.). |  |
@@ -40,6 +42,8 @@ instance = Repull::Reservation.new(
   check_in_time: 16:00,
   check_out_time: 10:00,
   status: confirmed,
+  status_detail: request_expired,
+  respond_by: 2026-09-23T09:00Z,
   source: airbnb,
   platform: airbnb,
   confirmation_code: HMXYZ123,

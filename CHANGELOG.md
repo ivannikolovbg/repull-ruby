@@ -2,6 +2,23 @@
 
 All notable changes to the `repull` gem are documented here.
 
+## [0.2.16] - 2026-09-22
+
+### Added
+
+- **Regenerated against the live spec (191 → 199 operations, none removed).**
+- **Inquiries** — `ConversationsApi#list_inquiries` (`GET /v1/inquiries`; `status` defaults to `open`, `all` for every state).
+- **Pre-approval** — `ConversationsApi#preapprove_conversation` (`POST /v1/conversations/{id}/pre-approval`, optional `block_instant_booking`).
+- **Special offers** — `ConversationsApi#create_conversation_special_offer` / `#get_conversation_special_offer` / `#withdraw_conversation_special_offer` (`POST`/`GET`/`DELETE /v1/conversations/{id}/special-offers[/{offerId}]`), plus `AirbnbApi#get_airbnb_offer` (`GET /v1/channels/airbnb/offers?offerId=`).
+- **Booking requests** — `ReservationsApi#accept_reservation_request` / `#decline_reservation_request` (`POST /v1/reservations/{id}/accept|decline`).
+- **Message attachments** — `SendMessageRequest#attachments` (1–5 `SendMessageAttachment`s by public `https://` URL) on `ConversationsApi#send_conversation_message`; the response carries `SentAttachment`s.
+- **Webhooks** — `WebhookEventType` gains `reservation.request.created`, `reservation.request.updated`, `inquiry.created`, `inquiry.updated`; models `ReservationRequestCreatedEvent`, `ReservationRequestUpdatedEvent`, `InquiryCreatedEvent`, `InquiryUpdatedEvent`, `InquiryWebhookObject`.
+- `Reservation` gains `status_detail` (`request_expired`) and `respond_by`.
+
+### Changed
+
+- `AirbnbApi#airbnb_reservation_action(code, airbnb_reservation_action_request, opts = {})` — the spec now marks the request body as required, so it is a positional argument instead of `opts[:body]`.
+
 ## [0.2.15] - 2026-09-18
 
 ### Added

@@ -19,6 +19,87 @@ module Repull
     def initialize(api_client = ApiClient.default)
       @api_client = api_client
     end
+    # Send a special offer
+    # Send the guest on this conversation an Airbnb special offer: your own dates, guest count and total price. The guest has 24 hours to book it. Use it to answer an inquiry with different terms, or to make a returning guest a custom price. To accept the guest’s own dates and price as they asked, pre-approve instead (`POST /v1/conversations/{id}/pre-approval`).  `listingId` is optional: omit it to offer the listing the guest asked about. It is a **Repull** listing id; Repull sends Airbnb its own listing id, using the link that belongs to this conversation’s Airbnb account.  `totalPrice` is the whole stay, in the listing’s Airbnb currency — Airbnb does not take a currency on an offer.  **Airbnb only**, and only for listings connected to Airbnb directly; anything else is `422 channel_not_supported` and nothing is sent. Runs the same action as the Vanio dashboard, so the inquiry is marked `special_offer_sent`.  An offer Airbnb refuses is never a `201`: dates that are taken, a price below Airbnb’s minimum, too many guests and the like are `422 airbnb_rejected` with Airbnb’s own reason in `message`.  Send `Idempotency-Key`: a repeat with the same key replays the first response instead of acting twice (a `409 idempotency_key_in_use` while the first is still running). A 5xx, a `429 airbnb_rate_limited` or a `403 connection_reauth_required` is not stored — nothing was done — so retrying with the same key reaches Airbnb again. Without it, a retry after a timeout can send the guest two offers.  Read or withdraw the offer with `GET` / `DELETE /v1/conversations/{id}/special-offers/{offerId}`.
+    # @param id [Integer] Repull conversation id (from &#x60;GET /v1/conversations&#x60; or &#x60;conversationId&#x60; on &#x60;GET /v1/inquiries&#x60;) — not the Airbnb thread id.
+    # @param create_conversation_special_offer_request [CreateConversationSpecialOfferRequest] 
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status &gt;&#x3D; 500, &#x60;408&#x60;, &#x60;425&#x60; and &#x60;429&#x60;, and the refusals that happen before anything is done and tell you to fix something outside the request first — &#x60;connection_reauth_required&#x60;, &#x60;listing_inactive&#x60;, and the rate/daily limits. Every other answer, including a final refusal such as &#x60;422 airbnb_rejected&#x60;, is stored and replayed.
+    # @return [CreateConversationSpecialOffer201Response]
+    def create_conversation_special_offer(id, create_conversation_special_offer_request, opts = {})
+      data, _status_code, _headers = create_conversation_special_offer_with_http_info(id, create_conversation_special_offer_request, opts)
+      data
+    end
+
+    # Send a special offer
+    # Send the guest on this conversation an Airbnb special offer: your own dates, guest count and total price. The guest has 24 hours to book it. Use it to answer an inquiry with different terms, or to make a returning guest a custom price. To accept the guest’s own dates and price as they asked, pre-approve instead (&#x60;POST /v1/conversations/{id}/pre-approval&#x60;).  &#x60;listingId&#x60; is optional: omit it to offer the listing the guest asked about. It is a **Repull** listing id; Repull sends Airbnb its own listing id, using the link that belongs to this conversation’s Airbnb account.  &#x60;totalPrice&#x60; is the whole stay, in the listing’s Airbnb currency — Airbnb does not take a currency on an offer.  **Airbnb only**, and only for listings connected to Airbnb directly; anything else is &#x60;422 channel_not_supported&#x60; and nothing is sent. Runs the same action as the Vanio dashboard, so the inquiry is marked &#x60;special_offer_sent&#x60;.  An offer Airbnb refuses is never a &#x60;201&#x60;: dates that are taken, a price below Airbnb’s minimum, too many guests and the like are &#x60;422 airbnb_rejected&#x60; with Airbnb’s own reason in &#x60;message&#x60;.  Send &#x60;Idempotency-Key&#x60;: a repeat with the same key replays the first response instead of acting twice (a &#x60;409 idempotency_key_in_use&#x60; while the first is still running). A 5xx, a &#x60;429 airbnb_rate_limited&#x60; or a &#x60;403 connection_reauth_required&#x60; is not stored — nothing was done — so retrying with the same key reaches Airbnb again. Without it, a retry after a timeout can send the guest two offers.  Read or withdraw the offer with &#x60;GET&#x60; / &#x60;DELETE /v1/conversations/{id}/special-offers/{offerId}&#x60;.
+    # @param id [Integer] Repull conversation id (from &#x60;GET /v1/conversations&#x60; or &#x60;conversationId&#x60; on &#x60;GET /v1/inquiries&#x60;) — not the Airbnb thread id.
+    # @param create_conversation_special_offer_request [CreateConversationSpecialOfferRequest] 
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status &gt;&#x3D; 500, &#x60;408&#x60;, &#x60;425&#x60; and &#x60;429&#x60;, and the refusals that happen before anything is done and tell you to fix something outside the request first — &#x60;connection_reauth_required&#x60;, &#x60;listing_inactive&#x60;, and the rate/daily limits. Every other answer, including a final refusal such as &#x60;422 airbnb_rejected&#x60;, is stored and replayed.
+    # @return [Array<(CreateConversationSpecialOffer201Response, Integer, Hash)>] CreateConversationSpecialOffer201Response data, response status code and response headers
+    def create_conversation_special_offer_with_http_info(id, create_conversation_special_offer_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ConversationsApi.create_conversation_special_offer ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling ConversationsApi.create_conversation_special_offer"
+      end
+      # verify the required parameter 'create_conversation_special_offer_request' is set
+      if @api_client.config.client_side_validation && create_conversation_special_offer_request.nil?
+        fail ArgumentError, "Missing the required parameter 'create_conversation_special_offer_request' when calling ConversationsApi.create_conversation_special_offer"
+      end
+      if @api_client.config.client_side_validation && !opts[:'idempotency_key'].nil? && opts[:'idempotency_key'].to_s.length > 255
+        fail ArgumentError, 'invalid value for "opts[:"idempotency_key"]" when calling ConversationsApi.create_conversation_special_offer, the character length must be smaller than or equal to 255.'
+      end
+
+      # resource path
+      local_var_path = '/v1/conversations/{id}/special-offers'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+      header_params[:'Idempotency-Key'] = opts[:'idempotency_key'] if !opts[:'idempotency_key'].nil?
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(create_conversation_special_offer_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'CreateConversationSpecialOffer201Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"ConversationsApi.create_conversation_special_offer",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ConversationsApi#create_conversation_special_offer\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # Get conversation detail
     # Returns one thread (the same shape as the list-row `Conversation`) plus expanded `host` (from `airbnb_hosts` for the thread's `host_id`) and `guest` (resolved via the thread's `reservation_id`, with up to 50 contacts) blocks.  A conversation that belongs to an inactive listing (by the thread's listing or its reservation's listing) returns `403 listing_inactive`. Inactive listings keep syncing; activate the listing to use it here.
     # @param id [Integer] Internal Repull thread id.
@@ -81,6 +162,75 @@ module Repull
       data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: ConversationsApi#get_conversation\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Get a special offer
+    # Read a special offer on this conversation back from Airbnb — typically to check its `status` (`active` until the guest books it, it expires, or you withdraw it). Read live from Airbnb with the conversation’s own Airbnb account.
+    # @param id [Integer] Repull conversation id (from &#x60;GET /v1/conversations&#x60; or &#x60;conversationId&#x60; on &#x60;GET /v1/inquiries&#x60;) — not the Airbnb thread id.
+    # @param offer_id [String] The special offer’s &#x60;id&#x60;, as returned by &#x60;POST /v1/conversations/{id}/special-offers&#x60;.
+    # @param [Hash] opts the optional parameters
+    # @return [CreateConversationSpecialOffer201Response]
+    def get_conversation_special_offer(id, offer_id, opts = {})
+      data, _status_code, _headers = get_conversation_special_offer_with_http_info(id, offer_id, opts)
+      data
+    end
+
+    # Get a special offer
+    # Read a special offer on this conversation back from Airbnb — typically to check its &#x60;status&#x60; (&#x60;active&#x60; until the guest books it, it expires, or you withdraw it). Read live from Airbnb with the conversation’s own Airbnb account.
+    # @param id [Integer] Repull conversation id (from &#x60;GET /v1/conversations&#x60; or &#x60;conversationId&#x60; on &#x60;GET /v1/inquiries&#x60;) — not the Airbnb thread id.
+    # @param offer_id [String] The special offer’s &#x60;id&#x60;, as returned by &#x60;POST /v1/conversations/{id}/special-offers&#x60;.
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(CreateConversationSpecialOffer201Response, Integer, Hash)>] CreateConversationSpecialOffer201Response data, response status code and response headers
+    def get_conversation_special_offer_with_http_info(id, offer_id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ConversationsApi.get_conversation_special_offer ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling ConversationsApi.get_conversation_special_offer"
+      end
+      # verify the required parameter 'offer_id' is set
+      if @api_client.config.client_side_validation && offer_id.nil?
+        fail ArgumentError, "Missing the required parameter 'offer_id' when calling ConversationsApi.get_conversation_special_offer"
+      end
+      # resource path
+      local_var_path = '/v1/conversations/{id}/special-offers/{offerId}'.sub('{id}', CGI.escape(id.to_s)).sub('{offerId}', CGI.escape(offer_id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'CreateConversationSpecialOffer201Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"ConversationsApi.get_conversation_special_offer",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ConversationsApi#get_conversation_special_offer\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end
@@ -282,12 +432,187 @@ module Repull
       return data, status_code, headers
     end
 
+    # List inquiries
+    # Airbnb inquiries — guests asking about dates before booking — newest first. By default only `open` ones: nobody has answered and the stay is still ahead. Answer one with `POST /v1/conversations/{conversationId}/pre-approval` (accept their dates and price) or `POST /v1/conversations/{conversationId}/special-offers` (your own terms).  Booking **requests** are not inquiries: they are reservations with status `pending` — list them with `GET /v1/reservations?status=pending` and answer with `POST /v1/reservations/{id}/accept` or `/decline`.  **Pagination:** pass `pagination.nextCursor` back as `?cursor=` until `pagination.hasMore` is `false`. `?offset=` also works (0..10000). `limit` defaults to 50, max 100.  Inquiries on inactive listings are left out; `?listing_id=` naming an inactive listing returns `403 listing_inactive`. `X-Account-Id` narrows to one connected account.
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :status Which inquiries to return. &#x60;all&#x60; returns every one. (default to 'open')
+    # @option opts [Integer] :listing_id Only inquiries about this Repull listing.
+    # @option opts [Integer] :conversation_id The inquiry on one conversation — combine with &#x60;status&#x3D;all&#x60; to see it whatever its state.
+    # @option opts [Integer] :limit Max inquiries per page (default 50, cap 100; over the cap returns 422). (default to 50)
+    # @option opts [String] :cursor Opaque base64 cursor returned in the previous response&#39;s &#x60;pagination.nextCursor&#x60;. Omit to fetch the first page.
+    # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.nextCursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
+    # @option opts [Boolean] :include_total When &#x60;true&#x60; (default), the response&#39;s &#x60;pagination.total&#x60; carries the count of rows matching the current filter, across all pages. Pass &#x60;false&#x60; to skip the count for very large workspaces where the per-page COUNT(*) cost matters. (default to true)
+    # @return [ListInquiries200Response]
+    def list_inquiries(opts = {})
+      data, _status_code, _headers = list_inquiries_with_http_info(opts)
+      data
+    end
+
+    # List inquiries
+    # Airbnb inquiries — guests asking about dates before booking — newest first. By default only &#x60;open&#x60; ones: nobody has answered and the stay is still ahead. Answer one with &#x60;POST /v1/conversations/{conversationId}/pre-approval&#x60; (accept their dates and price) or &#x60;POST /v1/conversations/{conversationId}/special-offers&#x60; (your own terms).  Booking **requests** are not inquiries: they are reservations with status &#x60;pending&#x60; — list them with &#x60;GET /v1/reservations?status&#x3D;pending&#x60; and answer with &#x60;POST /v1/reservations/{id}/accept&#x60; or &#x60;/decline&#x60;.  **Pagination:** pass &#x60;pagination.nextCursor&#x60; back as &#x60;?cursor&#x3D;&#x60; until &#x60;pagination.hasMore&#x60; is &#x60;false&#x60;. &#x60;?offset&#x3D;&#x60; also works (0..10000). &#x60;limit&#x60; defaults to 50, max 100.  Inquiries on inactive listings are left out; &#x60;?listing_id&#x3D;&#x60; naming an inactive listing returns &#x60;403 listing_inactive&#x60;. &#x60;X-Account-Id&#x60; narrows to one connected account.
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :status Which inquiries to return. &#x60;all&#x60; returns every one. (default to 'open')
+    # @option opts [Integer] :listing_id Only inquiries about this Repull listing.
+    # @option opts [Integer] :conversation_id The inquiry on one conversation — combine with &#x60;status&#x3D;all&#x60; to see it whatever its state.
+    # @option opts [Integer] :limit Max inquiries per page (default 50, cap 100; over the cap returns 422). (default to 50)
+    # @option opts [String] :cursor Opaque base64 cursor returned in the previous response&#39;s &#x60;pagination.nextCursor&#x60;. Omit to fetch the first page.
+    # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.nextCursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
+    # @option opts [Boolean] :include_total When &#x60;true&#x60; (default), the response&#39;s &#x60;pagination.total&#x60; carries the count of rows matching the current filter, across all pages. Pass &#x60;false&#x60; to skip the count for very large workspaces where the per-page COUNT(*) cost matters. (default to true)
+    # @return [Array<(ListInquiries200Response, Integer, Hash)>] ListInquiries200Response data, response status code and response headers
+    def list_inquiries_with_http_info(opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ConversationsApi.list_inquiries ...'
+      end
+      allowable_values = ["open", "pre_approved", "special_offer_sent", "booked", "expired", "declined", "not_possible", "all"]
+      if @api_client.config.client_side_validation && opts[:'status'] && !allowable_values.include?(opts[:'status'])
+        fail ArgumentError, "invalid value for \"status\", must be one of #{allowable_values}"
+      end
+      if @api_client.config.client_side_validation && !opts[:'limit'].nil? && opts[:'limit'] > 100
+        fail ArgumentError, 'invalid value for "opts[:"limit"]" when calling ConversationsApi.list_inquiries, must be smaller than or equal to 100.'
+      end
+
+      if @api_client.config.client_side_validation && !opts[:'limit'].nil? && opts[:'limit'] < 1
+        fail ArgumentError, 'invalid value for "opts[:"limit"]" when calling ConversationsApi.list_inquiries, must be greater than or equal to 1.'
+      end
+
+      if @api_client.config.client_side_validation && !opts[:'offset'].nil? && opts[:'offset'] > 10000
+        fail ArgumentError, 'invalid value for "opts[:"offset"]" when calling ConversationsApi.list_inquiries, must be smaller than or equal to 10000.'
+      end
+
+      if @api_client.config.client_side_validation && !opts[:'offset'].nil? && opts[:'offset'] < 0
+        fail ArgumentError, 'invalid value for "opts[:"offset"]" when calling ConversationsApi.list_inquiries, must be greater than or equal to 0.'
+      end
+
+      # resource path
+      local_var_path = '/v1/inquiries'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+      query_params[:'status'] = opts[:'status'] if !opts[:'status'].nil?
+      query_params[:'listing_id'] = opts[:'listing_id'] if !opts[:'listing_id'].nil?
+      query_params[:'conversation_id'] = opts[:'conversation_id'] if !opts[:'conversation_id'].nil?
+      query_params[:'limit'] = opts[:'limit'] if !opts[:'limit'].nil?
+      query_params[:'cursor'] = opts[:'cursor'] if !opts[:'cursor'].nil?
+      query_params[:'offset'] = opts[:'offset'] if !opts[:'offset'].nil?
+      query_params[:'include_total'] = opts[:'include_total'] if !opts[:'include_total'].nil?
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'ListInquiries200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"ConversationsApi.list_inquiries",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ConversationsApi#list_inquiries\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Pre-approve an inquiry
+    # Pre-approve the Airbnb inquiry on this conversation: the guest who asked about dates may now book them at the listed price, without waiting on you. To change the dates, guests or price, send a special offer instead (`POST /v1/conversations/{id}/special-offers`).  Find inquiries that need an answer with `GET /v1/inquiries` (default `status=open`); each carries the `conversationId` to use here.  **Airbnb only**, and only for listings connected to Airbnb directly. A Booking.com, VRBO or direct-booking conversation, or an Airbnb one relayed through a PMS (Hostaway, Guesty), returns `422 channel_not_supported` and nothing is sent.  Runs the same action as the Vanio dashboard’s Pre-approve button, so the inquiry is marked `pre_approved` everywhere.  An Airbnb refusal is never reported as a success: an inquiry that already moved on is `409 inquiry_no_longer_open`, an expired one `409 inquiry_expired`, a conversation that already has a booking `409 conversation_already_booked`.  Send `Idempotency-Key`: a repeat with the same key replays the first response instead of acting twice (a `409 idempotency_key_in_use` while the first is still running). A 5xx, a `429 airbnb_rate_limited` or a `403 connection_reauth_required` is not stored — nothing was done — so retrying with the same key reaches Airbnb again.
+    # @param id [Integer] Repull conversation id (from &#x60;GET /v1/conversations&#x60; or &#x60;conversationId&#x60; on &#x60;GET /v1/inquiries&#x60;) — not the Airbnb thread id.
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status &gt;&#x3D; 500, &#x60;408&#x60;, &#x60;425&#x60; and &#x60;429&#x60;, and the refusals that happen before anything is done and tell you to fix something outside the request first — &#x60;connection_reauth_required&#x60;, &#x60;listing_inactive&#x60;, and the rate/daily limits. Every other answer, including a final refusal such as &#x60;422 airbnb_rejected&#x60;, is stored and replayed.
+    # @option opts [PreapproveConversationRequest] :preapprove_conversation_request 
+    # @return [PreapproveConversation201Response]
+    def preapprove_conversation(id, opts = {})
+      data, _status_code, _headers = preapprove_conversation_with_http_info(id, opts)
+      data
+    end
+
+    # Pre-approve an inquiry
+    # Pre-approve the Airbnb inquiry on this conversation: the guest who asked about dates may now book them at the listed price, without waiting on you. To change the dates, guests or price, send a special offer instead (&#x60;POST /v1/conversations/{id}/special-offers&#x60;).  Find inquiries that need an answer with &#x60;GET /v1/inquiries&#x60; (default &#x60;status&#x3D;open&#x60;); each carries the &#x60;conversationId&#x60; to use here.  **Airbnb only**, and only for listings connected to Airbnb directly. A Booking.com, VRBO or direct-booking conversation, or an Airbnb one relayed through a PMS (Hostaway, Guesty), returns &#x60;422 channel_not_supported&#x60; and nothing is sent.  Runs the same action as the Vanio dashboard’s Pre-approve button, so the inquiry is marked &#x60;pre_approved&#x60; everywhere.  An Airbnb refusal is never reported as a success: an inquiry that already moved on is &#x60;409 inquiry_no_longer_open&#x60;, an expired one &#x60;409 inquiry_expired&#x60;, a conversation that already has a booking &#x60;409 conversation_already_booked&#x60;.  Send &#x60;Idempotency-Key&#x60;: a repeat with the same key replays the first response instead of acting twice (a &#x60;409 idempotency_key_in_use&#x60; while the first is still running). A 5xx, a &#x60;429 airbnb_rate_limited&#x60; or a &#x60;403 connection_reauth_required&#x60; is not stored — nothing was done — so retrying with the same key reaches Airbnb again.
+    # @param id [Integer] Repull conversation id (from &#x60;GET /v1/conversations&#x60; or &#x60;conversationId&#x60; on &#x60;GET /v1/inquiries&#x60;) — not the Airbnb thread id.
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status &gt;&#x3D; 500, &#x60;408&#x60;, &#x60;425&#x60; and &#x60;429&#x60;, and the refusals that happen before anything is done and tell you to fix something outside the request first — &#x60;connection_reauth_required&#x60;, &#x60;listing_inactive&#x60;, and the rate/daily limits. Every other answer, including a final refusal such as &#x60;422 airbnb_rejected&#x60;, is stored and replayed.
+    # @option opts [PreapproveConversationRequest] :preapprove_conversation_request 
+    # @return [Array<(PreapproveConversation201Response, Integer, Hash)>] PreapproveConversation201Response data, response status code and response headers
+    def preapprove_conversation_with_http_info(id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ConversationsApi.preapprove_conversation ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling ConversationsApi.preapprove_conversation"
+      end
+      if @api_client.config.client_side_validation && !opts[:'idempotency_key'].nil? && opts[:'idempotency_key'].to_s.length > 255
+        fail ArgumentError, 'invalid value for "opts[:"idempotency_key"]" when calling ConversationsApi.preapprove_conversation, the character length must be smaller than or equal to 255.'
+      end
+
+      # resource path
+      local_var_path = '/v1/conversations/{id}/pre-approval'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+      header_params[:'Idempotency-Key'] = opts[:'idempotency_key'] if !opts[:'idempotency_key'].nil?
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(opts[:'preapprove_conversation_request'])
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'PreapproveConversation201Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"ConversationsApi.preapprove_conversation",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ConversationsApi#preapprove_conversation\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # Send a message to the guest
-    # Sends a message to the guest on this conversation and records it in the thread.  Omit `channel` and the message goes out on whichever channel the conversation already uses (Airbnb, Booking.com, SMS, email or the direct-booking site) — that is the right default. Pass `channel` only to force a specific one.  The message is attributed to the API, not to Vanio AI: it is recorded with `aiGenerated` false so an API send is never counted as an automated reply.  ### Airbnb rewrites links — check `contentRewritten`  Airbnb rejects guest messages containing a link, an email address or a phone number, and names the offending text. When that happens the offending fragment is stripped and the remainder is re-sent once, which means **the guest receives a message that is not the one you wrote**. Reporting that as a plain success would be a lie, so every response carries `contentRewritten`; when it is `true`, `deliveredContent` is the text that actually reached the guest. Check it before assuming your message went out verbatim.  When the text cannot be salvaged (the link is most of the message) nothing is delivered and the call returns `422 message_not_sent` with the channel's verbatim refusal in `statusReason`.  Send `Idempotency-Key` — without it, retrying after a network timeout sends the guest the same message twice.  **Inactive listings:** a conversation that belongs to an inactive listing returns `403 listing_inactive` and no message is sent. Activate the listing first.
+    # Sends a message to the guest on this conversation and records it in the thread.  Omit `channel` and the message goes out on whichever channel the conversation already uses (Airbnb, Booking.com, SMS, email or the direct-booking site) — that is the right default. Pass `channel` only to force a specific one.  The message is attributed to the API, not to Vanio AI: it is recorded with `aiGenerated` false so an API send is never counted as an automated reply.  ### Airbnb rewrites links — check `contentRewritten`  Airbnb rejects guest messages containing a link, an email address or a phone number, and names the offending text. When that happens the offending fragment is stripped and the remainder is re-sent once, which means **the guest receives a message that is not the one you wrote**. Reporting that as a plain success would be a lie, so every response carries `contentRewritten`; when it is `true`, `deliveredContent` is the text that actually reached the guest. Check it before assuming your message went out verbatim.  When the text cannot be salvaged (the link is most of the message) nothing is delivered and the call returns `422 message_not_sent` with the channel's verbatim refusal in `statusReason`.  Send `Idempotency-Key` — without it, retrying after a network timeout sends the guest the same message twice.  ### Attachments  Send files with `attachments: [{ url, contentType?, filename? }]` — public `https://` URLs, up to 5 per request, 10 MB each. `message` may be omitted when there are attachments (except on Booking.com). Repull downloads each file, reads its real type from the bytes, keeps a durable copy and delivers it through the channel's own file flow. **Every file is checked before anything is sent**: if one is unreachable, too large or of a type the channel refuses, the call returns 422 naming the file (`index`) and the guest receives nothing.  | Channel | Accepted types | Text | How it arrives | |---|---|---|---| | Airbnb | JPEG, PNG, GIF, WebP (converted to JPEG), MP4, QuickTime | optional | each file as its own message, then the text as a separate message | | Booking.com | JPEG, PNG | **required** | one message carrying the text and every file | | SMS, email, direct-booking site chat | — | — | `422 attachments_not_supported`, nothing sent |  Airbnb does not allow files in pre-booking (inquiry) conversations; that refusal comes back as `422 message_not_sent`. Because Airbnb delivers files one message at a time, a later file can be refused after earlier ones arrived — that returns `422 message_partially_sent` with `parts` saying exactly which messages reached the guest; resend only the rest.  The response's `attachments` lists each file's durable `url`, and `parts` lists every channel message the send produced. Read-back (`GET /v1/conversations/{id}/messages`) shows the same files in each message's `attachments`.  **Inactive listings:** a conversation that belongs to an inactive listing returns `403 listing_inactive` and no message is sent. Activate the listing first.
     # @param id [Integer] Internal Repull thread id.
     # @param send_message_request [SendMessageRequest] 
     # @param [Hash] opts the optional parameters
-    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable.
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status &gt;&#x3D; 500, &#x60;408&#x60;, &#x60;425&#x60; and &#x60;429&#x60;, and the refusals that happen before anything is done and tell you to fix something outside the request first — &#x60;connection_reauth_required&#x60;, &#x60;listing_inactive&#x60;, and the rate/daily limits. Every other answer, including a final refusal such as &#x60;422 airbnb_rejected&#x60;, is stored and replayed.
     # @return [SendMessageResponse]
     def send_conversation_message(id, send_message_request, opts = {})
       data, _status_code, _headers = send_conversation_message_with_http_info(id, send_message_request, opts)
@@ -295,11 +620,11 @@ module Repull
     end
 
     # Send a message to the guest
-    # Sends a message to the guest on this conversation and records it in the thread.  Omit &#x60;channel&#x60; and the message goes out on whichever channel the conversation already uses (Airbnb, Booking.com, SMS, email or the direct-booking site) — that is the right default. Pass &#x60;channel&#x60; only to force a specific one.  The message is attributed to the API, not to Vanio AI: it is recorded with &#x60;aiGenerated&#x60; false so an API send is never counted as an automated reply.  ### Airbnb rewrites links — check &#x60;contentRewritten&#x60;  Airbnb rejects guest messages containing a link, an email address or a phone number, and names the offending text. When that happens the offending fragment is stripped and the remainder is re-sent once, which means **the guest receives a message that is not the one you wrote**. Reporting that as a plain success would be a lie, so every response carries &#x60;contentRewritten&#x60;; when it is &#x60;true&#x60;, &#x60;deliveredContent&#x60; is the text that actually reached the guest. Check it before assuming your message went out verbatim.  When the text cannot be salvaged (the link is most of the message) nothing is delivered and the call returns &#x60;422 message_not_sent&#x60; with the channel&#39;s verbatim refusal in &#x60;statusReason&#x60;.  Send &#x60;Idempotency-Key&#x60; — without it, retrying after a network timeout sends the guest the same message twice.  **Inactive listings:** a conversation that belongs to an inactive listing returns &#x60;403 listing_inactive&#x60; and no message is sent. Activate the listing first.
+    # Sends a message to the guest on this conversation and records it in the thread.  Omit &#x60;channel&#x60; and the message goes out on whichever channel the conversation already uses (Airbnb, Booking.com, SMS, email or the direct-booking site) — that is the right default. Pass &#x60;channel&#x60; only to force a specific one.  The message is attributed to the API, not to Vanio AI: it is recorded with &#x60;aiGenerated&#x60; false so an API send is never counted as an automated reply.  ### Airbnb rewrites links — check &#x60;contentRewritten&#x60;  Airbnb rejects guest messages containing a link, an email address or a phone number, and names the offending text. When that happens the offending fragment is stripped and the remainder is re-sent once, which means **the guest receives a message that is not the one you wrote**. Reporting that as a plain success would be a lie, so every response carries &#x60;contentRewritten&#x60;; when it is &#x60;true&#x60;, &#x60;deliveredContent&#x60; is the text that actually reached the guest. Check it before assuming your message went out verbatim.  When the text cannot be salvaged (the link is most of the message) nothing is delivered and the call returns &#x60;422 message_not_sent&#x60; with the channel&#39;s verbatim refusal in &#x60;statusReason&#x60;.  Send &#x60;Idempotency-Key&#x60; — without it, retrying after a network timeout sends the guest the same message twice.  ### Attachments  Send files with &#x60;attachments: [{ url, contentType?, filename? }]&#x60; — public &#x60;https://&#x60; URLs, up to 5 per request, 10 MB each. &#x60;message&#x60; may be omitted when there are attachments (except on Booking.com). Repull downloads each file, reads its real type from the bytes, keeps a durable copy and delivers it through the channel&#39;s own file flow. **Every file is checked before anything is sent**: if one is unreachable, too large or of a type the channel refuses, the call returns 422 naming the file (&#x60;index&#x60;) and the guest receives nothing.  | Channel | Accepted types | Text | How it arrives | |---|---|---|---| | Airbnb | JPEG, PNG, GIF, WebP (converted to JPEG), MP4, QuickTime | optional | each file as its own message, then the text as a separate message | | Booking.com | JPEG, PNG | **required** | one message carrying the text and every file | | SMS, email, direct-booking site chat | — | — | &#x60;422 attachments_not_supported&#x60;, nothing sent |  Airbnb does not allow files in pre-booking (inquiry) conversations; that refusal comes back as &#x60;422 message_not_sent&#x60;. Because Airbnb delivers files one message at a time, a later file can be refused after earlier ones arrived — that returns &#x60;422 message_partially_sent&#x60; with &#x60;parts&#x60; saying exactly which messages reached the guest; resend only the rest.  The response&#39;s &#x60;attachments&#x60; lists each file&#39;s durable &#x60;url&#x60;, and &#x60;parts&#x60; lists every channel message the send produced. Read-back (&#x60;GET /v1/conversations/{id}/messages&#x60;) shows the same files in each message&#39;s &#x60;attachments&#x60;.  **Inactive listings:** a conversation that belongs to an inactive listing returns &#x60;403 listing_inactive&#x60; and no message is sent. Activate the listing first.
     # @param id [Integer] Internal Repull thread id.
     # @param send_message_request [SendMessageRequest] 
     # @param [Hash] opts the optional parameters
-    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable.
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status &gt;&#x3D; 500, &#x60;408&#x60;, &#x60;425&#x60; and &#x60;429&#x60;, and the refusals that happen before anything is done and tell you to fix something outside the request first — &#x60;connection_reauth_required&#x60;, &#x60;listing_inactive&#x60;, and the rate/daily limits. Every other answer, including a final refusal such as &#x60;422 airbnb_rejected&#x60;, is stored and replayed.
     # @return [Array<(SendMessageResponse, Integer, Hash)>] SendMessageResponse data, response status code and response headers
     def send_conversation_message_with_http_info(id, send_message_request, opts = {})
       if @api_client.config.debugging
@@ -359,6 +684,75 @@ module Repull
       data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: ConversationsApi#send_conversation_message\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Withdraw a special offer
+    # Withdraw a special offer the guest has not booked yet, so it can no longer be booked. Runs the same action as the Vanio dashboard’s Withdraw offer. An offer the guest already booked cannot be withdrawn — Airbnb refuses with `409 inquiry_no_longer_open`; cancel the booking instead.
+    # @param id [Integer] Repull conversation id (from &#x60;GET /v1/conversations&#x60; or &#x60;conversationId&#x60; on &#x60;GET /v1/inquiries&#x60;) — not the Airbnb thread id.
+    # @param offer_id [String] The special offer’s &#x60;id&#x60;, as returned by &#x60;POST /v1/conversations/{id}/special-offers&#x60;.
+    # @param [Hash] opts the optional parameters
+    # @return [WithdrawConversationSpecialOffer200Response]
+    def withdraw_conversation_special_offer(id, offer_id, opts = {})
+      data, _status_code, _headers = withdraw_conversation_special_offer_with_http_info(id, offer_id, opts)
+      data
+    end
+
+    # Withdraw a special offer
+    # Withdraw a special offer the guest has not booked yet, so it can no longer be booked. Runs the same action as the Vanio dashboard’s Withdraw offer. An offer the guest already booked cannot be withdrawn — Airbnb refuses with &#x60;409 inquiry_no_longer_open&#x60;; cancel the booking instead.
+    # @param id [Integer] Repull conversation id (from &#x60;GET /v1/conversations&#x60; or &#x60;conversationId&#x60; on &#x60;GET /v1/inquiries&#x60;) — not the Airbnb thread id.
+    # @param offer_id [String] The special offer’s &#x60;id&#x60;, as returned by &#x60;POST /v1/conversations/{id}/special-offers&#x60;.
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(WithdrawConversationSpecialOffer200Response, Integer, Hash)>] WithdrawConversationSpecialOffer200Response data, response status code and response headers
+    def withdraw_conversation_special_offer_with_http_info(id, offer_id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ConversationsApi.withdraw_conversation_special_offer ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling ConversationsApi.withdraw_conversation_special_offer"
+      end
+      # verify the required parameter 'offer_id' is set
+      if @api_client.config.client_side_validation && offer_id.nil?
+        fail ArgumentError, "Missing the required parameter 'offer_id' when calling ConversationsApi.withdraw_conversation_special_offer"
+      end
+      # resource path
+      local_var_path = '/v1/conversations/{id}/special-offers/{offerId}'.sub('{id}', CGI.escape(id.to_s)).sub('{offerId}', CGI.escape(offer_id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'WithdrawConversationSpecialOffer200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"ConversationsApi.withdraw_conversation_special_offer",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:DELETE, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ConversationsApi#withdraw_conversation_special_offer\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end

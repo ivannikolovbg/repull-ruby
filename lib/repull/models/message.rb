@@ -39,6 +39,7 @@ module Repull
     # English translation when the original language is non-English and a translation has been computed.
     attr_accessor :translated_body
 
+    # Files on this message, inbound or outbound. Empty array when there are none. A file-only message has an empty `body`.
     attr_accessor :attachments
 
     # `true` when the message was sent by a Vanio automation (template, schedule, etc.).

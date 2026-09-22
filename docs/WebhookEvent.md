@@ -19,6 +19,8 @@ Repull::WebhookEvent.openapi_one_of
 #   :'AiOperationCompletedEvent',
 #   :'AiOperationFailedEvent',
 #   :'CalendarUpdatedEvent',
+#   :'InquiryCreatedEvent',
+#   :'InquiryUpdatedEvent',
 #   :'ListingCreatedEvent',
 #   :'ListingDeletedEvent',
 #   :'ListingReactivatedEvent',
@@ -32,6 +34,8 @@ Repull::WebhookEvent.openapi_one_of
 #   :'ReservationCancelledEvent',
 #   :'ReservationCreatedEvent',
 #   :'ReservationMessageReceivedEvent',
+#   :'ReservationRequestCreatedEvent',
+#   :'ReservationRequestUpdatedEvent',
 #   :'ReservationUpdatedEvent',
 #   :'ReviewCreatedEvent',
 #   :'ReviewRespondedEvent',
@@ -69,6 +73,8 @@ Repull::WebhookEvent.openapi_discriminator_mapping
 #   :'ai.operation.completed' => :'AiOperationCompletedEvent',
 #   :'ai.operation.failed' => :'AiOperationFailedEvent',
 #   :'calendar.updated' => :'CalendarUpdatedEvent',
+#   :'inquiry.created' => :'InquiryCreatedEvent',
+#   :'inquiry.updated' => :'InquiryUpdatedEvent',
 #   :'listing.created' => :'ListingCreatedEvent',
 #   :'listing.deleted' => :'ListingDeletedEvent',
 #   :'listing.reactivated' => :'ListingReactivatedEvent',
@@ -82,6 +88,8 @@ Repull::WebhookEvent.openapi_discriminator_mapping
 #   :'reservation.cancelled' => :'ReservationCancelledEvent',
 #   :'reservation.created' => :'ReservationCreatedEvent',
 #   :'reservation.message.received' => :'ReservationMessageReceivedEvent',
+#   :'reservation.request.created' => :'ReservationRequestCreatedEvent',
+#   :'reservation.request.updated' => :'ReservationRequestUpdatedEvent',
 #   :'reservation.updated' => :'ReservationUpdatedEvent',
 #   :'review.created' => :'ReviewCreatedEvent',
 #   :'review.responded' => :'ReviewRespondedEvent',
@@ -118,6 +126,8 @@ Repull::WebhookEvent.build(data_that_doesnt_match)
 - `AiOperationCompletedEvent`
 - `AiOperationFailedEvent`
 - `CalendarUpdatedEvent`
+- `InquiryCreatedEvent`
+- `InquiryUpdatedEvent`
 - `ListingCreatedEvent`
 - `ListingDeletedEvent`
 - `ListingReactivatedEvent`
@@ -131,6 +141,8 @@ Repull::WebhookEvent.build(data_that_doesnt_match)
 - `ReservationCancelledEvent`
 - `ReservationCreatedEvent`
 - `ReservationMessageReceivedEvent`
+- `ReservationRequestCreatedEvent`
+- `ReservationRequestUpdatedEvent`
 - `ReservationUpdatedEvent`
 - `ReviewCreatedEvent`
 - `ReviewRespondedEvent`

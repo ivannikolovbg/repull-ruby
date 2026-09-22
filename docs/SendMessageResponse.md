@@ -14,6 +14,8 @@
 | **submitted_content** | **String** | The text you sent. | [optional] |
 | **delivered_content** | **String** | The text the guest actually received. Differs from &#x60;submittedContent&#x60; exactly when &#x60;contentRewritten&#x60; is true. | [optional] |
 | **status_reason** | **String** | The channel&#39;s verbatim note, when it gave one — including the refusal that triggered a rewrite. | [optional] |
+| **attachments** | [**Array&lt;SentAttachment&gt;**](SentAttachment.md) | The files delivered, in request order. Empty array for a text-only send. | [optional] |
+| **parts** | [**Array&lt;SendMessagePart&gt;**](SendMessagePart.md) | Present only when &#x60;attachments&#x60; were sent: one entry per channel message, in delivery order. &#x60;id&#x60; is the text message (or the last file message when there is no text). | [optional] |
 
 ## Example
 
@@ -30,7 +32,9 @@ instance = Repull::SendMessageResponse.new(
   content_rewritten: null,
   submitted_content: null,
   delivered_content: null,
-  status_reason: null
+  status_reason: null,
+  attachments: null,
+  parts: null
 )
 ```
 

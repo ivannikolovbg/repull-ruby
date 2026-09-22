@@ -14,18 +14,23 @@ require 'date'
 require 'time'
 
 module Repull
+  # `message`, `attachments`, or both. Per-channel limits for `attachments`:  | Channel | Accepted types | Per file | Per request | Text | |---|---|---|---|---| | Airbnb | JPEG, PNG, GIF, WebP (sent as JPEG), MP4, QuickTime | 10 MB | 5 | optional — each file is sent as its own message, then the text | | Booking.com | JPEG, PNG | 10 MB | 5 | **required** — all files ride on the one text message | | SMS, email, direct-booking site chat | — | — | — | `422 attachments_not_supported`; nothing is sent |
   class SendMessageRequest < ApiModelBase
-    # The text to send the guest.
+    # The text to send the guest. Required unless `attachments` is present.
     attr_accessor :message
 
     # Force a channel. Omit to send on whichever channel the conversation already uses, which is the right default.
     attr_accessor :channel
 
+    # Files to send. See the per-channel table above.
+    attr_accessor :attachments
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
         :'message' => :'message',
-        :'channel' => :'channel'
+        :'channel' => :'channel',
+        :'attachments' => :'attachments'
       }
     end
 
@@ -43,7 +48,8 @@ module Repull
     def self.openapi_types
       {
         :'message' => :'String',
-        :'channel' => :'String'
+        :'channel' => :'String',
+        :'attachments' => :'Array<SendMessageAttachment>'
       }
     end
 
@@ -71,12 +77,16 @@ module Repull
 
       if attributes.key?(:'message')
         self.message = attributes[:'message']
-      else
-        self.message = nil
       end
 
       if attributes.key?(:'channel')
         self.channel = attributes[:'channel']
+      end
+
+      if attributes.key?(:'attachments')
+        if (value = attributes[:'attachments']).is_a?(Array)
+          self.attachments = value
+        end
       end
     end
 
@@ -85,16 +95,16 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
-      if @message.nil?
-        invalid_properties.push('invalid value for "message", message cannot be nil.')
-      end
-
-      if @message.to_s.length > 4000
+      if !@message.nil? && @message.to_s.length > 4000
         invalid_properties.push('invalid value for "message", the character length must be smaller than or equal to 4000.')
       end
 
-      if @message.to_s.length < 1
-        invalid_properties.push('invalid value for "message", the character length must be greater than or equal to 1.')
+      if !@attachments.nil? && @attachments.length > 5
+        invalid_properties.push('invalid value for "attachments", number of items must be less than or equal to 5.')
+      end
+
+      if !@attachments.nil? && @attachments.length < 1
+        invalid_properties.push('invalid value for "attachments", number of items must be greater than or equal to 1.')
       end
 
       invalid_properties
@@ -104,9 +114,9 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
-      return false if @message.nil?
-      return false if @message.to_s.length > 4000
-      return false if @message.to_s.length < 1
+      return false if !@message.nil? && @message.to_s.length > 4000
+      return false if !@attachments.nil? && @attachments.length > 5
+      return false if !@attachments.nil? && @attachments.length < 1
       true
     end
 
@@ -121,11 +131,25 @@ module Repull
         fail ArgumentError, 'invalid value for "message", the character length must be smaller than or equal to 4000.'
       end
 
-      if message.to_s.length < 1
-        fail ArgumentError, 'invalid value for "message", the character length must be greater than or equal to 1.'
+      @message = message
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] attachments Value to be assigned
+    def attachments=(attachments)
+      if attachments.nil?
+        fail ArgumentError, 'attachments cannot be nil'
       end
 
-      @message = message
+      if attachments.length > 5
+        fail ArgumentError, 'invalid value for "attachments", number of items must be less than or equal to 5.'
+      end
+
+      if attachments.length < 1
+        fail ArgumentError, 'invalid value for "attachments", number of items must be greater than or equal to 1.'
+      end
+
+      @attachments = attachments
     end
 
     # Checks equality by comparing each attribute.
@@ -134,7 +158,8 @@ module Repull
       return true if self.equal?(o)
       self.class == o.class &&
           message == o.message &&
-          channel == o.channel
+          channel == o.channel &&
+          attachments == o.attachments
     end
 
     # @see the `==` method
@@ -146,7 +171,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [message, channel].hash
+      [message, channel, attachments].hash
     end
 
     # Builds the object from hash

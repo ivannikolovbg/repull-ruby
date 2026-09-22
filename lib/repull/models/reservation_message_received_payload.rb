@@ -22,9 +22,13 @@ module Repull
 
     attr_accessor :from
 
+    # Empty when the guest sent only a file.
     attr_accessor :body
 
     attr_accessor :sent_at
+
+    # Files the guest sent (photos, videos, documents), same shape as `GET /v1/conversations/{id}/messages`. Empty array when there are none.
+    attr_accessor :attachments
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
@@ -33,7 +37,8 @@ module Repull
         :'thread_id' => :'threadId',
         :'from' => :'from',
         :'body' => :'body',
-        :'sent_at' => :'sentAt'
+        :'sent_at' => :'sentAt',
+        :'attachments' => :'attachments'
       }
     end
 
@@ -54,7 +59,8 @@ module Repull
         :'thread_id' => :'String',
         :'from' => :'ReservationMessageReceivedPayloadFrom',
         :'body' => :'String',
-        :'sent_at' => :'Time'
+        :'sent_at' => :'Time',
+        :'attachments' => :'Array<ConversationMessageAttachment>'
       }
     end
 
@@ -99,6 +105,12 @@ module Repull
       if attributes.key?(:'sent_at')
         self.sent_at = attributes[:'sent_at']
       end
+
+      if attributes.key?(:'attachments')
+        if (value = attributes[:'attachments']).is_a?(Array)
+          self.attachments = value
+        end
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -125,7 +137,8 @@ module Repull
           thread_id == o.thread_id &&
           from == o.from &&
           body == o.body &&
-          sent_at == o.sent_at
+          sent_at == o.sent_at &&
+          attachments == o.attachments
     end
 
     # @see the `==` method
@@ -137,7 +150,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [reservation_id, thread_id, from, body, sent_at].hash
+      [reservation_id, thread_id, from, body, sent_at, attachments].hash
     end
 
     # Builds the object from hash

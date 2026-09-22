@@ -42,6 +42,12 @@ module Repull
     # The channel's verbatim note, when it gave one — including the refusal that triggered a rewrite.
     attr_accessor :status_reason
 
+    # The files delivered, in request order. Empty array for a text-only send.
+    attr_accessor :attachments
+
+    # Present only when `attachments` were sent: one entry per channel message, in delivery order. `id` is the text message (or the last file message when there is no text).
+    attr_accessor :parts
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
@@ -54,7 +60,9 @@ module Repull
         :'content_rewritten' => :'contentRewritten',
         :'submitted_content' => :'submittedContent',
         :'delivered_content' => :'deliveredContent',
-        :'status_reason' => :'statusReason'
+        :'status_reason' => :'statusReason',
+        :'attachments' => :'attachments',
+        :'parts' => :'parts'
       }
     end
 
@@ -80,7 +88,9 @@ module Repull
         :'content_rewritten' => :'Boolean',
         :'submitted_content' => :'String',
         :'delivered_content' => :'String',
-        :'status_reason' => :'String'
+        :'status_reason' => :'String',
+        :'attachments' => :'Array<SentAttachment>',
+        :'parts' => :'Array<SendMessagePart>'
       }
     end
 
@@ -92,7 +102,7 @@ module Repull
         :'channel',
         :'submitted_content',
         :'delivered_content',
-        :'status_reason'
+        :'status_reason',
       ])
     end
 
@@ -151,6 +161,18 @@ module Repull
       if attributes.key?(:'status_reason')
         self.status_reason = attributes[:'status_reason']
       end
+
+      if attributes.key?(:'attachments')
+        if (value = attributes[:'attachments']).is_a?(Array)
+          self.attachments = value
+        end
+      end
+
+      if attributes.key?(:'parts')
+        if (value = attributes[:'parts']).is_a?(Array)
+          self.parts = value
+        end
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -182,7 +204,9 @@ module Repull
           content_rewritten == o.content_rewritten &&
           submitted_content == o.submitted_content &&
           delivered_content == o.delivered_content &&
-          status_reason == o.status_reason
+          status_reason == o.status_reason &&
+          attachments == o.attachments &&
+          parts == o.parts
     end
 
     # @see the `==` method
@@ -194,7 +218,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, conversation_id, external_message_id, channel, status, direction, content_rewritten, submitted_content, delivered_content, status_reason].hash
+      [id, conversation_id, external_message_id, channel, status, direction, content_rewritten, submitted_content, delivered_content, status_reason, attachments, parts].hash
     end
 
     # Builds the object from hash

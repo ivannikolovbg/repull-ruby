@@ -35,8 +35,14 @@ module Repull
     # Local check-out time for this stay, `HH:MM` on a 24-hour clock in the property's own timezone. Pair with `checkOut` to schedule the turnover clean. `null` when unknown. This is the same field `PATCH /v1/reservations/{id}` writes.
     attr_accessor :check_out_time
 
-    # Lifecycle status. The API normalises a multi-decade internal taxonomy down to these four buckets, so the value you receive is always one of the enum constants. `completed` is derived from `checkOut < today`.
+    # Lifecycle status. The API normalises a multi-decade internal taxonomy down to these four buckets, so the value you receive is always one of the enum constants. `completed` is derived from `checkOut < today`. A `pending` booking request the channel already let lapse — Airbnb expires an unanswered request 24 hours after the guest asks, and no request can be answered once its check-in has passed — is reported as `cancelled` with `statusDetail: \"request_expired\"`, even when the channel never told us.
     attr_accessor :status
+
+    # Present only when `status` was derived rather than reported by the channel. `request_expired` — a booking request nobody answered in time (Airbnb's 24-hour window passed, or the check-in did). Absent otherwise.
+    attr_accessor :status_detail
+
+    # On a `pending` Airbnb booking request that can still be answered: when it lapses (24 hours after the guest asked). Accept or decline before then with `POST /v1/reservations/{id}/accept` / `/decline`. Absent on every other reservation.
+    attr_accessor :respond_by
 
     # Booking source / channel. Lowercase. May be null on legacy rows. Canonical name as of 2026-05; `platform` is kept as an alias.
     attr_accessor :source
@@ -88,6 +94,8 @@ module Repull
         :'check_in_time' => :'checkInTime',
         :'check_out_time' => :'checkOutTime',
         :'status' => :'status',
+        :'status_detail' => :'statusDetail',
+        :'respond_by' => :'respondBy',
         :'source' => :'source',
         :'platform' => :'platform',
         :'confirmation_code' => :'confirmationCode',
@@ -125,6 +133,8 @@ module Repull
         :'check_in_time' => :'String',
         :'check_out_time' => :'String',
         :'status' => :'String',
+        :'status_detail' => :'String',
+        :'respond_by' => :'Time',
         :'source' => :'String',
         :'platform' => :'String',
         :'confirmation_code' => :'String',
@@ -209,6 +219,14 @@ module Repull
         self.status = attributes[:'status']
       else
         self.status = nil
+      end
+
+      if attributes.key?(:'status_detail')
+        self.status_detail = attributes[:'status_detail']
+      end
+
+      if attributes.key?(:'respond_by')
+        self.respond_by = attributes[:'respond_by']
       end
 
       if attributes.key?(:'source')
@@ -420,6 +438,8 @@ module Repull
           check_in_time == o.check_in_time &&
           check_out_time == o.check_out_time &&
           status == o.status &&
+          status_detail == o.status_detail &&
+          respond_by == o.respond_by &&
           source == o.source &&
           platform == o.platform &&
           confirmation_code == o.confirmation_code &&
@@ -444,7 +464,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, listing_id, guest_id, check_in, check_out, check_in_time, check_out_time, status, source, platform, confirmation_code, primary_guest, occupancy, financials, total_price, currency, guest_details, created_at, updated_at, booked_at, guest_name].hash
+      [id, listing_id, guest_id, check_in, check_out, check_in_time, check_out_time, status, status_detail, respond_by, source, platform, confirmation_code, primary_guest, occupancy, financials, total_price, currency, guest_details, created_at, updated_at, booked_at, guest_name].hash
     end
 
     # Builds the object from hash

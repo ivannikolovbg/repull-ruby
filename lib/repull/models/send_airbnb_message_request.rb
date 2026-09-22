@@ -14,14 +14,15 @@ require 'date'
 require 'time'
 
 module Repull
+  # `message`, `mediaUrl`, or both.
   class SendAirbnbMessageRequest < ApiModelBase
-    # Message body to send to the guest.
+    # Message body to send to the guest. Optional when `mediaUrl` is set (it is then sent as a separate message after the file).
     attr_accessor :message
 
-    # Optional URL of an image/media attachment to send with the message.
+    # Public https URL of one image or video to send (JPEG/PNG/GIF/WebP/MP4/QuickTime, up to 10 MB). Repull uploads it to Airbnb for you.
     attr_accessor :media_url
 
-    # Optional MIME/media type hint for `mediaUrl` (e.g. `image/jpeg`).
+    # Optional MIME type hint for `mediaUrl` (e.g. `image/jpeg`). The type is read from the file itself; this never overrides it.
     attr_accessor :media_type
 
     # Attribute mapping from ruby-style variable name to JSON key.
@@ -78,8 +79,6 @@ module Repull
 
       if attributes.key?(:'message')
         self.message = attributes[:'message']
-      else
-        self.message = nil
       end
 
       if attributes.key?(:'media_url')
@@ -96,10 +95,6 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
-      if @message.nil?
-        invalid_properties.push('invalid value for "message", message cannot be nil.')
-      end
-
       invalid_properties
     end
 
@@ -107,18 +102,7 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
-      return false if @message.nil?
       true
-    end
-
-    # Custom attribute writer method with validation
-    # @param [Object] message Value to be assigned
-    def message=(message)
-      if message.nil?
-        fail ArgumentError, 'message cannot be nil'
-      end
-
-      @message = message
     end
 
     # Checks equality by comparing each attribute.

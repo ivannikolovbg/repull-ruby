@@ -13,7 +13,7 @@
 | **channel** | **String** | Delivery channel — &#x60;airbnb&#x60;, &#x60;booking&#x60;, &#x60;sms&#x60;, &#x60;email&#x60;, etc. | [optional] |
 | **body** | **String** | Message body in the original language. | [optional] |
 | **translated_body** | **String** | English translation when the original language is non-English and a translation has been computed. | [optional] |
-| **attachments** | [**Array&lt;ConversationMessageAttachment&gt;**](ConversationMessageAttachment.md) |  | [optional] |
+| **attachments** | [**Array&lt;ConversationMessageAttachment&gt;**](ConversationMessageAttachment.md) | Files on this message, inbound or outbound. Empty array when there are none. A file-only message has an empty &#x60;body&#x60;. | [optional] |
 | **is_automated** | **Boolean** | &#x60;true&#x60; when the message was sent by a Vanio automation (template, schedule, etc.). | [optional] |
 | **ai_generated** | **Boolean** | &#x60;true&#x60; when the body was authored by Vanio AI (autopilot, draft). | [optional] |
 | **sent_at** | **Time** |  | [optional] |

@@ -14,10 +14,18 @@ require 'date'
 require 'time'
 
 module Repull
+  # A file on a message — a photo the guest sent, or a file sent to the guest. Files are copied to durable storage, so `url` keeps working after the channel's own link expires. Treat `url` as opaque.
   class ConversationMessageAttachment < ApiModelBase
     attr_accessor :id
 
+    # Where to download the file.
+    attr_accessor :url
+
+    # Same value as `url` (kept for older clients; it is not image-only). Use `url`.
     attr_accessor :image_url
+
+    # Coarse kind, derived from `contentType`.
+    attr_accessor :type
 
     attr_accessor :content_type
 
@@ -27,7 +35,9 @@ module Repull
     def self.attribute_map
       {
         :'id' => :'id',
+        :'url' => :'url',
         :'image_url' => :'imageUrl',
+        :'type' => :'type',
         :'content_type' => :'contentType',
         :'created_at' => :'createdAt'
       }
@@ -47,7 +57,9 @@ module Repull
     def self.openapi_types
       {
         :'id' => :'String',
+        :'url' => :'String',
         :'image_url' => :'String',
+        :'type' => :'String',
         :'content_type' => :'String',
         :'created_at' => :'Time'
       }
@@ -56,6 +68,11 @@ module Repull
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'id',
+        :'url',
+        :'image_url',
+        :'content_type',
+        :'created_at'
       ])
     end
 
@@ -79,8 +96,16 @@ module Repull
         self.id = attributes[:'id']
       end
 
+      if attributes.key?(:'url')
+        self.url = attributes[:'url']
+      end
+
       if attributes.key?(:'image_url')
         self.image_url = attributes[:'image_url']
+      end
+
+      if attributes.key?(:'type')
+        self.type = attributes[:'type']
       end
 
       if attributes.key?(:'content_type')
@@ -113,7 +138,9 @@ module Repull
       return true if self.equal?(o)
       self.class == o.class &&
           id == o.id &&
+          url == o.url &&
           image_url == o.image_url &&
+          type == o.type &&
           content_type == o.content_type &&
           created_at == o.created_at
     end
@@ -127,7 +154,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, image_url, content_type, created_at].hash
+      [id, url, image_url, type, content_type, created_at].hash
     end
 
     # Builds the object from hash

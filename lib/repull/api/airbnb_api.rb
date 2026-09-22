@@ -93,7 +93,7 @@ module Repull
     # Apply a state action to a listing by id. The path `id` is the canonical Repull listing id.  **Deactivating in Repull and unlisting on Airbnb are different operations.**  `delete` is a **deactivate of the Repull record only** — it sets the listing inactive and KEEPS the row; it does NOT touch the Airbnb listing, which stays live and keeps taking bookings. Use it to exclude a listing from the API / trim back under the plan-listings cap; reactivate via `PATCH /v1/listings/{id}` with `{ \"active\": true }`. Idempotent.  `unlist` calls Airbnb and **takes the live listing down**: it is deactivated with a valid deactivation reason and then READ BACK, so \"Airbnb accepted the call but the listing is still live\" is reported as a failure rather than a success. Requires `airbnbConnectionId` — a listing can be connected to more than one Airbnb listing, and taking down the wrong one is not undoable through this API. `relist` puts it back up (re-enables sync and makes the listing available again); it does not push content.  `push` / `publish` push the listing's content to Airbnb via the same host-side sync orchestrator as `POST /v1/listings/{id}/publish/airbnb` — pass `airbnbConnectionId` to update an already-mapped Airbnb listing, or `hostId` to create + publish a new one under that host. `force` re-pushes every field, ignoring dirty-field tracking. The result is per-section: see `AirbnbPublishResult`.  Any other action (e.g. `pull`) returns a structured 422 naming the supported actions.  Returns `403 listing_inactive` for `push`/`publish`/`unlist`/`relist` when the listing is inactive. `delete` (deactivation) is always accepted.
     # @param id [String] 
     # @param [Hash] opts the optional parameters
-    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable.
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status &gt;&#x3D; 500, &#x60;408&#x60;, &#x60;425&#x60; and &#x60;429&#x60;, and the refusals that happen before anything is done and tell you to fix something outside the request first — &#x60;connection_reauth_required&#x60;, &#x60;listing_inactive&#x60;, and the rate/daily limits. Every other answer, including a final refusal such as &#x60;422 airbnb_rejected&#x60;, is stored and replayed.
     # @option opts [AirbnbListingActionRequest] :airbnb_listing_action_request 
     # @return [AirbnbListingAction200Response]
     def airbnb_listing_action(id, opts = {})
@@ -105,7 +105,7 @@ module Repull
     # Apply a state action to a listing by id. The path &#x60;id&#x60; is the canonical Repull listing id.  **Deactivating in Repull and unlisting on Airbnb are different operations.**  &#x60;delete&#x60; is a **deactivate of the Repull record only** — it sets the listing inactive and KEEPS the row; it does NOT touch the Airbnb listing, which stays live and keeps taking bookings. Use it to exclude a listing from the API / trim back under the plan-listings cap; reactivate via &#x60;PATCH /v1/listings/{id}&#x60; with &#x60;{ \&quot;active\&quot;: true }&#x60;. Idempotent.  &#x60;unlist&#x60; calls Airbnb and **takes the live listing down**: it is deactivated with a valid deactivation reason and then READ BACK, so \&quot;Airbnb accepted the call but the listing is still live\&quot; is reported as a failure rather than a success. Requires &#x60;airbnbConnectionId&#x60; — a listing can be connected to more than one Airbnb listing, and taking down the wrong one is not undoable through this API. &#x60;relist&#x60; puts it back up (re-enables sync and makes the listing available again); it does not push content.  &#x60;push&#x60; / &#x60;publish&#x60; push the listing&#39;s content to Airbnb via the same host-side sync orchestrator as &#x60;POST /v1/listings/{id}/publish/airbnb&#x60; — pass &#x60;airbnbConnectionId&#x60; to update an already-mapped Airbnb listing, or &#x60;hostId&#x60; to create + publish a new one under that host. &#x60;force&#x60; re-pushes every field, ignoring dirty-field tracking. The result is per-section: see &#x60;AirbnbPublishResult&#x60;.  Any other action (e.g. &#x60;pull&#x60;) returns a structured 422 naming the supported actions.  Returns &#x60;403 listing_inactive&#x60; for &#x60;push&#x60;/&#x60;publish&#x60;/&#x60;unlist&#x60;/&#x60;relist&#x60; when the listing is inactive. &#x60;delete&#x60; (deactivation) is always accepted.
     # @param id [String] 
     # @param [Hash] opts the optional parameters
-    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable.
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status &gt;&#x3D; 500, &#x60;408&#x60;, &#x60;425&#x60; and &#x60;429&#x60;, and the refusals that happen before anything is done and tell you to fix something outside the request first — &#x60;connection_reauth_required&#x60;, &#x60;listing_inactive&#x60;, and the rate/daily limits. Every other answer, including a final refusal such as &#x60;422 airbnb_rejected&#x60;, is stored and replayed.
     # @option opts [AirbnbListingActionRequest] :airbnb_listing_action_request 
     # @return [Array<(AirbnbListingAction200Response, Integer, Hash)>] AirbnbListingAction200Response data, response status code and response headers
     def airbnb_listing_action_with_http_info(id, opts = {})
@@ -166,22 +166,26 @@ module Repull
       return data, status_code, headers
     end
 
-    # Accept/decline/cancel Airbnb reservation
-    # Apply a state action to an Airbnb reservation — `accept` / `decline` (for inquiries and reservation requests), `cancel` (host cancellation, carries penalties), `pre-approve` (for inquiries).  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
-    # @param code [String] 
+    # Accept, decline or cancel an Airbnb reservation
+    # Act on an Airbnb reservation by its Airbnb confirmation code. **Write-side** — calls Airbnb upstream, as the Airbnb account that owns the booking.  - `accept` — accept a pending booking request. - `decline` — decline a pending booking request. Requires `reason` (one of Airbnb's decline reasons) and `message` (sent to the guest, at most 500 characters). - `cancel` — cancel a confirmed booking as the host. Requires `reason` (one of Airbnb's host-cancellation reasons). **Host cancellations carry Airbnb penalties.**  The body is validated before anything reaches Airbnb; unknown fields are refused. There is no `pre-approve` action: a pre-approval answers an inquiry, which has no confirmation code — use `POST /v1/conversations/{id}/pre-approval`. For accept/decline, `POST /v1/reservations/{id}/accept` and `/decline` do the same by Repull id and also update Vanio.  Airbnb refusals are mapped rather than returned as a 500: a request that already moved on is `409 request_no_longer_pending` (do not retry), an expired one `409 request_expired`, any other refusal `422 airbnb_rejected` with Airbnb's reason.  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.  Send `Idempotency-Key` to make a retry safe.
+    # @param code [String] Airbnb confirmation code, e.g. &#x60;HM9J2MFR3W&#x60;.
+    # @param airbnb_reservation_action_request [AirbnbReservationActionRequest] 
     # @param [Hash] opts the optional parameters
-    # @return [nil]
-    def airbnb_reservation_action(code, opts = {})
-      airbnb_reservation_action_with_http_info(code, opts)
-      nil
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status &gt;&#x3D; 500, &#x60;408&#x60;, &#x60;425&#x60; and &#x60;429&#x60;, and the refusals that happen before anything is done and tell you to fix something outside the request first — &#x60;connection_reauth_required&#x60;, &#x60;listing_inactive&#x60;, and the rate/daily limits. Every other answer, including a final refusal such as &#x60;422 airbnb_rejected&#x60;, is stored and replayed.
+    # @return [AirbnbReservationAction200Response]
+    def airbnb_reservation_action(code, airbnb_reservation_action_request, opts = {})
+      data, _status_code, _headers = airbnb_reservation_action_with_http_info(code, airbnb_reservation_action_request, opts)
+      data
     end
 
-    # Accept/decline/cancel Airbnb reservation
-    # Apply a state action to an Airbnb reservation — &#x60;accept&#x60; / &#x60;decline&#x60; (for inquiries and reservation requests), &#x60;cancel&#x60; (host cancellation, carries penalties), &#x60;pre-approve&#x60; (for inquiries).  Returns &#x60;403 listing_inactive&#x60; when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
-    # @param code [String] 
+    # Accept, decline or cancel an Airbnb reservation
+    # Act on an Airbnb reservation by its Airbnb confirmation code. **Write-side** — calls Airbnb upstream, as the Airbnb account that owns the booking.  - &#x60;accept&#x60; — accept a pending booking request. - &#x60;decline&#x60; — decline a pending booking request. Requires &#x60;reason&#x60; (one of Airbnb&#39;s decline reasons) and &#x60;message&#x60; (sent to the guest, at most 500 characters). - &#x60;cancel&#x60; — cancel a confirmed booking as the host. Requires &#x60;reason&#x60; (one of Airbnb&#39;s host-cancellation reasons). **Host cancellations carry Airbnb penalties.**  The body is validated before anything reaches Airbnb; unknown fields are refused. There is no &#x60;pre-approve&#x60; action: a pre-approval answers an inquiry, which has no confirmation code — use &#x60;POST /v1/conversations/{id}/pre-approval&#x60;. For accept/decline, &#x60;POST /v1/reservations/{id}/accept&#x60; and &#x60;/decline&#x60; do the same by Repull id and also update Vanio.  Airbnb refusals are mapped rather than returned as a 500: a request that already moved on is &#x60;409 request_no_longer_pending&#x60; (do not retry), an expired one &#x60;409 request_expired&#x60;, any other refusal &#x60;422 airbnb_rejected&#x60; with Airbnb&#39;s reason.  Returns &#x60;403 listing_inactive&#x60; when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.  Send &#x60;Idempotency-Key&#x60; to make a retry safe.
+    # @param code [String] Airbnb confirmation code, e.g. &#x60;HM9J2MFR3W&#x60;.
+    # @param airbnb_reservation_action_request [AirbnbReservationActionRequest] 
     # @param [Hash] opts the optional parameters
-    # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
-    def airbnb_reservation_action_with_http_info(code, opts = {})
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status &gt;&#x3D; 500, &#x60;408&#x60;, &#x60;425&#x60; and &#x60;429&#x60;, and the refusals that happen before anything is done and tell you to fix something outside the request first — &#x60;connection_reauth_required&#x60;, &#x60;listing_inactive&#x60;, and the rate/daily limits. Every other answer, including a final refusal such as &#x60;422 airbnb_rejected&#x60;, is stored and replayed.
+    # @return [Array<(AirbnbReservationAction200Response, Integer, Hash)>] AirbnbReservationAction200Response data, response status code and response headers
+    def airbnb_reservation_action_with_http_info(code, airbnb_reservation_action_request, opts = {})
       if @api_client.config.debugging
         @api_client.config.logger.debug 'Calling API: AirbnbApi.airbnb_reservation_action ...'
       end
@@ -189,6 +193,14 @@ module Repull
       if @api_client.config.client_side_validation && code.nil?
         fail ArgumentError, "Missing the required parameter 'code' when calling AirbnbApi.airbnb_reservation_action"
       end
+      # verify the required parameter 'airbnb_reservation_action_request' is set
+      if @api_client.config.client_side_validation && airbnb_reservation_action_request.nil?
+        fail ArgumentError, "Missing the required parameter 'airbnb_reservation_action_request' when calling AirbnbApi.airbnb_reservation_action"
+      end
+      if @api_client.config.client_side_validation && !opts[:'idempotency_key'].nil? && opts[:'idempotency_key'].to_s.length > 255
+        fail ArgumentError, 'invalid value for "opts[:"idempotency_key"]" when calling AirbnbApi.airbnb_reservation_action, the character length must be smaller than or equal to 255.'
+      end
+
       # resource path
       local_var_path = '/v1/channels/airbnb/reservations/{code}'.sub('{code}', CGI.escape(code.to_s))
 
@@ -199,15 +211,21 @@ module Repull
       header_params = opts[:header_params] || {}
       # HTTP header 'Accept' (if needed)
       header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+      header_params[:'Idempotency-Key'] = opts[:'idempotency_key'] if !opts[:'idempotency_key'].nil?
 
       # form parameters
       form_params = opts[:form_params] || {}
 
       # http body (model)
-      post_body = opts[:debug_body]
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(airbnb_reservation_action_request)
 
       # return_type
-      return_type = opts[:debug_return_type]
+      return_type = opts[:debug_return_type] || 'AirbnbReservationAction200Response'
 
       # auth_names
       auth_names = opts[:debug_auth_names] || ['bearerAuth']
@@ -442,20 +460,22 @@ module Repull
     end
 
     # Create Airbnb special offer or pre-approval
-    # Create a special offer or a pre-approval on Airbnb. **Write-side** — calls Airbnb upstream. The `type` discriminator selects the flavour:  - `offer` — a special offer with custom terms (the remaining body fields are the offer params). - `preapproval` — pre-approve an inquiry thread (requires `threadId`; optional `blockInstantBooking`).  Requires a connected Airbnb host, else `404 no_connection`.  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # Create a pre-approval or a special offer on an Airbnb thread, addressed by **Airbnb** ids. **Write-side** — calls Airbnb upstream. The Repull-id equivalents, which also update the inquiry in Vanio, are `POST /v1/conversations/{id}/pre-approval` and `POST /v1/conversations/{id}/special-offers` — prefer those unless you only hold Airbnb ids.  - `type: \"preapproval\"` — let the guest book the dates and price they asked about. Requires `thread_id`; optional `block_instant_booking`. - `type: \"offer\"` — your own terms. Requires `thread_id`, `listing_id` (the **Airbnb** listing id, as a string), `start_date`, `nights`, `total_price` (whole stay, listing currency) and `guest_details` with `number_of_guests` (or `number_of_adults`; Airbnb counts adults + children).  The body is validated before anything reaches Airbnb (a `422 invalid_params` names the field), and unknown fields are refused. The legacy spellings `threadId` and `blockInstantBooking` still work. The request is sent as the Airbnb account that owns the thread or listing.  Airbnb refusals are mapped rather than returned as a 500: `409 inquiry_no_longer_open` / `inquiry_expired` when the inquiry moved on, `422 airbnb_rejected` with Airbnb’s reason otherwise, `403 connection_reauth_required` when the grant does not allow it.  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.  Send `Idempotency-Key`: a repeat with the same key replays the first response instead of acting twice (a `409 idempotency_key_in_use` while the first is still running). A 5xx, a `429 airbnb_rate_limited` or a `403 connection_reauth_required` is not stored — nothing was done — so retrying with the same key reaches Airbnb again.
     # @param create_airbnb_offer_request [CreateAirbnbOfferRequest] 
     # @param [Hash] opts the optional parameters
-    # @return [nil]
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status &gt;&#x3D; 500, &#x60;408&#x60;, &#x60;425&#x60; and &#x60;429&#x60;, and the refusals that happen before anything is done and tell you to fix something outside the request first — &#x60;connection_reauth_required&#x60;, &#x60;listing_inactive&#x60;, and the rate/daily limits. Every other answer, including a final refusal such as &#x60;422 airbnb_rejected&#x60;, is stored and replayed.
+    # @return [GetAirbnbOffer200Response]
     def create_airbnb_offer(create_airbnb_offer_request, opts = {})
-      create_airbnb_offer_with_http_info(create_airbnb_offer_request, opts)
-      nil
+      data, _status_code, _headers = create_airbnb_offer_with_http_info(create_airbnb_offer_request, opts)
+      data
     end
 
     # Create Airbnb special offer or pre-approval
-    # Create a special offer or a pre-approval on Airbnb. **Write-side** — calls Airbnb upstream. The &#x60;type&#x60; discriminator selects the flavour:  - &#x60;offer&#x60; — a special offer with custom terms (the remaining body fields are the offer params). - &#x60;preapproval&#x60; — pre-approve an inquiry thread (requires &#x60;threadId&#x60;; optional &#x60;blockInstantBooking&#x60;).  Requires a connected Airbnb host, else &#x60;404 no_connection&#x60;.  Returns &#x60;403 listing_inactive&#x60; when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # Create a pre-approval or a special offer on an Airbnb thread, addressed by **Airbnb** ids. **Write-side** — calls Airbnb upstream. The Repull-id equivalents, which also update the inquiry in Vanio, are &#x60;POST /v1/conversations/{id}/pre-approval&#x60; and &#x60;POST /v1/conversations/{id}/special-offers&#x60; — prefer those unless you only hold Airbnb ids.  - &#x60;type: \&quot;preapproval\&quot;&#x60; — let the guest book the dates and price they asked about. Requires &#x60;thread_id&#x60;; optional &#x60;block_instant_booking&#x60;. - &#x60;type: \&quot;offer\&quot;&#x60; — your own terms. Requires &#x60;thread_id&#x60;, &#x60;listing_id&#x60; (the **Airbnb** listing id, as a string), &#x60;start_date&#x60;, &#x60;nights&#x60;, &#x60;total_price&#x60; (whole stay, listing currency) and &#x60;guest_details&#x60; with &#x60;number_of_guests&#x60; (or &#x60;number_of_adults&#x60;; Airbnb counts adults + children).  The body is validated before anything reaches Airbnb (a &#x60;422 invalid_params&#x60; names the field), and unknown fields are refused. The legacy spellings &#x60;threadId&#x60; and &#x60;blockInstantBooking&#x60; still work. The request is sent as the Airbnb account that owns the thread or listing.  Airbnb refusals are mapped rather than returned as a 500: &#x60;409 inquiry_no_longer_open&#x60; / &#x60;inquiry_expired&#x60; when the inquiry moved on, &#x60;422 airbnb_rejected&#x60; with Airbnb’s reason otherwise, &#x60;403 connection_reauth_required&#x60; when the grant does not allow it.  Returns &#x60;403 listing_inactive&#x60; when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.  Send &#x60;Idempotency-Key&#x60;: a repeat with the same key replays the first response instead of acting twice (a &#x60;409 idempotency_key_in_use&#x60; while the first is still running). A 5xx, a &#x60;429 airbnb_rate_limited&#x60; or a &#x60;403 connection_reauth_required&#x60; is not stored — nothing was done — so retrying with the same key reaches Airbnb again.
     # @param create_airbnb_offer_request [CreateAirbnbOfferRequest] 
     # @param [Hash] opts the optional parameters
-    # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status &gt;&#x3D; 500, &#x60;408&#x60;, &#x60;425&#x60; and &#x60;429&#x60;, and the refusals that happen before anything is done and tell you to fix something outside the request first — &#x60;connection_reauth_required&#x60;, &#x60;listing_inactive&#x60;, and the rate/daily limits. Every other answer, including a final refusal such as &#x60;422 airbnb_rejected&#x60;, is stored and replayed.
+    # @return [Array<(GetAirbnbOffer200Response, Integer, Hash)>] GetAirbnbOffer200Response data, response status code and response headers
     def create_airbnb_offer_with_http_info(create_airbnb_offer_request, opts = {})
       if @api_client.config.debugging
         @api_client.config.logger.debug 'Calling API: AirbnbApi.create_airbnb_offer ...'
@@ -464,6 +484,10 @@ module Repull
       if @api_client.config.client_side_validation && create_airbnb_offer_request.nil?
         fail ArgumentError, "Missing the required parameter 'create_airbnb_offer_request' when calling AirbnbApi.create_airbnb_offer"
       end
+      if @api_client.config.client_side_validation && !opts[:'idempotency_key'].nil? && opts[:'idempotency_key'].to_s.length > 255
+        fail ArgumentError, 'invalid value for "opts[:"idempotency_key"]" when calling AirbnbApi.create_airbnb_offer, the character length must be smaller than or equal to 255.'
+      end
+
       # resource path
       local_var_path = '/v1/channels/airbnb/offers'
 
@@ -479,6 +503,7 @@ module Repull
       if !content_type.nil?
           header_params['Content-Type'] = content_type
       end
+      header_params[:'Idempotency-Key'] = opts[:'idempotency_key'] if !opts[:'idempotency_key'].nil?
 
       # form parameters
       form_params = opts[:form_params] || {}
@@ -487,7 +512,7 @@ module Repull
       post_body = opts[:debug_body] || @api_client.object_to_http_body(create_airbnb_offer_request)
 
       # return_type
-      return_type = opts[:debug_return_type]
+      return_type = opts[:debug_return_type] || 'GetAirbnbOffer200Response'
 
       # auth_names
       auth_names = opts[:debug_auth_names] || ['bearerAuth']
@@ -1500,6 +1525,70 @@ module Repull
       return data, status_code, headers
     end
 
+    # Get Airbnb special offer
+    # Read a pre-approval or special offer from Airbnb by its Airbnb id. **Live read** — calls Airbnb upstream. Pass the id as `?offerId=`. The Repull-id equivalent is `GET /v1/conversations/{id}/special-offers/{offerId}`, which also confirms the offer belongs to that conversation.
+    # @param offer_id [String] Airbnb special-offer id (the &#x60;id&#x60; Airbnb returned when the offer was created).
+    # @param [Hash] opts the optional parameters
+    # @return [GetAirbnbOffer200Response]
+    def get_airbnb_offer(offer_id, opts = {})
+      data, _status_code, _headers = get_airbnb_offer_with_http_info(offer_id, opts)
+      data
+    end
+
+    # Get Airbnb special offer
+    # Read a pre-approval or special offer from Airbnb by its Airbnb id. **Live read** — calls Airbnb upstream. Pass the id as &#x60;?offerId&#x3D;&#x60;. The Repull-id equivalent is &#x60;GET /v1/conversations/{id}/special-offers/{offerId}&#x60;, which also confirms the offer belongs to that conversation.
+    # @param offer_id [String] Airbnb special-offer id (the &#x60;id&#x60; Airbnb returned when the offer was created).
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(GetAirbnbOffer200Response, Integer, Hash)>] GetAirbnbOffer200Response data, response status code and response headers
+    def get_airbnb_offer_with_http_info(offer_id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: AirbnbApi.get_airbnb_offer ...'
+      end
+      # verify the required parameter 'offer_id' is set
+      if @api_client.config.client_side_validation && offer_id.nil?
+        fail ArgumentError, "Missing the required parameter 'offer_id' when calling AirbnbApi.get_airbnb_offer"
+      end
+      # resource path
+      local_var_path = '/v1/channels/airbnb/offers'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+      query_params[:'offerId'] = offer_id
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'GetAirbnbOffer200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"AirbnbApi.get_airbnb_offer",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: AirbnbApi#get_airbnb_offer\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # Get Airbnb reservation
     # Fetch a single Airbnb reservation by Airbnb confirmation code (e.g. `HMABCDEF12`).  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param code [String] 
@@ -2315,20 +2404,24 @@ module Repull
     end
 
     # Get Airbnb messages
-    # Fetch the full message log for an Airbnb thread, ordered oldest-to-newest. Walk pages with `?cursor=` until `pagination.hasMore` is `false`.  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # Messages stored for an Airbnb thread, as recorded rows (not the unified `Message` shape — use `GET /v1/conversations/{id}/messages` for that). By default returns 50 per page, newest first; walk older pages with `?cursor=` (the `pagination.nextCursor` of the previous page) until `pagination.hasMore` is `false`. `?all=true` returns up to 1000 rows oldest-first in one response, with no `pagination`.  Each row carries `attachments` — photos and other files on that message, inbound or outbound — in the same shape as the unified endpoint.  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param thread_id [String] 
     # @param [Hash] opts the optional parameters
-    # @return [MessageListResponse]
+    # @option opts [String] :cursor &#x60;pagination.nextCursor&#x60; from the previous page.
+    # @option opts [Boolean] :all &#x60;true&#x60; returns up to 1000 messages oldest-first in one response, without &#x60;pagination&#x60;.
+    # @return [ListAirbnbThreadMessages200Response]
     def list_airbnb_thread_messages(thread_id, opts = {})
       data, _status_code, _headers = list_airbnb_thread_messages_with_http_info(thread_id, opts)
       data
     end
 
     # Get Airbnb messages
-    # Fetch the full message log for an Airbnb thread, ordered oldest-to-newest. Walk pages with &#x60;?cursor&#x3D;&#x60; until &#x60;pagination.hasMore&#x60; is &#x60;false&#x60;.  Returns &#x60;403 listing_inactive&#x60; when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # Messages stored for an Airbnb thread, as recorded rows (not the unified &#x60;Message&#x60; shape — use &#x60;GET /v1/conversations/{id}/messages&#x60; for that). By default returns 50 per page, newest first; walk older pages with &#x60;?cursor&#x3D;&#x60; (the &#x60;pagination.nextCursor&#x60; of the previous page) until &#x60;pagination.hasMore&#x60; is &#x60;false&#x60;. &#x60;?all&#x3D;true&#x60; returns up to 1000 rows oldest-first in one response, with no &#x60;pagination&#x60;.  Each row carries &#x60;attachments&#x60; — photos and other files on that message, inbound or outbound — in the same shape as the unified endpoint.  Returns &#x60;403 listing_inactive&#x60; when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param thread_id [String] 
     # @param [Hash] opts the optional parameters
-    # @return [Array<(MessageListResponse, Integer, Hash)>] MessageListResponse data, response status code and response headers
+    # @option opts [String] :cursor &#x60;pagination.nextCursor&#x60; from the previous page.
+    # @option opts [Boolean] :all &#x60;true&#x60; returns up to 1000 messages oldest-first in one response, without &#x60;pagination&#x60;.
+    # @return [Array<(ListAirbnbThreadMessages200Response, Integer, Hash)>] ListAirbnbThreadMessages200Response data, response status code and response headers
     def list_airbnb_thread_messages_with_http_info(thread_id, opts = {})
       if @api_client.config.debugging
         @api_client.config.logger.debug 'Calling API: AirbnbApi.list_airbnb_thread_messages ...'
@@ -2342,6 +2435,8 @@ module Repull
 
       # query parameters
       query_params = opts[:query_params] || {}
+      query_params[:'cursor'] = opts[:'cursor'] if !opts[:'cursor'].nil?
+      query_params[:'all'] = opts[:'all'] if !opts[:'all'].nil?
 
       # header parameters
       header_params = opts[:header_params] || {}
@@ -2355,7 +2450,7 @@ module Repull
       post_body = opts[:debug_body]
 
       # return_type
-      return_type = opts[:debug_return_type] || 'MessageListResponse'
+      return_type = opts[:debug_return_type] || 'ListAirbnbThreadMessages200Response'
 
       # auth_names
       auth_names = opts[:debug_auth_names] || ['bearerAuth']
@@ -2771,22 +2866,22 @@ module Repull
     end
 
     # Send Airbnb message
-    # Send a message in an Airbnb thread as the host. Airbnb enforces content rules (no off-platform contact info, no external URLs) — violating messages are rejected upstream and surface as `airbnb_error`.  The `{threadId}` is the Airbnb thread id — the `externalThreadId` field on a unified `Conversation` (`GET /v1/conversations`).  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # Send a message in an Airbnb thread as the host. Airbnb enforces content rules (no off-platform contact info, no external URLs) — violating messages are rejected upstream and surface as `airbnb_error`.  ### Sending a photo or video (`mediaUrl`)  Airbnb only accepts media uploaded to a signed URL it issues, one file per message and no text on the same message. With `mediaUrl`, Repull downloads the file (public `https://` only, 10 MB max), reads its real type from the bytes (JPEG, PNG, GIF, WebP — converted to JPEG — or MP4/QuickTime), uploads it to Airbnb and sends it; `message`, if given, follows as a separate message. This is the same flow as `POST /v1/conversations/{id}/messages` with `attachments` — prefer that endpoint, which also takes several files per request. The response is a `SendMessageResponse`, the send is recorded in the conversation, and failures are the 422 codes documented there (`attachment_type_not_supported`, `attachment_too_large`, `message_not_sent` for a pre-booking thread, …). The thread must already be synced to Repull (`GET /v1/conversations` lists them), otherwise `404`.  Text-only sends (no `mediaUrl`) go straight to Airbnb and return Airbnb's message object.  The `{threadId}` is the Airbnb thread id — the `externalThreadId` field on a unified `Conversation` (`GET /v1/conversations`).  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param thread_id [String] Airbnb thread id (the &#x60;externalThreadId&#x60; on a unified &#x60;Conversation&#x60;).
     # @param send_airbnb_message_request [SendAirbnbMessageRequest] 
     # @param [Hash] opts the optional parameters
-    # @return [nil]
+    # @return [SendAirbnbMessage201Response]
     def send_airbnb_message(thread_id, send_airbnb_message_request, opts = {})
-      send_airbnb_message_with_http_info(thread_id, send_airbnb_message_request, opts)
-      nil
+      data, _status_code, _headers = send_airbnb_message_with_http_info(thread_id, send_airbnb_message_request, opts)
+      data
     end
 
     # Send Airbnb message
-    # Send a message in an Airbnb thread as the host. Airbnb enforces content rules (no off-platform contact info, no external URLs) — violating messages are rejected upstream and surface as &#x60;airbnb_error&#x60;.  The &#x60;{threadId}&#x60; is the Airbnb thread id — the &#x60;externalThreadId&#x60; field on a unified &#x60;Conversation&#x60; (&#x60;GET /v1/conversations&#x60;).  Returns &#x60;403 listing_inactive&#x60; when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+    # Send a message in an Airbnb thread as the host. Airbnb enforces content rules (no off-platform contact info, no external URLs) — violating messages are rejected upstream and surface as &#x60;airbnb_error&#x60;.  ### Sending a photo or video (&#x60;mediaUrl&#x60;)  Airbnb only accepts media uploaded to a signed URL it issues, one file per message and no text on the same message. With &#x60;mediaUrl&#x60;, Repull downloads the file (public &#x60;https://&#x60; only, 10 MB max), reads its real type from the bytes (JPEG, PNG, GIF, WebP — converted to JPEG — or MP4/QuickTime), uploads it to Airbnb and sends it; &#x60;message&#x60;, if given, follows as a separate message. This is the same flow as &#x60;POST /v1/conversations/{id}/messages&#x60; with &#x60;attachments&#x60; — prefer that endpoint, which also takes several files per request. The response is a &#x60;SendMessageResponse&#x60;, the send is recorded in the conversation, and failures are the 422 codes documented there (&#x60;attachment_type_not_supported&#x60;, &#x60;attachment_too_large&#x60;, &#x60;message_not_sent&#x60; for a pre-booking thread, …). The thread must already be synced to Repull (&#x60;GET /v1/conversations&#x60; lists them), otherwise &#x60;404&#x60;.  Text-only sends (no &#x60;mediaUrl&#x60;) go straight to Airbnb and return Airbnb&#39;s message object.  The &#x60;{threadId}&#x60; is the Airbnb thread id — the &#x60;externalThreadId&#x60; field on a unified &#x60;Conversation&#x60; (&#x60;GET /v1/conversations&#x60;).  Returns &#x60;403 listing_inactive&#x60; when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param thread_id [String] Airbnb thread id (the &#x60;externalThreadId&#x60; on a unified &#x60;Conversation&#x60;).
     # @param send_airbnb_message_request [SendAirbnbMessageRequest] 
     # @param [Hash] opts the optional parameters
-    # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
+    # @return [Array<(SendAirbnbMessage201Response, Integer, Hash)>] SendAirbnbMessage201Response data, response status code and response headers
     def send_airbnb_message_with_http_info(thread_id, send_airbnb_message_request, opts = {})
       if @api_client.config.debugging
         @api_client.config.logger.debug 'Calling API: AirbnbApi.send_airbnb_message ...'
@@ -2822,7 +2917,7 @@ module Repull
       post_body = opts[:debug_body] || @api_client.object_to_http_body(send_airbnb_message_request)
 
       # return_type
-      return_type = opts[:debug_return_type]
+      return_type = opts[:debug_return_type] || 'SendAirbnbMessage201Response'
 
       # auth_names
       auth_names = opts[:debug_auth_names] || ['bearerAuth']
@@ -3275,7 +3370,7 @@ module Repull
     # @param id [String] Repull listing id (numeric string).
     # @param airbnb_description_write_request [AirbnbDescriptionWriteRequest] 
     # @param [Hash] opts the optional parameters
-    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable.
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status &gt;&#x3D; 500, &#x60;408&#x60;, &#x60;425&#x60; and &#x60;429&#x60;, and the refusals that happen before anything is done and tell you to fix something outside the request first — &#x60;connection_reauth_required&#x60;, &#x60;listing_inactive&#x60;, and the rate/daily limits. Every other answer, including a final refusal such as &#x60;422 airbnb_rejected&#x60;, is stored and replayed.
     # @return [AirbnbContentWriteResponse]
     def update_airbnb_listing_description(id, airbnb_description_write_request, opts = {})
       data, _status_code, _headers = update_airbnb_listing_description_with_http_info(id, airbnb_description_write_request, opts)
@@ -3287,7 +3382,7 @@ module Repull
     # @param id [String] Repull listing id (numeric string).
     # @param airbnb_description_write_request [AirbnbDescriptionWriteRequest] 
     # @param [Hash] opts the optional parameters
-    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable.
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status &gt;&#x3D; 500, &#x60;408&#x60;, &#x60;425&#x60; and &#x60;429&#x60;, and the refusals that happen before anything is done and tell you to fix something outside the request first — &#x60;connection_reauth_required&#x60;, &#x60;listing_inactive&#x60;, and the rate/daily limits. Every other answer, including a final refusal such as &#x60;422 airbnb_rejected&#x60;, is stored and replayed.
     # @return [Array<(AirbnbContentWriteResponse, Integer, Hash)>] AirbnbContentWriteResponse data, response status code and response headers
     def update_airbnb_listing_description_with_http_info(id, airbnb_description_write_request, opts = {})
       if @api_client.config.debugging
@@ -3356,7 +3451,7 @@ module Repull
     # @param id [String] Repull listing id (numeric string).
     # @param airbnb_listing_details_write_request [AirbnbListingDetailsWriteRequest] 
     # @param [Hash] opts the optional parameters
-    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable.
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status &gt;&#x3D; 500, &#x60;408&#x60;, &#x60;425&#x60; and &#x60;429&#x60;, and the refusals that happen before anything is done and tell you to fix something outside the request first — &#x60;connection_reauth_required&#x60;, &#x60;listing_inactive&#x60;, and the rate/daily limits. Every other answer, including a final refusal such as &#x60;422 airbnb_rejected&#x60;, is stored and replayed.
     # @return [AirbnbContentWriteResponse]
     def update_airbnb_listing_details(id, airbnb_listing_details_write_request, opts = {})
       data, _status_code, _headers = update_airbnb_listing_details_with_http_info(id, airbnb_listing_details_write_request, opts)
@@ -3368,7 +3463,7 @@ module Repull
     # @param id [String] Repull listing id (numeric string).
     # @param airbnb_listing_details_write_request [AirbnbListingDetailsWriteRequest] 
     # @param [Hash] opts the optional parameters
-    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable.
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status &gt;&#x3D; 500, &#x60;408&#x60;, &#x60;425&#x60; and &#x60;429&#x60;, and the refusals that happen before anything is done and tell you to fix something outside the request first — &#x60;connection_reauth_required&#x60;, &#x60;listing_inactive&#x60;, and the rate/daily limits. Every other answer, including a final refusal such as &#x60;422 airbnb_rejected&#x60;, is stored and replayed.
     # @return [Array<(AirbnbContentWriteResponse, Integer, Hash)>] AirbnbContentWriteResponse data, response status code and response headers
     def update_airbnb_listing_details_with_http_info(id, airbnb_listing_details_write_request, opts = {})
       if @api_client.config.debugging
@@ -3437,7 +3532,7 @@ module Repull
     # @param id [String] Repull listing id (numeric string).
     # @param airbnb_permits_write_request [AirbnbPermitsWriteRequest] 
     # @param [Hash] opts the optional parameters
-    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable.
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status &gt;&#x3D; 500, &#x60;408&#x60;, &#x60;425&#x60; and &#x60;429&#x60;, and the refusals that happen before anything is done and tell you to fix something outside the request first — &#x60;connection_reauth_required&#x60;, &#x60;listing_inactive&#x60;, and the rate/daily limits. Every other answer, including a final refusal such as &#x60;422 airbnb_rejected&#x60;, is stored and replayed.
     # @return [UpdateAirbnbListingPermits200Response]
     def update_airbnb_listing_permits(id, airbnb_permits_write_request, opts = {})
       data, _status_code, _headers = update_airbnb_listing_permits_with_http_info(id, airbnb_permits_write_request, opts)
@@ -3449,7 +3544,7 @@ module Repull
     # @param id [String] Repull listing id (numeric string).
     # @param airbnb_permits_write_request [AirbnbPermitsWriteRequest] 
     # @param [Hash] opts the optional parameters
-    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable.
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status &gt;&#x3D; 500, &#x60;408&#x60;, &#x60;425&#x60; and &#x60;429&#x60;, and the refusals that happen before anything is done and tell you to fix something outside the request first — &#x60;connection_reauth_required&#x60;, &#x60;listing_inactive&#x60;, and the rate/daily limits. Every other answer, including a final refusal such as &#x60;422 airbnb_rejected&#x60;, is stored and replayed.
     # @return [Array<(UpdateAirbnbListingPermits200Response, Integer, Hash)>] UpdateAirbnbListingPermits200Response data, response status code and response headers
     def update_airbnb_listing_permits_with_http_info(id, airbnb_permits_write_request, opts = {})
       if @api_client.config.debugging
@@ -3747,7 +3842,7 @@ module Repull
     # @param id [String] Repull listing id (numeric string).
     # @param airbnb_safety_disclosures_write_request [AirbnbSafetyDisclosuresWriteRequest] 
     # @param [Hash] opts the optional parameters
-    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable.
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status &gt;&#x3D; 500, &#x60;408&#x60;, &#x60;425&#x60; and &#x60;429&#x60;, and the refusals that happen before anything is done and tell you to fix something outside the request first — &#x60;connection_reauth_required&#x60;, &#x60;listing_inactive&#x60;, and the rate/daily limits. Every other answer, including a final refusal such as &#x60;422 airbnb_rejected&#x60;, is stored and replayed.
     # @return [UpdateAirbnbListingSafetyDisclosures200Response]
     def update_airbnb_listing_safety_disclosures(id, airbnb_safety_disclosures_write_request, opts = {})
       data, _status_code, _headers = update_airbnb_listing_safety_disclosures_with_http_info(id, airbnb_safety_disclosures_write_request, opts)
@@ -3759,7 +3854,7 @@ module Repull
     # @param id [String] Repull listing id (numeric string).
     # @param airbnb_safety_disclosures_write_request [AirbnbSafetyDisclosuresWriteRequest] 
     # @param [Hash] opts the optional parameters
-    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Responses with status &gt;&#x3D; 500 are deliberately not stored, so a server error stays retryable.
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status &gt;&#x3D; 500, &#x60;408&#x60;, &#x60;425&#x60; and &#x60;429&#x60;, and the refusals that happen before anything is done and tell you to fix something outside the request first — &#x60;connection_reauth_required&#x60;, &#x60;listing_inactive&#x60;, and the rate/daily limits. Every other answer, including a final refusal such as &#x60;422 airbnb_rejected&#x60;, is stored and replayed.
     # @return [Array<(UpdateAirbnbListingSafetyDisclosures200Response, Integer, Hash)>] UpdateAirbnbListingSafetyDisclosures200Response data, response status code and response headers
     def update_airbnb_listing_safety_disclosures_with_http_info(id, airbnb_safety_disclosures_write_request, opts = {})
       if @api_client.config.debugging
@@ -3978,20 +4073,20 @@ module Repull
     end
 
     # Withdraw Airbnb special offer
-    # Withdraw a previously-created Airbnb special offer. **Write-side** — calls Airbnb upstream. Pass the offer id as `?offerId=`. Requires a connected Airbnb host, else `404 no_connection`.
-    # @param offer_id [String] Airbnb special-offer id to withdraw.
+    # Withdraw a special offer the guest has not booked. **Write-side** — calls Airbnb upstream. Pass the Airbnb offer id as `?offerId=`. The Repull-id equivalent is `DELETE /v1/conversations/{id}/special-offers/{offerId}`.
+    # @param offer_id [String] Airbnb special-offer id (the &#x60;id&#x60; Airbnb returned when the offer was created).
     # @param [Hash] opts the optional parameters
-    # @return [nil]
+    # @return [GetAirbnbOffer200Response]
     def withdraw_airbnb_offer(offer_id, opts = {})
-      withdraw_airbnb_offer_with_http_info(offer_id, opts)
-      nil
+      data, _status_code, _headers = withdraw_airbnb_offer_with_http_info(offer_id, opts)
+      data
     end
 
     # Withdraw Airbnb special offer
-    # Withdraw a previously-created Airbnb special offer. **Write-side** — calls Airbnb upstream. Pass the offer id as &#x60;?offerId&#x3D;&#x60;. Requires a connected Airbnb host, else &#x60;404 no_connection&#x60;.
-    # @param offer_id [String] Airbnb special-offer id to withdraw.
+    # Withdraw a special offer the guest has not booked. **Write-side** — calls Airbnb upstream. Pass the Airbnb offer id as &#x60;?offerId&#x3D;&#x60;. The Repull-id equivalent is &#x60;DELETE /v1/conversations/{id}/special-offers/{offerId}&#x60;.
+    # @param offer_id [String] Airbnb special-offer id (the &#x60;id&#x60; Airbnb returned when the offer was created).
     # @param [Hash] opts the optional parameters
-    # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
+    # @return [Array<(GetAirbnbOffer200Response, Integer, Hash)>] GetAirbnbOffer200Response data, response status code and response headers
     def withdraw_airbnb_offer_with_http_info(offer_id, opts = {})
       if @api_client.config.debugging
         @api_client.config.logger.debug 'Calling API: AirbnbApi.withdraw_airbnb_offer ...'
@@ -4019,7 +4114,7 @@ module Repull
       post_body = opts[:debug_body]
 
       # return_type
-      return_type = opts[:debug_return_type]
+      return_type = opts[:debug_return_type] || 'GetAirbnbOffer200Response'
 
       # auth_names
       auth_names = opts[:debug_auth_names] || ['bearerAuth']
