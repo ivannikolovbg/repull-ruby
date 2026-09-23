@@ -14,17 +14,30 @@ require 'date'
 require 'time'
 
 module Repull
-  # Partial address. Only provided sub-fields are written.
+  # Partial address. Only provided sub-fields are written; the ones you omit keep their current value, and an explicit `null` clears one.  This is also the repair path for a listing that cannot be published: Airbnb requires `street` and `city` for every country and additionally `state` and `postalCode` for a **US** property — and a listing with no `countryCode` behaves as US. Send just the missing part, e.g. `{ \"address\": { \"state\": \"FL\" } }`. `GET /v1/listings/{id}/publish-status` names what is missing.
   class ListingContentUpdateRequestAddress < ApiModelBase
+    # Street address including the number. Required by Airbnb for every country.
     attr_accessor :street
 
+    # City / town. Required by Airbnb for every country.
     attr_accessor :city
 
-    # ISO-3166 alpha-2 country code.
+    # State, province or region. **Required for a US property**, and a listing with no `countryCode` counts as US.
+    attr_accessor :state
+
+    # Postal code — ZIP in the US, postcode in the UK, and so on. **Required for a US property**, and a listing with no `countryCode` counts as US. Send the complete code; a partial postcode is rejected downstream. Alias: `zipcode`.
+    attr_accessor :postal_code
+
+    # Alias for `postalCode`, accepted because it is the field name on the Airbnb mirror. `postalCode` wins if you send both.
+    attr_accessor :zipcode
+
+    # ISO-3166 alpha-2 country code. **Send this for any non-US property.** Leaving it unset does not mean \"unknown\" — the publish path treats a listing with no country as US and then demands `state` and `postalCode`.
     attr_accessor :country_code
 
+    # Latitude. Never a substitute for the postal address — Airbnb rejects coordinates it cannot reconcile with a full address.
     attr_accessor :lat
 
+    # Longitude. See `lat`.
     attr_accessor :lng
 
     # Attribute mapping from ruby-style variable name to JSON key.
@@ -32,6 +45,9 @@ module Repull
       {
         :'street' => :'street',
         :'city' => :'city',
+        :'state' => :'state',
+        :'postal_code' => :'postalCode',
+        :'zipcode' => :'zipcode',
         :'country_code' => :'countryCode',
         :'lat' => :'lat',
         :'lng' => :'lng'
@@ -53,6 +69,9 @@ module Repull
       {
         :'street' => :'String',
         :'city' => :'String',
+        :'state' => :'String',
+        :'postal_code' => :'String',
+        :'zipcode' => :'String',
         :'country_code' => :'String',
         :'lat' => :'Float',
         :'lng' => :'Float'
@@ -64,6 +83,9 @@ module Repull
       Set.new([
         :'street',
         :'city',
+        :'state',
+        :'postal_code',
+        :'zipcode',
         :'country_code',
         :'lat',
         :'lng'
@@ -92,6 +114,18 @@ module Repull
 
       if attributes.key?(:'city')
         self.city = attributes[:'city']
+      end
+
+      if attributes.key?(:'state')
+        self.state = attributes[:'state']
+      end
+
+      if attributes.key?(:'postal_code')
+        self.postal_code = attributes[:'postal_code']
+      end
+
+      if attributes.key?(:'zipcode')
+        self.zipcode = attributes[:'zipcode']
       end
 
       if attributes.key?(:'country_code')
@@ -129,6 +163,9 @@ module Repull
       self.class == o.class &&
           street == o.street &&
           city == o.city &&
+          state == o.state &&
+          postal_code == o.postal_code &&
+          zipcode == o.zipcode &&
           country_code == o.country_code &&
           lat == o.lat &&
           lng == o.lng
@@ -143,7 +180,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [street, city, country_code, lat, lng].hash
+      [street, city, state, postal_code, zipcode, country_code, lat, lng].hash
     end
 
     # Builds the object from hash

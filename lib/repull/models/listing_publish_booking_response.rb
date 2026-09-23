@@ -14,12 +14,11 @@ require 'date'
 require 'time'
 
 module Repull
-  class ListingPublishResponse < ApiModelBase
+  class ListingPublishBookingResponse < ApiModelBase
     attr_accessor :listing_id
 
     attr_accessor :channel
 
-    # Channel-specific push result (sections pushed, errors, etc.)
     attr_accessor :result
 
     # Attribute mapping from ruby-style variable name to JSON key.
@@ -46,7 +45,7 @@ module Repull
       {
         :'listing_id' => :'String',
         :'channel' => :'String',
-        :'result' => :'Object'
+        :'result' => :'BookingPublishResult'
       }
     end
 
@@ -60,14 +59,14 @@ module Repull
     # @param [Hash] attributes Model attributes in the form of hash
     def initialize(attributes = {})
       if (!attributes.is_a?(Hash))
-        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::ListingPublishResponse` initialize method"
+        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::ListingPublishBookingResponse` initialize method"
       end
 
       # check to see if the attribute exists and convert string to symbol for hash key
       acceptable_attribute_map = self.class.acceptable_attribute_map
       attributes = attributes.each_with_object({}) { |(k, v), h|
         if (!acceptable_attribute_map.key?(k.to_sym))
-          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::ListingPublishResponse`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
+          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::ListingPublishBookingResponse`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
         end
         h[k.to_sym] = v
       }

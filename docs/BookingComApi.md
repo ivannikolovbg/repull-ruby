@@ -5,6 +5,7 @@ All URIs are relative to *https://api.repull.dev*
 | Method | HTTP request | Description |
 | ------ | ------------ | ----------- |
 | [**acknowledge_booking_reservations**](BookingComApi.md#acknowledge_booking_reservations) | **POST** /v1/channels/booking/reservations | Acknowledge Booking.com reservations |
+| [**booking_property_action**](BookingComApi.md#booking_property_action) | **POST** /v1/channels/booking/properties/{id} | Take a property off sale / put it back (unlist/relist) |
 | [**booking_setup**](BookingComApi.md#booking_setup) | **POST** /v1/channels/booking/setup | Booking.com property setup actions |
 | [**create_booking_webhook**](BookingComApi.md#create_booking_webhook) | **POST** /v1/channels/booking/webhooks | Subscribe to a Booking.com notification |
 | [**delete_booking_webhook**](BookingComApi.md#delete_booking_webhook) | **DELETE** /v1/channels/booking/webhooks | Unsubscribe from a Booking.com notification |
@@ -95,13 +96,13 @@ nil (empty response body)
 - **Accept**: application/json
 
 
-## booking_setup
+## booking_property_action
 
-> booking_setup(booking_setup_request)
+> <BookingPropertyActionResponse> booking_property_action(id, booking_property_action_request, opts)
 
-Booking.com property setup actions
+Take a property off sale / put it back (unlist/relist)
 
-Action-router for onboarding a property onto Booking.com. Select the step with `action`:  - `create-legal-entity` — register the legal entity (returns 201). - `check-legal-status` — poll legal-entity status by `leid`. - `check-readiness` — check whether a property is ready to open (`property_id`). - `open-property` — open the property for sale (`property_id`). - `set-contacts` — set property contacts (`property_id`, `contacts`). - `set-policies` — set property policies (`property_id`, plus policy fields).  Missing required fields per action return a validation error; upstream failures surface as `booking_error`.  Every action that takes a `property_id` requires a property connected to this workspace; any other id returns `404 not_found`.  Returns `403 listing_inactive` when any listing mapped to the Booking.com property is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+Stop this listing's Booking.com property being sold, or start it again. `id` is a **Repull listing id**, not a Booking.com hotel id, as on the GET.  **Booking.com has no unlist, so this is an availability write.** Airbnb has a real deactivate; Booking.com does not. `unlist` closes the mapped room across the whole forward window, so the property stops selling. `relist` is not its mirror image: it re-syncs the true calendar, so dates that are genuinely blocked (a reservation, an owner stay) stay blocked and only the closure `unlist` wrote lifts. Re-opening everything would sell dates that are not for sale.  **Which property gets closed.** A listing can be mapped to more than one Booking.com property — the same unit re-listed under a new property keeps its old mapping, and workspaces routinely sit on five or six. With exactly one, send nothing. With several, name one with `hotelId` (or `?hotel_id=`); omit it and the request is refused with **`409 ambiguous_booking_mapping`** listing the candidates, and nothing is written. That refusal matters more here than on a publish: writing content into the wrong property is recoverable, closing the wrong property's availability takes real inventory off sale while the property you meant keeps selling. Naming a property this listing is not mapped to is a `404` that names the ones it is.  **This does not change the listing in Repull.** `active` — what Repull bills and serves — is untouched by both actions and is deliberately not echoed in the response, so the two ideas can never be read as one field. To take a listing off the market on every channel at once, use `POST /v1/listings/{id}/offline`.  Any other action returns a structured `422` naming the ones that are supported. To push content use `POST /v1/listings/{id}/publish/booking`; to map rooms use `POST /v1/connect/booking/map-rooms`.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -115,7 +116,84 @@ Repull.configure do |config|
 end
 
 api_instance = Repull::BookingComApi.new
-booking_setup_request = Repull::BookingSetupRequest.new({action: 'create-legal-entity'}) # BookingSetupRequest | 
+id = 56 # Integer | Repull listing id — NOT a Booking.com hotel id.
+booking_property_action_request = Repull::BookingPropertyActionRequest.new({action: 'action_example'}) # BookingPropertyActionRequest | 
+opts = {
+  hotel_id: 'hotel_id_example', # String | Booking.com property to act on, for a listing mapped to more than one. The query-string spelling of the body's `hotelId`; the body wins when both are sent.
+  idempotency_key: '9f1c2f7e-4a3b-4f2e-9c8d-1b6a0e5d7c31' # String | Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged `Idempotency-Status: cached` — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → `409 idempotency_key_in_use`. - Same key with a DIFFERENT payload → `422 idempotency_key_reused`. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status >= 500, `408`, `425` and `429`, and the refusals that happen before anything is done and tell you to fix something outside the request first — `connection_reauth_required`, `listing_inactive`, and the rate/daily limits. Every other answer, including a final refusal such as `422 airbnb_rejected`, is stored and replayed.
+}
+
+begin
+  # Take a property off sale / put it back (unlist/relist)
+  result = api_instance.booking_property_action(id, booking_property_action_request, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling BookingComApi->booking_property_action: #{e}"
+end
+```
+
+#### Using the booking_property_action_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<BookingPropertyActionResponse>, Integer, Hash)> booking_property_action_with_http_info(id, booking_property_action_request, opts)
+
+```ruby
+begin
+  # Take a property off sale / put it back (unlist/relist)
+  data, status_code, headers = api_instance.booking_property_action_with_http_info(id, booking_property_action_request, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <BookingPropertyActionResponse>
+rescue Repull::ApiError => e
+  puts "Error when calling BookingComApi->booking_property_action_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **Integer** | Repull listing id — NOT a Booking.com hotel id. |  |
+| **booking_property_action_request** | [**BookingPropertyActionRequest**](BookingPropertyActionRequest.md) |  |  |
+| **hotel_id** | **String** | Booking.com property to act on, for a listing mapped to more than one. The query-string spelling of the body&#39;s &#x60;hotelId&#x60;; the body wins when both are sent. | [optional] |
+| **idempotency_key** | **String** | Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status &gt;&#x3D; 500, &#x60;408&#x60;, &#x60;425&#x60; and &#x60;429&#x60;, and the refusals that happen before anything is done and tell you to fix something outside the request first — &#x60;connection_reauth_required&#x60;, &#x60;listing_inactive&#x60;, and the rate/daily limits. Every other answer, including a final refusal such as &#x60;422 airbnb_rejected&#x60;, is stored and replayed. | [optional] |
+
+### Return type
+
+[**BookingPropertyActionResponse**](BookingPropertyActionResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## booking_setup
+
+> booking_setup(booking_setup_request)
+
+Booking.com property setup actions
+
+Action-router for putting a property onto Booking.com — including building one from nothing. Select the step with `action`.  ## Opening a property  - `create-property` — create a NEW Booking.com property for a Repull listing (`listing_id`). Creates the property, its first room, a rate plan and the room-rate product that makes the room sellable, seeds availability and rates, syncs the calendar, then sends the notification that starts Booking's validation. Returns 201. - `add-room` — add another room type (and its sellable product) to a property (`listing_id`, `property_id`). Returns 201. - `add-unit` — raise the number of identical units on an existing room (`listing_id`, `property_id`, `room_id`). - `advance` — re-send the summary notification for a property (`property_id`) to move it out of the \"XML: Being built\" stage.  ## Account and policy steps  - `create-legal-entity` — register a legal entity directly (returns 201). Not normally needed: see the legal-entity rules below. - `check-legal-status` — always `404`. A legal entity's details are readable for any id on the connectivity-provider credentials every workspace shares, and nothing records which workspace registered which entity, so no entity can be shown to be yours. `create-property` resolves it for you. - `check-readiness` — check whether a property is ready to open (`property_id`). - `open-property` — open the property for sale (`property_id`). - `set-contacts` — set property contacts (`property_id`, `contacts`). - `set-policies` — set property policies (`property_id`, plus policy fields).  ## Three things about Booking.com that cost real money  **A newly created property is NOT sellable.** Booking holds it at \"XML: Being built\" until it validates the summary notification. `create-property` sends that notification, but it can fail on its own after everything else succeeded — the response always reports `status: \"being_built\"` and `sellable: false`, never a guess. Use `advance` to re-send it, and check the Extranet for the stage.  **A room with no ACTIVE rate plan is invisible.** Booking only renders rooms that have at least one active product linkage (room × rate plan). A room can be created successfully, return a `roomId`, and never appear on the property page. If `rateId` comes back `null` from `create-property` or `add-room`, that is exactly what happened: activate a rate plan on the property in the Extranet, then add the room again.  **The room name is shown to travellers.** It is taken from the listing's name and appears on the Booking.com property page. Internal nicknames belong on the property's partner reference, not on the room.  ## The legal entity is resolved, not asked for  A property is created against the legal entity Booking.com contracts with, invoices and pays. You do not normally send one:  1. If this workspace already creates properties under a legal entity, that one is reused. A second is never registered. 2. If it has none and the request carries `legal_entity` (`company_name`, `legal_contact_name`, `legal_contact_email`), one is registered and used. Booking.com emails the legal contact a contract; creation only succeeds once it is signed. 3. If it has none and no `legal_entity`, the request is refused with `422 legal_entity_required` naming the fields — a contracted company is never invented.  `legal_entity_id` overrides all of that. An id that already carries another workspace's properties is refused with `403 legal_entity_not_yours` before anything is created.  ## What you do not control  Properties are created against Booking's **production** target only. A test-target property cannot be sold through and there is no route back from one, so `target` is not a parameter — sending it changes nothing.  These are fixed on every created property and are not parameters: property category (Apartment), initial room count (1), and the property contact record (a placeholder name, email and phone). Set the real contacts afterwards with `set-contacts`. Latitude and longitude come from the listing and are adjusted slightly to clear Booking.com's duplicate detection — send the property's true position on the listing and do not pre-adjust it yourself.  The listing's name, check-in/check-out times, currency, capacity and price come from the listing. Its postal code is taken from the listing's own `postalCode`; when the listing has none, it falls back to a connected Airbnb listing. A listing with neither is created without a postal code, so set `postalCode` on the listing first.  ## Guards  Every action that takes a `property_id` requires a property connected to this workspace; any other id returns `404 not_found`. Every action that takes a `listing_id` requires a listing in this workspace; any other id returns `404 not_found`.  `create-property` refuses a listing with no coordinates (`422 missing_coordinates`) before anything is created — creating a Booking.com property cannot be undone.  `create-property` is subject to the same published-listing gate as the dashboard: no plan, or the plan's listing limit reached, returns `403 billing_error` with `used` and `limit`, and nothing is created.  Returns `403 listing_inactive` when the listing — or any listing mapped to the Booking.com property — is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.  If a property is created and a later step fails, the response is `422 booking_create_partial` carrying `property_id`. The property EXISTS. Do not retry `create-property`, which would open a second one — continue with `add-room` and `advance`.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::BookingComApi.new
+booking_setup_request = Repull::BookingSetupRequest.new({action: 'create-property'}) # BookingSetupRequest | 
 
 begin
   # Booking.com property setup actions

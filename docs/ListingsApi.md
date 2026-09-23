@@ -17,6 +17,8 @@ All URIs are relative to *https://api.repull.dev*
 | [**publish_listing_to_booking**](ListingsApi.md#publish_listing_to_booking) | **POST** /v1/listings/{id}/publish/booking | Publish a listing to Booking.com |
 | [**pull_listing_from_airbnb**](ListingsApi.md#pull_listing_from_airbnb) | **POST** /v1/listings/{id}/pull/airbnb | Refresh a listing from Airbnb |
 | [**set_listings_status**](ListingsApi.md#set_listings_status) | **POST** /v1/listings/status | Activate or deactivate listings in bulk |
+| [**take_listing_offline**](ListingsApi.md#take_listing_offline) | **POST** /v1/listings/{id}/offline | Take a listing off the market |
+| [**take_listing_online**](ListingsApi.md#take_listing_online) | **POST** /v1/listings/{id}/online | Put a listing back on the market |
 | [**update_listing_active**](ListingsApi.md#update_listing_active) | **PATCH** /v1/listings/{id} | Deactivate or reactivate a listing |
 | [**update_listing_content**](ListingsApi.md#update_listing_content) | **PUT** /v1/listings/{id}/content | Update canonical listing content |
 
@@ -455,7 +457,7 @@ end
 
 Per-channel publish status
 
-Returns connection state and sync activity per channel. `channels` is sync activity (empty until first push). `connections` is connection state (populated as soon as a channel is linked). Recommended polling cadence: at most once per 30s per listing — for bulk views, prefer `GET /v1/listings` and filter client-side.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+Returns connection state and sync activity per channel. `channels` is sync activity (empty until first push). `connections` is connection state (populated as soon as a channel is linked). Recommended polling cadence: at most once per 30s per listing — for bulk views, prefer `GET /v1/listings` and filter client-side.  **When a push fails, this endpoint says why.** `channels[].pushError` carries the channel's own reason for the last failed push, verbatim — `\"Links and contact info can't be shared\"`, `\"Check-in start time must be before end time\"`, `\"property_type_group must be one of […]\"`. It is free text written by the channel, so render it next to the retry button rather than parsing it. `null` when the last push succeeded or none has run; pair it with `pushStatus` to tell those two apart.  **It also says what you will not be allowed to change.** The `airbnb` entry in `connections` carries `lockedFields` — attributes Airbnb has locked on this listing. Airbnb does not refuse a write to one: it answers 200, reports the field as locked, and applies nothing, so a locked write is indistinguishable from a successful one unless you looked first. Read it before you let someone edit. Airbnb-only; no other channel has the concept, and no other entry carries the field.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -678,7 +680,7 @@ end
 
 Publish a listing to Airbnb
 
-Push a Repull listing's canonical content to Airbnb. Pass `airbnbConnectionId` to update an already-mapped Airbnb listing, or `hostId` to create a brand-new Airbnb listing under that host.  **A publish is not one call to Airbnb.** It is up to eight independent ones — details, description, amenities, rooms, policies, photos, pricing, checkout_tasks — and each can fail on its own. `result.published` is true only when every attempted section landed; `result.sections` lists the ones that did and `result.errors[]` carries Airbnb's own reason, per section, for the ones that did not. **A partial publish is normal and is not rolled back**: what succeeded stays applied. Publish again once you have fixed the failing sections — a re-publish of an unchanged section is harmless.  `result.lockedFields` names the fields Airbnb will not let this listing change at all. They are not retryable by anyone: Airbnb answers 200 and applies nothing. `GET /v1/channels/airbnb/listings/{id}` reports the same list up front.  **Which fields this pushes** — title, description sections and house rules (English/primary locale), amenities, rooms and beds, photos, nightly price and fees, cancellation policy and guest controls, check-in/out times, quiet hours, property and room type, checkout tasks. **Not pushed by this endpoint:** non-primary locales (`PUT /v1/channels/airbnb/listings/{id}/descriptions`), guest-safety disclosures (`PUT …/safety-disclosures`), check-in method (`PUT …/details`), permits (`PUT …/permits`), and the calendar (`PUT …/availability`).  `force: true` re-pushes every section, ignoring dirty-field tracking. Without it only the sections changed since the last successful publish are sent.  Send `Idempotency-Key` to make a retry safe: a timeout on a publish otherwise leaves you unable to tell whether it ran.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+Push a Repull listing's canonical content to Airbnb. Pass `airbnbConnectionId` to update an already-mapped Airbnb listing, or `hostId` to create a brand-new Airbnb listing under that host.  **A publish is not one call to Airbnb.** It is up to eight independent ones — details, description, amenities, rooms, policies, photos, pricing, checkout_tasks — and each can fail on its own. `result.published` is true only when every attempted section landed; `result.sections` lists the ones that did and `result.errors[]` carries Airbnb's own reason, per section, for the ones that did not. **A partial publish is normal and is not rolled back**: what succeeded stays applied. Publish again once you have fixed the failing sections — a re-publish of an unchanged section is harmless.  `result.live` is a different question from `result.published`. `published` is about CONTENT — every attempted section landed. `live` is about whether the listing takes bookings: it is true only when activation was actually performed and succeeded. A create can land all eight sections and still leave the listing inactive, because activation is skipped when instant-booking cannot be confirmed to be off — so `published: true` with `live: false` is a real and common outcome, and `result.warnings` says why. `live` is ABSENT, not `false`, when activation was never part of the operation: publishing to an already-mapped listing updates content and activates nothing. Only treat a listing as not-live when `live` is present and false.  `result.warnings[]` lists steps that failed WITHOUT failing the publish — optional work the push carried on past. They were previously swallowed, so the only sign of one was a listing that was somehow not quite right afterwards. A publish can be `published: true` and still carry warnings; read them before concluding nothing needs doing.  `result.lockedFields` names the fields Airbnb will not let this listing change at all. They are not retryable by anyone: Airbnb answers 200 and applies nothing. `GET /v1/channels/airbnb/listings/{id}` reports the same list up front.  **Which fields this pushes** — title, description sections and house rules (English/primary locale), amenities, rooms and beds, photos, nightly price and fees, cancellation policy and guest controls, check-in/out times, quiet hours, property and room type, checkout tasks. **Not pushed by this endpoint:** non-primary locales (`PUT /v1/channels/airbnb/listings/{id}/descriptions`), guest-safety disclosures (`PUT …/safety-disclosures`), check-in method (`PUT …/details`), permits (`PUT …/permits`), and the calendar (`PUT …/availability`).  `force: true` re-pushes every section, ignoring dirty-field tracking. Without it only the sections changed since the last successful publish are sent.  Send `Idempotency-Key` to make a retry safe: a timeout on a publish otherwise leaves you unable to tell whether it ran.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -749,11 +751,11 @@ end
 
 ## publish_listing_to_booking
 
-> <ListingPublishResponse> publish_listing_to_booking(id)
+> <ListingPublishBookingResponse> publish_listing_to_booking(id, opts)
 
 Publish a listing to Booking.com
 
-Push a Repull listing to Booking.com. The listing must already be mapped to a Booking property + room (created via the Booking-claim Connect flow).  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+Push a Repull listing's content to Booking.com. The listing must already be mapped to a Booking.com property + room — claim the hotel through the Connect Booking flow, then map its rooms with `POST /v1/connect/booking/map-rooms`.  **Which property the content lands in.** A listing can be mapped to more than one Booking.com property; the same unit re-listed under a new property keeps its old mapping, and workspaces routinely sit on five or six. When the listing has exactly one property you need send nothing. When it has several, name one with `hotelId` in the body (or `?hotel_id=` — the same value, accepted either way, body wins if you send both). Omit it on such a listing and the push is refused with **`409 ambiguous_booking_mapping`**, listing the candidate ids: content pushed into a property chosen for you lands on the wrong listing and reports success, which is worse than a refusal. `GET /v1/channels/booking/properties` lists every property with the listings mapped under it. Naming a property this listing is not mapped to is a `404` that names the ones it is.  The property that actually received the content comes back as `result.hotelId`.  **A publish is not one call to Booking.com.** It is several independent Content API calls — details, description, amenities, rooms, photos, pricing — and each can fail on its own. `result.published` is true only when every attempted section landed; `result.sections` lists the ones that did and `result.errors[]` carries Booking.com's own reason, per section, for the ones that did not. A property whose Content API credentials do not cover a section answers 403 for that section alone. **A partial publish is normal and is not rolled back**: what succeeded stays applied. Fix the failing sections and publish again — re-publishing an unchanged section is harmless.  A listing with no Booking.com property mapped at all is not an error: the call returns `result.published: false` with `result.reason` and `result.hotelId: null`, and nothing is pushed.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -767,11 +769,15 @@ Repull.configure do |config|
 end
 
 api_instance = Repull::ListingsApi.new
-id = 56 # Integer | 
+id = 56 # Integer | Repull listing id — NOT a Booking.com hotel id.
+opts = {
+  hotel_id: 'hotel_id_example', # String | Booking.com property to publish into, for a listing mapped to more than one. The query-string spelling of the body's `hotelId`, accepted so this route reads the same as every other Booking listing-addressed route. The body wins when both are sent.
+  listing_publish_booking_request: Repull::ListingPublishBookingRequest.new # ListingPublishBookingRequest | 
+}
 
 begin
   # Publish a listing to Booking.com
-  result = api_instance.publish_listing_to_booking(id)
+  result = api_instance.publish_listing_to_booking(id, opts)
   p result
 rescue Repull::ApiError => e
   puts "Error when calling ListingsApi->publish_listing_to_booking: #{e}"
@@ -782,15 +788,15 @@ end
 
 This returns an Array which contains the response data, status code and headers.
 
-> <Array(<ListingPublishResponse>, Integer, Hash)> publish_listing_to_booking_with_http_info(id)
+> <Array(<ListingPublishBookingResponse>, Integer, Hash)> publish_listing_to_booking_with_http_info(id, opts)
 
 ```ruby
 begin
   # Publish a listing to Booking.com
-  data, status_code, headers = api_instance.publish_listing_to_booking_with_http_info(id)
+  data, status_code, headers = api_instance.publish_listing_to_booking_with_http_info(id, opts)
   p status_code # => 2xx
   p headers # => { ... }
-  p data # => <ListingPublishResponse>
+  p data # => <ListingPublishBookingResponse>
 rescue Repull::ApiError => e
   puts "Error when calling ListingsApi->publish_listing_to_booking_with_http_info: #{e}"
 end
@@ -800,11 +806,13 @@ end
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **id** | **Integer** |  |  |
+| **id** | **Integer** | Repull listing id — NOT a Booking.com hotel id. |  |
+| **hotel_id** | **String** | Booking.com property to publish into, for a listing mapped to more than one. The query-string spelling of the body&#39;s &#x60;hotelId&#x60;, accepted so this route reads the same as every other Booking listing-addressed route. The body wins when both are sent. | [optional] |
+| **listing_publish_booking_request** | [**ListingPublishBookingRequest**](ListingPublishBookingRequest.md) |  | [optional] |
 
 ### Return type
 
-[**ListingPublishResponse**](ListingPublishResponse.md)
+[**ListingPublishBookingResponse**](ListingPublishBookingResponse.md)
 
 ### Authorization
 
@@ -812,7 +820,7 @@ end
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 
@@ -947,6 +955,160 @@ end
 ### Return type
 
 [**ListingStatusBatchResponse**](ListingStatusBatchResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## take_listing_offline
+
+> <ListingMarketStateResponse> take_listing_offline(id, opts)
+
+Take a listing off the market
+
+Stop this listing being sold, on every channel it is connected to, in one call.  What that means differs per channel and you do not have to know which is which. On **Airbnb** the live listing is deactivated with a valid deactivation reason and then READ BACK — Airbnb accepts some deactivations and leaves the listing up, so \"we sent the request\" is never reported as success. On **Booking.com** there is no unlist at all; the equivalent is closing the room's availability across the whole forward window, which is what happens.  **This is not the same as deactivating the listing in Repull.** The two get confused because both sound like removal, and they have opposite consequences:  | | Take offline (this endpoint) | Deactivate in Repull (`PATCH /v1/listings/{id}` `{\"active\": false}`) | |---|---|---| | The guest-facing listing | **Stops taking bookings** | Stays live and keeps taking bookings | | Billing and plan limits | Unchanged | No longer billed, no longer counts toward the cap | | API access to the listing | Unchanged — you can still read and write it | `403 listing_inactive` until reactivated | | Reverse it with | `POST /v1/listings/{id}/online` | `PATCH /v1/listings/{id}` `{\"active\": true}` | | Data kept | Yes | Yes, and it keeps syncing |  Neither one deletes anything, on either side.  **The answer is per channel item.** A listing can sit on several Airbnb connections and a Booking.com property at once; they fail independently and a partial result is the ordinary outcome, so every item reports its own `state`, `code` and `message` and there is no top-level success flag to mislead you. Nothing is rolled back — re-send the same request to retry the items that did not land.  **Booking.com ambiguity is reported, not fanned out.** A listing mapped to more than one active Booking.com property comes back with that item refused (`ambiguous_booking_mapping`) while the Airbnb items still run: closing the wrong property's availability takes real inventory off sale, and taking a listing off Airbnb is not less urgent because its Booking.com mapping is untidy. Name the property with `hotelId` and send it again.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ListingsApi.new
+id = 56 # Integer | Repull listing id.
+opts = {
+  hotel_id: 'hotel_id_example', # String | Booking.com property to act on, for a listing mapped to more than one. The query-string spelling of the body's `hotelId`; the body wins when both are sent.
+  idempotency_key: '9f1c2f7e-4a3b-4f2e-9c8d-1b6a0e5d7c31', # String | Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged `Idempotency-Status: cached` — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → `409 idempotency_key_in_use`. - Same key with a DIFFERENT payload → `422 idempotency_key_reused`. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status >= 500, `408`, `425` and `429`, and the refusals that happen before anything is done and tell you to fix something outside the request first — `connection_reauth_required`, `listing_inactive`, and the rate/daily limits. Every other answer, including a final refusal such as `422 airbnb_rejected`, is stored and replayed.
+  listing_market_state_request: Repull::ListingMarketStateRequest.new # ListingMarketStateRequest | 
+}
+
+begin
+  # Take a listing off the market
+  result = api_instance.take_listing_offline(id, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ListingsApi->take_listing_offline: #{e}"
+end
+```
+
+#### Using the take_listing_offline_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<ListingMarketStateResponse>, Integer, Hash)> take_listing_offline_with_http_info(id, opts)
+
+```ruby
+begin
+  # Take a listing off the market
+  data, status_code, headers = api_instance.take_listing_offline_with_http_info(id, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <ListingMarketStateResponse>
+rescue Repull::ApiError => e
+  puts "Error when calling ListingsApi->take_listing_offline_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **Integer** | Repull listing id. |  |
+| **hotel_id** | **String** | Booking.com property to act on, for a listing mapped to more than one. The query-string spelling of the body&#39;s &#x60;hotelId&#x60;; the body wins when both are sent. | [optional] |
+| **idempotency_key** | **String** | Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status &gt;&#x3D; 500, &#x60;408&#x60;, &#x60;425&#x60; and &#x60;429&#x60;, and the refusals that happen before anything is done and tell you to fix something outside the request first — &#x60;connection_reauth_required&#x60;, &#x60;listing_inactive&#x60;, and the rate/daily limits. Every other answer, including a final refusal such as &#x60;422 airbnb_rejected&#x60;, is stored and replayed. | [optional] |
+| **listing_market_state_request** | [**ListingMarketStateRequest**](ListingMarketStateRequest.md) |  | [optional] |
+
+### Return type
+
+[**ListingMarketStateResponse**](ListingMarketStateResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## take_listing_online
+
+> <ListingMarketStateResponse> take_listing_online(id, opts)
+
+Put a listing back on the market
+
+Put this listing back on sale, on every channel it is connected to. The counterpart of `POST /v1/listings/{id}/offline`, which documents the per-item response and the difference between this and deactivating a listing in Repull.  **It does not push content.** On **Airbnb** it re-enables sync and makes the listing available again; anything that changed while the listing was down is still unpublished, so follow with `POST /v1/listings/{id}/publish/airbnb` if the content moved. On **Booking.com** it re-syncs the true calendar rather than opening everything: dates that are genuinely blocked — a reservation, an owner stay — stay blocked, and only the closure `offline` wrote lifts. The two directions are not mirror images, and that is deliberate.  **One asymmetry worth planning for.** Taking a listing down passes no billing gate; putting it back up goes through the channel-publish gate. So on a workspace whose subscription has lapsed, `offline` still works and this endpoint answers `402 payment_required` — a listing can be left off the market until billing is sorted out. That refusal is reported as a billing refusal with the action that fixes it, never as a channel error: retrying, or reconnecting the channel, does nothing for it.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ListingsApi.new
+id = 56 # Integer | Repull listing id.
+opts = {
+  hotel_id: 'hotel_id_example', # String | Booking.com property to act on, for a listing mapped to more than one. The query-string spelling of the body's `hotelId`; the body wins when both are sent.
+  idempotency_key: '9f1c2f7e-4a3b-4f2e-9c8d-1b6a0e5d7c31', # String | Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged `Idempotency-Status: cached` — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → `409 idempotency_key_in_use`. - Same key with a DIFFERENT payload → `422 idempotency_key_reused`. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status >= 500, `408`, `425` and `429`, and the refusals that happen before anything is done and tell you to fix something outside the request first — `connection_reauth_required`, `listing_inactive`, and the rate/daily limits. Every other answer, including a final refusal such as `422 airbnb_rejected`, is stored and replayed.
+  listing_market_state_request: Repull::ListingMarketStateRequest.new # ListingMarketStateRequest | 
+}
+
+begin
+  # Put a listing back on the market
+  result = api_instance.take_listing_online(id, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ListingsApi->take_listing_online: #{e}"
+end
+```
+
+#### Using the take_listing_online_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<ListingMarketStateResponse>, Integer, Hash)> take_listing_online_with_http_info(id, opts)
+
+```ruby
+begin
+  # Put a listing back on the market
+  data, status_code, headers = api_instance.take_listing_online_with_http_info(id, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <ListingMarketStateResponse>
+rescue Repull::ApiError => e
+  puts "Error when calling ListingsApi->take_listing_online_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **Integer** | Repull listing id. |  |
+| **hotel_id** | **String** | Booking.com property to act on, for a listing mapped to more than one. The query-string spelling of the body&#39;s &#x60;hotelId&#x60;; the body wins when both are sent. | [optional] |
+| **idempotency_key** | **String** | Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status &gt;&#x3D; 500, &#x60;408&#x60;, &#x60;425&#x60; and &#x60;429&#x60;, and the refusals that happen before anything is done and tell you to fix something outside the request first — &#x60;connection_reauth_required&#x60;, &#x60;listing_inactive&#x60;, and the rate/daily limits. Every other answer, including a final refusal such as &#x60;422 airbnb_rejected&#x60;, is stored and replayed. | [optional] |
+| **listing_market_state_request** | [**ListingMarketStateRequest**](ListingMarketStateRequest.md) |  | [optional] |
+
+### Return type
+
+[**ListingMarketStateResponse**](ListingMarketStateResponse.md)
 
 ### Authorization
 

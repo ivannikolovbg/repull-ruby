@@ -1,4 +1,4 @@
-# Repull::ListingPublishResponse
+# Repull::ListingPublishBookingResponse
 
 ## Properties
 
@@ -6,14 +6,14 @@
 | ---- | ---- | ----------- | ----- |
 | **listing_id** | **String** |  | [optional] |
 | **channel** | **String** |  | [optional] |
-| **result** | **Object** | Channel-specific push result (sections pushed, errors, etc.) | [optional] |
+| **result** | [**BookingPublishResult**](BookingPublishResult.md) |  | [optional] |
 
 ## Example
 
 ```ruby
 require 'repull'
 
-instance = Repull::ListingPublishResponse.new(
+instance = Repull::ListingPublishBookingResponse.new(
   listing_id: null,
   channel: null,
   result: null

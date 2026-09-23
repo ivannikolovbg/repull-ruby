@@ -8,7 +8,7 @@
 | **conversation_id** | **String** | Repull conversation id — pass it to &#x60;POST /v1/conversations/{id}/pre-approval&#x60; or &#x60;/special-offers&#x60;. |  |
 | **listing_id** | **String** |  |  |
 | **channel** | **String** |  |  |
-| **status** | **String** | &#x60;open&#x60; — nobody has answered and the stay is still ahead; &#x60;pre_approved&#x60;; &#x60;special_offer_sent&#x60; (from the API, Vanio, or Airbnb’s own app); &#x60;booked&#x60; — the guest booked (&#x60;reservationId&#x60;); &#x60;expired&#x60; — the stay has started or Airbnb expired it; &#x60;declined&#x60;; &#x60;not_possible&#x60; — Airbnb says the dates cannot be booked. |  |
+| **status** | **String** | &#x60;open&#x60; — nobody has answered and the stay is still ahead; &#x60;pre_approved&#x60;; &#x60;special_offer_sent&#x60; (from the API, a connected app, or Airbnb’s own app); &#x60;booked&#x60; — the guest booked (&#x60;reservationId&#x60;); &#x60;expired&#x60; — the stay has started or Airbnb expired it; &#x60;declined&#x60;; &#x60;not_possible&#x60; — Airbnb says the dates cannot be booked. |  |
 | **check_in** | **Date** |  |  |
 | **check_out** | **Date** |  |  |
 | **guests** | [**ListInquiries200ResponseDataInnerGuests**](ListInquiries200ResponseDataInnerGuests.md) |  |  |

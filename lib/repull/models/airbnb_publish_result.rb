@@ -14,16 +14,22 @@ require 'date'
 require 'time'
 
 module Repull
-  # A publish is not one call to Airbnb: it is up to eight independent ones (details, description, amenities, rooms, policies, photos, pricing, checkout_tasks), each of which can fail on its own. A PARTIAL publish is normal — what succeeded stays applied; there is no rollback.
+  # A publish is not one call to Airbnb: it is up to eight independent ones (details, description, amenities, rooms, policies, photos, pricing, checkout_tasks), each of which can fail on its own. A PARTIAL publish is normal — what succeeded stays applied; there is no rollback.  **Content landing and the listing being live are two different answers.** `published` is about content; `live` is about whether the listing takes bookings. Read both.
   class AirbnbPublishResult < ApiModelBase
     # True only when EVERY attempted section reached Airbnb.
     attr_accessor :published
+
+    # Whether the listing is active and bookable on Airbnb — that is, whether activation was actually performed and succeeded.  `published: true` with `live: false` is a real and common outcome: every content section landed, but the listing was never activated, because activation is skipped when instant-booking cannot be confirmed to be off. `warnings` says why.  **Absent is not `false`.** The field is omitted entirely when activation was never part of the operation — publishing to an already-mapped Airbnb listing updates content and activates nothing, so there is nothing to report. Only treat the listing as not-live when `live` is present and false.
+    attr_accessor :live
 
     # Sections that landed on Airbnb.
     attr_accessor :sections
 
     # Per-section failures. Empty when `published` is true.
     attr_accessor :errors
+
+    # Steps that failed WITHOUT failing the publish — optional work the push carried on past, each in the push's own words. These used to be swallowed silently, so the only sign of one was a listing that was somehow not quite right afterwards. A publish can be `published: true` and still carry warnings; read them before concluding nothing needs doing.
+    attr_accessor :warnings
 
     # Set when the publish never started at all (no connection, address missing, subscription gate).
     attr_accessor :reason
@@ -35,8 +41,10 @@ module Repull
     def self.attribute_map
       {
         :'published' => :'published',
+        :'live' => :'live',
         :'sections' => :'sections',
         :'errors' => :'errors',
+        :'warnings' => :'warnings',
         :'reason' => :'reason',
         :'locked_fields' => :'lockedFields'
       }
@@ -56,8 +64,10 @@ module Repull
     def self.openapi_types
       {
         :'published' => :'Boolean',
+        :'live' => :'Boolean',
         :'sections' => :'Array<String>',
         :'errors' => :'Array<PublishSectionError>',
+        :'warnings' => :'Array<String>',
         :'reason' => :'String',
         :'locked_fields' => :'Array<String>'
       }
@@ -91,6 +101,10 @@ module Repull
         self.published = nil
       end
 
+      if attributes.key?(:'live')
+        self.live = attributes[:'live']
+      end
+
       if attributes.key?(:'sections')
         if (value = attributes[:'sections']).is_a?(Array)
           self.sections = value
@@ -105,6 +119,14 @@ module Repull
         end
       else
         self.errors = nil
+      end
+
+      if attributes.key?(:'warnings')
+        if (value = attributes[:'warnings']).is_a?(Array)
+          self.warnings = value
+        end
+      else
+        self.warnings = nil
       end
 
       if attributes.key?(:'reason')
@@ -137,6 +159,10 @@ module Repull
         invalid_properties.push('invalid value for "errors", errors cannot be nil.')
       end
 
+      if @warnings.nil?
+        invalid_properties.push('invalid value for "warnings", warnings cannot be nil.')
+      end
+
       if @locked_fields.nil?
         invalid_properties.push('invalid value for "locked_fields", locked_fields cannot be nil.')
       end
@@ -151,6 +177,7 @@ module Repull
       return false if @published.nil?
       return false if @sections.nil?
       return false if @errors.nil?
+      return false if @warnings.nil?
       return false if @locked_fields.nil?
       true
     end
@@ -186,6 +213,16 @@ module Repull
     end
 
     # Custom attribute writer method with validation
+    # @param [Object] warnings Value to be assigned
+    def warnings=(warnings)
+      if warnings.nil?
+        fail ArgumentError, 'warnings cannot be nil'
+      end
+
+      @warnings = warnings
+    end
+
+    # Custom attribute writer method with validation
     # @param [Object] locked_fields Value to be assigned
     def locked_fields=(locked_fields)
       if locked_fields.nil?
@@ -201,8 +238,10 @@ module Repull
       return true if self.equal?(o)
       self.class == o.class &&
           published == o.published &&
+          live == o.live &&
           sections == o.sections &&
           errors == o.errors &&
+          warnings == o.warnings &&
           reason == o.reason &&
           locked_fields == o.locked_fields
     end
@@ -216,7 +255,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [published, sections, errors, reason, locked_fields].hash
+      [published, live, sections, errors, warnings, reason, locked_fields].hash
     end
 
     # Builds the object from hash

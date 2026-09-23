@@ -14,62 +14,50 @@ require 'date'
 require 'time'
 
 module Repull
-  class BookingSetupRequest < ApiModelBase
-    attr_accessor :action
+  # What happened on ONE channel item — one Airbnb connection, or one Booking.com property. A listing can carry several Airbnb connections (a re-list, or a move between host accounts) and each gets its own entry.
+  class ChannelMarketStateItem < ApiModelBase
+    attr_accessor :channel
 
-    # Repull listing id — required for `create-property`, `add-room` and `add-unit`. NOT a Booking.com Hotel ID. `listingId` is accepted as an alias.
-    attr_accessor :listing_id
+    # **What is now true of this item**, not what you asked for.  `offline` — it is off the market. `online` — it is back on. `unchanged` — nothing was sent, or what was sent did not take; `code` and `message` say why.  `unchanged` never means \"it was already like that\": it means we did not put it there, and it is still in whatever state it was in before the call.
+    attr_accessor :state
 
-    # Booking.com Hotel ID — required for `add-room`, `add-unit`, `advance`, and the readiness/open/contacts/policies actions.
-    attr_accessor :property_id
+    # True only when the channel confirmed the change.
+    attr_accessor :ok
 
-    # Booking.com room id — required for `add-unit`. `GET /v1/channels/booking/properties/{listingId}/rooms` lists them. `roomId` is accepted as an alias.
-    attr_accessor :room_id
+    # Airbnb connection row id — the `id` from `GET /v1/channels/airbnb/listings/{id}`. Present on Airbnb items.
+    attr_accessor :connection_id
 
-    # Optional override for `create-property`. Omit it: the legal entity this workspace already uses is resolved automatically. An id that carries another workspace's properties is refused with `403 legal_entity_not_yours`. `legalEntityId` is accepted as an alias.
-    attr_accessor :legal_entity_id
+    # The Booking.com property acted on. Present on Booking.com items; null when the property could not be resolved.
+    attr_accessor :hotel_id
 
-    attr_accessor :legal_entity
+    # Error code when `ok` is false — the SAME code the channel-specific endpoint returns for this failure, so one vocabulary covers both surfaces. Absent when `ok` is true.  The channel codes come in pairs, and the pair is the retryable split — the most useful bit in the whole item:  - `airbnb_rejected` / `booking_rejected` — the channel refused the request AS SENT. `message` carries its own reason. Correct it and send again; resending the same thing is refused again. - `airbnb_error` / `booking_error` — the channel did not complete the request (outage, timeout, server error). Nothing about the request needs to change: retry with backoff.  Plus `ambiguous_booking_mapping` (name the property with `hotelId`) and `payment_required` (a billing refusal, which keeps its own code rather than being buried under a channel one).
+    attr_accessor :code
 
-    # Legal entity id — required for `check-legal-status`, which always answers 404.
-    attr_accessor :leid
+    # The `code` this item used to carry, for callers still branching on the old string. A migration aid with a deprecation window — **`code` is canonical.**  This fan-out reaches Airbnb through an internal hop that flattens a refusal into its own 500, so an unambiguous Airbnb 400 (\"Please specify a valid room type\") was reported as `airbnb_error` — whose published advice is to retry with backoff, forever, for something Airbnb will never accept. It now reads Airbnb's real status and answers `airbnb_rejected`, and the classification covers the whole 4xx range rather than only `400`. Items whose code changed carry `previousCode`. **Removed in v2.**
+    attr_accessor :previous_code
 
-    # Contacts payload for `set-contacts`.
-    attr_accessor :contacts
+    # The channel's own reason, verbatim. Absent when `ok` is true.
+    attr_accessor :message
 
-    class EnumAttributeValidator
-      attr_reader :datatype
-      attr_reader :allowable_values
+    # What to do about it, phrased for the direction you asked for — \"still live and taking bookings\" and \"still down\" call for different reactions. Absent when `ok` is true.
+    attr_accessor :fix
 
-      def initialize(datatype, allowable_values)
-        @allowable_values = allowable_values.map do |value|
-          case datatype.to_s
-          when /Integer/i
-            value.to_i
-          when /Float/i
-            value.to_f
-          else
-            value
-          end
-        end
-      end
-
-      def valid?(value)
-        !value || allowable_values.include?(value)
-      end
-    end
+    # Airbnb only, and only when going offline: the listing was READ BACK after the deactivation and confirmed down. Airbnb accepts a deactivation and leaves some listings live, so \"we sent the request\" is a weaker claim than this one and is never reported as success.
+    attr_accessor :verified
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'action' => :'action',
-        :'listing_id' => :'listing_id',
-        :'property_id' => :'property_id',
-        :'room_id' => :'room_id',
-        :'legal_entity_id' => :'legal_entity_id',
-        :'legal_entity' => :'legal_entity',
-        :'leid' => :'leid',
-        :'contacts' => :'contacts'
+        :'channel' => :'channel',
+        :'state' => :'state',
+        :'ok' => :'ok',
+        :'connection_id' => :'connectionId',
+        :'hotel_id' => :'hotelId',
+        :'code' => :'code',
+        :'previous_code' => :'previousCode',
+        :'message' => :'message',
+        :'fix' => :'fix',
+        :'verified' => :'verified'
       }
     end
 
@@ -86,20 +74,24 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'action' => :'String',
-        :'listing_id' => :'Integer',
-        :'property_id' => :'String',
-        :'room_id' => :'Integer',
-        :'legal_entity_id' => :'Integer',
-        :'legal_entity' => :'BookingSetupRequestLegalEntity',
-        :'leid' => :'Integer',
-        :'contacts' => :'Array<Hash<String, Object>>'
+        :'channel' => :'String',
+        :'state' => :'String',
+        :'ok' => :'Boolean',
+        :'connection_id' => :'String',
+        :'hotel_id' => :'String',
+        :'code' => :'String',
+        :'previous_code' => :'String',
+        :'message' => :'String',
+        :'fix' => :'String',
+        :'verified' => :'Boolean'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'connection_id',
+        :'hotel_id',
       ])
     end
 
@@ -107,52 +99,62 @@ module Repull
     # @param [Hash] attributes Model attributes in the form of hash
     def initialize(attributes = {})
       if (!attributes.is_a?(Hash))
-        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::BookingSetupRequest` initialize method"
+        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::ChannelMarketStateItem` initialize method"
       end
 
       # check to see if the attribute exists and convert string to symbol for hash key
       acceptable_attribute_map = self.class.acceptable_attribute_map
       attributes = attributes.each_with_object({}) { |(k, v), h|
         if (!acceptable_attribute_map.key?(k.to_sym))
-          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::BookingSetupRequest`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
+          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::ChannelMarketStateItem`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
         end
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'action')
-        self.action = attributes[:'action']
+      if attributes.key?(:'channel')
+        self.channel = attributes[:'channel']
       else
-        self.action = nil
+        self.channel = nil
       end
 
-      if attributes.key?(:'listing_id')
-        self.listing_id = attributes[:'listing_id']
+      if attributes.key?(:'state')
+        self.state = attributes[:'state']
+      else
+        self.state = nil
       end
 
-      if attributes.key?(:'property_id')
-        self.property_id = attributes[:'property_id']
+      if attributes.key?(:'ok')
+        self.ok = attributes[:'ok']
+      else
+        self.ok = nil
       end
 
-      if attributes.key?(:'room_id')
-        self.room_id = attributes[:'room_id']
+      if attributes.key?(:'connection_id')
+        self.connection_id = attributes[:'connection_id']
       end
 
-      if attributes.key?(:'legal_entity_id')
-        self.legal_entity_id = attributes[:'legal_entity_id']
+      if attributes.key?(:'hotel_id')
+        self.hotel_id = attributes[:'hotel_id']
       end
 
-      if attributes.key?(:'legal_entity')
-        self.legal_entity = attributes[:'legal_entity']
+      if attributes.key?(:'code')
+        self.code = attributes[:'code']
       end
 
-      if attributes.key?(:'leid')
-        self.leid = attributes[:'leid']
+      if attributes.key?(:'previous_code')
+        self.previous_code = attributes[:'previous_code']
       end
 
-      if attributes.key?(:'contacts')
-        if (value = attributes[:'contacts']).is_a?(Array)
-          self.contacts = value
-        end
+      if attributes.key?(:'message')
+        self.message = attributes[:'message']
+      end
+
+      if attributes.key?(:'fix')
+        self.fix = attributes[:'fix']
+      end
+
+      if attributes.key?(:'verified')
+        self.verified = attributes[:'verified']
       end
     end
 
@@ -161,8 +163,16 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
-      if @action.nil?
-        invalid_properties.push('invalid value for "action", action cannot be nil.')
+      if @channel.nil?
+        invalid_properties.push('invalid value for "channel", channel cannot be nil.')
+      end
+
+      if @state.nil?
+        invalid_properties.push('invalid value for "state", state cannot be nil.')
+      end
+
+      if @ok.nil?
+        invalid_properties.push('invalid value for "ok", ok cannot be nil.')
       end
 
       invalid_properties
@@ -172,20 +182,40 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
-      return false if @action.nil?
-      action_validator = EnumAttributeValidator.new('String', ["create-property", "add-room", "add-unit", "advance", "create-legal-entity", "check-legal-status", "check-readiness", "open-property", "set-contacts", "set-policies"])
-      return false unless action_validator.valid?(@action)
+      return false if @channel.nil?
+      return false if @state.nil?
+      return false if @ok.nil?
       true
     end
 
-    # Custom attribute writer method checking allowed values (enum).
-    # @param [Object] action Object to be assigned
-    def action=(action)
-      validator = EnumAttributeValidator.new('String', ["create-property", "add-room", "add-unit", "advance", "create-legal-entity", "check-legal-status", "check-readiness", "open-property", "set-contacts", "set-policies"])
-      unless validator.valid?(action)
-        fail ArgumentError, "invalid value for \"action\", must be one of #{validator.allowable_values}."
+    # Custom attribute writer method with validation
+    # @param [Object] channel Value to be assigned
+    def channel=(channel)
+      if channel.nil?
+        fail ArgumentError, 'channel cannot be nil'
       end
-      @action = action
+
+      @channel = channel
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] state Value to be assigned
+    def state=(state)
+      if state.nil?
+        fail ArgumentError, 'state cannot be nil'
+      end
+
+      @state = state
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] ok Value to be assigned
+    def ok=(ok)
+      if ok.nil?
+        fail ArgumentError, 'ok cannot be nil'
+      end
+
+      @ok = ok
     end
 
     # Checks equality by comparing each attribute.
@@ -193,14 +223,16 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          action == o.action &&
-          listing_id == o.listing_id &&
-          property_id == o.property_id &&
-          room_id == o.room_id &&
-          legal_entity_id == o.legal_entity_id &&
-          legal_entity == o.legal_entity &&
-          leid == o.leid &&
-          contacts == o.contacts
+          channel == o.channel &&
+          state == o.state &&
+          ok == o.ok &&
+          connection_id == o.connection_id &&
+          hotel_id == o.hotel_id &&
+          code == o.code &&
+          previous_code == o.previous_code &&
+          message == o.message &&
+          fix == o.fix &&
+          verified == o.verified
     end
 
     # @see the `==` method
@@ -212,7 +244,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [action, listing_id, property_id, room_id, legal_entity_id, legal_entity, leid, contacts].hash
+      [channel, state, ok, connection_id, hotel_id, code, previous_code, message, fix, verified].hash
     end
 
     # Builds the object from hash

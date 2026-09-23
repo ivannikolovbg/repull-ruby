@@ -48,6 +48,9 @@ module Repull
     # Suggestion for typos and near-matches. Present when the server can guess the intent.
     attr_accessor :did_you_mean
 
+    # The `code` THIS response used to carry, for callers whose branch still matches the old string. A migration aid with a deprecation window — **`code` is canonical, always match on that.**  Present only where an endpoint's classification actually changed, never as a permanent synonym, and it disappears from a response as soon as the canonical code and the old one agree.  The live case: the reviews, messaging, check-in-guide, alteration-answer and Airbnb-pull endpoints used to report EVERY Airbnb failure as `500 airbnb_error`, including refusals Airbnb will repeat forever. They now classify the same way every other Airbnb write does — an Airbnb 4xx is `422 airbnb_rejected` (fix the request), 5xx and timeouts stay `502 airbnb_error` (retry with backoff), and a dead grant is `403 connection_reauth_required`. Those responses carry `previous_code: \"airbnb_error\"`. **Removed in v2** — migrate your branches to `code` before then.
+    attr_accessor :previous_code
+
     # Every inactive listing the request involved. Present on `code: \"listing_inactive\"` (HTTP 403) — activate these ids and retry.
     attr_accessor :listing_ids
 
@@ -79,6 +82,7 @@ module Repull
         :'valid_params' => :'validParams',
         :'endpoint' => :'endpoint',
         :'did_you_mean' => :'did_you_mean',
+        :'previous_code' => :'previous_code',
         :'listing_ids' => :'listing_ids',
         :'listing_id' => :'listing_id',
         :'airbnb_listing_id' => :'airbnb_listing_id',
@@ -112,6 +116,7 @@ module Repull
         :'valid_params' => :'Array<String>',
         :'endpoint' => :'String',
         :'did_you_mean' => :'String',
+        :'previous_code' => :'String',
         :'listing_ids' => :'Array<String>',
         :'listing_id' => :'String',
         :'airbnb_listing_id' => :'String',
@@ -200,6 +205,10 @@ module Repull
 
       if attributes.key?(:'did_you_mean')
         self.did_you_mean = attributes[:'did_you_mean']
+      end
+
+      if attributes.key?(:'previous_code')
+        self.previous_code = attributes[:'previous_code']
       end
 
       if attributes.key?(:'listing_ids')
@@ -335,6 +344,7 @@ module Repull
           valid_params == o.valid_params &&
           endpoint == o.endpoint &&
           did_you_mean == o.did_you_mean &&
+          previous_code == o.previous_code &&
           listing_ids == o.listing_ids &&
           listing_id == o.listing_id &&
           airbnb_listing_id == o.airbnb_listing_id &&
@@ -352,7 +362,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [code, message, fix, docs_url, request_id, field, value_received, valid_values, valid_params, endpoint, did_you_mean, listing_ids, listing_id, airbnb_listing_id, sync_category, retry_after, support].hash
+      [code, message, fix, docs_url, request_id, field, value_received, valid_values, valid_params, endpoint, did_you_mean, previous_code, listing_ids, listing_id, airbnb_listing_id, sync_category, retry_after, support].hash
     end
 
     # Builds the object from hash

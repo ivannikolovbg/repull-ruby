@@ -14,62 +14,23 @@ require 'date'
 require 'time'
 
 module Repull
-  class BookingSetupRequest < ApiModelBase
-    attr_accessor :action
+  # One section of a publish that did not reach Booking.com.
+  class BookingPublishSectionError < ApiModelBase
+    # Which part of the listing this failure is about — e.g. `details`, `description`, `amenities`, `rooms`, `photos`, `pricing`.
+    attr_accessor :section
 
-    # Repull listing id — required for `create-property`, `add-room` and `add-unit`. NOT a Booking.com Hotel ID. `listingId` is accepted as an alias.
-    attr_accessor :listing_id
+    # Booking.com's own reason, verbatim, or ours when we refused to send an empty section.
+    attr_accessor :message
 
-    # Booking.com Hotel ID — required for `add-room`, `add-unit`, `advance`, and the readiness/open/contacts/policies actions.
-    attr_accessor :property_id
-
-    # Booking.com room id — required for `add-unit`. `GET /v1/channels/booking/properties/{listingId}/rooms` lists them. `roomId` is accepted as an alias.
-    attr_accessor :room_id
-
-    # Optional override for `create-property`. Omit it: the legal entity this workspace already uses is resolved automatically. An id that carries another workspace's properties is refused with `403 legal_entity_not_yours`. `legalEntityId` is accepted as an alias.
-    attr_accessor :legal_entity_id
-
-    attr_accessor :legal_entity
-
-    # Legal entity id — required for `check-legal-status`, which always answers 404.
-    attr_accessor :leid
-
-    # Contacts payload for `set-contacts`.
-    attr_accessor :contacts
-
-    class EnumAttributeValidator
-      attr_reader :datatype
-      attr_reader :allowable_values
-
-      def initialize(datatype, allowable_values)
-        @allowable_values = allowable_values.map do |value|
-          case datatype.to_s
-          when /Integer/i
-            value.to_i
-          when /Float/i
-            value.to_f
-          else
-            value
-          end
-        end
-      end
-
-      def valid?(value)
-        !value || allowable_values.include?(value)
-      end
-    end
+    # `no_content` — there was nothing canonical to send for this section; write the content, then publish again. `rejected` — Booking.com refused the section as sent; fix the content, or the property's Content API permissions, and publish again.  Airbnb's third code, `locked`, has no Booking.com counterpart and never appears here.
+    attr_accessor :code
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'action' => :'action',
-        :'listing_id' => :'listing_id',
-        :'property_id' => :'property_id',
-        :'room_id' => :'room_id',
-        :'legal_entity_id' => :'legal_entity_id',
-        :'legal_entity' => :'legal_entity',
-        :'leid' => :'leid',
-        :'contacts' => :'contacts'
+        :'section' => :'section',
+        :'message' => :'message',
+        :'code' => :'code'
       }
     end
 
@@ -86,14 +47,9 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'action' => :'String',
-        :'listing_id' => :'Integer',
-        :'property_id' => :'String',
-        :'room_id' => :'Integer',
-        :'legal_entity_id' => :'Integer',
-        :'legal_entity' => :'BookingSetupRequestLegalEntity',
-        :'leid' => :'Integer',
-        :'contacts' => :'Array<Hash<String, Object>>'
+        :'section' => :'String',
+        :'message' => :'String',
+        :'code' => :'String'
       }
     end
 
@@ -107,52 +63,34 @@ module Repull
     # @param [Hash] attributes Model attributes in the form of hash
     def initialize(attributes = {})
       if (!attributes.is_a?(Hash))
-        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::BookingSetupRequest` initialize method"
+        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::BookingPublishSectionError` initialize method"
       end
 
       # check to see if the attribute exists and convert string to symbol for hash key
       acceptable_attribute_map = self.class.acceptable_attribute_map
       attributes = attributes.each_with_object({}) { |(k, v), h|
         if (!acceptable_attribute_map.key?(k.to_sym))
-          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::BookingSetupRequest`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
+          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::BookingPublishSectionError`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
         end
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'action')
-        self.action = attributes[:'action']
+      if attributes.key?(:'section')
+        self.section = attributes[:'section']
       else
-        self.action = nil
+        self.section = nil
       end
 
-      if attributes.key?(:'listing_id')
-        self.listing_id = attributes[:'listing_id']
+      if attributes.key?(:'message')
+        self.message = attributes[:'message']
+      else
+        self.message = nil
       end
 
-      if attributes.key?(:'property_id')
-        self.property_id = attributes[:'property_id']
-      end
-
-      if attributes.key?(:'room_id')
-        self.room_id = attributes[:'room_id']
-      end
-
-      if attributes.key?(:'legal_entity_id')
-        self.legal_entity_id = attributes[:'legal_entity_id']
-      end
-
-      if attributes.key?(:'legal_entity')
-        self.legal_entity = attributes[:'legal_entity']
-      end
-
-      if attributes.key?(:'leid')
-        self.leid = attributes[:'leid']
-      end
-
-      if attributes.key?(:'contacts')
-        if (value = attributes[:'contacts']).is_a?(Array)
-          self.contacts = value
-        end
+      if attributes.key?(:'code')
+        self.code = attributes[:'code']
+      else
+        self.code = nil
       end
     end
 
@@ -161,8 +99,16 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
-      if @action.nil?
-        invalid_properties.push('invalid value for "action", action cannot be nil.')
+      if @section.nil?
+        invalid_properties.push('invalid value for "section", section cannot be nil.')
+      end
+
+      if @message.nil?
+        invalid_properties.push('invalid value for "message", message cannot be nil.')
+      end
+
+      if @code.nil?
+        invalid_properties.push('invalid value for "code", code cannot be nil.')
       end
 
       invalid_properties
@@ -172,20 +118,40 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
-      return false if @action.nil?
-      action_validator = EnumAttributeValidator.new('String', ["create-property", "add-room", "add-unit", "advance", "create-legal-entity", "check-legal-status", "check-readiness", "open-property", "set-contacts", "set-policies"])
-      return false unless action_validator.valid?(@action)
+      return false if @section.nil?
+      return false if @message.nil?
+      return false if @code.nil?
       true
     end
 
-    # Custom attribute writer method checking allowed values (enum).
-    # @param [Object] action Object to be assigned
-    def action=(action)
-      validator = EnumAttributeValidator.new('String', ["create-property", "add-room", "add-unit", "advance", "create-legal-entity", "check-legal-status", "check-readiness", "open-property", "set-contacts", "set-policies"])
-      unless validator.valid?(action)
-        fail ArgumentError, "invalid value for \"action\", must be one of #{validator.allowable_values}."
+    # Custom attribute writer method with validation
+    # @param [Object] section Value to be assigned
+    def section=(section)
+      if section.nil?
+        fail ArgumentError, 'section cannot be nil'
       end
-      @action = action
+
+      @section = section
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] message Value to be assigned
+    def message=(message)
+      if message.nil?
+        fail ArgumentError, 'message cannot be nil'
+      end
+
+      @message = message
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] code Value to be assigned
+    def code=(code)
+      if code.nil?
+        fail ArgumentError, 'code cannot be nil'
+      end
+
+      @code = code
     end
 
     # Checks equality by comparing each attribute.
@@ -193,14 +159,9 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          action == o.action &&
-          listing_id == o.listing_id &&
-          property_id == o.property_id &&
-          room_id == o.room_id &&
-          legal_entity_id == o.legal_entity_id &&
-          legal_entity == o.legal_entity &&
-          leid == o.leid &&
-          contacts == o.contacts
+          section == o.section &&
+          message == o.message &&
+          code == o.code
     end
 
     # @see the `==` method
@@ -212,7 +173,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [action, listing_id, property_id, room_id, legal_entity_id, legal_entity, leid, contacts].hash
+      [section, message, code].hash
     end
 
     # Builds the object from hash

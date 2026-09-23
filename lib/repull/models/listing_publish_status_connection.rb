@@ -28,13 +28,17 @@ module Repull
     # ISO timestamp the connection was first established.
     attr_accessor :since
 
+    # Fields the channel will not let this listing change. **Airbnb only** — present on the `airbnb` entry and absent on every other channel, because no other channel has the concept.  Airbnb does not refuse a write to a locked field: the request returns 200, reports the field as locked, and applies nothing. So a write to one of these looks exactly like a write that worked. Read this before you let a user edit — it is here, rather than only on `GET /v1/channels/airbnb/listings/{id}`, because this is the endpoint a listing editor already calls.  Empty for a listing with nothing locked, and for one that has not synced since we began recording them — the two are not distinguished, because a caller acts the same way on both. This is what Airbnb last told us, not a promise: a lock can appear between syncs, which is why a publish result also reports `lockedFields`.
+    attr_accessor :locked_fields
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
         :'channel' => :'channel',
         :'connected' => :'connected',
         :'sync_enabled' => :'syncEnabled',
-        :'since' => :'since'
+        :'since' => :'since',
+        :'locked_fields' => :'lockedFields'
       }
     end
 
@@ -54,14 +58,15 @@ module Repull
         :'channel' => :'String',
         :'connected' => :'Boolean',
         :'sync_enabled' => :'Boolean',
-        :'since' => :'Time'
+        :'since' => :'Time',
+        :'locked_fields' => :'Array<String>'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
-        :'since'
+        :'since',
       ])
     end
 
@@ -96,6 +101,12 @@ module Repull
       if attributes.key?(:'since')
         self.since = attributes[:'since']
       end
+
+      if attributes.key?(:'locked_fields')
+        if (value = attributes[:'locked_fields']).is_a?(Array)
+          self.locked_fields = value
+        end
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -121,7 +132,8 @@ module Repull
           channel == o.channel &&
           connected == o.connected &&
           sync_enabled == o.sync_enabled &&
-          since == o.since
+          since == o.since &&
+          locked_fields == o.locked_fields
     end
 
     # @see the `==` method
@@ -133,7 +145,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [channel, connected, sync_enabled, since].hash
+      [channel, connected, sync_enabled, since, locked_fields].hash
     end
 
     # Builds the object from hash

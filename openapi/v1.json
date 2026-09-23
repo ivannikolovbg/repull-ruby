@@ -2232,7 +2232,7 @@
       },
       "ReservationRequestUpdatedPayload": {
         "type": "object",
-        "description": "Payload for `reservation.request.updated`. A booking request stopped waiting on the host. `requestStatus` says how; `data.object` is the reservation after the change (`status` `confirmed` once accepted, `cancelled` otherwise). An accepted request also fires `reservation.created`. Fires when the channel reports the outcome, whoever acted \u2014 the API, the Vanio dashboard or the channel's own app.",
+        "description": "Payload for `reservation.request.updated`. A booking request stopped waiting on the host. `requestStatus` says how; `data.object` is the reservation after the change (`status` `confirmed` once accepted, `cancelled` otherwise). An accepted request also fires `reservation.created`. Fires when the channel reports the outcome, whoever acted \u2014 the API, a connected app or the channel's own app.",
         "required": [
           "object",
           "requestStatus",
@@ -2412,7 +2412,7 @@
       },
       "InquiryUpdatedPayload": {
         "type": "object",
-        "description": "Payload for `inquiry.updated`. The inquiry's status, dates, guest count or the reservation it became changed. `previousAttributes` holds only what moved, with prior values. Fires whether the host acted through the API, the Vanio dashboard or the Airbnb app. An inquiry whose dates simply pass is `expired` in `GET /v1/inquiries` but fires no event unless the channel reports it.",
+        "description": "Payload for `inquiry.updated`. The inquiry's status, dates, guest count or the reservation it became changed. `previousAttributes` holds only what moved, with prior values. Fires whether the host acted through the API, a connected app or the Airbnb app. An inquiry whose dates simply pass is `expired` in `GET /v1/inquiries` but fires no event unless the channel reports it.",
         "required": [
           "object",
           "previousAttributes"
@@ -5291,6 +5291,12 @@
                 "description": "Suggestion for typos and near-matches. Present when the server can guess the intent.",
                 "example": "check_in_after"
               },
+              "previous_code": {
+                "type": "string",
+                "deprecated": true,
+                "description": "The `code` THIS response used to carry, for callers whose branch still matches the old string. A migration aid with a deprecation window \u2014 **`code` is canonical, always match on that.**\n\nPresent only where an endpoint's classification actually changed, never as a permanent synonym, and it disappears from a response as soon as the canonical code and the old one agree.\n\nThe live case: the reviews, messaging, check-in-guide, alteration-answer and Airbnb-pull endpoints used to report EVERY Airbnb failure as `500 airbnb_error`, including refusals Airbnb will repeat forever. They now classify the same way every other Airbnb write does \u2014 an Airbnb 4xx is `422 airbnb_rejected` (fix the request), 5xx and timeouts stay `502 airbnb_error` (retry with backoff), and a dead grant is `403 connection_reauth_required`. Those responses carry `previous_code: \"airbnb_error\"`. **Removed in v2** \u2014 migrate your branches to `code` before then.",
+                "example": "airbnb_error"
+              },
               "listing_ids": {
                 "type": "array",
                 "items": {
@@ -6025,7 +6031,7 @@
         "required": [
           "name"
         ],
-        "description": "Inputs for `POST /v1/listings`. Provide enough address detail (street + city + lat/lng) for downstream Airbnb publish to work.",
+        "description": "Inputs for `POST /v1/listings`.\n\n**Address requirements \u2014 read this before you build the payload.** Publishing to Airbnb runs a create preflight that refuses the listing outright if the address is incomplete, and the refusal only surfaces later, at publish time. Airbnb requires `street` and `city` for every country. For a **US** property it additionally requires `state` and `postalCode`. Crucially, **omitting `countryCode` makes the listing behave as US**, so a listing created without a country needs `state` and `postalCode` too. Send `countryCode` explicitly for a non-US property. `lat`/`lng` alone are not enough \u2014 Airbnb rejects coordinates that are not backed by a full postal address. Use `GET /v1/listings/{id}/publish-status` to see which parts are still missing before you attempt a publish.",
         "properties": {
           "name": {
             "type": "string",
@@ -6036,29 +6042,54 @@
             "type": "string",
             "example": "apartment"
           },
+          "roomTypeCategory": {
+            "type": "string",
+            "example": "entire_home",
+            "description": "What the guest actually gets. Airbnb refuses to activate a listing that has not stated one, answering \"Please specify a valid room type\" \u2014 which reads like a beds problem and is not. It is never defaulted: most listings are an entire home, but hundreds are a private or hotel room, and publishing one of those as an entire home is a false claim about someone's property. Settable later with `PUT /v1/listings/{id}/content` under `details`."
+          },
+          "propertyTypeCategory": {
+            "type": "string",
+            "description": "Airbnb's finer property-type category, when you know it. Optional."
+          },
           "street": {
             "type": "string",
-            "example": "123 Main St"
+            "example": "123 Main St",
+            "description": "Street address including the number. Required by Airbnb for every country \u2014 a publish is refused without it."
           },
           "city": {
             "type": "string",
-            "example": "Miami Beach"
+            "example": "Miami Beach",
+            "description": "City / town. Required by Airbnb for every country \u2014 a publish is refused without it."
           },
           "state": {
             "type": "string",
-            "example": "FL"
+            "example": "FL",
+            "description": "State, province or region. **Required for a US property**, and a listing with no `countryCode` counts as US. Optional elsewhere, but stored and used wherever the channel carries it."
+          },
+          "postalCode": {
+            "type": "string",
+            "example": "33139",
+            "description": "Postal code \u2014 ZIP in the US, postcode in the UK, and so on. **Required for a US property**, and a listing with no `countryCode` counts as US. Send the complete code: Booking.com rejects a partial postcode such as `SW6` where the full value is `SW6 1EP`. Alias: `zipcode`."
+          },
+          "zipcode": {
+            "type": "string",
+            "example": "33139",
+            "description": "Alias for `postalCode`, accepted because it is the field name on the Airbnb mirror. `postalCode` wins if you send both. Prefer `postalCode` \u2014 the field holds non-US postcodes too."
           },
           "countryCode": {
             "type": "string",
-            "example": "US"
+            "example": "US",
+            "description": "ISO-3166 alpha-2 country code. **Send this for any non-US property.** Omitting it does not mean \"unknown\" \u2014 the publish path treats a listing with no country as US, which then requires `state` and `postalCode` and will refuse the listing when they are absent."
           },
           "lat": {
             "type": "number",
-            "example": 25.7617
+            "example": 25.7617,
+            "description": "Latitude. Useful for map search, but never a substitute for the postal address \u2014 Airbnb rejects coordinates it cannot reconcile with a full address."
           },
           "lng": {
             "type": "number",
-            "example": -80.1918
+            "example": -80.1918,
+            "description": "Longitude. See `lat`."
           },
           "bedrooms": {
             "type": "integer",
@@ -6274,28 +6305,51 @@
           },
           "address": {
             "type": "object",
-            "description": "Partial address. Only provided sub-fields are written.",
+            "description": "Partial address. Only provided sub-fields are written; the ones you omit keep their current value, and an explicit `null` clears one.\n\nThis is also the repair path for a listing that cannot be published: Airbnb requires `street` and `city` for every country and additionally `state` and `postalCode` for a **US** property \u2014 and a listing with no `countryCode` behaves as US. Send just the missing part, e.g. `{ \"address\": { \"state\": \"FL\" } }`. `GET /v1/listings/{id}/publish-status` names what is missing.",
             "properties": {
               "street": {
                 "type": "string",
-                "nullable": true
+                "nullable": true,
+                "description": "Street address including the number. Required by Airbnb for every country."
               },
               "city": {
                 "type": "string",
-                "nullable": true
+                "nullable": true,
+                "description": "City / town. Required by Airbnb for every country."
+              },
+              "state": {
+                "type": "string",
+                "nullable": true,
+                "example": "FL",
+                "description": "State, province or region. **Required for a US property**, and a listing with no `countryCode` counts as US."
+              },
+              "postalCode": {
+                "type": "string",
+                "nullable": true,
+                "example": "33139",
+                "description": "Postal code \u2014 ZIP in the US, postcode in the UK, and so on. **Required for a US property**, and a listing with no `countryCode` counts as US. Send the complete code; a partial postcode is rejected downstream. Alias: `zipcode`."
+              },
+              "zipcode": {
+                "type": "string",
+                "nullable": true,
+                "example": "33139",
+                "description": "Alias for `postalCode`, accepted because it is the field name on the Airbnb mirror. `postalCode` wins if you send both."
               },
               "countryCode": {
                 "type": "string",
                 "nullable": true,
-                "description": "ISO-3166 alpha-2 country code."
+                "example": "US",
+                "description": "ISO-3166 alpha-2 country code. **Send this for any non-US property.** Leaving it unset does not mean \"unknown\" \u2014 the publish path treats a listing with no country as US and then demands `state` and `postalCode`."
               },
               "lat": {
                 "type": "number",
-                "nullable": true
+                "nullable": true,
+                "description": "Latitude. Never a substitute for the postal address \u2014 Airbnb rejects coordinates it cannot reconcile with a full address."
               },
               "lng": {
                 "type": "number",
-                "nullable": true
+                "nullable": true,
+                "description": "Longitude. See `lat`."
               }
             }
           },
@@ -6878,18 +6932,13 @@
           }
         }
       },
-      "ListingPublishResponse": {
+      "ListingPublishBookingRequest": {
         "type": "object",
+        "description": "Optional. Omit the body entirely when the listing is mapped to exactly one Booking.com property.",
         "properties": {
-          "listingId": {
-            "type": "string"
-          },
-          "channel": {
-            "type": "string"
-          },
-          "result": {
-            "type": "object",
-            "description": "Channel-specific push result (sections pushed, errors, etc.)"
+          "hotelId": {
+            "type": "string",
+            "description": "Booking.com property to publish into. Required when this listing is mapped to more than one \u2014 without it the push is refused with `409 ambiguous_booking_mapping` rather than written into a property chosen for you. `GET /v1/channels/booking/properties` lists every property in the workspace with the listings mapped under it. `?hotel_id=` in the query string is accepted as well and means the same thing; the body wins if you send both."
           }
         }
       },
@@ -6959,6 +7008,7 @@
       },
       "ListingPublishStatusChannel": {
         "type": "object",
+        "description": "Sync activity for one channel. `pushStatus` says whether the last push landed; `pushError` says why it did not.",
         "properties": {
           "platform": {
             "type": "string",
@@ -6967,6 +7017,12 @@
           "pushStatus": {
             "type": "string",
             "nullable": true
+          },
+          "pushError": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why the last push failed \u2014 the channel's own reason, verbatim, sanitised for display.\n\nThis is the field to render when `pushStatus` is `error`. It carries what Airbnb or Booking.com actually objected to, which is almost always something the operator can fix in the listing content: `\"Airbnb error (400): We can't save your info yet. Links and contact info can't be shared.\"`, `\"Check-in start time must be before end time\"`, `\"property_type_group must be one of [apartments, houses, \u2026]\"`, `\"Rate limited by provider\"`.\n\n**Free text, not an enum.** It is written by the channel and changes without notice: show it to a human, log it, put it next to the retry button \u2014 but never parse it or branch on its contents. When a push fails for several reasons at once the reasons are joined with `; `.\n\n`null` when the last push succeeded, and when no push has run yet \u2014 the two are told apart by `pushStatus` and `lastPushedAt`, not by this field.",
+            "example": "Airbnb error (400): property_type_group must be one of [apartments, houses, secondary_units, unique_homes, bnb]"
           },
           "lastPushedAt": {
             "type": "string",
@@ -6987,7 +7043,11 @@
           "platformHasChanges": {
             "type": "boolean"
           }
-        }
+        },
+        "required": [
+          "platform",
+          "pushError"
+        ]
       },
       "ListingPublishStatusConnection": {
         "type": "object",
@@ -7011,6 +7071,43 @@
             "format": "date-time",
             "nullable": true,
             "description": "ISO timestamp the connection was first established."
+          },
+          "lockedFields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Fields the channel will not let this listing change. **Airbnb only** \u2014 present on the `airbnb` entry and absent on every other channel, because no other channel has the concept.\n\nAirbnb does not refuse a write to a locked field: the request returns 200, reports the field as locked, and applies nothing. So a write to one of these looks exactly like a write that worked. Read this before you let a user edit \u2014 it is here, rather than only on `GET /v1/channels/airbnb/listings/{id}`, because this is the endpoint a listing editor already calls.\n\nEmpty for a listing with nothing locked, and for one that has not synced since we began recording them \u2014 the two are not distinguished, because a caller acts the same way on both. This is what Airbnb last told us, not a promise: a lock can appear between syncs, which is why a publish result also reports `lockedFields`.",
+            "example": [
+              "name",
+              "property_type_category"
+            ]
+          }
+        }
+      },
+      "ListingAddressReadiness": {
+        "type": "object",
+        "description": "Whether one channel would accept this listing's postal address, answered WITHOUT attempting a publish.",
+        "properties": {
+          "ready": {
+            "type": "boolean",
+            "description": "True when the address satisfies this channel's create preflight. False means a publish would be refused for the address alone."
+          },
+          "missing": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The address parts still needed, named as the REQUEST fields you send \u2014 `street`, `city`, `state`, `postalCode` \u2014 so the value can be acted on directly. Empty when `ready` is true.",
+            "example": [
+              "state",
+              "postalCode"
+            ]
+          },
+          "have": {
+            "type": "string",
+            "description": "The address as currently resolved, for debugging.",
+            "example": "street=123 Main St, city=Miami Beach, state=\u2205, postalCode=\u2205, country=US"
           }
         }
       },
@@ -7019,6 +7116,22 @@
         "properties": {
           "listingId": {
             "type": "string"
+          },
+          "addressReadiness": {
+            "type": "object",
+            "description": "Address readiness per channel, keyed by channel name (`airbnb` today). Airbnb requires `street` and `city` for every country and additionally `state` and `postalCode` for a **US** property \u2014 and a listing with no `countryCode` behaves as US. Check this BEFORE calling a publish endpoint: an incomplete address is refused at the create preflight and never reaches the channel.\n\nIt sits here rather than inside `channels[]` because `channels` reports sync activity and is empty for a listing that has never been pushed \u2014 exactly the listing whose address blocker you need to see. Repair a gap with `PUT /v1/listings/{id}/content`, sending only the missing parts under `address`. An empty object means readiness was not reported; it never means ready.",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ListingAddressReadiness"
+            },
+            "example": {
+              "airbnb": {
+                "ready": false,
+                "missing": [
+                  "state",
+                  "postalCode"
+                ]
+              }
+            }
           },
           "channels": {
             "type": "array",
@@ -10518,17 +10631,22 @@
       },
       "AirbnbPublishResult": {
         "type": "object",
-        "description": "A publish is not one call to Airbnb: it is up to eight independent ones (details, description, amenities, rooms, policies, photos, pricing, checkout_tasks), each of which can fail on its own. A PARTIAL publish is normal \u2014 what succeeded stays applied; there is no rollback.",
+        "description": "A publish is not one call to Airbnb: it is up to eight independent ones (details, description, amenities, rooms, policies, photos, pricing, checkout_tasks), each of which can fail on its own. A PARTIAL publish is normal \u2014 what succeeded stays applied; there is no rollback.\n\n**Content landing and the listing being live are two different answers.** `published` is about content; `live` is about whether the listing takes bookings. Read both.",
         "required": [
           "published",
           "sections",
           "errors",
+          "warnings",
           "lockedFields"
         ],
         "properties": {
           "published": {
             "type": "boolean",
             "description": "True only when EVERY attempted section reached Airbnb."
+          },
+          "live": {
+            "type": "boolean",
+            "description": "Whether the listing is active and bookable on Airbnb \u2014 that is, whether activation was actually performed and succeeded.\n\n`published: true` with `live: false` is a real and common outcome: every content section landed, but the listing was never activated, because activation is skipped when instant-booking cannot be confirmed to be off. `warnings` says why.\n\n**Absent is not `false`.** The field is omitted entirely when activation was never part of the operation \u2014 publishing to an already-mapped Airbnb listing updates content and activates nothing, so there is nothing to report. Only treat the listing as not-live when `live` is present and false."
           },
           "sections": {
             "type": "array",
@@ -10548,6 +10666,16 @@
               "$ref": "#/components/schemas/PublishSectionError"
             },
             "description": "Per-section failures. Empty when `published` is true."
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Steps that failed WITHOUT failing the publish \u2014 optional work the push carried on past, each in the push's own words. These used to be swallowed silently, so the only sign of one was a listing that was somehow not quite right afterwards. A publish can be `published: true` and still carry warnings; read them before concluding nothing needs doing.",
+            "example": [
+              "instant booking could not be confirmed off \u2014 listing left inactive"
+            ]
           },
           "reason": {
             "type": "string",
@@ -10573,6 +10701,227 @@
           },
           "result": {
             "$ref": "#/components/schemas/AirbnbPublishResult"
+          }
+        }
+      },
+      "BookingPublishSectionError": {
+        "type": "object",
+        "description": "One section of a publish that did not reach Booking.com.",
+        "required": [
+          "section",
+          "message",
+          "code"
+        ],
+        "properties": {
+          "section": {
+            "type": "string",
+            "description": "Which part of the listing this failure is about \u2014 e.g. `details`, `description`, `amenities`, `rooms`, `photos`, `pricing`.",
+            "example": "description"
+          },
+          "message": {
+            "type": "string",
+            "description": "Booking.com's own reason, verbatim, or ours when we refused to send an empty section."
+          },
+          "code": {
+            "type": "string",
+            "description": "`no_content` \u2014 there was nothing canonical to send for this section; write the content, then publish again. `rejected` \u2014 Booking.com refused the section as sent; fix the content, or the property's Content API permissions, and publish again.\n\nAirbnb's third code, `locked`, has no Booking.com counterpart and never appears here."
+          }
+        }
+      },
+      "BookingPublishResult": {
+        "type": "object",
+        "description": "A publish is not one call to Booking.com: it is several independent Content API calls (details, description, amenities, rooms, photos, pricing), each of which can fail on its own. A PARTIAL publish is normal \u2014 what succeeded stays applied; there is no rollback. Fix the failing sections and publish again; re-publishing an unchanged section is harmless.\n\nA property whose Content API credentials do not cover a section answers 403 for that section alone \u2014 the rest still land, and the failure is reported here rather than swallowed.",
+        "required": [
+          "published",
+          "sections",
+          "errors"
+        ],
+        "properties": {
+          "published": {
+            "type": "boolean",
+            "description": "True only when EVERY attempted section reached Booking.com."
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Sections that landed on Booking.com.",
+            "example": [
+              "details",
+              "description",
+              "photos"
+            ]
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BookingPublishSectionError"
+            },
+            "description": "Per-section failures. Empty when `published` is true."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Set when the publish never started at all \u2014 most often because the listing is not mapped to any Booking.com property yet. Finish the Connect flow (`POST /v1/connect/booking/map-rooms`) and publish again."
+          },
+          "hotelId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The Booking.com property this publish wrote into \u2014 resolved from the listing's mapping, or the one you named. Always read it back: a listing can be mapped to several properties, and this states which one actually received the content. Null when the listing is mapped to no property, in which case nothing was pushed."
+          }
+        }
+      },
+      "ListingPublishBookingResponse": {
+        "type": "object",
+        "properties": {
+          "listingId": {
+            "type": "string"
+          },
+          "channel": {
+            "type": "string"
+          },
+          "result": {
+            "$ref": "#/components/schemas/BookingPublishResult"
+          }
+        }
+      },
+      "ListingMarketStateRequest": {
+        "type": "object",
+        "description": "Optional. Send no body at all unless this listing is mapped to more than one Booking.com property.",
+        "properties": {
+          "hotelId": {
+            "type": "string",
+            "description": "Booking.com property to act on, for a listing mapped to more than one. Without it the Booking.com item comes back refused with `ambiguous_booking_mapping` \u2014 closing the wrong property's availability takes real inventory off sale, so it is never guessed. The Airbnb items are unaffected and still run. `GET /v1/channels/booking/properties` lists every property in the workspace with the listings mapped under it. `?hotel_id=` in the query string means the same thing; the body wins if you send both."
+          }
+        }
+      },
+      "ChannelMarketStateItem": {
+        "type": "object",
+        "description": "What happened on ONE channel item \u2014 one Airbnb connection, or one Booking.com property. A listing can carry several Airbnb connections (a re-list, or a move between host accounts) and each gets its own entry.",
+        "required": [
+          "channel",
+          "state",
+          "ok"
+        ],
+        "properties": {
+          "channel": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "description": "**What is now true of this item**, not what you asked for.\n\n`offline` \u2014 it is off the market. `online` \u2014 it is back on. `unchanged` \u2014 nothing was sent, or what was sent did not take; `code` and `message` say why.\n\n`unchanged` never means \"it was already like that\": it means we did not put it there, and it is still in whatever state it was in before the call."
+          },
+          "ok": {
+            "type": "boolean",
+            "description": "True only when the channel confirmed the change."
+          },
+          "connectionId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Airbnb connection row id \u2014 the `id` from `GET /v1/channels/airbnb/listings/{id}`. Present on Airbnb items."
+          },
+          "hotelId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The Booking.com property acted on. Present on Booking.com items; null when the property could not be resolved."
+          },
+          "code": {
+            "type": "string",
+            "description": "Error code when `ok` is false \u2014 the SAME code the channel-specific endpoint returns for this failure, so one vocabulary covers both surfaces. Absent when `ok` is true.\n\nThe channel codes come in pairs, and the pair is the retryable split \u2014 the most useful bit in the whole item:\n\n- `airbnb_rejected` / `booking_rejected` \u2014 the channel refused the request AS SENT. `message` carries its own reason. Correct it and send again; resending the same thing is refused again.\n- `airbnb_error` / `booking_error` \u2014 the channel did not complete the request (outage, timeout, server error). Nothing about the request needs to change: retry with backoff.\n\nPlus `ambiguous_booking_mapping` (name the property with `hotelId`) and `payment_required` (a billing refusal, which keeps its own code rather than being buried under a channel one)."
+          },
+          "previousCode": {
+            "type": "string",
+            "deprecated": true,
+            "description": "The `code` this item used to carry, for callers still branching on the old string. A migration aid with a deprecation window \u2014 **`code` is canonical.**\n\nThis fan-out reaches Airbnb through an internal hop that flattens a refusal into its own 500, so an unambiguous Airbnb 400 (\"Please specify a valid room type\") was reported as `airbnb_error` \u2014 whose published advice is to retry with backoff, forever, for something Airbnb will never accept. It now reads Airbnb's real status and answers `airbnb_rejected`, and the classification covers the whole 4xx range rather than only `400`. Items whose code changed carry `previousCode`. **Removed in v2.**",
+            "example": "airbnb_error"
+          },
+          "message": {
+            "type": "string",
+            "description": "The channel's own reason, verbatim. Absent when `ok` is true."
+          },
+          "fix": {
+            "type": "string",
+            "description": "What to do about it, phrased for the direction you asked for \u2014 \"still live and taking bookings\" and \"still down\" call for different reactions. Absent when `ok` is true."
+          },
+          "verified": {
+            "type": "boolean",
+            "description": "Airbnb only, and only when going offline: the listing was READ BACK after the deactivation and confirmed down. Airbnb accepts a deactivation and leaves some listings live, so \"we sent the request\" is a weaker claim than this one and is never reported as success."
+          }
+        }
+      },
+      "ListingMarketStateResponse": {
+        "type": "object",
+        "description": "The per-item result of a fan-out. **There is deliberately no top-level success flag**: a listing can sit on two Airbnb connections and a Booking.com property, they fail independently, and partial success is the ordinary outcome \u2014 any single boolean would be wrong for exactly the calls that need reading. Walk `channels` and check each `ok`.\n\nNothing here is rolled back. What landed stays landed; re-send the same request to retry the items that did not, which is safe.",
+        "required": [
+          "listingId",
+          "state",
+          "channels"
+        ],
+        "properties": {
+          "listingId": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "description": "The state you asked for. Compare each item's own `state` against it."
+          },
+          "channels": {
+            "type": "array",
+            "description": "One entry per channel item acted on \u2014 Airbnb connections first, then the Booking.com property. Never empty: a listing connected to nothing is refused with `422 no_connected_channels` rather than answered with an empty array.",
+            "items": {
+              "$ref": "#/components/schemas/ChannelMarketStateItem"
+            }
+          }
+        }
+      },
+      "BookingPropertyActionRequest": {
+        "type": "object",
+        "required": [
+          "action"
+        ],
+        "description": "Take this listing's Booking.com property off sale, or put it back.",
+        "properties": {
+          "action": {
+            "type": "string",
+            "description": "`unlist` closes the room's availability across the whole forward window, so the property stops selling. `relist` re-syncs the real calendar: dates that are genuinely blocked (a reservation, an owner stay) stay blocked, and only the closure `unlist` wrote lifts. They are not mirror images, and that is deliberate."
+          },
+          "hotelId": {
+            "type": "string",
+            "description": "Booking.com property to act on, for a listing mapped to more than one. Without it the request is refused with `409 ambiguous_booking_mapping` and nothing is written. `?hotel_id=` means the same thing; the body wins if you send both."
+          }
+        }
+      },
+      "BookingPropertyActionResponse": {
+        "type": "object",
+        "required": [
+          "listingId",
+          "channel",
+          "action",
+          "hotelId",
+          "selling"
+        ],
+        "properties": {
+          "listingId": {
+            "type": "string"
+          },
+          "channel": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "hotelId": {
+            "type": "string",
+            "description": "The Booking.com property that was acted on. Always read it back \u2014 a listing can be mapped to several, and this states which one changed."
+          },
+          "roomBookingId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Booking.com's own room id the availability write addressed."
+          },
+          "selling": {
+            "type": "boolean",
+            "description": "Whether the property is now on sale. **This is the state of the property on Booking.com, not of the listing in Repull** \u2014 `active` (what Repull bills and serves) is untouched by both actions and is deliberately not echoed here so the two can never be read as one field."
           }
         }
       },
@@ -11400,7 +11749,7 @@
         }
       },
       "AirbnbWriteRejected": {
-        "description": "The request was refused as sent; resending the same body will be refused again. Two cases:\n\n- `invalid_params` \u2014 the body failed validation before anything was sent to Airbnb. `field` names the offending field (e.g. `operations.0.max_nights`), `value_received` echoes it, and `fix` says what to send.\n- `airbnb_rejected` \u2014 Airbnb refused the change; `message` carries Airbnb's own reason.",
+        "description": "The request was refused as sent; resending the same body will be refused again. Two cases:\n\n- `invalid_params` \u2014 the body failed validation before anything was sent to Airbnb. `field` names the offending field (e.g. `operations.0.max_nights`), `value_received` echoes it, and `fix` says what to send.\n- `airbnb_rejected` \u2014 Airbnb refused the change; `message` carries Airbnb's own reason.\n\n**This is the opposite answer to `502 airbnb_error`, not another name for it.** A refusal is permanent until you change the request; `airbnb_error` means Airbnb did not answer and the same request should be retried. Branch on that split rather than on \"Airbnb failed\".\n\nSome endpoints \u2014 reviews, messaging, the check-in guide, alteration answers and the Airbnb pull \u2014 used to report every Airbnb failure as `500 airbnb_error`, refusals included. They now classify like every other Airbnb write, and the responses whose code changed carry a deprecated `previous_code: \"airbnb_error\"` so an existing handler keeps matching while you migrate.",
         "content": {
           "application/json": {
             "schema": {
@@ -11507,7 +11856,7 @@
         }
       },
       "AirbnbUpstreamError": {
-        "description": "Airbnb did not complete the request \u2014 an outage, timeout or server error on their side (`airbnb_error`). The request itself is fine: retry with exponential backoff.",
+        "description": "Airbnb did not complete the request \u2014 an outage, timeout or server error on their side (`airbnb_error`). The request itself is fine: retry with exponential backoff.\n\n**`airbnb_error` never means Airbnb refused something.** A refusal is `422 airbnb_rejected` and retrying it cannot succeed; an expired or revoked grant is `403 connection_reauth_required` and retrying that cannot succeed either. If you have one branch for \"Airbnb failed\", split it here \u2014 this is the only one of the three where a retry is the right move.",
         "content": {
           "application/json": {
             "schema": {
@@ -11540,6 +11889,26 @@
                   }
                 }
               }
+            }
+          }
+        }
+      },
+      "PublishBillingRefused": {
+        "description": "The publish was refused for BILLING reasons and **nothing was sent to the channel**. Two codes:\n\n  - `payment_required` \u2014 publishing a listing to a channel needs an active paid subscription. `upgrade_url` is where to start or restore it.\n  - `channel_publish_limit_reached` \u2014 the plan's published-listing quota is full. `used` and `limit` say by how much. Take another listing off the channel to free a slot, or raise the quota.\n\nThis is not a channel fault, and the two things that fix a channel fault \u2014 retrying with backoff, reconnecting the channel \u2014 do nothing here. Once the billing state changes, send exactly the same request again; it is safe to repeat.\n\n**It applies to putting a listing back on the market as well as to publishing content.** Taking a listing down passes no billing gate and putting it back up does, so a lapsed subscription can leave a listing unlisted until billing is sorted out.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "ChannelActionUnavailable": {
+        "description": "The action is not reachable from the API yet and the request was refused before it got to the channel (`channel_action_unavailable`). **Nothing was changed** \u2014 whatever you were acting on is in the state it was in before the call.\n\nThis is a gap on our side, not a problem with your request: there is nothing to correct and retrying returns the same answer until the gap is closed. `fix` names where the operation can be performed in the meantime.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
             }
           }
         }
@@ -12819,7 +13188,7 @@
       "post": {
         "operationId": "send_conversation_message",
         "summary": "Send a message to the guest",
-        "description": "Sends a message to the guest on this conversation and records it in the thread.\n\nOmit `channel` and the message goes out on whichever channel the conversation already uses (Airbnb, Booking.com, SMS, email or the direct-booking site) \u2014 that is the right default. Pass `channel` only to force a specific one.\n\nThe message is attributed to the API, not to Vanio AI: it is recorded with `aiGenerated` false so an API send is never counted as an automated reply.\n\n### Airbnb rewrites links \u2014 check `contentRewritten`\n\nAirbnb rejects guest messages containing a link, an email address or a phone number, and names the offending text. When that happens the offending fragment is stripped and the remainder is re-sent once, which means **the guest receives a message that is not the one you wrote**. Reporting that as a plain success would be a lie, so every response carries `contentRewritten`; when it is `true`, `deliveredContent` is the text that actually reached the guest. Check it before assuming your message went out verbatim.\n\nWhen the text cannot be salvaged (the link is most of the message) nothing is delivered and the call returns `422 message_not_sent` with the channel's verbatim refusal in `statusReason`.\n\nSend `Idempotency-Key` \u2014 without it, retrying after a network timeout sends the guest the same message twice.\n\n### Attachments\n\nSend files with `attachments: [{ url, contentType?, filename? }]` \u2014 public `https://` URLs, up to 5 per request, 10 MB each. `message` may be omitted when there are attachments (except on Booking.com). Repull downloads each file, reads its real type from the bytes, keeps a durable copy and delivers it through the channel's own file flow. **Every file is checked before anything is sent**: if one is unreachable, too large or of a type the channel refuses, the call returns 422 naming the file (`index`) and the guest receives nothing.\n\n| Channel | Accepted types | Text | How it arrives |\n|---|---|---|---|\n| Airbnb | JPEG, PNG, GIF, WebP (converted to JPEG), MP4, QuickTime | optional | each file as its own message, then the text as a separate message |\n| Booking.com | JPEG, PNG | **required** | one message carrying the text and every file |\n| SMS, email, direct-booking site chat | \u2014 | \u2014 | `422 attachments_not_supported`, nothing sent |\n\nAirbnb does not allow files in pre-booking (inquiry) conversations; that refusal comes back as `422 message_not_sent`. Because Airbnb delivers files one message at a time, a later file can be refused after earlier ones arrived \u2014 that returns `422 message_partially_sent` with `parts` saying exactly which messages reached the guest; resend only the rest.\n\nThe response's `attachments` lists each file's durable `url`, and `parts` lists every channel message the send produced. Read-back (`GET /v1/conversations/{id}/messages`) shows the same files in each message's `attachments`.\n\n**Inactive listings:** a conversation that belongs to an inactive listing returns `403 listing_inactive` and no message is sent. Activate the listing first.",
+        "description": "Sends a message to the guest on this conversation and records it in the thread.\n\nOmit `channel` and the message goes out on whichever channel the conversation already uses (Airbnb, Booking.com, SMS, email or the direct-booking site) \u2014 that is the right default. Pass `channel` only to force a specific one.\n\nThe message is attributed to the API: it is recorded with `aiGenerated` false so an API send is never counted as an automated reply.\n\n### Airbnb rewrites links \u2014 check `contentRewritten`\n\nAirbnb rejects guest messages containing a link, an email address or a phone number, and names the offending text. When that happens the offending fragment is stripped and the remainder is re-sent once, which means **the guest receives a message that is not the one you wrote**. Reporting that as a plain success would be a lie, so every response carries `contentRewritten`; when it is `true`, `deliveredContent` is the text that actually reached the guest. Check it before assuming your message went out verbatim.\n\nWhen the text cannot be salvaged (the link is most of the message) nothing is delivered and the call returns `422 message_not_sent` with the channel's verbatim refusal in `statusReason`.\n\nSend `Idempotency-Key` \u2014 without it, retrying after a network timeout sends the guest the same message twice.\n\n### Attachments\n\nSend files with `attachments: [{ url, contentType?, filename? }]` \u2014 public `https://` URLs, up to 5 per request, 10 MB each. `message` may be omitted when there are attachments (except on Booking.com). Repull downloads each file, reads its real type from the bytes, keeps a durable copy and delivers it through the channel's own file flow. **Every file is checked before anything is sent**: if one is unreachable, too large or of a type the channel refuses, the call returns 422 naming the file (`index`) and the guest receives nothing.\n\n| Channel | Accepted types | Text | How it arrives |\n|---|---|---|---|\n| Airbnb | JPEG, PNG, GIF, WebP (converted to JPEG), MP4, QuickTime | optional | each file as its own message, then the text as a separate message |\n| Booking.com | JPEG, PNG | **required** | one message carrying the text and every file |\n| SMS, email, direct-booking site chat | \u2014 | \u2014 | `422 attachments_not_supported`, nothing sent |\n\nAirbnb does not allow files in pre-booking (inquiry) conversations; that refusal comes back as `422 message_not_sent`. Because Airbnb delivers files one message at a time, a later file can be refused after earlier ones arrived \u2014 that returns `422 message_partially_sent` with `parts` saying exactly which messages reached the guest; resend only the rest.\n\nThe response's `attachments` lists each file's durable `url`, and `parts` lists every channel message the send produced. Read-back (`GET /v1/conversations/{id}/messages`) shows the same files in each message's `attachments`.\n\n**Inactive listings:** a conversation that belongs to an inactive listing returns `403 listing_inactive` and no message is sent. Activate the listing first.",
         "tags": [
           "Conversations"
         ],
@@ -14808,7 +15177,13 @@
             "$ref": "#/components/responses/NotFound"
           },
           "422": {
-            "$ref": "#/components/responses/UnprocessableEntity"
+            "$ref": "#/components/responses/AirbnbWriteRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/AirbnbRateLimited"
+          },
+          "502": {
+            "$ref": "#/components/responses/AirbnbUpstreamError"
           }
         }
       }
@@ -15699,7 +16074,7 @@
       "post": {
         "operationId": "airbnb_listing_action",
         "summary": "Listing action (delete/push/publish/unlist/relist)",
-        "description": "Apply a state action to a listing by id. The path `id` is the canonical Repull listing id.\n\n**Deactivating in Repull and unlisting on Airbnb are different operations.**\n\n`delete` is a **deactivate of the Repull record only** \u2014 it sets the listing inactive and KEEPS the row; it does NOT touch the Airbnb listing, which stays live and keeps taking bookings. Use it to exclude a listing from the API / trim back under the plan-listings cap; reactivate via `PATCH /v1/listings/{id}` with `{ \"active\": true }`. Idempotent.\n\n`unlist` calls Airbnb and **takes the live listing down**: it is deactivated with a valid deactivation reason and then READ BACK, so \"Airbnb accepted the call but the listing is still live\" is reported as a failure rather than a success. Requires `airbnbConnectionId` \u2014 a listing can be connected to more than one Airbnb listing, and taking down the wrong one is not undoable through this API. `relist` puts it back up (re-enables sync and makes the listing available again); it does not push content.\n\n`push` / `publish` push the listing's content to Airbnb via the same host-side sync orchestrator as `POST /v1/listings/{id}/publish/airbnb` \u2014 pass `airbnbConnectionId` to update an already-mapped Airbnb listing, or `hostId` to create + publish a new one under that host. `force` re-pushes every field, ignoring dirty-field tracking. The result is per-section: see `AirbnbPublishResult`.\n\nAny other action (e.g. `pull`) returns a structured 422 naming the supported actions.\n\nReturns `403 listing_inactive` for `push`/`publish`/`unlist`/`relist` when the listing is inactive. `delete` (deactivation) is always accepted.",
+        "description": "Apply a state action to a listing by id. The path `id` is the canonical Repull listing id.\n\n**`delete` here never touches Airbnb. Read this before you call it.**\n\n| | `action: \"delete\"` (this endpoint) | `action: \"unlist\"` (this endpoint) |\n|---|---|---|\n| What it changes | The Repull record | The live Airbnb listing |\n| Calls Airbnb | **No. Never.** | Yes |\n| The guest-facing listing | Stays live and keeps taking bookings | **Goes down** and stops taking bookings |\n| Billing and plan limits | No longer billed, no longer counts toward the cap | Unchanged |\n| API access to the listing | `403 listing_inactive` until reactivated | Unchanged \u2014 you can still read and write it |\n| Reverse it with | `PATCH /v1/listings/{id}` `{ \"active\": true }` | `action: \"relist\"` |\n| Data kept | Yes, and it keeps syncing | Yes |\n\nNeither one deletes anything on Airbnb. **There is no endpoint on this API that deletes an Airbnb listing** \u2014 the word `delete` on this route means \"deactivate the Repull record\" and nothing else. (Main vanio's internal listing-sync layer has a same-named action that DOES hard-delete on Airbnb; it is not exposed here, by any endpoint, deliberately. If you have read that code, note that the two names do not mean the same thing.)\n\n`delete` is idempotent. To take a listing off the market on every channel at once \u2014 Airbnb and Booking.com together \u2014 use `POST /v1/listings/{id}/offline`.\n\n`unlist` calls Airbnb and **takes the live listing down**: it is deactivated with a valid deactivation reason and then READ BACK, so \"Airbnb accepted the call but the listing is still live\" is reported as a failure rather than a success. Requires `airbnbConnectionId` \u2014 a listing can be connected to more than one Airbnb listing, and taking down the wrong one is not undoable through this API. `relist` puts it back up (re-enables sync and makes the listing available again); it does not push content.\n\n`relist` goes through the channel-publish billing gate and `unlist` does not, so on a workspace whose subscription has lapsed a listing can be taken down and not put back until billing is sorted out. That refusal comes back as `402` with the action that fixes it \u2014 never as an Airbnb error, because retrying and reconnecting Airbnb do nothing for it.\n\n`push` / `publish` push the listing's content to Airbnb via the same host-side sync orchestrator as `POST /v1/listings/{id}/publish/airbnb` \u2014 pass `airbnbConnectionId` to update an already-mapped Airbnb listing, or `hostId` to create + publish a new one under that host. `force` re-pushes every field, ignoring dirty-field tracking. The result is per-section: see `AirbnbPublishResult`.\n\nAny other action (e.g. `pull`) returns a structured 422 naming the supported actions.\n\nReturns `403 listing_inactive` for `push`/`publish`/`unlist`/`relist` when the listing is inactive. `delete` (deactivation) is always accepted.",
         "tags": [
           "Airbnb"
         ],
@@ -15769,6 +16144,9 @@
                 }
               }
             }
+          },
+          "402": {
+            "$ref": "#/components/responses/PublishBillingRefused"
           },
           "403": {
             "$ref": "#/components/responses/AirbnbWriteForbidden"
@@ -16475,7 +16853,7 @@
       "post": {
         "operationId": "send_airbnb_message",
         "summary": "Send Airbnb message",
-        "description": "Send a message in an Airbnb thread as the host. Airbnb enforces content rules (no off-platform contact info, no external URLs) \u2014 violating messages are rejected upstream and surface as `airbnb_error`.\n\n### Sending a photo or video (`mediaUrl`)\n\nAirbnb only accepts media uploaded to a signed URL it issues, one file per message and no text on the same message. With `mediaUrl`, Repull downloads the file (public `https://` only, 10 MB max), reads its real type from the bytes (JPEG, PNG, GIF, WebP \u2014 converted to JPEG \u2014 or MP4/QuickTime), uploads it to Airbnb and sends it; `message`, if given, follows as a separate message. This is the same flow as `POST /v1/conversations/{id}/messages` with `attachments` \u2014 prefer that endpoint, which also takes several files per request. The response is a `SendMessageResponse`, the send is recorded in the conversation, and failures are the 422 codes documented there (`attachment_type_not_supported`, `attachment_too_large`, `message_not_sent` for a pre-booking thread, \u2026). The thread must already be synced to Repull (`GET /v1/conversations` lists them), otherwise `404`.\n\nText-only sends (no `mediaUrl`) go straight to Airbnb and return Airbnb's message object.\n\nThe `{threadId}` is the Airbnb thread id \u2014 the `externalThreadId` field on a unified `Conversation` (`GET /v1/conversations`).\n\nReturns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "description": "Send a message in an Airbnb thread as the host. Airbnb enforces content rules (no off-platform contact info, no external URLs) \u2014 violating messages are rejected upstream and surface as `422 airbnb_rejected` carrying Airbnb's own reason. Resending the same text is refused again; edit it first. `502 airbnb_error` is the other answer and means something else entirely: Airbnb did not complete the send, so retry it unchanged.\n\n### Sending a photo or video (`mediaUrl`)\n\nAirbnb only accepts media uploaded to a signed URL it issues, one file per message and no text on the same message. With `mediaUrl`, Repull downloads the file (public `https://` only, 10 MB max), reads its real type from the bytes (JPEG, PNG, GIF, WebP \u2014 converted to JPEG \u2014 or MP4/QuickTime), uploads it to Airbnb and sends it; `message`, if given, follows as a separate message. This is the same flow as `POST /v1/conversations/{id}/messages` with `attachments` \u2014 prefer that endpoint, which also takes several files per request. The response is a `SendMessageResponse`, the send is recorded in the conversation, and failures are the 422 codes documented there (`attachment_type_not_supported`, `attachment_too_large`, `message_not_sent` for a pre-booking thread, \u2026). The thread must already be synced to Repull (`GET /v1/conversations` lists them), otherwise `404`.\n\nText-only sends (no `mediaUrl`) go straight to Airbnb and return Airbnb's message object.\n\nThe `{threadId}` is the Airbnb thread id \u2014 the `externalThreadId` field on a unified `Conversation` (`GET /v1/conversations`).\n\nReturns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
         "tags": [
           "Airbnb"
         ],
@@ -16548,17 +16926,16 @@
             "$ref": "#/components/responses/NotFound"
           },
           "422": {
-            "description": "With `mediaUrl`: nothing was sent unless the code is `message_partially_sent`. `invalid_params` (bad `mediaUrl`), `attachment_url_not_allowed`, `attachment_unreachable`, `attachment_too_large`, `attachment_type_not_supported`, `message_not_sent` (Airbnb refused \u2014 e.g. files are not allowed in pre-booking threads), `message_partially_sent` (the file arrived, the text did not). Same codes as `POST /v1/conversations/{id}/messages`.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
+            "$ref": "#/components/responses/AirbnbWriteRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/AirbnbRateLimited"
           },
           "500": {
             "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/AirbnbUpstreamError"
           }
         }
       }
@@ -16707,7 +17084,7 @@
       "post": {
         "operationId": "airbnb_reservation_action",
         "summary": "Accept, decline or cancel an Airbnb reservation",
-        "description": "Act on an Airbnb reservation by its Airbnb confirmation code. **Write-side** \u2014 calls Airbnb upstream, as the Airbnb account that owns the booking.\n\n- `accept` \u2014 accept a pending booking request.\n- `decline` \u2014 decline a pending booking request. Requires `reason` (one of Airbnb's decline reasons) and `message` (sent to the guest, at most 500 characters).\n- `cancel` \u2014 cancel a confirmed booking as the host. Requires `reason` (one of Airbnb's host-cancellation reasons). **Host cancellations carry Airbnb penalties.**\n\nThe body is validated before anything reaches Airbnb; unknown fields are refused. There is no `pre-approve` action: a pre-approval answers an inquiry, which has no confirmation code \u2014 use `POST /v1/conversations/{id}/pre-approval`. For accept/decline, `POST /v1/reservations/{id}/accept` and `/decline` do the same by Repull id and also update Vanio.\n\nAirbnb refusals are mapped rather than returned as a 500: a request that already moved on is `409 request_no_longer_pending` (do not retry), an expired one `409 request_expired`, any other refusal `422 airbnb_rejected` with Airbnb's reason.\n\nReturns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.\n\nSend `Idempotency-Key` to make a retry safe.",
+        "description": "Act on an Airbnb reservation by its Airbnb confirmation code. **Write-side** \u2014 calls Airbnb upstream, as the Airbnb account that owns the booking.\n\n- `accept` \u2014 accept a pending booking request.\n- `decline` \u2014 decline a pending booking request. Requires `reason` (one of Airbnb's decline reasons) and `message` (sent to the guest, at most 500 characters).\n- `cancel` \u2014 cancel a confirmed booking as the host. Requires `reason` (one of Airbnb's host-cancellation reasons). **Host cancellations carry Airbnb penalties.**\n\nThe body is validated before anything reaches Airbnb; unknown fields are refused. There is no `pre-approve` action: a pre-approval answers an inquiry, which has no confirmation code \u2014 use `POST /v1/conversations/{id}/pre-approval`. For accept/decline, `POST /v1/reservations/{id}/accept` and `/decline` do the same by Repull id and keep the reservation in Repull in sync.\n\nAirbnb refusals are mapped rather than returned as a 500: a request that already moved on is `409 request_no_longer_pending` (do not retry), an expired one `409 request_expired`, any other refusal `422 airbnb_rejected` with Airbnb's reason.\n\nReturns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.\n\nSend `Idempotency-Key` to make a retry safe.",
         "tags": [
           "Airbnb"
         ],
@@ -17065,6 +17442,15 @@
           },
           "403": {
             "$ref": "#/components/responses/ListingInactive"
+          },
+          "422": {
+            "$ref": "#/components/responses/AirbnbWriteRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/AirbnbRateLimited"
+          },
+          "502": {
+            "$ref": "#/components/responses/AirbnbUpstreamError"
           }
         }
       }
@@ -17119,10 +17505,16 @@
             "$ref": "#/components/responses/NotFound"
           },
           "422": {
-            "$ref": "#/components/responses/UnprocessableEntity"
+            "$ref": "#/components/responses/AirbnbWriteRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/AirbnbRateLimited"
           },
           "500": {
             "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/AirbnbUpstreamError"
           }
         }
       }
@@ -17187,10 +17579,16 @@
             "$ref": "#/components/responses/NotFound"
           },
           "422": {
-            "$ref": "#/components/responses/UnprocessableEntity"
+            "$ref": "#/components/responses/AirbnbWriteRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/AirbnbRateLimited"
           },
           "500": {
             "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/AirbnbUpstreamError"
           }
         }
       }
@@ -17424,8 +17822,17 @@
           "404": {
             "$ref": "#/components/responses/NotFound"
           },
+          "422": {
+            "$ref": "#/components/responses/AirbnbWriteRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/AirbnbRateLimited"
+          },
           "500": {
             "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/AirbnbUpstreamError"
           }
         }
       }
@@ -17474,8 +17881,17 @@
           "404": {
             "$ref": "#/components/responses/NotFound"
           },
+          "422": {
+            "$ref": "#/components/responses/AirbnbWriteRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/AirbnbRateLimited"
+          },
           "500": {
             "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/AirbnbUpstreamError"
           }
         }
       }
@@ -17741,10 +18157,16 @@
             "$ref": "#/components/responses/NotFound"
           },
           "422": {
-            "$ref": "#/components/responses/UnprocessableEntity"
+            "$ref": "#/components/responses/AirbnbWriteRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/AirbnbRateLimited"
           },
           "500": {
             "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/AirbnbUpstreamError"
           }
         }
       }
@@ -18084,8 +18506,17 @@
           "404": {
             "$ref": "#/components/responses/NotFound"
           },
+          "422": {
+            "$ref": "#/components/responses/AirbnbWriteRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/AirbnbRateLimited"
+          },
           "500": {
             "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/AirbnbUpstreamError"
           }
         }
       }
@@ -20161,7 +20592,7 @@
       "post": {
         "operationId": "publishListingToAirbnb",
         "summary": "Publish a listing to Airbnb",
-        "description": "Push a Repull listing's canonical content to Airbnb. Pass `airbnbConnectionId` to update an already-mapped Airbnb listing, or `hostId` to create a brand-new Airbnb listing under that host.\n\n**A publish is not one call to Airbnb.** It is up to eight independent ones \u2014 details, description, amenities, rooms, policies, photos, pricing, checkout_tasks \u2014 and each can fail on its own. `result.published` is true only when every attempted section landed; `result.sections` lists the ones that did and `result.errors[]` carries Airbnb's own reason, per section, for the ones that did not. **A partial publish is normal and is not rolled back**: what succeeded stays applied. Publish again once you have fixed the failing sections \u2014 a re-publish of an unchanged section is harmless.\n\n`result.lockedFields` names the fields Airbnb will not let this listing change at all. They are not retryable by anyone: Airbnb answers 200 and applies nothing. `GET /v1/channels/airbnb/listings/{id}` reports the same list up front.\n\n**Which fields this pushes** \u2014 title, description sections and house rules (English/primary locale), amenities, rooms and beds, photos, nightly price and fees, cancellation policy and guest controls, check-in/out times, quiet hours, property and room type, checkout tasks. **Not pushed by this endpoint:** non-primary locales (`PUT /v1/channels/airbnb/listings/{id}/descriptions`), guest-safety disclosures (`PUT \u2026/safety-disclosures`), check-in method (`PUT \u2026/details`), permits (`PUT \u2026/permits`), and the calendar (`PUT \u2026/availability`).\n\n`force: true` re-pushes every section, ignoring dirty-field tracking. Without it only the sections changed since the last successful publish are sent.\n\nSend `Idempotency-Key` to make a retry safe: a timeout on a publish otherwise leaves you unable to tell whether it ran.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "description": "Push a Repull listing's canonical content to Airbnb. Pass `airbnbConnectionId` to update an already-mapped Airbnb listing, or `hostId` to create a brand-new Airbnb listing under that host.\n\n**A publish is not one call to Airbnb.** It is up to eight independent ones \u2014 details, description, amenities, rooms, policies, photos, pricing, checkout_tasks \u2014 and each can fail on its own. `result.published` is true only when every attempted section landed; `result.sections` lists the ones that did and `result.errors[]` carries Airbnb's own reason, per section, for the ones that did not. **A partial publish is normal and is not rolled back**: what succeeded stays applied. Publish again once you have fixed the failing sections \u2014 a re-publish of an unchanged section is harmless.\n\n`result.live` is a different question from `result.published`. `published` is about CONTENT \u2014 every attempted section landed. `live` is about whether the listing takes bookings: it is true only when activation was actually performed and succeeded. A create can land all eight sections and still leave the listing inactive, because activation is skipped when instant-booking cannot be confirmed to be off \u2014 so `published: true` with `live: false` is a real and common outcome, and `result.warnings` says why. `live` is ABSENT, not `false`, when activation was never part of the operation: publishing to an already-mapped listing updates content and activates nothing. Only treat a listing as not-live when `live` is present and false.\n\n`result.warnings[]` lists steps that failed WITHOUT failing the publish \u2014 optional work the push carried on past. They were previously swallowed, so the only sign of one was a listing that was somehow not quite right afterwards. A publish can be `published: true` and still carry warnings; read them before concluding nothing needs doing.\n\n`result.lockedFields` names the fields Airbnb will not let this listing change at all. They are not retryable by anyone: Airbnb answers 200 and applies nothing. `GET /v1/channels/airbnb/listings/{id}` reports the same list up front.\n\n**Which fields this pushes** \u2014 title, description sections and house rules (English/primary locale), amenities, rooms and beds, photos, nightly price and fees, cancellation policy and guest controls, check-in/out times, quiet hours, property and room type, checkout tasks. **Not pushed by this endpoint:** non-primary locales (`PUT /v1/channels/airbnb/listings/{id}/descriptions`), guest-safety disclosures (`PUT \u2026/safety-disclosures`), check-in method (`PUT \u2026/details`), permits (`PUT \u2026/permits`), and the calendar (`PUT \u2026/availability`).\n\n`force: true` re-pushes every section, ignoring dirty-field tracking. Without it only the sections changed since the last successful publish are sent.\n\nSend `Idempotency-Key` to make a retry safe: a timeout on a publish otherwise leaves you unable to tell whether it ran.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
         "tags": [
           "Listings"
         ],
@@ -20201,6 +20632,9 @@
           "400": {
             "$ref": "#/components/responses/BadRequest"
           },
+          "402": {
+            "$ref": "#/components/responses/PublishBillingRefused"
+          },
           "403": {
             "$ref": "#/components/responses/ListingInactive"
           },
@@ -20214,7 +20648,7 @@
       "post": {
         "operationId": "publishListingToBooking",
         "summary": "Publish a listing to Booking.com",
-        "description": "Push a Repull listing to Booking.com. The listing must already be mapped to a Booking property + room (created via the Booking-claim Connect flow).\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "description": "Push a Repull listing's content to Booking.com. The listing must already be mapped to a Booking.com property + room \u2014 claim the hotel through the Connect Booking flow, then map its rooms with `POST /v1/connect/booking/map-rooms`.\n\n**Which property the content lands in.** A listing can be mapped to more than one Booking.com property; the same unit re-listed under a new property keeps its old mapping, and workspaces routinely sit on five or six. When the listing has exactly one property you need send nothing. When it has several, name one with `hotelId` in the body (or `?hotel_id=` \u2014 the same value, accepted either way, body wins if you send both). Omit it on such a listing and the push is refused with **`409 ambiguous_booking_mapping`**, listing the candidate ids: content pushed into a property chosen for you lands on the wrong listing and reports success, which is worse than a refusal. `GET /v1/channels/booking/properties` lists every property with the listings mapped under it. Naming a property this listing is not mapped to is a `404` that names the ones it is.\n\nThe property that actually received the content comes back as `result.hotelId`.\n\n**A publish is not one call to Booking.com.** It is several independent Content API calls \u2014 details, description, amenities, rooms, photos, pricing \u2014 and each can fail on its own. `result.published` is true only when every attempted section landed; `result.sections` lists the ones that did and `result.errors[]` carries Booking.com's own reason, per section, for the ones that did not. A property whose Content API credentials do not cover a section answers 403 for that section alone. **A partial publish is normal and is not rolled back**: what succeeded stays applied. Fix the failing sections and publish again \u2014 re-publishing an unchanged section is harmless.\n\nA listing with no Booking.com property mapped at all is not an error: the call returns `result.published: false` with `result.reason` and `result.hotelId: null`, and nothing is pushed.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
         "tags": [
           "Listings"
         ],
@@ -20225,16 +20659,36 @@
             "required": true,
             "schema": {
               "type": "integer"
-            }
+            },
+            "description": "Repull listing id \u2014 NOT a Booking.com hotel id."
+          },
+          {
+            "name": "hotel_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Booking.com property to publish into, for a listing mapped to more than one. The query-string spelling of the body's `hotelId`, accepted so this route reads the same as every other Booking listing-addressed route. The body wins when both are sent."
           }
         ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListingPublishBookingRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
-            "description": "Pushed",
+            "description": "Publish attempted \u2014 read `result.published`, `result.errors` and `result.hotelId`",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ListingPublishResponse"
+                  "$ref": "#/components/schemas/ListingPublishBookingResponse"
                 }
               }
             }
@@ -20242,8 +20696,17 @@
           "400": {
             "$ref": "#/components/responses/BadRequest"
           },
+          "402": {
+            "$ref": "#/components/responses/PublishBillingRefused"
+          },
           "403": {
             "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           }
         }
       }
@@ -20252,7 +20715,7 @@
       "get": {
         "operationId": "getListingPublishStatus",
         "summary": "Per-channel publish status",
-        "description": "Returns connection state and sync activity per channel. `channels` is sync activity (empty until first push). `connections` is connection state (populated as soon as a channel is linked). Recommended polling cadence: at most once per 30s per listing \u2014 for bulk views, prefer `GET /v1/listings` and filter client-side.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "description": "Returns connection state and sync activity per channel. `channels` is sync activity (empty until first push). `connections` is connection state (populated as soon as a channel is linked). Recommended polling cadence: at most once per 30s per listing \u2014 for bulk views, prefer `GET /v1/listings` and filter client-side.\n\n**When a push fails, this endpoint says why.** `channels[].pushError` carries the channel's own reason for the last failed push, verbatim \u2014 `\"Links and contact info can't be shared\"`, `\"Check-in start time must be before end time\"`, `\"property_type_group must be one of [\u2026]\"`. It is free text written by the channel, so render it next to the retry button rather than parsing it. `null` when the last push succeeded or none has run; pair it with `pushStatus` to tell those two apart.\n\n**It also says what you will not be allowed to change.** The `airbnb` entry in `connections` carries `lockedFields` \u2014 attributes Airbnb has locked on this listing. Airbnb does not refuse a write to one: it answers 200, reports the field as locked, and applies nothing, so a locked write is indistinguishable from a successful one unless you looked first. Read it before you let someone edit. Airbnb-only; no other channel has the concept, and no other entry carries the field.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
         "tags": [
           "Listings"
         ],
@@ -21216,6 +21679,89 @@
             "$ref": "#/components/responses/InternalError"
           }
         }
+      },
+      "post": {
+        "operationId": "booking_property_action",
+        "summary": "Take a property off sale / put it back (unlist/relist)",
+        "description": "Stop this listing's Booking.com property being sold, or start it again. `id` is a **Repull listing id**, not a Booking.com hotel id, as on the GET.\n\n**Booking.com has no unlist, so this is an availability write.** Airbnb has a real deactivate; Booking.com does not. `unlist` closes the mapped room across the whole forward window, so the property stops selling. `relist` is not its mirror image: it re-syncs the true calendar, so dates that are genuinely blocked (a reservation, an owner stay) stay blocked and only the closure `unlist` wrote lifts. Re-opening everything would sell dates that are not for sale.\n\n**Which property gets closed.** A listing can be mapped to more than one Booking.com property \u2014 the same unit re-listed under a new property keeps its old mapping, and workspaces routinely sit on five or six. With exactly one, send nothing. With several, name one with `hotelId` (or `?hotel_id=`); omit it and the request is refused with **`409 ambiguous_booking_mapping`** listing the candidates, and nothing is written. That refusal matters more here than on a publish: writing content into the wrong property is recoverable, closing the wrong property's availability takes real inventory off sale while the property you meant keeps selling. Naming a property this listing is not mapped to is a `404` that names the ones it is.\n\n**This does not change the listing in Repull.** `active` \u2014 what Repull bills and serves \u2014 is untouched by both actions and is deliberately not echoed in the response, so the two ideas can never be read as one field. To take a listing off the market on every channel at once, use `POST /v1/listings/{id}/offline`.\n\nAny other action returns a structured `422` naming the ones that are supported. To push content use `POST /v1/listings/{id}/publish/booking`; to map rooms use `POST /v1/connect/booking/map-rooms`.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "tags": [
+          "Booking.com"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Repull listing id \u2014 NOT a Booking.com hotel id."
+          },
+          {
+            "name": "hotel_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Booking.com property to act on, for a listing mapped to more than one. The query-string spelling of the body's `hotelId`; the body wins when both are sent."
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BookingPropertyActionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Done \u2014 `hotelId` names the property that changed and `selling` says whether it is now on sale",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingPropertyActionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PublishBillingRefused"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/BookingWriteRejected"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BookingUpstreamError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ChannelActionUnavailable"
+          }
+        }
       }
     },
     "/v1/channels/booking/reservations": {
@@ -21351,7 +21897,7 @@
       "post": {
         "operationId": "booking_setup",
         "summary": "Booking.com property setup actions",
-        "description": "Action-router for onboarding a property onto Booking.com. Select the step with `action`:\n\n- `create-legal-entity` \u2014 register the legal entity (returns 201).\n- `check-legal-status` \u2014 poll legal-entity status by `leid`.\n- `check-readiness` \u2014 check whether a property is ready to open (`property_id`).\n- `open-property` \u2014 open the property for sale (`property_id`).\n- `set-contacts` \u2014 set property contacts (`property_id`, `contacts`).\n- `set-policies` \u2014 set property policies (`property_id`, plus policy fields).\n\nMissing required fields per action return a validation error; upstream failures surface as `booking_error`.\n\nEvery action that takes a `property_id` requires a property connected to this workspace; any other id returns `404 not_found`.\n\nReturns `403 listing_inactive` when any listing mapped to the Booking.com property is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "description": "Action-router for putting a property onto Booking.com \u2014 including building one from nothing. Select the step with `action`.\n\n## Opening a property\n\n- `create-property` \u2014 create a NEW Booking.com property for a Repull listing (`listing_id`). Creates the property, its first room, a rate plan and the room-rate product that makes the room sellable, seeds availability and rates, syncs the calendar, then sends the notification that starts Booking's validation. Returns 201.\n- `add-room` \u2014 add another room type (and its sellable product) to a property (`listing_id`, `property_id`). Returns 201.\n- `add-unit` \u2014 raise the number of identical units on an existing room (`listing_id`, `property_id`, `room_id`).\n- `advance` \u2014 re-send the summary notification for a property (`property_id`) to move it out of the \"XML: Being built\" stage.\n\n## Account and policy steps\n\n- `create-legal-entity` \u2014 register a legal entity directly (returns 201). Not normally needed: see the legal-entity rules below.\n- `check-legal-status` \u2014 always `404`. A legal entity's details are readable for any id on the connectivity-provider credentials every workspace shares, and nothing records which workspace registered which entity, so no entity can be shown to be yours. `create-property` resolves it for you.\n- `check-readiness` \u2014 check whether a property is ready to open (`property_id`).\n- `open-property` \u2014 open the property for sale (`property_id`).\n- `set-contacts` \u2014 set property contacts (`property_id`, `contacts`).\n- `set-policies` \u2014 set property policies (`property_id`, plus policy fields).\n\n## Three things about Booking.com that cost real money\n\n**A newly created property is NOT sellable.** Booking holds it at \"XML: Being built\" until it validates the summary notification. `create-property` sends that notification, but it can fail on its own after everything else succeeded \u2014 the response always reports `status: \"being_built\"` and `sellable: false`, never a guess. Use `advance` to re-send it, and check the Extranet for the stage.\n\n**A room with no ACTIVE rate plan is invisible.** Booking only renders rooms that have at least one active product linkage (room \u00d7 rate plan). A room can be created successfully, return a `roomId`, and never appear on the property page. If `rateId` comes back `null` from `create-property` or `add-room`, that is exactly what happened: activate a rate plan on the property in the Extranet, then add the room again.\n\n**The room name is shown to travellers.** It is taken from the listing's name and appears on the Booking.com property page. Internal nicknames belong on the property's partner reference, not on the room.\n\n## The legal entity is resolved, not asked for\n\nA property is created against the legal entity Booking.com contracts with, invoices and pays. You do not normally send one:\n\n1. If this workspace already creates properties under a legal entity, that one is reused. A second is never registered.\n2. If it has none and the request carries `legal_entity` (`company_name`, `legal_contact_name`, `legal_contact_email`), one is registered and used. Booking.com emails the legal contact a contract; creation only succeeds once it is signed.\n3. If it has none and no `legal_entity`, the request is refused with `422 legal_entity_required` naming the fields \u2014 a contracted company is never invented.\n\n`legal_entity_id` overrides all of that. An id that already carries another workspace's properties is refused with `403 legal_entity_not_yours` before anything is created.\n\n## What you do not control\n\nProperties are created against Booking's **production** target only. A test-target property cannot be sold through and there is no route back from one, so `target` is not a parameter \u2014 sending it changes nothing.\n\nThese are fixed on every created property and are not parameters: property category (Apartment), initial room count (1), and the property contact record (a placeholder name, email and phone). Set the real contacts afterwards with `set-contacts`. Latitude and longitude come from the listing and are adjusted slightly to clear Booking.com's duplicate detection \u2014 send the property's true position on the listing and do not pre-adjust it yourself.\n\nThe listing's name, check-in/check-out times, currency, capacity and price come from the listing. Its postal code is taken from the listing's own `postalCode`; when the listing has none, it falls back to a connected Airbnb listing. A listing with neither is created without a postal code, so set `postalCode` on the listing first.\n\n## Guards\n\nEvery action that takes a `property_id` requires a property connected to this workspace; any other id returns `404 not_found`. Every action that takes a `listing_id` requires a listing in this workspace; any other id returns `404 not_found`.\n\n`create-property` refuses a listing with no coordinates (`422 missing_coordinates`) before anything is created \u2014 creating a Booking.com property cannot be undone.\n\n`create-property` is subject to the same published-listing gate as the dashboard: no plan, or the plan's listing limit reached, returns `403 billing_error` with `used` and `limit`, and nothing is created.\n\nReturns `403 listing_inactive` when the listing \u2014 or any listing mapped to the Booking.com property \u2014 is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.\n\nIf a property is created and a later step fails, the response is `422 booking_create_partial` carrying `property_id`. The property EXISTS. Do not retry `create-property`, which would open a second one \u2014 continue with `add-room` and `advance`.",
         "tags": [
           "Booking.com"
         ],
@@ -21368,6 +21914,10 @@
                   "action": {
                     "type": "string",
                     "enum": [
+                      "create-property",
+                      "add-room",
+                      "add-unit",
+                      "advance",
                       "create-legal-entity",
                       "check-legal-status",
                       "check-readiness",
@@ -21376,13 +21926,53 @@
                       "set-policies"
                     ]
                   },
+                  "listing_id": {
+                    "type": "integer",
+                    "description": "Repull listing id \u2014 required for `create-property`, `add-room` and `add-unit`. NOT a Booking.com Hotel ID. `listingId` is accepted as an alias."
+                  },
                   "property_id": {
                     "type": "string",
-                    "description": "Booking.com property id \u2014 required for readiness/open/contacts/policies actions."
+                    "description": "Booking.com Hotel ID \u2014 required for `add-room`, `add-unit`, `advance`, and the readiness/open/contacts/policies actions."
+                  },
+                  "room_id": {
+                    "type": "integer",
+                    "description": "Booking.com room id \u2014 required for `add-unit`. `GET /v1/channels/booking/properties/{listingId}/rooms` lists them. `roomId` is accepted as an alias."
+                  },
+                  "legal_entity_id": {
+                    "type": "integer",
+                    "description": "Optional override for `create-property`. Omit it: the legal entity this workspace already uses is resolved automatically. An id that carries another workspace's properties is refused with `403 legal_entity_not_yours`. `legalEntityId` is accepted as an alias."
+                  },
+                  "legal_entity": {
+                    "type": "object",
+                    "description": "Used by `create-property` ONLY when this workspace has no legal entity yet \u2014 one is registered with Booking.com from these details and used for the property. Ignored when the workspace already has one, so a second is never registered.",
+                    "properties": {
+                      "company_name": {
+                        "type": "string"
+                      },
+                      "legal_contact_name": {
+                        "type": "string"
+                      },
+                      "legal_contact_email": {
+                        "type": "string",
+                        "format": "email"
+                      },
+                      "country": {
+                        "type": "string"
+                      },
+                      "city": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "company_name",
+                      "legal_contact_name",
+                      "legal_contact_email"
+                    ],
+                    "additionalProperties": true
                   },
                   "leid": {
                     "type": "integer",
-                    "description": "Legal entity id \u2014 required for `check-legal-status`."
+                    "description": "Legal entity id \u2014 required for `check-legal-status`, which always answers 404."
                   },
                   "contacts": {
                     "type": "array",
@@ -21400,10 +21990,10 @@
         },
         "responses": {
           "200": {
-            "description": "Action result"
+            "description": "Action result. `add-unit` returns `{ action, listingId, propertyId, roomId, units }`; `advance` returns `{ action, propertyId, checked, opened, sellable }`."
           },
           "201": {
-            "description": "Legal entity created (for `create-legal-entity`)"
+            "description": "Created. `create-property` returns `{ action, listingId, propertyId, roomId, legalEntity: { id, source }, target, status, sellable, nextSteps }` \u2014 `status` is `being_built` and `sellable` is `false` until Booking.com validates the property. `add-room` returns `{ action, listingId, propertyId, roomId, rateId, guestFacingName, nextSteps }` \u2014 a `null` `rateId` means the room has no sellable product and will not appear on Booking.com. `create-legal-entity` returns Booking.com's response."
           },
           "400": {
             "$ref": "#/components/responses/BadRequest"
@@ -21412,13 +22002,40 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/ListingInactive"
+            "description": "`listing_inactive` \u2014 the listing is inactive. `billing_error` \u2014 no plan, or the published-listing limit is reached (carries `used` and `limit`). `legal_entity_not_yours` \u2014 the named legal entity carries another workspace's properties. Nothing was created in any case.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
           },
+          "422": {
+            "description": "`missing_coordinates` \u2014 the listing has no latitude/longitude and nothing was created. `legal_entity_required` \u2014 this workspace has no legal entity and the request carried no details to register one. `booking_create_partial` \u2014 the property WAS created (see `property_id`) and a later step failed; do not retry `create-property`. `booking_error` \u2014 Booking.com refused the request as sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
           "500": {
             "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "description": "`upstream_error` / `service_misconfigured` \u2014 the setup service could not be reached or could not complete the action. Nothing was created on Booking.com.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -23731,8 +24348,17 @@
           "404": {
             "$ref": "#/components/responses/NotFound"
           },
+          "422": {
+            "$ref": "#/components/responses/AirbnbWriteRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/AirbnbRateLimited"
+          },
           "500": {
             "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/AirbnbUpstreamError"
           }
         }
       }
@@ -23786,10 +24412,13 @@
             "$ref": "#/components/responses/Conflict"
           },
           "422": {
-            "$ref": "#/components/responses/UnprocessableEntity"
+            "$ref": "#/components/responses/AirbnbWriteRejected"
           },
           "429": {
             "$ref": "#/components/responses/TooManyRequests"
+          },
+          "502": {
+            "$ref": "#/components/responses/AirbnbUpstreamError"
           }
         }
       }
@@ -25116,7 +25745,7 @@
       "post": {
         "operationId": "preapprove_conversation",
         "summary": "Pre-approve an inquiry",
-        "description": "Pre-approve the Airbnb inquiry on this conversation: the guest who asked about dates may now book them at the listed price, without waiting on you. To change the dates, guests or price, send a special offer instead (`POST /v1/conversations/{id}/special-offers`).\n\nFind inquiries that need an answer with `GET /v1/inquiries` (default `status=open`); each carries the `conversationId` to use here.\n\n**Airbnb only**, and only for listings connected to Airbnb directly. A Booking.com, VRBO or direct-booking conversation, or an Airbnb one relayed through a PMS (Hostaway, Guesty), returns `422 channel_not_supported` and nothing is sent.\n\nRuns the same action as the Vanio dashboard\u2019s Pre-approve button, so the inquiry is marked `pre_approved` everywhere.\n\nAn Airbnb refusal is never reported as a success: an inquiry that already moved on is `409 inquiry_no_longer_open`, an expired one `409 inquiry_expired`, a conversation that already has a booking `409 conversation_already_booked`.\n\nSend `Idempotency-Key`: a repeat with the same key replays the first response instead of acting twice (a `409 idempotency_key_in_use` while the first is still running). A 5xx, a `429 airbnb_rate_limited` or a `403 connection_reauth_required` is not stored \u2014 nothing was done \u2014 so retrying with the same key reaches Airbnb again.",
+        "description": "Pre-approve the Airbnb inquiry on this conversation: the guest who asked about dates may now book them at the listed price, without waiting on you. To change the dates, guests or price, send a special offer instead (`POST /v1/conversations/{id}/special-offers`).\n\nFind inquiries that need an answer with `GET /v1/inquiries` (default `status=open`); each carries the `conversationId` to use here.\n\n**Airbnb only**, and only for listings connected to Airbnb directly. A Booking.com, VRBO or direct-booking conversation, or an Airbnb one relayed through a PMS (Hostaway, Guesty), returns `422 channel_not_supported` and nothing is sent.\n\nThe inquiry is marked `pre_approved` everywhere, the same as pre-approving in Airbnb.\n\nAn Airbnb refusal is never reported as a success: an inquiry that already moved on is `409 inquiry_no_longer_open`, an expired one `409 inquiry_expired`, a conversation that already has a booking `409 conversation_already_booked`.\n\nSend `Idempotency-Key`: a repeat with the same key replays the first response instead of acting twice (a `409 idempotency_key_in_use` while the first is still running). A 5xx, a `429 airbnb_rate_limited` or a `403 connection_reauth_required` is not stored \u2014 nothing was done \u2014 so retrying with the same key reaches Airbnb again.",
         "tags": [
           "Conversations"
         ],
@@ -25465,7 +26094,7 @@
       "post": {
         "operationId": "create_conversation_special_offer",
         "summary": "Send a special offer",
-        "description": "Send the guest on this conversation an Airbnb special offer: your own dates, guest count and total price. The guest has 24 hours to book it. Use it to answer an inquiry with different terms, or to make a returning guest a custom price. To accept the guest\u2019s own dates and price as they asked, pre-approve instead (`POST /v1/conversations/{id}/pre-approval`).\n\n`listingId` is optional: omit it to offer the listing the guest asked about. It is a **Repull** listing id; Repull sends Airbnb its own listing id, using the link that belongs to this conversation\u2019s Airbnb account.\n\n`totalPrice` is the whole stay, in the listing\u2019s Airbnb currency \u2014 Airbnb does not take a currency on an offer.\n\n**Airbnb only**, and only for listings connected to Airbnb directly; anything else is `422 channel_not_supported` and nothing is sent. Runs the same action as the Vanio dashboard, so the inquiry is marked `special_offer_sent`.\n\nAn offer Airbnb refuses is never a `201`: dates that are taken, a price below Airbnb\u2019s minimum, too many guests and the like are `422 airbnb_rejected` with Airbnb\u2019s own reason in `message`.\n\nSend `Idempotency-Key`: a repeat with the same key replays the first response instead of acting twice (a `409 idempotency_key_in_use` while the first is still running). A 5xx, a `429 airbnb_rate_limited` or a `403 connection_reauth_required` is not stored \u2014 nothing was done \u2014 so retrying with the same key reaches Airbnb again. Without it, a retry after a timeout can send the guest two offers.\n\nRead or withdraw the offer with `GET` / `DELETE /v1/conversations/{id}/special-offers/{offerId}`.",
+        "description": "Send the guest on this conversation an Airbnb special offer: your own dates, guest count and total price. The guest has 24 hours to book it. Use it to answer an inquiry with different terms, or to make a returning guest a custom price. To accept the guest\u2019s own dates and price as they asked, pre-approve instead (`POST /v1/conversations/{id}/pre-approval`).\n\n`listingId` is optional: omit it to offer the listing the guest asked about. It is a **Repull** listing id; Repull sends Airbnb its own listing id, using the link that belongs to this conversation\u2019s Airbnb account.\n\n`totalPrice` is the whole stay, in the listing\u2019s Airbnb currency \u2014 Airbnb does not take a currency on an offer.\n\n**Airbnb only**, and only for listings connected to Airbnb directly; anything else is `422 channel_not_supported` and nothing is sent. The inquiry is marked `special_offer_sent`.\n\nAn offer Airbnb refuses is never a `201`: dates that are taken, a price below Airbnb\u2019s minimum, too many guests and the like are `422 airbnb_rejected` with Airbnb\u2019s own reason in `message`.\n\nSend `Idempotency-Key`: a repeat with the same key replays the first response instead of acting twice (a `409 idempotency_key_in_use` while the first is still running). A 5xx, a `429 airbnb_rate_limited` or a `403 connection_reauth_required` is not stored \u2014 nothing was done \u2014 so retrying with the same key reaches Airbnb again. Without it, a retry after a timeout can send the guest two offers.\n\nRead or withdraw the offer with `GET` / `DELETE /v1/conversations/{id}/special-offers/{offerId}`.",
         "tags": [
           "Conversations"
         ],
@@ -26294,7 +26923,7 @@
       "delete": {
         "operationId": "withdraw_conversation_special_offer",
         "summary": "Withdraw a special offer",
-        "description": "Withdraw a special offer the guest has not booked yet, so it can no longer be booked. Runs the same action as the Vanio dashboard\u2019s Withdraw offer. An offer the guest already booked cannot be withdrawn \u2014 Airbnb refuses with `409 inquiry_no_longer_open`; cancel the booking instead.",
+        "description": "Withdraw a special offer the guest has not booked yet, so it can no longer be booked. An offer the guest already booked cannot be withdrawn \u2014 Airbnb refuses with `409 inquiry_no_longer_open`; cancel the booking instead.",
         "tags": [
           "Conversations"
         ],
@@ -26689,7 +27318,7 @@
                               "declined",
                               "not_possible"
                             ],
-                            "description": "`open` \u2014 nobody has answered and the stay is still ahead; `pre_approved`; `special_offer_sent` (from the API, Vanio, or Airbnb\u2019s own app); `booked` \u2014 the guest booked (`reservationId`); `expired` \u2014 the stay has started or Airbnb expired it; `declined`; `not_possible` \u2014 Airbnb says the dates cannot be booked."
+                            "description": "`open` \u2014 nobody has answered and the stay is still ahead; `pre_approved`; `special_offer_sent` (from the API, a connected app, or Airbnb\u2019s own app); `booked` \u2014 the guest booked (`reservationId`); `expired` \u2014 the stay has started or Airbnb expired it; `declined`; `not_possible` \u2014 Airbnb says the dates cannot be booked."
                           },
                           "checkIn": {
                             "type": "string",
@@ -26807,7 +27436,7 @@
       "post": {
         "operationId": "accept_reservation_request",
         "summary": "Accept a booking request",
-        "description": "Accept a pending Airbnb booking request \u2014 a reservation with status `pending`, made on a listing without Instant Book. Find them with `GET /v1/reservations?status=pending`. Airbnb expires a request the host has not answered within 24 hours.\n\nRuns the same action as the Vanio dashboard\u2019s Accept button. Airbnb confirms asynchronously: the reservation\u2019s status moves to confirmed, and a `reservation.updated` webhook fires, when Airbnb\u2019s notification lands (usually within seconds). The response reports what Airbnb was asked to do.\n\n**Airbnb only**, and only for listings connected to Airbnb directly: other channels have no request step (`422 channel_not_supported`). A reservation that is not pending is refused before Airbnb is contacted (`409 reservation_not_pending`); one Airbnb says already moved on is `409 request_no_longer_pending`. Neither is worth retrying.\n\nTakes no body.\n\nSend `Idempotency-Key`: a repeat with the same key replays the first response instead of acting twice (a `409 idempotency_key_in_use` while the first is still running). A 5xx, a `429 airbnb_rate_limited` or a `403 connection_reauth_required` is not stored \u2014 nothing was done \u2014 so retrying with the same key reaches Airbnb again.",
+        "description": "Accept a pending Airbnb booking request \u2014 a reservation with status `pending`, made on a listing without Instant Book. Find them with `GET /v1/reservations?status=pending`. Airbnb expires a request the host has not answered within 24 hours.\n\nAirbnb confirms asynchronously: the reservation\u2019s status moves to confirmed, and a `reservation.updated` webhook fires, when Airbnb\u2019s notification lands (usually within seconds). The response reports what Airbnb was asked to do.\n\n**Airbnb only**, and only for listings connected to Airbnb directly: other channels have no request step (`422 channel_not_supported`). A reservation that is not pending is refused before Airbnb is contacted (`409 reservation_not_pending`); one Airbnb says already moved on is `409 request_no_longer_pending`. Neither is worth retrying.\n\nTakes no body.\n\nSend `Idempotency-Key`: a repeat with the same key replays the first response instead of acting twice (a `409 idempotency_key_in_use` while the first is still running). A 5xx, a `429 airbnb_rate_limited` or a `403 connection_reauth_required` is not stored \u2014 nothing was done \u2014 so retrying with the same key reaches Airbnb again.",
         "tags": [
           "Reservations"
         ],
@@ -27155,7 +27784,7 @@
       "post": {
         "operationId": "decline_reservation_request",
         "summary": "Decline a booking request",
-        "description": "Decline a pending Airbnb booking request (a reservation with status `pending`; find them with `GET /v1/reservations?status=pending`).\n\n`reason` must be one of Airbnb\u2019s own decline reasons. `message` is required: Airbnb sends it to the guest with the decline (at most 500 characters). It is not defaulted \u2014 a canned message would put words in your mouth.\n\nRuns the same action as the Vanio dashboard\u2019s Decline button. Airbnb confirms asynchronously; the reservation\u2019s status moves, and `reservation.updated` fires, when its notification lands. Same channel and status rules as `POST /v1/reservations/{id}/accept`.\n\nSend `Idempotency-Key`: a repeat with the same key replays the first response instead of acting twice (a `409 idempotency_key_in_use` while the first is still running). A 5xx, a `429 airbnb_rate_limited` or a `403 connection_reauth_required` is not stored \u2014 nothing was done \u2014 so retrying with the same key reaches Airbnb again.",
+        "description": "Decline a pending Airbnb booking request (a reservation with status `pending`; find them with `GET /v1/reservations?status=pending`).\n\n`reason` must be one of Airbnb\u2019s own decline reasons. `message` is required: Airbnb sends it to the guest with the decline (at most 500 characters). It is not defaulted \u2014 a canned message would put words in your mouth.\n\nAirbnb confirms asynchronously; the reservation\u2019s status moves, and `reservation.updated` fires, when its notification lands. Same channel and status rules as `POST /v1/reservations/{id}/accept`.\n\nSend `Idempotency-Key`: a repeat with the same key replays the first response instead of acting twice (a `409 idempotency_key_in_use` while the first is still running). A 5xx, a `429 airbnb_rate_limited` or a `403 connection_reauth_required` is not stored \u2014 nothing was done \u2014 so retrying with the same key reaches Airbnb again.",
         "tags": [
           "Reservations"
         ],
@@ -27543,6 +28172,160 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/v1/listings/{id}/offline": {
+      "post": {
+        "operationId": "takeListingOffline",
+        "summary": "Take a listing off the market",
+        "description": "Stop this listing being sold, on every channel it is connected to, in one call.\n\nWhat that means differs per channel and you do not have to know which is which. On **Airbnb** the live listing is deactivated with a valid deactivation reason and then READ BACK \u2014 Airbnb accepts some deactivations and leaves the listing up, so \"we sent the request\" is never reported as success. On **Booking.com** there is no unlist at all; the equivalent is closing the room's availability across the whole forward window, which is what happens.\n\n**This is not the same as deactivating the listing in Repull.** The two get confused because both sound like removal, and they have opposite consequences:\n\n| | Take offline (this endpoint) | Deactivate in Repull (`PATCH /v1/listings/{id}` `{\"active\": false}`) |\n|---|---|---|\n| The guest-facing listing | **Stops taking bookings** | Stays live and keeps taking bookings |\n| Billing and plan limits | Unchanged | No longer billed, no longer counts toward the cap |\n| API access to the listing | Unchanged \u2014 you can still read and write it | `403 listing_inactive` until reactivated |\n| Reverse it with | `POST /v1/listings/{id}/online` | `PATCH /v1/listings/{id}` `{\"active\": true}` |\n| Data kept | Yes | Yes, and it keeps syncing |\n\nNeither one deletes anything, on either side.\n\n**The answer is per channel item.** A listing can sit on several Airbnb connections and a Booking.com property at once; they fail independently and a partial result is the ordinary outcome, so every item reports its own `state`, `code` and `message` and there is no top-level success flag to mislead you. Nothing is rolled back \u2014 re-send the same request to retry the items that did not land.\n\n**Booking.com ambiguity is reported, not fanned out.** A listing mapped to more than one active Booking.com property comes back with that item refused (`ambiguous_booking_mapping`) while the Airbnb items still run: closing the wrong property's availability takes real inventory off sale, and taking a listing off Airbnb is not less urgent because its Booking.com mapping is untidy. Name the property with `hotelId` and send it again.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "tags": [
+          "Listings"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Repull listing id."
+          },
+          {
+            "name": "hotel_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Booking.com property to act on, for a listing mapped to more than one. The query-string spelling of the body's `hotelId`; the body wins when both are sent."
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListingMarketStateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Attempted on every connected channel \u2014 read each item's `ok` and `state`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListingMarketStateResponse"
+                }
+              }
+            }
+          },
+          "402": {
+            "$ref": "#/components/responses/PublishBillingRefused"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "description": "`no_connected_channels` \u2014 this listing is not connected to any channel, so there was nothing to take offline. Connect one with `POST /v1/connect/sessions` and publish it first. Answered as a refusal rather than a 200 with an empty array, because \"taken off the market everywhere\" over zero channels is not something a caller should have to notice for themselves.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        }
+      }
+    },
+    "/v1/listings/{id}/online": {
+      "post": {
+        "operationId": "takeListingOnline",
+        "summary": "Put a listing back on the market",
+        "description": "Put this listing back on sale, on every channel it is connected to. The counterpart of `POST /v1/listings/{id}/offline`, which documents the per-item response and the difference between this and deactivating a listing in Repull.\n\n**It does not push content.** On **Airbnb** it re-enables sync and makes the listing available again; anything that changed while the listing was down is still unpublished, so follow with `POST /v1/listings/{id}/publish/airbnb` if the content moved. On **Booking.com** it re-syncs the true calendar rather than opening everything: dates that are genuinely blocked \u2014 a reservation, an owner stay \u2014 stay blocked, and only the closure `offline` wrote lifts. The two directions are not mirror images, and that is deliberate.\n\n**One asymmetry worth planning for.** Taking a listing down passes no billing gate; putting it back up goes through the channel-publish gate. So on a workspace whose subscription has lapsed, `offline` still works and this endpoint answers `402 payment_required` \u2014 a listing can be left off the market until billing is sorted out. That refusal is reported as a billing refusal with the action that fixes it, never as a channel error: retrying, or reconnecting the channel, does nothing for it.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "tags": [
+          "Listings"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Repull listing id."
+          },
+          {
+            "name": "hotel_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Booking.com property to act on, for a listing mapped to more than one. The query-string spelling of the body's `hotelId`; the body wins when both are sent."
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListingMarketStateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Attempted on every connected channel \u2014 read each item's `ok` and `state`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListingMarketStateResponse"
+                }
+              }
+            }
+          },
+          "402": {
+            "$ref": "#/components/responses/PublishBillingRefused"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "description": "`no_connected_channels` \u2014 this listing is not connected to any channel, so there was nothing to put back on the market. Connect one with `POST /v1/connect/sessions` and publish it first.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
           }
         }
       }

@@ -14,62 +14,31 @@ require 'date'
 require 'time'
 
 module Repull
-  class BookingSetupRequest < ApiModelBase
-    attr_accessor :action
+  # A publish is not one call to Booking.com: it is several independent Content API calls (details, description, amenities, rooms, photos, pricing), each of which can fail on its own. A PARTIAL publish is normal — what succeeded stays applied; there is no rollback. Fix the failing sections and publish again; re-publishing an unchanged section is harmless.  A property whose Content API credentials do not cover a section answers 403 for that section alone — the rest still land, and the failure is reported here rather than swallowed.
+  class BookingPublishResult < ApiModelBase
+    # True only when EVERY attempted section reached Booking.com.
+    attr_accessor :published
 
-    # Repull listing id — required for `create-property`, `add-room` and `add-unit`. NOT a Booking.com Hotel ID. `listingId` is accepted as an alias.
-    attr_accessor :listing_id
+    # Sections that landed on Booking.com.
+    attr_accessor :sections
 
-    # Booking.com Hotel ID — required for `add-room`, `add-unit`, `advance`, and the readiness/open/contacts/policies actions.
-    attr_accessor :property_id
+    # Per-section failures. Empty when `published` is true.
+    attr_accessor :errors
 
-    # Booking.com room id — required for `add-unit`. `GET /v1/channels/booking/properties/{listingId}/rooms` lists them. `roomId` is accepted as an alias.
-    attr_accessor :room_id
+    # Set when the publish never started at all — most often because the listing is not mapped to any Booking.com property yet. Finish the Connect flow (`POST /v1/connect/booking/map-rooms`) and publish again.
+    attr_accessor :reason
 
-    # Optional override for `create-property`. Omit it: the legal entity this workspace already uses is resolved automatically. An id that carries another workspace's properties is refused with `403 legal_entity_not_yours`. `legalEntityId` is accepted as an alias.
-    attr_accessor :legal_entity_id
-
-    attr_accessor :legal_entity
-
-    # Legal entity id — required for `check-legal-status`, which always answers 404.
-    attr_accessor :leid
-
-    # Contacts payload for `set-contacts`.
-    attr_accessor :contacts
-
-    class EnumAttributeValidator
-      attr_reader :datatype
-      attr_reader :allowable_values
-
-      def initialize(datatype, allowable_values)
-        @allowable_values = allowable_values.map do |value|
-          case datatype.to_s
-          when /Integer/i
-            value.to_i
-          when /Float/i
-            value.to_f
-          else
-            value
-          end
-        end
-      end
-
-      def valid?(value)
-        !value || allowable_values.include?(value)
-      end
-    end
+    # The Booking.com property this publish wrote into — resolved from the listing's mapping, or the one you named. Always read it back: a listing can be mapped to several properties, and this states which one actually received the content. Null when the listing is mapped to no property, in which case nothing was pushed.
+    attr_accessor :hotel_id
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'action' => :'action',
-        :'listing_id' => :'listing_id',
-        :'property_id' => :'property_id',
-        :'room_id' => :'room_id',
-        :'legal_entity_id' => :'legal_entity_id',
-        :'legal_entity' => :'legal_entity',
-        :'leid' => :'leid',
-        :'contacts' => :'contacts'
+        :'published' => :'published',
+        :'sections' => :'sections',
+        :'errors' => :'errors',
+        :'reason' => :'reason',
+        :'hotel_id' => :'hotelId'
       }
     end
 
@@ -86,20 +55,18 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'action' => :'String',
-        :'listing_id' => :'Integer',
-        :'property_id' => :'String',
-        :'room_id' => :'Integer',
-        :'legal_entity_id' => :'Integer',
-        :'legal_entity' => :'BookingSetupRequestLegalEntity',
-        :'leid' => :'Integer',
-        :'contacts' => :'Array<Hash<String, Object>>'
+        :'published' => :'Boolean',
+        :'sections' => :'Array<String>',
+        :'errors' => :'Array<BookingPublishSectionError>',
+        :'reason' => :'String',
+        :'hotel_id' => :'String'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'hotel_id'
       ])
     end
 
@@ -107,52 +74,46 @@ module Repull
     # @param [Hash] attributes Model attributes in the form of hash
     def initialize(attributes = {})
       if (!attributes.is_a?(Hash))
-        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::BookingSetupRequest` initialize method"
+        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::BookingPublishResult` initialize method"
       end
 
       # check to see if the attribute exists and convert string to symbol for hash key
       acceptable_attribute_map = self.class.acceptable_attribute_map
       attributes = attributes.each_with_object({}) { |(k, v), h|
         if (!acceptable_attribute_map.key?(k.to_sym))
-          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::BookingSetupRequest`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
+          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::BookingPublishResult`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
         end
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'action')
-        self.action = attributes[:'action']
+      if attributes.key?(:'published')
+        self.published = attributes[:'published']
       else
-        self.action = nil
+        self.published = nil
       end
 
-      if attributes.key?(:'listing_id')
-        self.listing_id = attributes[:'listing_id']
-      end
-
-      if attributes.key?(:'property_id')
-        self.property_id = attributes[:'property_id']
-      end
-
-      if attributes.key?(:'room_id')
-        self.room_id = attributes[:'room_id']
-      end
-
-      if attributes.key?(:'legal_entity_id')
-        self.legal_entity_id = attributes[:'legal_entity_id']
-      end
-
-      if attributes.key?(:'legal_entity')
-        self.legal_entity = attributes[:'legal_entity']
-      end
-
-      if attributes.key?(:'leid')
-        self.leid = attributes[:'leid']
-      end
-
-      if attributes.key?(:'contacts')
-        if (value = attributes[:'contacts']).is_a?(Array)
-          self.contacts = value
+      if attributes.key?(:'sections')
+        if (value = attributes[:'sections']).is_a?(Array)
+          self.sections = value
         end
+      else
+        self.sections = nil
+      end
+
+      if attributes.key?(:'errors')
+        if (value = attributes[:'errors']).is_a?(Array)
+          self.errors = value
+        end
+      else
+        self.errors = nil
+      end
+
+      if attributes.key?(:'reason')
+        self.reason = attributes[:'reason']
+      end
+
+      if attributes.key?(:'hotel_id')
+        self.hotel_id = attributes[:'hotel_id']
       end
     end
 
@@ -161,8 +122,16 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
-      if @action.nil?
-        invalid_properties.push('invalid value for "action", action cannot be nil.')
+      if @published.nil?
+        invalid_properties.push('invalid value for "published", published cannot be nil.')
+      end
+
+      if @sections.nil?
+        invalid_properties.push('invalid value for "sections", sections cannot be nil.')
+      end
+
+      if @errors.nil?
+        invalid_properties.push('invalid value for "errors", errors cannot be nil.')
       end
 
       invalid_properties
@@ -172,20 +141,40 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
-      return false if @action.nil?
-      action_validator = EnumAttributeValidator.new('String', ["create-property", "add-room", "add-unit", "advance", "create-legal-entity", "check-legal-status", "check-readiness", "open-property", "set-contacts", "set-policies"])
-      return false unless action_validator.valid?(@action)
+      return false if @published.nil?
+      return false if @sections.nil?
+      return false if @errors.nil?
       true
     end
 
-    # Custom attribute writer method checking allowed values (enum).
-    # @param [Object] action Object to be assigned
-    def action=(action)
-      validator = EnumAttributeValidator.new('String', ["create-property", "add-room", "add-unit", "advance", "create-legal-entity", "check-legal-status", "check-readiness", "open-property", "set-contacts", "set-policies"])
-      unless validator.valid?(action)
-        fail ArgumentError, "invalid value for \"action\", must be one of #{validator.allowable_values}."
+    # Custom attribute writer method with validation
+    # @param [Object] published Value to be assigned
+    def published=(published)
+      if published.nil?
+        fail ArgumentError, 'published cannot be nil'
       end
-      @action = action
+
+      @published = published
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] sections Value to be assigned
+    def sections=(sections)
+      if sections.nil?
+        fail ArgumentError, 'sections cannot be nil'
+      end
+
+      @sections = sections
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] errors Value to be assigned
+    def errors=(errors)
+      if errors.nil?
+        fail ArgumentError, 'errors cannot be nil'
+      end
+
+      @errors = errors
     end
 
     # Checks equality by comparing each attribute.
@@ -193,14 +182,11 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          action == o.action &&
-          listing_id == o.listing_id &&
-          property_id == o.property_id &&
-          room_id == o.room_id &&
-          legal_entity_id == o.legal_entity_id &&
-          legal_entity == o.legal_entity &&
-          leid == o.leid &&
-          contacts == o.contacts
+          published == o.published &&
+          sections == o.sections &&
+          errors == o.errors &&
+          reason == o.reason &&
+          hotel_id == o.hotel_id
     end
 
     # @see the `==` method
@@ -212,7 +198,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [action, listing_id, property_id, room_id, legal_entity_id, legal_entity, leid, contacts].hash
+      [published, sections, errors, reason, hotel_id].hash
     end
 
     # Builds the object from hash

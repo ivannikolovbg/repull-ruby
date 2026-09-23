@@ -14,10 +14,14 @@ require 'date'
 require 'time'
 
 module Repull
+  # Sync activity for one channel. `pushStatus` says whether the last push landed; `pushError` says why it did not.
   class ListingPublishStatusChannel < ApiModelBase
     attr_accessor :platform
 
     attr_accessor :push_status
+
+    # Why the last push failed — the channel's own reason, verbatim, sanitised for display.  This is the field to render when `pushStatus` is `error`. It carries what Airbnb or Booking.com actually objected to, which is almost always something the operator can fix in the listing content: `\"Airbnb error (400): We can't save your info yet. Links and contact info can't be shared.\"`, `\"Check-in start time must be before end time\"`, `\"property_type_group must be one of [apartments, houses, …]\"`, `\"Rate limited by provider\"`.  **Free text, not an enum.** It is written by the channel and changes without notice: show it to a human, log it, put it next to the retry button — but never parse it or branch on its contents. When a push fails for several reasons at once the reasons are joined with `; `.  `null` when the last push succeeded, and when no push has run yet — the two are told apart by `pushStatus` and `lastPushedAt`, not by this field.
+    attr_accessor :push_error
 
     attr_accessor :last_pushed_at
 
@@ -32,6 +36,7 @@ module Repull
       {
         :'platform' => :'platform',
         :'push_status' => :'pushStatus',
+        :'push_error' => :'pushError',
         :'last_pushed_at' => :'lastPushedAt',
         :'last_pulled_at' => :'lastPulledAt',
         :'dirty_fields' => :'dirtyFields',
@@ -54,6 +59,7 @@ module Repull
       {
         :'platform' => :'String',
         :'push_status' => :'String',
+        :'push_error' => :'String',
         :'last_pushed_at' => :'Time',
         :'last_pulled_at' => :'Time',
         :'dirty_fields' => :'Array<String>',
@@ -65,6 +71,7 @@ module Repull
     def self.openapi_nullable
       Set.new([
         :'push_status',
+        :'push_error',
         :'last_pushed_at',
         :'last_pulled_at',
       ])
@@ -88,10 +95,18 @@ module Repull
 
       if attributes.key?(:'platform')
         self.platform = attributes[:'platform']
+      else
+        self.platform = nil
       end
 
       if attributes.key?(:'push_status')
         self.push_status = attributes[:'push_status']
+      end
+
+      if attributes.key?(:'push_error')
+        self.push_error = attributes[:'push_error']
+      else
+        self.push_error = nil
       end
 
       if attributes.key?(:'last_pushed_at')
@@ -118,6 +133,10 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
+      if @platform.nil?
+        invalid_properties.push('invalid value for "platform", platform cannot be nil.')
+      end
+
       invalid_properties
     end
 
@@ -125,7 +144,18 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
+      return false if @platform.nil?
       true
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] platform Value to be assigned
+    def platform=(platform)
+      if platform.nil?
+        fail ArgumentError, 'platform cannot be nil'
+      end
+
+      @platform = platform
     end
 
     # Checks equality by comparing each attribute.
@@ -135,6 +165,7 @@ module Repull
       self.class == o.class &&
           platform == o.platform &&
           push_status == o.push_status &&
+          push_error == o.push_error &&
           last_pushed_at == o.last_pushed_at &&
           last_pulled_at == o.last_pulled_at &&
           dirty_fields == o.dirty_fields &&
@@ -150,7 +181,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [platform, push_status, last_pushed_at, last_pulled_at, dirty_fields, platform_has_changes].hash
+      [platform, push_status, push_error, last_pushed_at, last_pulled_at, dirty_fields, platform_has_changes].hash
     end
 
     # Builds the object from hash

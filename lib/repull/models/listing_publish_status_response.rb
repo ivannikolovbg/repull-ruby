@@ -17,6 +17,9 @@ module Repull
   class ListingPublishStatusResponse < ApiModelBase
     attr_accessor :listing_id
 
+    # Address readiness per channel, keyed by channel name (`airbnb` today). Airbnb requires `street` and `city` for every country and additionally `state` and `postalCode` for a **US** property — and a listing with no `countryCode` behaves as US. Check this BEFORE calling a publish endpoint: an incomplete address is refused at the create preflight and never reaches the channel.  It sits here rather than inside `channels[]` because `channels` reports sync activity and is empty for a listing that has never been pushed — exactly the listing whose address blocker you need to see. Repair a gap with `PUT /v1/listings/{id}/content`, sending only the missing parts under `address`. An empty object means readiness was not reported; it never means ready.
+    attr_accessor :address_readiness
+
     # Sync activity per channel — empty if the listing has never been pushed/pulled. Empty does NOT mean \"not connected\"; check `connections` for that.
     attr_accessor :channels
 
@@ -27,6 +30,7 @@ module Repull
     def self.attribute_map
       {
         :'listing_id' => :'listingId',
+        :'address_readiness' => :'addressReadiness',
         :'channels' => :'channels',
         :'connections' => :'connections'
       }
@@ -46,6 +50,7 @@ module Repull
     def self.openapi_types
       {
         :'listing_id' => :'String',
+        :'address_readiness' => :'Hash<String, ListingAddressReadiness>',
         :'channels' => :'Array<ListingPublishStatusChannel>',
         :'connections' => :'Array<ListingPublishStatusConnection>'
       }
@@ -75,6 +80,12 @@ module Repull
 
       if attributes.key?(:'listing_id')
         self.listing_id = attributes[:'listing_id']
+      end
+
+      if attributes.key?(:'address_readiness')
+        if (value = attributes[:'address_readiness']).is_a?(Hash)
+          self.address_readiness = value
+        end
       end
 
       if attributes.key?(:'channels')
@@ -111,6 +122,7 @@ module Repull
       return true if self.equal?(o)
       self.class == o.class &&
           listing_id == o.listing_id &&
+          address_readiness == o.address_readiness &&
           channels == o.channels &&
           connections == o.connections
     end
@@ -124,7 +136,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [listing_id, channels, connections].hash
+      [listing_id, address_readiness, channels, connections].hash
     end
 
     # Builds the object from hash

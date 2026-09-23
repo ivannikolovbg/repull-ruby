@@ -14,23 +14,41 @@ require 'date'
 require 'time'
 
 module Repull
-  # Inputs for `POST /v1/listings`. Provide enough address detail (street + city + lat/lng) for downstream Airbnb publish to work.
+  # Inputs for `POST /v1/listings`.  **Address requirements — read this before you build the payload.** Publishing to Airbnb runs a create preflight that refuses the listing outright if the address is incomplete, and the refusal only surfaces later, at publish time. Airbnb requires `street` and `city` for every country. For a **US** property it additionally requires `state` and `postalCode`. Crucially, **omitting `countryCode` makes the listing behave as US**, so a listing created without a country needs `state` and `postalCode` too. Send `countryCode` explicitly for a non-US property. `lat`/`lng` alone are not enough — Airbnb rejects coordinates that are not backed by a full postal address. Use `GET /v1/listings/{id}/publish-status` to see which parts are still missing before you attempt a publish.
   class ListingCreateRequest < ApiModelBase
     # Public guest-facing title
     attr_accessor :name
 
     attr_accessor :property_type
 
+    # What the guest actually gets. Airbnb refuses to activate a listing that has not stated one, answering \"Please specify a valid room type\" — which reads like a beds problem and is not. It is never defaulted: most listings are an entire home, but hundreds are a private or hotel room, and publishing one of those as an entire home is a false claim about someone's property. Settable later with `PUT /v1/listings/{id}/content` under `details`.
+    attr_accessor :room_type_category
+
+    # Airbnb's finer property-type category, when you know it. Optional.
+    attr_accessor :property_type_category
+
+    # Street address including the number. Required by Airbnb for every country — a publish is refused without it.
     attr_accessor :street
 
+    # City / town. Required by Airbnb for every country — a publish is refused without it.
     attr_accessor :city
 
+    # State, province or region. **Required for a US property**, and a listing with no `countryCode` counts as US. Optional elsewhere, but stored and used wherever the channel carries it.
     attr_accessor :state
 
+    # Postal code — ZIP in the US, postcode in the UK, and so on. **Required for a US property**, and a listing with no `countryCode` counts as US. Send the complete code: Booking.com rejects a partial postcode such as `SW6` where the full value is `SW6 1EP`. Alias: `zipcode`.
+    attr_accessor :postal_code
+
+    # Alias for `postalCode`, accepted because it is the field name on the Airbnb mirror. `postalCode` wins if you send both. Prefer `postalCode` — the field holds non-US postcodes too.
+    attr_accessor :zipcode
+
+    # ISO-3166 alpha-2 country code. **Send this for any non-US property.** Omitting it does not mean \"unknown\" — the publish path treats a listing with no country as US, which then requires `state` and `postalCode` and will refuse the listing when they are absent.
     attr_accessor :country_code
 
+    # Latitude. Useful for map search, but never a substitute for the postal address — Airbnb rejects coordinates it cannot reconcile with a full address.
     attr_accessor :lat
 
+    # Longitude. See `lat`.
     attr_accessor :lng
 
     attr_accessor :bedrooms
@@ -68,9 +86,13 @@ module Repull
       {
         :'name' => :'name',
         :'property_type' => :'propertyType',
+        :'room_type_category' => :'roomTypeCategory',
+        :'property_type_category' => :'propertyTypeCategory',
         :'street' => :'street',
         :'city' => :'city',
         :'state' => :'state',
+        :'postal_code' => :'postalCode',
+        :'zipcode' => :'zipcode',
         :'country_code' => :'countryCode',
         :'lat' => :'lat',
         :'lng' => :'lng',
@@ -107,9 +129,13 @@ module Repull
       {
         :'name' => :'String',
         :'property_type' => :'String',
+        :'room_type_category' => :'String',
+        :'property_type_category' => :'String',
         :'street' => :'String',
         :'city' => :'String',
         :'state' => :'String',
+        :'postal_code' => :'String',
+        :'zipcode' => :'String',
         :'country_code' => :'String',
         :'lat' => :'Float',
         :'lng' => :'Float',
@@ -163,6 +189,14 @@ module Repull
         self.property_type = attributes[:'property_type']
       end
 
+      if attributes.key?(:'room_type_category')
+        self.room_type_category = attributes[:'room_type_category']
+      end
+
+      if attributes.key?(:'property_type_category')
+        self.property_type_category = attributes[:'property_type_category']
+      end
+
       if attributes.key?(:'street')
         self.street = attributes[:'street']
       end
@@ -173,6 +207,14 @@ module Repull
 
       if attributes.key?(:'state')
         self.state = attributes[:'state']
+      end
+
+      if attributes.key?(:'postal_code')
+        self.postal_code = attributes[:'postal_code']
+      end
+
+      if attributes.key?(:'zipcode')
+        self.zipcode = attributes[:'zipcode']
       end
 
       if attributes.key?(:'country_code')
@@ -285,9 +327,13 @@ module Repull
       self.class == o.class &&
           name == o.name &&
           property_type == o.property_type &&
+          room_type_category == o.room_type_category &&
+          property_type_category == o.property_type_category &&
           street == o.street &&
           city == o.city &&
           state == o.state &&
+          postal_code == o.postal_code &&
+          zipcode == o.zipcode &&
           country_code == o.country_code &&
           lat == o.lat &&
           lng == o.lng &&
@@ -317,7 +363,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [name, property_type, street, city, state, country_code, lat, lng, bedrooms, bathrooms, beds, person_capacity, summary, description, default_daily_price, cleaning_fee, cancellation_policy, check_in_time_start, check_out_time, allows_pets, allows_smoking, allows_children, allows_events].hash
+      [name, property_type, room_type_category, property_type_category, street, city, state, postal_code, zipcode, country_code, lat, lng, bedrooms, bathrooms, beds, person_capacity, summary, description, default_daily_price, cleaning_fee, cancellation_policy, check_in_time_start, check_out_time, allows_pets, allows_smoking, allows_children, allows_events].hash
     end
 
     # Builds the object from hash
