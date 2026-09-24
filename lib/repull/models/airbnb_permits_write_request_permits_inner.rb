@@ -15,11 +15,19 @@ require 'time'
 
 module Repull
   class AirbnbPermitsWriteRequestPermitsInner < ApiModelBase
-    # As named by the GET, e.g. the city or registry asking.
+    # As returned by the GET, e.g. `maui_county_hawaii`.
     attr_accessor :regulatory_body
 
+    # As returned by the GET.
     attr_accessor :regulation_type
 
+    # Echo the GET's `regulation_context` (e.g. `initial`) when present.
+    attr_accessor :regulation_context
+
+    # The `slug` of the flow you are answering, e.g. `existing_registration` or `exemption_claim`.
+    attr_accessor :flow_slug
+
+    # Keyed by each question's `answer_key`. Each value carries exactly one field, chosen by the question's `type`: TEXT → `text_value`, ATTESTATION → `attestation_value`, RADIO → `radio_value`, DATE → `date_value`, SELECT → `selected_options_value`.
     attr_accessor :answers
 
     # Attribute mapping from ruby-style variable name to JSON key.
@@ -27,6 +35,8 @@ module Repull
       {
         :'regulatory_body' => :'regulatory_body',
         :'regulation_type' => :'regulation_type',
+        :'regulation_context' => :'regulation_context',
+        :'flow_slug' => :'flow_slug',
         :'answers' => :'answers'
       }
     end
@@ -46,7 +56,9 @@ module Repull
       {
         :'regulatory_body' => :'String',
         :'regulation_type' => :'String',
-        :'answers' => :'Array<AirbnbPermitsWriteRequestPermitsInnerAnswersInner>'
+        :'regulation_context' => :'String',
+        :'flow_slug' => :'String',
+        :'answers' => :'Hash<String, AirbnbPermitsWriteRequestPermitsInnerAnswersValue>'
       }
     end
 
@@ -84,8 +96,18 @@ module Repull
         self.regulation_type = nil
       end
 
+      if attributes.key?(:'regulation_context')
+        self.regulation_context = attributes[:'regulation_context']
+      end
+
+      if attributes.key?(:'flow_slug')
+        self.flow_slug = attributes[:'flow_slug']
+      else
+        self.flow_slug = nil
+      end
+
       if attributes.key?(:'answers')
-        if (value = attributes[:'answers']).is_a?(Array)
+        if (value = attributes[:'answers']).is_a?(Hash)
           self.answers = value
         end
       else
@@ -106,6 +128,10 @@ module Repull
         invalid_properties.push('invalid value for "regulation_type", regulation_type cannot be nil.')
       end
 
+      if @flow_slug.nil?
+        invalid_properties.push('invalid value for "flow_slug", flow_slug cannot be nil.')
+      end
+
       if @answers.nil?
         invalid_properties.push('invalid value for "answers", answers cannot be nil.')
       end
@@ -123,6 +149,7 @@ module Repull
       warn '[DEPRECATED] the `valid?` method is obsolete'
       return false if @regulatory_body.nil?
       return false if @regulation_type.nil?
+      return false if @flow_slug.nil?
       return false if @answers.nil?
       return false if @answers.length < 1
       true
@@ -149,6 +176,16 @@ module Repull
     end
 
     # Custom attribute writer method with validation
+    # @param [Object] flow_slug Value to be assigned
+    def flow_slug=(flow_slug)
+      if flow_slug.nil?
+        fail ArgumentError, 'flow_slug cannot be nil'
+      end
+
+      @flow_slug = flow_slug
+    end
+
+    # Custom attribute writer method with validation
     # @param [Object] answers Value to be assigned
     def answers=(answers)
       if answers.nil?
@@ -169,6 +206,8 @@ module Repull
       self.class == o.class &&
           regulatory_body == o.regulatory_body &&
           regulation_type == o.regulation_type &&
+          regulation_context == o.regulation_context &&
+          flow_slug == o.flow_slug &&
           answers == o.answers
     end
 
@@ -181,7 +220,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [regulatory_body, regulation_type, answers].hash
+      [regulatory_body, regulation_type, regulation_context, flow_slug, answers].hash
     end
 
     # Builds the object from hash

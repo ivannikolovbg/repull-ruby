@@ -4,72 +4,10 @@ All URIs are relative to *https://api.repull.dev*
 
 | Method | HTTP request | Description |
 | ------ | ------------ | ----------- |
-| [**get_atlas_health**](HealthApi.md#get_atlas_health) | **GET** /v1/health/atlas | Atlas market-intelligence backend health |
 | [**get_auth_health**](HealthApi.md#get_auth_health) | **GET** /v1/health/auth | API-key authentication path health |
 | [**get_channel_health**](HealthApi.md#get_channel_health) | **GET** /v1/health/channels/{channel} | Per-channel connectivity health |
 | [**get_mcp_health**](HealthApi.md#get_mcp_health) | **GET** /v1/health/mcp | MCP server reachability |
 | [**get_webhooks_health**](HealthApi.md#get_webhooks_health) | **GET** /v1/health/webhooks | Webhook delivery pipeline health |
-
-
-## get_atlas_health
-
-> Hash&lt;String, Object&gt; get_atlas_health
-
-Atlas market-intelligence backend health
-
-Component-level probe. `GET /v1/health` reports the API as a whole; this reports one dependency so an incident can be localised without guessing.
-
-### Examples
-
-```ruby
-require 'time'
-require 'repull'
-
-api_instance = Repull::HealthApi.new
-
-begin
-  # Atlas market-intelligence backend health
-  result = api_instance.get_atlas_health
-  p result
-rescue Repull::ApiError => e
-  puts "Error when calling HealthApi->get_atlas_health: #{e}"
-end
-```
-
-#### Using the get_atlas_health_with_http_info variant
-
-This returns an Array which contains the response data, status code and headers.
-
-> <Array(Hash&lt;String, Object&gt;, Integer, Hash)> get_atlas_health_with_http_info
-
-```ruby
-begin
-  # Atlas market-intelligence backend health
-  data, status_code, headers = api_instance.get_atlas_health_with_http_info
-  p status_code # => 2xx
-  p headers # => { ... }
-  p data # => Hash&lt;String, Object&gt;
-rescue Repull::ApiError => e
-  puts "Error when calling HealthApi->get_atlas_health_with_http_info: #{e}"
-end
-```
-
-### Parameters
-
-This endpoint does not need any parameter.
-
-### Return type
-
-**Hash&lt;String, Object&gt;**
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
 
 
 ## get_auth_health

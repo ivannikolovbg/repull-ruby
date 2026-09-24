@@ -15,7 +15,7 @@ require 'time'
 
 module Repull
   class AirbnbPermitsResponse < ApiModelBase
-    # The live permit flows from Airbnb — present only with `?source=live`, `null` otherwise. Each flow names its `regulatory_body`, `regulation_type`, `status`, and the `question_key` / `answer_type` / `options` of every question you have to answer, plus the answers already on file.
+    # The live permit flows from Airbnb — present only with `?source=live`, `null` otherwise. Each flow names its `regulatory_body`, `regulation_type`, `status`, its `flows[]` with the `answer_key` / `type` / `choices` of every question you have to answer, plus the answers already on file.
     attr_accessor :permits
 
     # Permits as last mirrored by the sync worker: body, type, status, number. The RESULT of a permit, not the questions.

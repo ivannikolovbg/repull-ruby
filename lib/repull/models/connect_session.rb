@@ -25,13 +25,21 @@ module Repull
     # Echoed back from the request body for SDK consumers that pass an opaque correlation token.
     attr_accessor :state
 
+    # Present only on a Repull Migrate session.
+    attr_accessor :purpose
+
+    # Repull Migrate only: the workspace the property manager's data lands in. Read it with `X-Workspace-Id`, track it with `GET /v1/migrations/{workspaceId}`.
+    attr_accessor :workspace_id
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
         :'session_id' => :'sessionId',
         :'url' => :'url',
         :'expires_at' => :'expiresAt',
-        :'state' => :'state'
+        :'state' => :'state',
+        :'purpose' => :'purpose',
+        :'workspace_id' => :'workspaceId'
       }
     end
 
@@ -51,14 +59,16 @@ module Repull
         :'session_id' => :'String',
         :'url' => :'String',
         :'expires_at' => :'Time',
-        :'state' => :'String'
+        :'state' => :'String',
+        :'purpose' => :'String',
+        :'workspace_id' => :'String'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
-        :'state'
+        :'state',
       ])
     end
 
@@ -98,6 +108,14 @@ module Repull
 
       if attributes.key?(:'state')
         self.state = attributes[:'state']
+      end
+
+      if attributes.key?(:'purpose')
+        self.purpose = attributes[:'purpose']
+      end
+
+      if attributes.key?(:'workspace_id')
+        self.workspace_id = attributes[:'workspace_id']
       end
     end
 
@@ -169,7 +187,9 @@ module Repull
           session_id == o.session_id &&
           url == o.url &&
           expires_at == o.expires_at &&
-          state == o.state
+          state == o.state &&
+          purpose == o.purpose &&
+          workspace_id == o.workspace_id
     end
 
     # @see the `==` method
@@ -181,7 +201,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [session_id, url, expires_at, state].hash
+      [session_id, url, expires_at, state, purpose, workspace_id].hash
     end
 
     # Builds the object from hash

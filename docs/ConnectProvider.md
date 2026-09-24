@@ -13,6 +13,7 @@
 | **description** | **String** |  |  |
 | **docs_url** | **String** |  |  |
 | **aliases** | **Array&lt;String&gt;** | Optional friendly aliases the picker&#39;s search box can match. | [optional] |
+| **migration_capabilities** | **Hash&lt;String, Object&gt;** | PMS providers: what Repull Migrate can carry across, per entity — &#x60;{ read: { listings: { level, notes }, … }, write: { … } }&#x60; with &#x60;level&#x60; &#x60;full&#x60; | &#x60;partial&#x60; | &#x60;none&#x60;. &#x60;null&#x60; for channels (OTAs). | [optional] |
 
 ## Example
 
@@ -28,7 +29,8 @@ instance = Repull::ConnectProvider.new(
   logo_url: null,
   description: OAuth consent — host approves access in one click.,
   docs_url: https://repull.dev/docs/channels/airbnb,
-  aliases: [&quot;airbnb&quot;,&quot;abnb&quot;]
+  aliases: [&quot;airbnb&quot;,&quot;abnb&quot;],
+  migration_capabilities: null
 )
 ```
 

@@ -40,6 +40,9 @@ module Repull
     # Optional friendly aliases the picker's search box can match.
     attr_accessor :aliases
 
+    # PMS providers: what Repull Migrate can carry across, per entity — `{ read: { listings: { level, notes }, … }, write: { … } }` with `level` `full` | `partial` | `none`. `null` for channels (OTAs).
+    attr_accessor :migration_capabilities
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
@@ -51,7 +54,8 @@ module Repull
         :'logo_url' => :'logoUrl',
         :'description' => :'description',
         :'docs_url' => :'docsUrl',
-        :'aliases' => :'aliases'
+        :'aliases' => :'aliases',
+        :'migration_capabilities' => :'migrationCapabilities'
       }
     end
 
@@ -76,14 +80,16 @@ module Repull
         :'logo_url' => :'String',
         :'description' => :'String',
         :'docs_url' => :'String',
-        :'aliases' => :'Array<String>'
+        :'aliases' => :'Array<String>',
+        :'migration_capabilities' => :'Hash<String, Object>'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
-        :'aliases'
+        :'aliases',
+        :'migration_capabilities'
       ])
     end
 
@@ -154,6 +160,12 @@ module Repull
       if attributes.key?(:'aliases')
         if (value = attributes[:'aliases']).is_a?(Array)
           self.aliases = value
+        end
+      end
+
+      if attributes.key?(:'migration_capabilities')
+        if (value = attributes[:'migration_capabilities']).is_a?(Hash)
+          self.migration_capabilities = value
         end
       end
     end
@@ -306,7 +318,8 @@ module Repull
           logo_url == o.logo_url &&
           description == o.description &&
           docs_url == o.docs_url &&
-          aliases == o.aliases
+          aliases == o.aliases &&
+          migration_capabilities == o.migration_capabilities
     end
 
     # @see the `==` method
@@ -318,7 +331,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, display_name, category, connect_pattern, status, logo_url, description, docs_url, aliases].hash
+      [id, display_name, category, connect_pattern, status, logo_url, description, docs_url, aliases, migration_capabilities].hash
     end
 
     # Builds the object from hash

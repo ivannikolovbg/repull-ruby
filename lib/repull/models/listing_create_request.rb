@@ -63,7 +63,14 @@ module Repull
 
     attr_accessor :description
 
+    # Nightly rate for every night that is not a weekend night. Stating it is what gives the new listing a calendar: 365 nights are written from it, and that calendar is what a publish sends to the channel. Without a price the listing has no availability to publish, which Booking.com refuses with \"No availability pushed\".
     attr_accessor :default_daily_price
+
+    # Nightly rate for Saturday and Sunday nights (UTC). Omit it and those nights take `defaultDailyPrice`. It is the same rate the direct-booking quoter charges for a weekend night, so the calendar and a quote cannot disagree.
+    attr_accessor :weekend_price
+
+    # Charged per guest above the number included in the nightly rate.
+    attr_accessor :price_per_extra_guest
 
     attr_accessor :cleaning_fee
 
@@ -103,6 +110,8 @@ module Repull
         :'summary' => :'summary',
         :'description' => :'description',
         :'default_daily_price' => :'defaultDailyPrice',
+        :'weekend_price' => :'weekendPrice',
+        :'price_per_extra_guest' => :'pricePerExtraGuest',
         :'cleaning_fee' => :'cleaningFee',
         :'cancellation_policy' => :'cancellationPolicy',
         :'check_in_time_start' => :'checkInTimeStart',
@@ -146,6 +155,8 @@ module Repull
         :'summary' => :'String',
         :'description' => :'String',
         :'default_daily_price' => :'Float',
+        :'weekend_price' => :'Float',
+        :'price_per_extra_guest' => :'Float',
         :'cleaning_fee' => :'Float',
         :'cancellation_policy' => :'String',
         :'check_in_time_start' => :'String',
@@ -160,6 +171,8 @@ module Repull
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'weekend_price',
+        :'price_per_extra_guest',
       ])
     end
 
@@ -257,6 +270,14 @@ module Repull
         self.default_daily_price = attributes[:'default_daily_price']
       end
 
+      if attributes.key?(:'weekend_price')
+        self.weekend_price = attributes[:'weekend_price']
+      end
+
+      if attributes.key?(:'price_per_extra_guest')
+        self.price_per_extra_guest = attributes[:'price_per_extra_guest']
+      end
+
       if attributes.key?(:'cleaning_fee')
         self.cleaning_fee = attributes[:'cleaning_fee']
       end
@@ -344,6 +365,8 @@ module Repull
           summary == o.summary &&
           description == o.description &&
           default_daily_price == o.default_daily_price &&
+          weekend_price == o.weekend_price &&
+          price_per_extra_guest == o.price_per_extra_guest &&
           cleaning_fee == o.cleaning_fee &&
           cancellation_policy == o.cancellation_policy &&
           check_in_time_start == o.check_in_time_start &&
@@ -363,7 +386,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [name, property_type, room_type_category, property_type_category, street, city, state, postal_code, zipcode, country_code, lat, lng, bedrooms, bathrooms, beds, person_capacity, summary, description, default_daily_price, cleaning_fee, cancellation_policy, check_in_time_start, check_out_time, allows_pets, allows_smoking, allows_children, allows_events].hash
+      [name, property_type, room_type_category, property_type_category, street, city, state, postal_code, zipcode, country_code, lat, lng, bedrooms, bathrooms, beds, person_capacity, summary, description, default_daily_price, weekend_price, price_per_extra_guest, cleaning_fee, cancellation_policy, check_in_time_start, check_out_time, allows_pets, allows_smoking, allows_children, allows_events].hash
     end
 
     # Builds the object from hash

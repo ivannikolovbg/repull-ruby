@@ -14,7 +14,7 @@ require 'date'
 require 'time'
 
 module Repull
-  # Answer the regulatory permit questions Airbnb asks for this listing. Read them first with `?source=live` on the GET — Airbnb refuses a `question_key` it did not ask for on this listing.
+  # Answer the regulatory permit questions Airbnb asks for this listing, in Airbnb's Listing Permits shape. Read them first with `?source=live` on the GET: each permit lists its `flows[]`, and each flow its `questions[]` with an `answer_key` and a `type`.
   class AirbnbPermitsWriteRequest < ApiModelBase
     attr_accessor :permits
 

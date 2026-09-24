@@ -84,6 +84,10 @@
       "description": "Manage PMS/OTA connections. Supports 50+ platforms."
     },
     {
+      "name": "Migrate",
+      "description": "Repull Migrate \u2014 move a property manager's data out of their old PMS: import, report, channel links, cutover."
+    },
+    {
       "name": "Webhooks",
       "description": "Subscribe to real-time events (reservation changes, messages, etc.)"
     },
@@ -572,10 +576,15 @@
             "description": "Present only when `status` was derived rather than reported by the channel. `request_expired` \u2014 a booking request nobody answered in time (Airbnb's 24-hour window passed, or the check-in did). Absent otherwise.",
             "example": "request_expired"
           },
+          "pendingReason": {
+            "type": "string",
+            "description": "Why a `pending` reservation is pending \u2014 who has to act next. `host_approval`: a booking request the host must accept or decline (see `respondBy`). `guest_payment`: Airbnb is waiting for the guest to pay. `guest_verification`: Airbnb is holding the booking while the guest completes identity verification. The last two need no action from the host, and Airbnb does not publish a deadline for them. Present only while `status` is `pending`; when it changes you receive `reservation.updated` with the previous raw status in `previousAttributes.status`, even if `status` stays `pending`.",
+            "example": "guest_verification"
+          },
           "respondBy": {
             "type": "string",
             "format": "date-time",
-            "description": "On a `pending` Airbnb booking request that can still be answered: when it lapses (24 hours after the guest asked). Accept or decline before then with `POST /v1/reservations/{id}/accept` / `/decline`. Absent on every other reservation.",
+            "description": "On a `pending` Airbnb booking request (`pendingReason: host_approval`) that can still be answered: when it lapses (24 hours after the guest asked). Accept or decline before then with `POST /v1/reservations/{id}/accept` / `/decline`. Absent on every other reservation, including bookings Airbnb is holding for the guest's payment or verification \u2014 those have no deadline we can report.",
             "example": "2026-09-23T09:00:00.000Z"
           },
           "source": {
@@ -1471,6 +1480,12 @@
               "abnb"
             ],
             "description": "Optional friendly aliases the picker's search box can match."
+          },
+          "migrationCapabilities": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": true,
+            "description": "PMS providers: what Repull Migrate can carry across, per entity \u2014 `{ read: { listings: { level, notes }, \u2026 }, write: { \u2026 } }` with `level` `full` | `partial` | `none`. `null` for channels (OTAs)."
           }
         },
         "required": [
@@ -1495,6 +1510,359 @@
           }
         }
       },
+      "MigrationImportRun": {
+        "type": "object",
+        "description": "The last import run on a connection.",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "finishedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "entities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "results": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "object",
+              "properties": {
+                "entityType": {
+                  "type": "string",
+                  "example": "listings"
+                },
+                "processed": {
+                  "type": "integer"
+                },
+                "errors": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "error": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "Migration": {
+        "type": "object",
+        "description": "One migration: a property manager moved through Repull Migrate, living in its own workspace.",
+        "required": [
+          "workspaceId",
+          "name",
+          "state",
+          "connections",
+          "counts"
+        ],
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "example": "1204",
+            "description": "Pass as `X-Workspace-Id` to read this property manager's listings, reservations and conversations through the regular endpoints."
+          },
+          "name": {
+            "type": "string",
+            "example": "Seaside Rentals"
+          },
+          "externalRef": {
+            "type": "string",
+            "nullable": true,
+            "description": "Your own id for this property manager, as sent when the migration was created."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "state": {
+            "type": "string",
+            "description": "`awaiting_connection` \u2014 not connected yet. `importing` \u2014 the first import is running. `imported` \u2014 data is in and kept fresh until cutover. `failed` \u2014 the last import failed (see `connections[].import.error`). `cut_over` \u2014 the source was disconnected. `deactivated` \u2014 the migration was deleted."
+          },
+          "cutoverAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "connections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "provider": {
+                  "type": "string",
+                  "example": "guesty"
+                },
+                "status": {
+                  "type": "string",
+                  "example": "active"
+                },
+                "connectedAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "lastPolledAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "nullable": true
+                },
+                "import": {
+                  "nullable": true,
+                  "description": "The last import run, or null before the first one (and for channels, which sync on their own schedule).",
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/MigrationImportRun"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "counts": {
+            "type": "object",
+            "properties": {
+              "listings": {
+                "type": "integer"
+              },
+              "reservations": {
+                "type": "integer"
+              },
+              "upcomingReservations": {
+                "type": "integer"
+              },
+              "guests": {
+                "type": "integer"
+              },
+              "conversations": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "MigrationReport": {
+        "type": "object",
+        "properties": {
+          "workspaceId": {
+            "type": "string"
+          },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "capabilities": {
+            "type": "object",
+            "description": "Per source provider: what it can carry, per entity \u2014 `{ read: { listings: { level, notes } \u2026 }, write: { \u2026 } }`, level `full` | `partial` | `none`.",
+            "additionalProperties": true
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "severity": {
+                  "type": "string",
+                  "enum": [
+                    "error",
+                    "warning",
+                    "info"
+                  ]
+                },
+                "entity": {
+                  "type": "string",
+                  "example": "reservations"
+                },
+                "code": {
+                  "type": "string",
+                  "example": "reservation_missing_guest_contact"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "count": {
+                  "type": "integer"
+                },
+                "sampleIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  },
+                  "description": "Up to 10 affected listing / reservation ids."
+                }
+              }
+            }
+          }
+        }
+      },
+      "MigrationChannelMap": {
+        "type": "object",
+        "properties": {
+          "workspaceId": {
+            "type": "string"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "provider": {
+                  "type": "string"
+                },
+                "supported": {
+                  "type": "boolean",
+                  "description": "False when this PMS does not expose channel links."
+                },
+                "error": {
+                  "type": "string",
+                  "nullable": true
+                }
+              }
+            }
+          },
+          "listings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "listingId": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "The property in this workspace, when it came across."
+                },
+                "name": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "provider": {
+                  "type": "string"
+                },
+                "externalListingId": {
+                  "type": "string",
+                  "description": "The listing id in the source PMS."
+                },
+                "airbnb": {
+                  "type": "object",
+                  "nullable": true,
+                  "properties": {
+                    "listingId": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "booking": {
+                  "type": "object",
+                  "nullable": true,
+                  "properties": {
+                    "hotelId": {
+                      "type": "string"
+                    },
+                    "roomId": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "vrbo": {
+                  "type": "object",
+                  "nullable": true,
+                  "properties": {
+                    "listingId": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "MigrationCutoverCheck": {
+        "type": "object",
+        "properties": {
+          "workspaceId": {
+            "type": "string"
+          },
+          "checkedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "matched": {
+            "type": "integer"
+          },
+          "missing": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MigrationReservationRef"
+            },
+            "description": "Upcoming in the source, absent from the destination."
+          },
+          "extra": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MigrationReservationRef"
+            },
+            "description": "In the destination, not an upcoming reservation in the source."
+          },
+          "mismatched": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "source": {
+                  "$ref": "#/components/schemas/MigrationReservationRef"
+                },
+                "destination": {
+                  "$ref": "#/components/schemas/MigrationReservationRef"
+                }
+              }
+            }
+          }
+        }
+      },
+      "MigrationReservationRef": {
+        "type": "object",
+        "properties": {
+          "confirmationCode": {
+            "type": "string"
+          },
+          "checkIn": {
+            "type": "string",
+            "format": "date"
+          },
+          "checkOut": {
+            "type": "string",
+            "format": "date"
+          },
+          "reservationId": {
+            "type": "string"
+          },
+          "platform": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
       "ConnectSession": {
         "type": "object",
         "description": "A multi-channel Connect picker session. The `url` is the hosted picker page on connect.repull.dev \u2014 redirect the host to it, they pick a channel, and the picker takes them through the per-provider flow before redirecting back to the original `redirectUrl`.",
@@ -1516,6 +1884,15 @@
             "type": "string",
             "nullable": true,
             "description": "Echoed back from the request body for SDK consumers that pass an opaque correlation token."
+          },
+          "purpose": {
+            "type": "string",
+            "description": "Present only on a Repull Migrate session."
+          },
+          "workspaceId": {
+            "type": "string",
+            "description": "Repull Migrate only: the workspace the property manager's data lands in. Read it with `X-Workspace-Id`, track it with `GET /v1/migrations/{workspaceId}`.",
+            "example": "1204"
           }
         },
         "required": [
@@ -1898,6 +2275,8 @@
           "ai.operation.failed",
           "payment.completed",
           "payment.refunded",
+          "migration.completed",
+          "migration.failed",
           "repull.ping",
           "usage.quota.warning"
         ]
@@ -4082,6 +4461,144 @@
           }
         }
       },
+      "MigrationImportPayload": {
+        "type": "object",
+        "description": "One import run into a migration workspace.",
+        "properties": {
+          "workspaceId": {
+            "type": "integer"
+          },
+          "provider": {
+            "type": "string",
+            "example": "guesty"
+          },
+          "connectionId": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "entities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "entityType": {
+                  "type": "string"
+                },
+                "processed": {
+                  "type": "integer"
+                },
+                "errors": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "error": {
+            "type": "string",
+            "description": "Present on `migration.failed`."
+          }
+        }
+      },
+      "MigrationCompletedEvent": {
+        "type": "object",
+        "required": [
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
+          "workspaceId",
+          "data"
+        ],
+        "properties": {
+          "event": {
+            "type": "string",
+            "description": "The event name. This field is `event`, not `type`."
+          },
+          "eventId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
+          },
+          "apiVersion": {
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this delivery was built."
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
+          },
+          "workspaceId": {
+            "type": "integer",
+            "description": "The migration's workspace \u2014 pass it as `X-Workspace-Id`, or to `GET /v1/migrations/{workspaceId}`."
+          },
+          "data": {
+            "$ref": "#/components/schemas/MigrationImportPayload"
+          }
+        },
+        "description": "An import into a migration workspace finished."
+      },
+      "MigrationFailedEvent": {
+        "type": "object",
+        "required": [
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
+          "workspaceId",
+          "data"
+        ],
+        "properties": {
+          "event": {
+            "type": "string",
+            "description": "The event name. This field is `event`, not `type`."
+          },
+          "eventId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
+          },
+          "apiVersion": {
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this delivery was built."
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
+          },
+          "workspaceId": {
+            "type": "integer",
+            "description": "The migration's workspace \u2014 pass it as `X-Workspace-Id`, or to `GET /v1/migrations/{workspaceId}`."
+          },
+          "data": {
+            "$ref": "#/components/schemas/MigrationImportPayload"
+          }
+        },
+        "description": "An import into a migration workspace stopped with an error."
+      },
       "WebhookEvent": {
         "oneOf": [
           {
@@ -4161,6 +4678,12 @@
           },
           {
             "$ref": "#/components/schemas/UsageQuotaWarningEvent"
+          },
+          {
+            "$ref": "#/components/schemas/MigrationCompletedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/MigrationFailedEvent"
           }
         ],
         "discriminator": {
@@ -4191,7 +4714,9 @@
             "payment.completed": "#/components/schemas/PaymentCompletedEvent",
             "payment.refunded": "#/components/schemas/PaymentRefundedEvent",
             "repull.ping": "#/components/schemas/RepullPingEvent",
-            "usage.quota.warning": "#/components/schemas/UsageQuotaWarningEvent"
+            "usage.quota.warning": "#/components/schemas/UsageQuotaWarningEvent",
+            "migration.completed": "#/components/schemas/MigrationCompletedEvent",
+            "migration.failed": "#/components/schemas/MigrationFailedEvent"
           }
         },
         "description": "The full event envelope POSTed to your webhook URL. Discriminated on `type` \u2014 narrow `event.data` by switching on `event.type`. Use the matching `*Event` variant directly if your SDK lacks discriminator support. Events about an inactive listing (reservations, messages, alterations, reviews, payments, calendar and listing events) are not delivered. The data keeps syncing while the listing is inactive, but its events are never sent \u2014 including after you reactivate it; webhooks resume for events that happen from reactivation on. Account-level events are always delivered."
@@ -6114,7 +6639,18 @@
             "type": "string"
           },
           "defaultDailyPrice": {
-            "type": "number"
+            "type": "number",
+            "description": "Nightly rate for every night that is not a weekend night. Stating it is what gives the new listing a calendar: 365 nights are written from it, and that calendar is what a publish sends to the channel. Without a price the listing has no availability to publish, which Booking.com refuses with \"No availability pushed\"."
+          },
+          "weekendPrice": {
+            "type": "number",
+            "nullable": true,
+            "description": "Nightly rate for Saturday and Sunday nights (UTC). Omit it and those nights take `defaultDailyPrice`. It is the same rate the direct-booking quoter charges for a weekend night, so the calendar and a quote cannot disagree."
+          },
+          "pricePerExtraGuest": {
+            "type": "number",
+            "nullable": true,
+            "description": "Charged per guest above the number included in the nightly rate."
           },
           "cleaningFee": {
             "type": "number"
@@ -6150,6 +6686,10 @@
           "id": {
             "type": "string",
             "description": "New listing ID \u2014 use for follow-up generate-content / publish calls"
+          },
+          "calendarDaysSeeded": {
+            "type": "integer",
+            "description": "Nights of calendar written from the price you stated. `0` means the listing has no calendar and a publish will send no availability \u2014 state `defaultDailyPrice` on the create, or set it later with `PUT /v1/listings/{id}/content` under `pricing`."
           }
         }
       },
@@ -6403,6 +6943,54 @@
               }
             }
           },
+          "pricing": {
+            "type": "object",
+            "description": "The listing's standing rates. Partial like every other section: only the fields you send are written, and `null` clears one.\n\nChanging `defaultDailyPrice` or `weekendPrice` also moves the nights on the calendar that still carry the old rate and were written by us \u2014 a night you or a channel priced yourself is never touched, and neither is a blocked or reserved one. So a price change reaches the calendar without overwriting anyone's work.\n\nThis is still a local write. Publish to send the new rates to a channel.",
+            "properties": {
+              "defaultDailyPrice": {
+                "type": "number",
+                "nullable": true,
+                "description": "Nightly rate for every night that is not a weekend night."
+              },
+              "weekendPrice": {
+                "type": "number",
+                "nullable": true,
+                "description": "Nightly rate for Saturday and Sunday nights (UTC)."
+              },
+              "cleaningFee": {
+                "type": "number",
+                "nullable": true
+              },
+              "pricePerExtraGuest": {
+                "type": "number",
+                "nullable": true
+              },
+              "securityDeposit": {
+                "type": "number",
+                "nullable": true
+              },
+              "weeklyDiscount": {
+                "type": "number",
+                "nullable": true,
+                "description": "Fraction, not a percentage: `0.1` is 10% off a stay of a week or more."
+              },
+              "monthlyDiscount": {
+                "type": "number",
+                "nullable": true,
+                "description": "Fraction, not a percentage."
+              },
+              "guestsIncluded": {
+                "type": "integer",
+                "nullable": true,
+                "description": "Guests covered by the nightly rate before `pricePerExtraGuest` applies."
+              },
+              "currency": {
+                "type": "string",
+                "nullable": true,
+                "description": "ISO 4217, e.g. `USD`."
+              }
+            }
+          },
           "policies": {
             "type": "object",
             "properties": {
@@ -6573,7 +7161,7 @@
             "items": {
               "type": "string"
             },
-            "description": "Content slabs that were actually written, e.g. [\"title\",\"occupancy\",\"amenities\"]. A non-English write also reports `locale:<tag>` so you can see which row was written."
+            "description": "Content slabs that were actually written, e.g. [\"title\",\"occupancy\",\"amenities\"]. A non-English write also reports `locale:<tag>` so you can see which row was written. A rate change reports `pricing`, and `calendar` as well when nights on the calendar moved to the new rate."
           },
           "deferred": {
             "type": "array",
@@ -11048,7 +11636,7 @@
           "permits": {
             "type": "array",
             "nullable": true,
-            "description": "The live permit flows from Airbnb \u2014 present only with `?source=live`, `null` otherwise. Each flow names its `regulatory_body`, `regulation_type`, `status`, and the `question_key` / `answer_type` / `options` of every question you have to answer, plus the answers already on file.",
+            "description": "The live permit flows from Airbnb \u2014 present only with `?source=live`, `null` otherwise. Each flow names its `regulatory_body`, `regulation_type`, `status`, its `flows[]` with the `answer_key` / `type` / `choices` of every question you have to answer, plus the answers already on file.",
             "items": {
               "type": "object",
               "additionalProperties": true
@@ -11096,7 +11684,7 @@
         "required": [
           "permits"
         ],
-        "description": "Answer the regulatory permit questions Airbnb asks for this listing. Read them first with `?source=live` on the GET \u2014 Airbnb refuses a `question_key` it did not ask for on this listing.",
+        "description": "Answer the regulatory permit questions Airbnb asks for this listing, in Airbnb's Listing Permits shape. Read them first with `?source=live` on the GET: each permit lists its `flows[]`, and each flow its `questions[]` with an `answer_key` and a `type`.",
         "properties": {
           "permits": {
             "type": "array",
@@ -11106,46 +11694,53 @@
               "required": [
                 "regulatory_body",
                 "regulation_type",
+                "flow_slug",
                 "answers"
               ],
               "additionalProperties": false,
               "properties": {
                 "regulatory_body": {
                   "type": "string",
-                  "description": "As named by the GET, e.g. the city or registry asking."
+                  "description": "As returned by the GET, e.g. `maui_county_hawaii`."
                 },
                 "regulation_type": {
-                  "type": "string"
+                  "type": "string",
+                  "description": "As returned by the GET."
+                },
+                "regulation_context": {
+                  "type": "string",
+                  "description": "Echo the GET's `regulation_context` (e.g. `initial`) when present."
+                },
+                "flow_slug": {
+                  "type": "string",
+                  "description": "The `slug` of the flow you are answering, e.g. `existing_registration` or `exemption_claim`."
                 },
                 "answers": {
-                  "type": "array",
-                  "minItems": 1,
-                  "items": {
+                  "type": "object",
+                  "minProperties": 1,
+                  "description": "Keyed by each question's `answer_key`. Each value carries exactly one field, chosen by the question's `type`: TEXT \u2192 `text_value`, ATTESTATION \u2192 `attestation_value`, RADIO \u2192 `radio_value`, DATE \u2192 `date_value`, SELECT \u2192 `selected_options_value`.",
+                  "additionalProperties": {
                     "type": "object",
-                    "required": [
-                      "question_key"
-                    ],
                     "additionalProperties": false,
-                    "description": "Exactly one value field applies, decided by the question's `answer_type`.",
                     "properties": {
-                      "question_key": {
+                      "text_value": {
                         "type": "string"
                       },
-                      "text_value": {
-                        "type": "string",
-                        "nullable": true
+                      "attestation_value": {
+                        "type": "boolean"
+                      },
+                      "radio_value": {
+                        "type": "string"
                       },
                       "date_value": {
                         "type": "string",
-                        "nullable": true,
                         "description": "ISO date, YYYY-MM-DD."
                       },
                       "selected_options_value": {
                         "type": "array",
                         "items": {
                           "type": "string"
-                        },
-                        "nullable": true
+                        }
                       }
                     }
                   }
@@ -11153,6 +11748,24 @@
               }
             }
           }
+        },
+        "example": {
+          "permits": [
+            {
+              "regulatory_body": "maui_county_hawaii",
+              "regulation_type": "registration",
+              "regulation_context": "initial",
+              "flow_slug": "existing_registration",
+              "answers": {
+                "attestation": {
+                  "attestation_value": true
+                },
+                "permit_number": {
+                  "text_value": "TMK-2-3-004-005"
+                }
+              }
+            }
+          ]
         }
       },
       "AirbnbSafetyDisclosure": {
@@ -12356,7 +12969,7 @@
                 "completed"
               ]
             },
-            "description": "Filter by lifecycle status. **Case-insensitive** \u2014 `confirmed`, `Confirmed`, and `CONFIRMED` all match. Each public value expands to the full set of internal sub-states server-side: `confirmed` matches `accept`/`confirmed`/`modified`, `cancelled` matches every cancellation sub-state (`cancelled_by_host`, `declined`, `expired`, etc.), `pending` includes `inquiry`/`awaiting_payment`. `completed` is a derived state \u2014 combine `status=confirmed` with `check_out_before=<today>` to filter for past stays. `pending` is how an Airbnb booking **request** awaiting the host appears \u2014 answer it with `POST /v1/reservations/{id}/accept` or `/decline` before its `respondBy`. `pending` lists only requests that can still be answered: one the channel already let lapse (Airbnb expires a request 24 hours after the guest asks; no request survives its check-in date) is left out and appears under `cancelled` with `statusDetail: \"request_expired\"` instead. The stored record is not changed \u2014 this is derived when you read it. Airbnb **inquiries** (questions before booking) are not reservations: list them with `GET /v1/inquiries`."
+            "description": "Filter by lifecycle status. **Case-insensitive** \u2014 `confirmed`, `Confirmed`, and `CONFIRMED` all match. Each public value expands to the full set of internal sub-states server-side: `confirmed` matches `accept`/`confirmed`/`modified`, `cancelled` matches every cancellation sub-state (`cancelled_by_host`, `declined`, `expired`, etc.), `pending` covers three different situations, told apart by `pendingReason` on each reservation: a booking **request** awaiting the host (`host_approval` \u2014 answer it with `POST /v1/reservations/{id}/accept` or `/decline` before its `respondBy`), and a booking Airbnb is holding for the guest to pay (`guest_payment`) or to complete identity verification (`guest_verification`), which need no action from the host. `completed` is a derived state \u2014 combine `status=confirmed` with `check_out_before=<today>` to filter for past stays. `pending` lists only bookings that can still go ahead: a request the channel already let lapse (Airbnb expires a request 24 hours after the guest asks) and any pending booking whose check-in date has passed are left out and appear under `cancelled` with `statusDetail: \"request_expired\"` instead. The stored record is not changed \u2014 this is derived when you read it. Airbnb **inquiries** (questions before booking) are not reservations: list them with `GET /v1/inquiries`."
           },
           {
             "name": "listingId",
@@ -13837,6 +14450,79 @@
                     "nullable": true,
                     "description": "Optional UI language for the hosted Connect pages. Accepts any supported locale code (currently `en`, `fr`). When set it pins the language for the whole flow, overriding the workspace `default_language`. Unknown codes are ignored and the page falls back to the workspace default, then `Accept-Language`, then `en`. The end user can still override per-visit with a `?locale=` query param on the hosted page.",
                     "example": "fr"
+                  },
+                  "purpose": {
+                    "type": "string",
+                    "enum": [
+                      "connect",
+                      "migrate"
+                    ],
+                    "default": "connect",
+                    "description": "`migrate` starts a Repull Migrate session: the property manager connects their current PMS (or channel) and their data is copied into a new workspace of theirs, which you read with `X-Workspace-Id`. The hosted pages use migration wording, and after connecting they show the import's progress."
+                  },
+                  "workspace": {
+                    "type": "object",
+                    "description": "Migrate only \u2014 the property manager being moved. Required unless you send `X-Workspace-Id` to reconnect an existing migration.",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "maxLength": 120,
+                        "example": "Seaside Rentals"
+                      },
+                      "externalRef": {
+                        "type": "string",
+                        "maxLength": 120,
+                        "description": "Your own id for this property manager. Returned on every migration read.",
+                        "example": "acct_8812"
+                      }
+                    }
+                  },
+                  "copy": {
+                    "type": "object",
+                    "description": "Migrate only \u2014 your wording for the hosted pages. Anything you leave out uses Repull's localized migration copy.",
+                    "properties": {
+                      "title": {
+                        "type": "string",
+                        "maxLength": 300
+                      },
+                      "subtitle": {
+                        "type": "string",
+                        "maxLength": 300
+                      },
+                      "completedTitle": {
+                        "type": "string",
+                        "maxLength": 300
+                      },
+                      "completedBody": {
+                        "type": "string",
+                        "maxLength": 300
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "scope": {
+                    "type": "array",
+                    "description": "Migrate only \u2014 what you want brought across, listed to the property manager before they connect.",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "listings",
+                        "photos",
+                        "amenities",
+                        "rooms",
+                        "houseRules",
+                        "fees",
+                        "taxes",
+                        "owners",
+                        "guests",
+                        "reservations",
+                        "payments",
+                        "conversations",
+                        "calendar",
+                        "rates",
+                        "channelIds"
+                      ]
+                    }
                   }
                 }
               }
@@ -14779,30 +15465,6 @@
           },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntity"
-          }
-        }
-      }
-    },
-    "/v1/health/atlas": {
-      "get": {
-        "operationId": "getAtlasHealth",
-        "summary": "Atlas market-intelligence backend health",
-        "description": "Component-level probe. `GET /v1/health` reports the API as a whole; this reports one dependency so an incident can be localised without guessing.",
-        "tags": [
-          "Health"
-        ],
-        "security": [],
-        "responses": {
-          "200": {
-            "description": "Component status",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true
-                }
-              }
-            }
           }
         }
       }
@@ -25442,7 +26104,7 @@
       "get": {
         "operationId": "listAirbnbListingPermits",
         "summary": "List Airbnb permits and licences",
-        "description": "The regulatory permits, licences and registration numbers attached to an Airbnb listing.\n\n**DB-only by default.** `?source=cache` (the default) returns the permits as last mirrored by the sync worker \u2014 regulatory body, regulation type, status, permit number \u2014 with no upstream call.\n\n**`?source=live` also returns the QUESTIONS.** The mirror stores the RESULT of a permit, not what Airbnb asks for it, so a caller that is about to write needs `?source=live` once: it returns each permit flow with the `question_key`, `answer_type` and `options` of every question, and the answers already on file. Airbnb refuses a `question_key` it did not ask for on this listing, so this is not optional guesswork you can skip.\n\nReturns `404` when the listing has no Airbnb connection in this workspace, and `403 listing_inactive` when the listing is inactive.",
+        "description": "The regulatory permits, licences and registration numbers attached to an Airbnb listing.\n\n**DB-only by default.** `?source=cache` (the default) returns the permits as last mirrored by the sync worker \u2014 regulatory body, regulation type, status, permit number \u2014 with no upstream call.\n\n**`?source=live` also returns the QUESTIONS.** The mirror stores the RESULT of a permit, not what Airbnb asks for it, so a caller that is about to write needs `?source=live` once: it returns each permit's `flows[]` with the `answer_key`, `type` and `choices` of every question, and the answers already on file. Airbnb refuses an `answer_key` it did not ask for on this listing, so this is not optional guesswork you can skip.\n\nReturns `404` when the listing has no Airbnb connection in this workspace, and `403 listing_inactive` when the listing is inactive.",
         "tags": [
           "Airbnb"
         ],
@@ -25517,7 +26179,7 @@
       "put": {
         "operationId": "updateAirbnbListingPermits",
         "summary": "Answer Airbnb permit questions",
-        "description": "Answer the regulatory permit questions for a listing \u2014 the licence or registration number a city requires to keep the listing up.\n\nRead the questions first with `GET \u2026/permits?source=live`: every answer is keyed by a `question_key` Airbnb asks for THIS listing, and the question's `answer_type` decides which value field applies (`text_value`, `date_value`, or `selected_options_value`). Answers are forwarded verbatim \u2014 nothing is defaulted or inferred, because a wrong licence number can take a listing down in a regulated city.\n\nSend `Idempotency-Key`: a timeout here leaves you unable to tell \"never arrived\" from \"arrived, response lost\", and this is a compliance filing.\n\nAirbnb refusing the answers (an unknown question key, a malformed licence number) is `422 airbnb_rejected` carrying Airbnb's own reason. An expired or revoked Airbnb connection is `403 connection_reauth_required`.",
+        "description": "Answer the regulatory permit questions for a listing \u2014 the licence or registration number a city requires to keep the listing up.\n\nRead the questions first with `GET \u2026/permits?source=live`. For each permit, pick one of its `flows[]` and send its `slug` as `flow_slug`; key every answer by the question's `answer_key`, and let the question's `type` decide the value field (`text_value`, `attestation_value`, `radio_value`, `date_value` or `selected_options_value`). Answers are forwarded verbatim \u2014 nothing is defaulted or inferred, because a wrong licence number can take a listing down in a regulated city.\n\nSend `Idempotency-Key`: a timeout here leaves you unable to tell \"never arrived\" from \"arrived, response lost\", and this is a compliance filing.\n\nAirbnb refusing the answers (an unknown `answer_key`, a malformed licence number) is `422 airbnb_rejected` carrying Airbnb's own reason. An expired or revoked Airbnb connection is `403 connection_reauth_required`.",
         "tags": [
           "Airbnb"
         ],
@@ -28326,6 +28988,526 @@
           },
           "429": {
             "$ref": "#/components/responses/TooManyRequests"
+          }
+        }
+      }
+    },
+    "/v1/migrations": {
+      "get": {
+        "operationId": "listMigrations",
+        "summary": "List migrations",
+        "description": "Every property manager your workspace has moved through Repull Migrate, newest first, each with where it stands. Page with `pagination.nextCursor`.",
+        "tags": [
+          "Migrate"
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "`pagination.nextCursor` from the previous page."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Migrations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Migration"
+                      }
+                    },
+                    "pagination": {
+                      "type": "object",
+                      "properties": {
+                        "nextCursor": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "hasMore": {
+                          "type": "boolean"
+                        },
+                        "total": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/migrations/{workspaceId}": {
+      "get": {
+        "operationId": "getMigration",
+        "summary": "Get a migration",
+        "description": "Where one migration stands: its state, the source connections with their last import run, and how much data has landed.",
+        "tags": [
+          "Migrate"
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "The migration's workspace id (from `POST /v1/connect` with `purpose: \"migrate\"`, or `GET /v1/migrations`)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The migration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Migration"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteMigration",
+        "summary": "End a migration",
+        "description": "Disconnects the source (it stops syncing) and deactivates the migration's workspace. The imported data is kept and stays readable.",
+        "tags": [
+          "Migrate"
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "The migration's workspace id (from `POST /v1/connect` with `purpose: \"migrate\"`, or `GET /v1/migrations`)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ended",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "workspaceId": {
+                          "type": "string"
+                        },
+                        "deactivated": {
+                          "type": "boolean"
+                        },
+                        "deactivatedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/migrations/{workspaceId}/channel-map": {
+      "get": {
+        "operationId": "getMigrationChannelMap",
+        "summary": "Get channel links",
+        "description": "The Airbnb, Booking.com and VRBO listing each migrated property is linked to in the source PMS, read live. Use it to link each listing to the right property when the channels are reconnected in the destination \u2014 channel connections themselves cannot be moved between PMSs.",
+        "tags": [
+          "Migrate"
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "The migration's workspace id (from `POST /v1/connect` with `purpose: \"migrate\"`, or `GET /v1/migrations`)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Channel links",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/MigrationChannelMap"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/migrations/{workspaceId}/cutover": {
+      "post": {
+        "operationId": "cutoverMigration",
+        "summary": "Cut over",
+        "description": "The property manager has switched: disconnect the source so it stops syncing. The imported data stays readable. Idempotent.",
+        "tags": [
+          "Migrate"
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "The migration's workspace id (from `POST /v1/connect` with `purpose: \"migrate\"`, or `GET /v1/migrations`)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The migration after cutover",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Migration"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/migrations/{workspaceId}/cutover-check": {
+      "post": {
+        "operationId": "checkMigrationCutover",
+        "summary": "Check reservations before switching",
+        "description": "Send every upcoming reservation the destination holds; get back what is missing, extra, or on different dates compared with the source. Read-only \u2014 run it as often as you like before cutover.",
+        "tags": [
+          "Migrate"
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "The migration's workspace id (from `POST /v1/connect` with `purpose: \"migrate\"`, or `GET /v1/migrations`)."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "reservations"
+                ],
+                "properties": {
+                  "reservations": {
+                    "type": "array",
+                    "maxItems": 10000,
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "confirmationCode",
+                        "checkIn",
+                        "checkOut"
+                      ],
+                      "properties": {
+                        "confirmationCode": {
+                          "type": "string"
+                        },
+                        "checkIn": {
+                          "type": "string",
+                          "format": "date"
+                        },
+                        "checkOut": {
+                          "type": "string",
+                          "format": "date"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Comparison",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/MigrationCutoverCheck"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/migrations/{workspaceId}/import": {
+      "post": {
+        "operationId": "runMigrationImport",
+        "summary": "Run the import again",
+        "description": "Queue another import from the source PMS \u2014 for example messages after the first pass, or only reservations changed since a date. Progress shows on `GET /v1/migrations/{workspaceId}`.",
+        "tags": [
+          "Migrate"
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "The migration's workspace id (from `POST /v1/connect` with `purpose: \"migrate\"`, or `GET /v1/migrations`)."
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "entities": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "listings",
+                        "reservations",
+                        "messages",
+                        "calendar"
+                      ]
+                    },
+                    "description": "Defaults to listings and reservations."
+                  },
+                  "since": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Only reservations changed after this."
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Queued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "workspaceId": {
+                          "type": "string"
+                        },
+                        "queued": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "connectionId": {
+                                "type": "string"
+                              },
+                              "provider": {
+                                "type": "string"
+                              },
+                              "queued": {
+                                "type": "boolean"
+                              },
+                              "error": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/migrations/{workspaceId}/report": {
+      "get": {
+        "operationId": "getMigrationReport",
+        "summary": "Get a migration report",
+        "description": "What came across and what needs a decision in the destination: properties without an address, upcoming reservations with no guest contact, channel reservations that must not be re-created, and anything the source PMS cannot carry. Includes the source's capability matrix.",
+        "tags": [
+          "Migrate"
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "The migration's workspace id (from `POST /v1/connect` with `purpose: \"migrate\"`, or `GET /v1/migrations`)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The report",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/MigrationReport"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         }
       }

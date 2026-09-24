@@ -26,6 +26,8 @@ Repull::WebhookEvent.openapi_one_of
 #   :'ListingReactivatedEvent',
 #   :'ListingSuspendedEvent',
 #   :'ListingUpdatedEvent',
+#   :'MigrationCompletedEvent',
+#   :'MigrationFailedEvent',
 #   :'PaymentCompletedEvent',
 #   :'PaymentRefundedEvent',
 #   :'RepullPingEvent',
@@ -80,6 +82,8 @@ Repull::WebhookEvent.openapi_discriminator_mapping
 #   :'listing.reactivated' => :'ListingReactivatedEvent',
 #   :'listing.suspended' => :'ListingSuspendedEvent',
 #   :'listing.updated' => :'ListingUpdatedEvent',
+#   :'migration.completed' => :'MigrationCompletedEvent',
+#   :'migration.failed' => :'MigrationFailedEvent',
 #   :'payment.completed' => :'PaymentCompletedEvent',
 #   :'payment.refunded' => :'PaymentRefundedEvent',
 #   :'repull.ping' => :'RepullPingEvent',
@@ -133,6 +137,8 @@ Repull::WebhookEvent.build(data_that_doesnt_match)
 - `ListingReactivatedEvent`
 - `ListingSuspendedEvent`
 - `ListingUpdatedEvent`
+- `MigrationCompletedEvent`
+- `MigrationFailedEvent`
 - `PaymentCompletedEvent`
 - `PaymentRefundedEvent`
 - `RepullPingEvent`

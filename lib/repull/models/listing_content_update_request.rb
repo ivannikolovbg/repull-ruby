@@ -39,6 +39,8 @@ module Repull
 
     attr_accessor :occupancy
 
+    attr_accessor :pricing
+
     attr_accessor :policies
 
     # Photo set — full replacement by default (pass `photosMode: \"append\"` to add after existing photos, or `[]` to clear; omit to leave untouched). Each entry is a hosted image URL (string) or a structured ref. URL-ingest only: the URL is persisted and attached to the listing in order — the OTA push downloads it at publish time. Binary/multipart upload is a follow-up. A non-empty array with no valid http(s) URL is reported in `deferred` (existing photos left untouched).
@@ -59,6 +61,7 @@ module Repull
         :'address' => :'address',
         :'details' => :'details',
         :'occupancy' => :'occupancy',
+        :'pricing' => :'pricing',
         :'policies' => :'policies',
         :'photos' => :'photos',
         :'photos_mode' => :'photosMode'
@@ -87,6 +90,7 @@ module Repull
         :'address' => :'ListingContentUpdateRequestAddress',
         :'details' => :'ListingContentUpdateRequestDetails',
         :'occupancy' => :'ListingContentUpdateRequestOccupancy',
+        :'pricing' => :'ListingContentUpdateRequestPricing',
         :'policies' => :'ListingContentUpdateRequestPolicies',
         :'photos' => :'Array<ListingContentUpdateRequestPhotosInner>',
         :'photos_mode' => :'String'
@@ -155,6 +159,10 @@ module Repull
         self.occupancy = attributes[:'occupancy']
       end
 
+      if attributes.key?(:'pricing')
+        self.pricing = attributes[:'pricing']
+      end
+
       if attributes.key?(:'policies')
         self.policies = attributes[:'policies']
       end
@@ -201,6 +209,7 @@ module Repull
           address == o.address &&
           details == o.details &&
           occupancy == o.occupancy &&
+          pricing == o.pricing &&
           policies == o.policies &&
           photos == o.photos &&
           photos_mode == o.photos_mode
@@ -215,7 +224,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [locale, title, name, description, summary, amenities, address, details, occupancy, policies, photos, photos_mode].hash
+      [locale, title, name, description, summary, amenities, address, details, occupancy, pricing, policies, photos, photos_mode].hash
     end
 
     # Builds the object from hash

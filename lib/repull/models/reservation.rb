@@ -41,7 +41,10 @@ module Repull
     # Present only when `status` was derived rather than reported by the channel. `request_expired` — a booking request nobody answered in time (Airbnb's 24-hour window passed, or the check-in did). Absent otherwise.
     attr_accessor :status_detail
 
-    # On a `pending` Airbnb booking request that can still be answered: when it lapses (24 hours after the guest asked). Accept or decline before then with `POST /v1/reservations/{id}/accept` / `/decline`. Absent on every other reservation.
+    # Why a `pending` reservation is pending — who has to act next. `host_approval`: a booking request the host must accept or decline (see `respondBy`). `guest_payment`: Airbnb is waiting for the guest to pay. `guest_verification`: Airbnb is holding the booking while the guest completes identity verification. The last two need no action from the host, and Airbnb does not publish a deadline for them. Present only while `status` is `pending`; when it changes you receive `reservation.updated` with the previous raw status in `previousAttributes.status`, even if `status` stays `pending`.
+    attr_accessor :pending_reason
+
+    # On a `pending` Airbnb booking request (`pendingReason: host_approval`) that can still be answered: when it lapses (24 hours after the guest asked). Accept or decline before then with `POST /v1/reservations/{id}/accept` / `/decline`. Absent on every other reservation, including bookings Airbnb is holding for the guest's payment or verification — those have no deadline we can report.
     attr_accessor :respond_by
 
     # Booking source / channel. Lowercase. May be null on legacy rows. Canonical name as of 2026-05; `platform` is kept as an alias.
@@ -95,6 +98,7 @@ module Repull
         :'check_out_time' => :'checkOutTime',
         :'status' => :'status',
         :'status_detail' => :'statusDetail',
+        :'pending_reason' => :'pendingReason',
         :'respond_by' => :'respondBy',
         :'source' => :'source',
         :'platform' => :'platform',
@@ -134,6 +138,7 @@ module Repull
         :'check_out_time' => :'String',
         :'status' => :'String',
         :'status_detail' => :'String',
+        :'pending_reason' => :'String',
         :'respond_by' => :'Time',
         :'source' => :'String',
         :'platform' => :'String',
@@ -223,6 +228,10 @@ module Repull
 
       if attributes.key?(:'status_detail')
         self.status_detail = attributes[:'status_detail']
+      end
+
+      if attributes.key?(:'pending_reason')
+        self.pending_reason = attributes[:'pending_reason']
       end
 
       if attributes.key?(:'respond_by')
@@ -439,6 +448,7 @@ module Repull
           check_out_time == o.check_out_time &&
           status == o.status &&
           status_detail == o.status_detail &&
+          pending_reason == o.pending_reason &&
           respond_by == o.respond_by &&
           source == o.source &&
           platform == o.platform &&
@@ -464,7 +474,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, listing_id, guest_id, check_in, check_out, check_in_time, check_out_time, status, status_detail, respond_by, source, platform, confirmation_code, primary_guest, occupancy, financials, total_price, currency, guest_details, created_at, updated_at, booked_at, guest_name].hash
+      [id, listing_id, guest_id, check_in, check_out, check_in_time, check_out_time, status, status_detail, pending_reason, respond_by, source, platform, confirmation_code, primary_guest, occupancy, financials, total_price, currency, guest_details, created_at, updated_at, booked_at, guest_name].hash
     end
 
     # Builds the object from hash

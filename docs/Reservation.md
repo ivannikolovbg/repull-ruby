@@ -13,7 +13,8 @@
 | **check_out_time** | **String** | Local check-out time for this stay, &#x60;HH:MM&#x60; on a 24-hour clock in the property&#39;s own timezone. Pair with &#x60;checkOut&#x60; to schedule the turnover clean. &#x60;null&#x60; when unknown. This is the same field &#x60;PATCH /v1/reservations/{id}&#x60; writes. | [optional] |
 | **status** | **String** | Lifecycle status. The API normalises a multi-decade internal taxonomy down to these four buckets, so the value you receive is always one of the enum constants. &#x60;completed&#x60; is derived from &#x60;checkOut &lt; today&#x60;. A &#x60;pending&#x60; booking request the channel already let lapse — Airbnb expires an unanswered request 24 hours after the guest asks, and no request can be answered once its check-in has passed — is reported as &#x60;cancelled&#x60; with &#x60;statusDetail: \&quot;request_expired\&quot;&#x60;, even when the channel never told us. |  |
 | **status_detail** | **String** | Present only when &#x60;status&#x60; was derived rather than reported by the channel. &#x60;request_expired&#x60; — a booking request nobody answered in time (Airbnb&#39;s 24-hour window passed, or the check-in did). Absent otherwise. | [optional] |
-| **respond_by** | **Time** | On a &#x60;pending&#x60; Airbnb booking request that can still be answered: when it lapses (24 hours after the guest asked). Accept or decline before then with &#x60;POST /v1/reservations/{id}/accept&#x60; / &#x60;/decline&#x60;. Absent on every other reservation. | [optional] |
+| **pending_reason** | **String** | Why a &#x60;pending&#x60; reservation is pending — who has to act next. &#x60;host_approval&#x60;: a booking request the host must accept or decline (see &#x60;respondBy&#x60;). &#x60;guest_payment&#x60;: Airbnb is waiting for the guest to pay. &#x60;guest_verification&#x60;: Airbnb is holding the booking while the guest completes identity verification. The last two need no action from the host, and Airbnb does not publish a deadline for them. Present only while &#x60;status&#x60; is &#x60;pending&#x60;; when it changes you receive &#x60;reservation.updated&#x60; with the previous raw status in &#x60;previousAttributes.status&#x60;, even if &#x60;status&#x60; stays &#x60;pending&#x60;. | [optional] |
+| **respond_by** | **Time** | On a &#x60;pending&#x60; Airbnb booking request (&#x60;pendingReason: host_approval&#x60;) that can still be answered: when it lapses (24 hours after the guest asked). Accept or decline before then with &#x60;POST /v1/reservations/{id}/accept&#x60; / &#x60;/decline&#x60;. Absent on every other reservation, including bookings Airbnb is holding for the guest&#39;s payment or verification — those have no deadline we can report. | [optional] |
 | **source** | **String** | Booking source / channel. Lowercase. May be null on legacy rows. Canonical name as of 2026-05; &#x60;platform&#x60; is kept as an alias. | [optional] |
 | **platform** | **String** | DEPRECATED alias for &#x60;source&#x60;. Same value, kept for back-compat. | [optional] |
 | **confirmation_code** | **String** | Channel-side confirmation code (Airbnb HMxxx, Booking.com numeric, etc.). |  |
@@ -43,6 +44,7 @@ instance = Repull::Reservation.new(
   check_out_time: 10:00,
   status: confirmed,
   status_detail: request_expired,
+  pending_reason: guest_verification,
   respond_by: 2026-09-23T09:00Z,
   source: airbnb,
   platform: airbnb,

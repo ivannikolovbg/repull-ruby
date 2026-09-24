@@ -22,7 +22,9 @@
 | **person_capacity** | **Integer** |  | [optional] |
 | **summary** | **String** |  | [optional] |
 | **description** | **String** |  | [optional] |
-| **default_daily_price** | **Float** |  | [optional] |
+| **default_daily_price** | **Float** | Nightly rate for every night that is not a weekend night. Stating it is what gives the new listing a calendar: 365 nights are written from it, and that calendar is what a publish sends to the channel. Without a price the listing has no availability to publish, which Booking.com refuses with \&quot;No availability pushed\&quot;. | [optional] |
+| **weekend_price** | **Float** | Nightly rate for Saturday and Sunday nights (UTC). Omit it and those nights take &#x60;defaultDailyPrice&#x60;. It is the same rate the direct-booking quoter charges for a weekend night, so the calendar and a quote cannot disagree. | [optional] |
+| **price_per_extra_guest** | **Float** | Charged per guest above the number included in the nightly rate. | [optional] |
 | **cleaning_fee** | **Float** |  | [optional] |
 | **cancellation_policy** | **String** |  | [optional] |
 | **check_in_time_start** | **String** |  | [optional] |
@@ -57,6 +59,8 @@ instance = Repull::ListingCreateRequest.new(
   summary: null,
   description: null,
   default_daily_price: null,
+  weekend_price: null,
+  price_per_extra_guest: null,
   cleaning_fee: null,
   cancellation_policy: null,
   check_in_time_start: 15:00,

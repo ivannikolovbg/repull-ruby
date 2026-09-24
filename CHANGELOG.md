@@ -2,6 +2,24 @@
 
 All notable changes to the `repull` gem are documented here.
 
+## [0.2.18] - 2026-09-24
+
+Regenerated against the live `https://api.repull.dev/openapi.json` (202 → 209 operations).
+
+### Added
+- **Repull Migrate** — `Repull::MigrateApi`: `list_migrations`, `get_migration`, `get_migration_report`,
+  `get_migration_channel_map`, `run_migration_import`, `check_migration_cutover`, `cutover_migration`,
+  `delete_migration`.
+- `create_connect_session` accepts `purpose: 'migrate'`, `workspace`, `copy` and `scope`; the session returns `workspace_id`.
+- `migration.completed` / `migration.failed` webhook events; child-workspace events carry `workspace_id`.
+- `ConnectProvider#migration_capabilities`.
+
+### Changed
+- Airbnb permits write takes Airbnb's submission shape (`flow_slug` + `answers` keyed by `answer_key`).
+
+### Removed
+- `get_atlas_health` (endpoint retired).
+
 ## [0.2.17] - 2026-09-23
 
 ### Added

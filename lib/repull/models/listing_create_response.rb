@@ -18,10 +18,14 @@ module Repull
     # New listing ID — use for follow-up generate-content / publish calls
     attr_accessor :id
 
+    # Nights of calendar written from the price you stated. `0` means the listing has no calendar and a publish will send no availability — state `defaultDailyPrice` on the create, or set it later with `PUT /v1/listings/{id}/content` under `pricing`.
+    attr_accessor :calendar_days_seeded
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'id' => :'id'
+        :'id' => :'id',
+        :'calendar_days_seeded' => :'calendarDaysSeeded'
       }
     end
 
@@ -38,7 +42,8 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'id' => :'String'
+        :'id' => :'String',
+        :'calendar_days_seeded' => :'Integer'
       }
     end
 
@@ -67,6 +72,10 @@ module Repull
       if attributes.key?(:'id')
         self.id = attributes[:'id']
       end
+
+      if attributes.key?(:'calendar_days_seeded')
+        self.calendar_days_seeded = attributes[:'calendar_days_seeded']
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -89,7 +98,8 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          id == o.id
+          id == o.id &&
+          calendar_days_seeded == o.calendar_days_seeded
     end
 
     # @see the `==` method
@@ -101,7 +111,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id].hash
+      [id, calendar_days_seeded].hash
     end
 
     # Builds the object from hash

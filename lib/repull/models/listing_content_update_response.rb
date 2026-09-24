@@ -18,7 +18,7 @@ module Repull
     # The listing id (serialized as a string to preserve precision).
     attr_accessor :id
 
-    # Content slabs that were actually written, e.g. [\"title\",\"occupancy\",\"amenities\"]. A non-English write also reports `locale:<tag>` so you can see which row was written.
+    # Content slabs that were actually written, e.g. [\"title\",\"occupancy\",\"amenities\"]. A non-English write also reports `locale:<tag>` so you can see which row was written. A rate change reports `pricing`, and `calendar` as well when nights on the calendar moved to the new rate.
     attr_accessor :changed
 
     # Provided-but-not-applied fields — e.g. \"photos\" when a non-empty photos array carried no valid http(s) URL.

@@ -27,13 +27,49 @@ module Repull
     # Optional UI language for the hosted Connect pages. Accepts any supported locale code (currently `en`, `fr`). When set it pins the language for the whole flow, overriding the workspace `default_language`. Unknown codes are ignored and the page falls back to the workspace default, then `Accept-Language`, then `en`. The end user can still override per-visit with a `?locale=` query param on the hosted page.
     attr_accessor :locale
 
+    # `migrate` starts a Repull Migrate session: the property manager connects their current PMS (or channel) and their data is copied into a new workspace of theirs, which you read with `X-Workspace-Id`. The hosted pages use migration wording, and after connecting they show the import's progress.
+    attr_accessor :purpose
+
+    attr_accessor :workspace
+
+    attr_accessor :copy
+
+    # Migrate only — what you want brought across, listed to the property manager before they connect.
+    attr_accessor :scope
+
+    class EnumAttributeValidator
+      attr_reader :datatype
+      attr_reader :allowable_values
+
+      def initialize(datatype, allowable_values)
+        @allowable_values = allowable_values.map do |value|
+          case datatype.to_s
+          when /Integer/i
+            value.to_i
+          when /Float/i
+            value.to_f
+          else
+            value
+          end
+        end
+      end
+
+      def valid?(value)
+        !value || allowable_values.include?(value)
+      end
+    end
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
         :'redirect_url' => :'redirectUrl',
         :'state' => :'state',
         :'allowed_providers' => :'allowedProviders',
-        :'locale' => :'locale'
+        :'locale' => :'locale',
+        :'purpose' => :'purpose',
+        :'workspace' => :'workspace',
+        :'copy' => :'copy',
+        :'scope' => :'scope'
       }
     end
 
@@ -53,7 +89,11 @@ module Repull
         :'redirect_url' => :'String',
         :'state' => :'String',
         :'allowed_providers' => :'Array<String>',
-        :'locale' => :'String'
+        :'locale' => :'String',
+        :'purpose' => :'String',
+        :'workspace' => :'CreateConnectSessionRequestWorkspace',
+        :'copy' => :'CreateConnectSessionRequestCopy',
+        :'scope' => :'Array<String>'
       }
     end
 
@@ -62,7 +102,7 @@ module Repull
       Set.new([
         :'state',
         :'allowed_providers',
-        :'locale'
+        :'locale',
       ])
     end
 
@@ -101,6 +141,26 @@ module Repull
       if attributes.key?(:'locale')
         self.locale = attributes[:'locale']
       end
+
+      if attributes.key?(:'purpose')
+        self.purpose = attributes[:'purpose']
+      else
+        self.purpose = 'connect'
+      end
+
+      if attributes.key?(:'workspace')
+        self.workspace = attributes[:'workspace']
+      end
+
+      if attributes.key?(:'copy')
+        self.copy = attributes[:'copy']
+      end
+
+      if attributes.key?(:'scope')
+        if (value = attributes[:'scope']).is_a?(Array)
+          self.scope = value
+        end
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -120,6 +180,8 @@ module Repull
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
       return false if @redirect_url.nil?
+      purpose_validator = EnumAttributeValidator.new('String', ["connect", "migrate"])
+      return false unless purpose_validator.valid?(@purpose)
       true
     end
 
@@ -133,6 +195,16 @@ module Repull
       @redirect_url = redirect_url
     end
 
+    # Custom attribute writer method checking allowed values (enum).
+    # @param [Object] purpose Object to be assigned
+    def purpose=(purpose)
+      validator = EnumAttributeValidator.new('String', ["connect", "migrate"])
+      unless validator.valid?(purpose)
+        fail ArgumentError, "invalid value for \"purpose\", must be one of #{validator.allowable_values}."
+      end
+      @purpose = purpose
+    end
+
     # Checks equality by comparing each attribute.
     # @param [Object] Object to be compared
     def ==(o)
@@ -141,7 +213,11 @@ module Repull
           redirect_url == o.redirect_url &&
           state == o.state &&
           allowed_providers == o.allowed_providers &&
-          locale == o.locale
+          locale == o.locale &&
+          purpose == o.purpose &&
+          workspace == o.workspace &&
+          copy == o.copy &&
+          scope == o.scope
     end
 
     # @see the `==` method
@@ -153,7 +229,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [redirect_url, state, allowed_providers, locale].hash
+      [redirect_url, state, allowed_providers, locale, purpose, workspace, copy, scope].hash
     end
 
     # Builds the object from hash
