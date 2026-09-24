@@ -2,6 +2,16 @@
 
 All notable changes to the `repull` gem are documented here.
 
+## [0.2.19] - 2026-09-24
+
+Regenerated against the live `https://api.repull.dev/openapi.json` (210 operations):
+
+- `POST /v1/channels/booking/listings/map` — map a Booking.com room to a listing with an API key; the property's reservations import automatically.
+- `/v1/channels/booking/content` rebuilt on Booking.com's Property Management APIs — types `photos`, `facilities`, `description`, `settings`, `policies`, `licences`, `checkin_methods`, `contacts`.
+- `/v1/channels/booking/setup` — `check-readiness` and `advance` return `blockers`; `create-property` accepts `contact`.
+- `PUT /v1/listings/{id}/content` — `rooms` (with beds) and `checkoutTasks`; `weeklyDiscount`/`monthlyDiscount` are percentages.
+- `GET /v1/channels/booking/availability` and `…/listings/{id}/pricing` read per room by default.
+
 ## [0.2.18] - 2026-09-24
 
 Regenerated against the live `https://api.repull.dev/openapi.json` (202 → 209 operations).

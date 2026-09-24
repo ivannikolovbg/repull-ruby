@@ -14,65 +14,49 @@ require 'date'
 require 'time'
 
 module Repull
-  # Canonical PMS-owned listing content. Every field is optional — this is a partial update, only the fields you send are written; absent fields are left untouched. This is a LOCAL write only: it does NOT push to Airbnb/Booking.com. Distribution is a separate explicit publish step. `photos` are ingested by URL and attached to the listing in order (full-replace by default, or append via `photosMode`).
-  class ListingContentUpdateRequest < ApiModelBase
-    # Which language the `title` / `description` / `summary` / `policies.houseRules` in THIS request are written in. Defaults to `en`. Canonical content is stored per locale — one row per (listing, locale) — so sending Italian copy with `locale: \"it\"` creates or updates the Italian row instead of overwriting the English one. Distribution of a non-primary locale to Airbnb is a separate call: `PUT /v1/channels/airbnb/listings/{id}/descriptions`.
-    attr_accessor :locale
+  # Id fields are strings (API-wide convention — bigint ids are stringified to avoid 53-bit JS-number precision loss).
+  class MapBookingRoomResponse < ApiModelBase
+    attr_accessor :success
 
-    # Guest-facing title. Written to the listing name and the description row for `locale`.
-    attr_accessor :title
+    # True when the room already pointed at this listing (or was already unmapped) and its channel link agreed. Nothing was written.
+    attr_accessor :already_mapped
 
-    # Alias for `title`.
-    attr_accessor :name
+    # Booking.com's room id, as recorded for this room.
+    attr_accessor :room_booking_id
 
-    # Long-form listing description.
-    attr_accessor :description
+    # The listing the room now points at. Null after an unmap.
+    attr_accessor :listing_id
 
-    # Short summary / tagline.
-    attr_accessor :summary
+    # The listing the room pointed at before this call; null when it was unmapped. Omitted on a no-op.
+    attr_accessor :previous_listing_id
 
-    attr_accessor :amenities
+    # The Booking.com property the room belongs to.
+    attr_accessor :hotel_id
 
-    attr_accessor :address
+    # Repull-side id of the room record — the `roomId` the Connect room-mapping flow takes.
+    attr_accessor :room_id
 
-    attr_accessor :details
+    attr_accessor :room_name
 
-    attr_accessor :occupancy
+    # Id of the resulting channel-link row. Null after an unmap, and for a room Booking.com has given us no room id for.
+    attr_accessor :platform_link_id
 
-    # The listing's rooms and the beds in each — what Airbnb shows as the sleeping arrangements and needs before a listing can go live. FULL replacement: the rooms you send become the whole set. Omit to leave rooms untouched; send `[]` to clear them.  Every entry is checked before anything is written, so a bad entry refuses the whole request with `422 invalid_params` naming it (e.g. `rooms[1].beds[0].quantity`) — a listing is never left with half its rooms.  Values use Airbnb's vocabulary, which Booking.com room mapping also reads. This is a local write; publish to send it to a channel.
-    attr_accessor :rooms
-
-    # What the guest is asked to do before leaving. FULL replacement: omit to leave untouched; send `[]` to clear. An unknown `taskType` refuses the whole request with `422 invalid_params`.  Published to Airbnb, which is the only channel with checkout tasks. Airbnb accepts them only from partner apps it has certified for the feature; until then the publish result reports Airbnb's own refusal for this section and every other section still lands.
-    attr_accessor :checkout_tasks
-
-    attr_accessor :pricing
-
-    attr_accessor :policies
-
-    # Photo set — full replacement by default (pass `photosMode: \"append\"` to add after existing photos, or `[]` to clear; omit to leave untouched). Each entry is a hosted image URL (string) or a structured ref. URL-ingest only: the URL is persisted and attached to the listing in order — the OTA push downloads it at publish time. Binary/multipart upload is a follow-up. A non-empty array with no valid http(s) URL is reported in `deferred` (existing photos left untouched).
-    attr_accessor :photos
-
-    # How `photos` is applied: `replace` (full replacement of the photo set) or `append` (add after the existing photos). Ignored when `photos` is absent.
-    attr_accessor :photos_mode
+    # Reservations Booking.com returned for the property and ran through the import after the room was mapped — the property's active bookings, which would otherwise never reach the listing. A reservation already present is left as it is, so this counts what was processed, not what was new, and re-sending never duplicates. Runs on every successful map, including a re-map to the same listing, so re-sending retries an import that did not run. `null` means the mapping succeeded but the import could not run; the room is still mapped. Absent after an unmap, when there is nothing to pull.
+    attr_accessor :reservations_imported
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'locale' => :'locale',
-        :'title' => :'title',
-        :'name' => :'name',
-        :'description' => :'description',
-        :'summary' => :'summary',
-        :'amenities' => :'amenities',
-        :'address' => :'address',
-        :'details' => :'details',
-        :'occupancy' => :'occupancy',
-        :'rooms' => :'rooms',
-        :'checkout_tasks' => :'checkoutTasks',
-        :'pricing' => :'pricing',
-        :'policies' => :'policies',
-        :'photos' => :'photos',
-        :'photos_mode' => :'photosMode'
+        :'success' => :'success',
+        :'already_mapped' => :'alreadyMapped',
+        :'room_booking_id' => :'roomBookingId',
+        :'listing_id' => :'listingId',
+        :'previous_listing_id' => :'previousListingId',
+        :'hotel_id' => :'hotelId',
+        :'room_id' => :'roomId',
+        :'room_name' => :'roomName',
+        :'platform_link_id' => :'platformLinkId',
+        :'reservations_imported' => :'reservationsImported'
       }
     end
 
@@ -89,33 +73,28 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'locale' => :'String',
-        :'title' => :'String',
-        :'name' => :'String',
-        :'description' => :'String',
-        :'summary' => :'String',
-        :'amenities' => :'ListingContentUpdateRequestAmenities',
-        :'address' => :'ListingContentUpdateRequestAddress',
-        :'details' => :'ListingContentUpdateRequestDetails',
-        :'occupancy' => :'ListingContentUpdateRequestOccupancy',
-        :'rooms' => :'Array<ListingContentUpdateRequestRoomsInner>',
-        :'checkout_tasks' => :'Array<ListingContentUpdateRequestCheckoutTasksInner>',
-        :'pricing' => :'ListingContentUpdateRequestPricing',
-        :'policies' => :'ListingContentUpdateRequestPolicies',
-        :'photos' => :'Array<ListingContentUpdateRequestPhotosInner>',
-        :'photos_mode' => :'String'
+        :'success' => :'Boolean',
+        :'already_mapped' => :'Boolean',
+        :'room_booking_id' => :'String',
+        :'listing_id' => :'String',
+        :'previous_listing_id' => :'String',
+        :'hotel_id' => :'String',
+        :'room_id' => :'String',
+        :'room_name' => :'String',
+        :'platform_link_id' => :'String',
+        :'reservations_imported' => :'Integer'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
-        :'title',
-        :'name',
-        :'description',
-        :'summary',
-        :'rooms',
-        :'checkout_tasks',
+        :'room_booking_id',
+        :'listing_id',
+        :'previous_listing_id',
+        :'room_name',
+        :'platform_link_id',
+        :'reservations_imported'
       ])
     end
 
@@ -123,84 +102,68 @@ module Repull
     # @param [Hash] attributes Model attributes in the form of hash
     def initialize(attributes = {})
       if (!attributes.is_a?(Hash))
-        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::ListingContentUpdateRequest` initialize method"
+        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::MapBookingRoomResponse` initialize method"
       end
 
       # check to see if the attribute exists and convert string to symbol for hash key
       acceptable_attribute_map = self.class.acceptable_attribute_map
       attributes = attributes.each_with_object({}) { |(k, v), h|
         if (!acceptable_attribute_map.key?(k.to_sym))
-          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::ListingContentUpdateRequest`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
+          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::MapBookingRoomResponse`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
         end
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'locale')
-        self.locale = attributes[:'locale']
-      end
-
-      if attributes.key?(:'title')
-        self.title = attributes[:'title']
-      end
-
-      if attributes.key?(:'name')
-        self.name = attributes[:'name']
-      end
-
-      if attributes.key?(:'description')
-        self.description = attributes[:'description']
-      end
-
-      if attributes.key?(:'summary')
-        self.summary = attributes[:'summary']
-      end
-
-      if attributes.key?(:'amenities')
-        self.amenities = attributes[:'amenities']
-      end
-
-      if attributes.key?(:'address')
-        self.address = attributes[:'address']
-      end
-
-      if attributes.key?(:'details')
-        self.details = attributes[:'details']
-      end
-
-      if attributes.key?(:'occupancy')
-        self.occupancy = attributes[:'occupancy']
-      end
-
-      if attributes.key?(:'rooms')
-        if (value = attributes[:'rooms']).is_a?(Array)
-          self.rooms = value
-        end
-      end
-
-      if attributes.key?(:'checkout_tasks')
-        if (value = attributes[:'checkout_tasks']).is_a?(Array)
-          self.checkout_tasks = value
-        end
-      end
-
-      if attributes.key?(:'pricing')
-        self.pricing = attributes[:'pricing']
-      end
-
-      if attributes.key?(:'policies')
-        self.policies = attributes[:'policies']
-      end
-
-      if attributes.key?(:'photos')
-        if (value = attributes[:'photos']).is_a?(Array)
-          self.photos = value
-        end
-      end
-
-      if attributes.key?(:'photos_mode')
-        self.photos_mode = attributes[:'photos_mode']
+      if attributes.key?(:'success')
+        self.success = attributes[:'success']
       else
-        self.photos_mode = 'replace'
+        self.success = nil
+      end
+
+      if attributes.key?(:'already_mapped')
+        self.already_mapped = attributes[:'already_mapped']
+      else
+        self.already_mapped = nil
+      end
+
+      if attributes.key?(:'room_booking_id')
+        self.room_booking_id = attributes[:'room_booking_id']
+      else
+        self.room_booking_id = nil
+      end
+
+      if attributes.key?(:'listing_id')
+        self.listing_id = attributes[:'listing_id']
+      else
+        self.listing_id = nil
+      end
+
+      if attributes.key?(:'previous_listing_id')
+        self.previous_listing_id = attributes[:'previous_listing_id']
+      end
+
+      if attributes.key?(:'hotel_id')
+        self.hotel_id = attributes[:'hotel_id']
+      else
+        self.hotel_id = nil
+      end
+
+      if attributes.key?(:'room_id')
+        self.room_id = attributes[:'room_id']
+      else
+        self.room_id = nil
+      end
+
+      if attributes.key?(:'room_name')
+        self.room_name = attributes[:'room_name']
+      end
+
+      if attributes.key?(:'platform_link_id')
+        self.platform_link_id = attributes[:'platform_link_id']
+      end
+
+      if attributes.key?(:'reservations_imported')
+        self.reservations_imported = attributes[:'reservations_imported']
       end
     end
 
@@ -209,6 +172,22 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
+      if @success.nil?
+        invalid_properties.push('invalid value for "success", success cannot be nil.')
+      end
+
+      if @already_mapped.nil?
+        invalid_properties.push('invalid value for "already_mapped", already_mapped cannot be nil.')
+      end
+
+      if @hotel_id.nil?
+        invalid_properties.push('invalid value for "hotel_id", hotel_id cannot be nil.')
+      end
+
+      if @room_id.nil?
+        invalid_properties.push('invalid value for "room_id", room_id cannot be nil.')
+      end
+
       invalid_properties
     end
 
@@ -216,7 +195,51 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
+      return false if @success.nil?
+      return false if @already_mapped.nil?
+      return false if @hotel_id.nil?
+      return false if @room_id.nil?
       true
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] success Value to be assigned
+    def success=(success)
+      if success.nil?
+        fail ArgumentError, 'success cannot be nil'
+      end
+
+      @success = success
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] already_mapped Value to be assigned
+    def already_mapped=(already_mapped)
+      if already_mapped.nil?
+        fail ArgumentError, 'already_mapped cannot be nil'
+      end
+
+      @already_mapped = already_mapped
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] hotel_id Value to be assigned
+    def hotel_id=(hotel_id)
+      if hotel_id.nil?
+        fail ArgumentError, 'hotel_id cannot be nil'
+      end
+
+      @hotel_id = hotel_id
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] room_id Value to be assigned
+    def room_id=(room_id)
+      if room_id.nil?
+        fail ArgumentError, 'room_id cannot be nil'
+      end
+
+      @room_id = room_id
     end
 
     # Checks equality by comparing each attribute.
@@ -224,21 +247,16 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          locale == o.locale &&
-          title == o.title &&
-          name == o.name &&
-          description == o.description &&
-          summary == o.summary &&
-          amenities == o.amenities &&
-          address == o.address &&
-          details == o.details &&
-          occupancy == o.occupancy &&
-          rooms == o.rooms &&
-          checkout_tasks == o.checkout_tasks &&
-          pricing == o.pricing &&
-          policies == o.policies &&
-          photos == o.photos &&
-          photos_mode == o.photos_mode
+          success == o.success &&
+          already_mapped == o.already_mapped &&
+          room_booking_id == o.room_booking_id &&
+          listing_id == o.listing_id &&
+          previous_listing_id == o.previous_listing_id &&
+          hotel_id == o.hotel_id &&
+          room_id == o.room_id &&
+          room_name == o.room_name &&
+          platform_link_id == o.platform_link_id &&
+          reservations_imported == o.reservations_imported
     end
 
     # @see the `==` method
@@ -250,7 +268,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [locale, title, name, description, summary, amenities, address, details, occupancy, rooms, checkout_tasks, pricing, policies, photos, photos_mode].hash
+      [success, already_mapped, room_booking_id, listing_id, previous_listing_id, hotel_id, room_id, room_name, platform_link_id, reservations_imported].hash
     end
 
     # Builds the object from hash

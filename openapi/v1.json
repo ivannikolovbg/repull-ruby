@@ -6943,6 +6943,97 @@
               }
             }
           },
+          "rooms": {
+            "type": "array",
+            "nullable": true,
+            "description": "The listing's rooms and the beds in each \u2014 what Airbnb shows as the sleeping arrangements and needs before a listing can go live. FULL replacement: the rooms you send become the whole set. Omit to leave rooms untouched; send `[]` to clear them.\n\nEvery entry is checked before anything is written, so a bad entry refuses the whole request with `422 invalid_params` naming it (e.g. `rooms[1].beds[0].quantity`) \u2014 a listing is never left with half its rooms.\n\nValues use Airbnb's vocabulary, which Booking.com room mapping also reads. This is a local write; publish to send it to a channel.",
+            "items": {
+              "type": "object",
+              "required": [
+                "roomType"
+              ],
+              "properties": {
+                "roomType": {
+                  "type": "string",
+                  "description": "e.g. `bedroom`, `full_bathroom`, `half_bathroom`, `living_room`, `kitchen`. Not a closed list \u2014 Airbnb validates it at publish and its refusal comes back in the publish result.",
+                  "example": "bedroom"
+                },
+                "roomName": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Your own label, e.g. \"Primary bedroom\"."
+                },
+                "roomNumber": {
+                  "type": "integer",
+                  "nullable": true,
+                  "minimum": 1,
+                  "description": "Order among rooms of the same type, from 1."
+                },
+                "isPrivate": {
+                  "type": "boolean",
+                  "nullable": true,
+                  "description": "Whether the room is private to the guest."
+                },
+                "beds": {
+                  "type": "array",
+                  "nullable": true,
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "bedType",
+                      "quantity"
+                    ],
+                    "properties": {
+                      "bedType": {
+                        "type": "string",
+                        "description": "e.g. `king_bed`, `queen_bed`, `double_bed`, `single_bed`, `sofa_bed`, `bunk_bed`.",
+                        "example": "queen_bed"
+                      },
+                      "quantity": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 20
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "checkoutTasks": {
+            "type": "array",
+            "nullable": true,
+            "description": "What the guest is asked to do before leaving. FULL replacement: omit to leave untouched; send `[]` to clear. An unknown `taskType` refuses the whole request with `422 invalid_params`.\n\nPublished to Airbnb, which is the only channel with checkout tasks. Airbnb accepts them only from partner apps it has certified for the feature; until then the publish result reports Airbnb's own refusal for this section and every other section still lands.",
+            "items": {
+              "type": "object",
+              "required": [
+                "taskType"
+              ],
+              "properties": {
+                "taskType": {
+                  "type": "string",
+                  "enum": [
+                    "return_keys",
+                    "turn_things_off",
+                    "throw_trash",
+                    "lock_up",
+                    "gather_towels",
+                    "additional_requests"
+                  ],
+                  "description": "Any casing is accepted; stored lowercase."
+                },
+                "instructions": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Detail shown to the guest with the task, e.g. \"Leave the keys on the kitchen counter\"."
+                },
+                "required": {
+                  "type": "boolean",
+                  "nullable": true
+                }
+              }
+            }
+          },
           "pricing": {
             "type": "object",
             "description": "The listing's standing rates. Partial like every other section: only the fields you send are written, and `null` clears one.\n\nChanging `defaultDailyPrice` or `weekendPrice` also moves the nights on the calendar that still carry the old rate and were written by us \u2014 a night you or a channel priced yourself is never touched, and neither is a blocked or reserved one. So a price change reaches the calendar without overwriting anyone's work.\n\nThis is still a local write. Publish to send the new rates to a channel.",
@@ -6972,12 +7063,16 @@
               "weeklyDiscount": {
                 "type": "number",
                 "nullable": true,
-                "description": "Fraction, not a percentage: `0.1` is 10% off a stay of a week or more."
+                "minimum": 0,
+                "maximum": 99,
+                "description": "A percentage, not a fraction: `10` is 10% off a stay of a week or more. A value between 0 and 1 is refused (it would publish as a fraction of one percent) \u2014 send `10`, not `0.1`. `0` clears it."
               },
               "monthlyDiscount": {
                 "type": "number",
                 "nullable": true,
-                "description": "Fraction, not a percentage."
+                "minimum": 0,
+                "maximum": 99,
+                "description": "A percentage, not a fraction: `20` is 20% off a stay of 28 nights or more. Values between 0 and 1 are refused, as for `weeklyDiscount`."
               },
               "guestsIncluded": {
                 "type": "integer",
@@ -11131,6 +11226,93 @@
           "platformLinkId": {
             "type": "string",
             "description": "Internal id of the resulting `listing_platform_links` row."
+          }
+        }
+      },
+      "MapBookingRoomRequest": {
+        "type": "object",
+        "required": [
+          "roomBookingId",
+          "listingId"
+        ],
+        "description": "Body for `POST /v1/channels/booking/listings/map`.",
+        "properties": {
+          "roomBookingId": {
+            "type": "string",
+            "description": "Booking.com's own room id. Discover it via `GET /v1/channels/booking/properties/{id}/rooms` (`rooms[].roomId`). A number is also accepted."
+          },
+          "listingId": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Canonical Repull listing id to link the room to. Must belong to your workspace and be active. `null` unmaps the room and removes its channel link. The field is required \u2014 omitting it is a 422, not an unmap."
+          },
+          "hotelId": {
+            "type": "string",
+            "description": "Optional. When present, must be the Booking.com property the room belongs to \u2014 guards against mapping a room of the wrong property when looping over several."
+          },
+          "syncEnabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether the resulting channel link has sync enabled."
+          }
+        }
+      },
+      "MapBookingRoomResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "alreadyMapped",
+          "roomBookingId",
+          "listingId",
+          "hotelId",
+          "roomId"
+        ],
+        "description": "Id fields are strings (API-wide convention \u2014 bigint ids are stringified to avoid 53-bit JS-number precision loss).",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "alreadyMapped": {
+            "type": "boolean",
+            "description": "True when the room already pointed at this listing (or was already unmapped) and its channel link agreed. Nothing was written."
+          },
+          "roomBookingId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Booking.com's room id, as recorded for this room."
+          },
+          "listingId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The listing the room now points at. Null after an unmap."
+          },
+          "previousListingId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The listing the room pointed at before this call; null when it was unmapped. Omitted on a no-op."
+          },
+          "hotelId": {
+            "type": "string",
+            "description": "The Booking.com property the room belongs to."
+          },
+          "roomId": {
+            "type": "string",
+            "description": "Repull-side id of the room record \u2014 the `roomId` the Connect room-mapping flow takes."
+          },
+          "roomName": {
+            "type": "string",
+            "nullable": true
+          },
+          "platformLinkId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Id of the resulting channel-link row. Null after an unmap, and for a room Booking.com has given us no room id for."
+          },
+          "reservationsImported": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Reservations Booking.com returned for the property and ran through the import after the room was mapped \u2014 the property's active bookings, which would otherwise never reach the listing. A reservation already present is left as it is, so this counts what was processed, not what was new, and re-sending never duplicates. Runs on every successful map, including a re-map to the same listing, so re-sending retries an import that did not run. `null` means the mapping succeeded but the import could not run; the room is still mapped. Absent after an unmap, when there is nothing to pull."
           }
         }
       },
@@ -21639,7 +21821,7 @@
             "schema": {
               "type": "boolean"
             },
-            "description": "When true, returns room-level (vs rate-plan-level) state."
+            "description": "Defaults to `true`: availability per room, which is how Booking.com keeps inventory and how Vanio reads it. Send `false` for the per-rate read \u2014 its `roomsToSell` is often 0 for rooms that are on sale."
           }
         ],
         "responses": {
@@ -21732,38 +21914,213 @@
       "get": {
         "operationId": "get_booking_content",
         "summary": "Get Booking.com content",
-        "description": "Fetch the current content (descriptions, amenities, photos) for a Booking.com property. Used to round-trip edits through Repull.\n\n`property_id` must be a Booking.com property connected to this workspace (`GET /v1/channels/booking/properties` lists them). Any other id \u2014 including one connected to a different workspace \u2014 returns `404 not_found`, the same answer as an id that does not exist.\n\nReturns `403 listing_inactive` when any listing mapped to the Booking.com property is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "description": "Read one kind of content for a Booking.com property, straight from Booking.com.\n\n| `type` | What it is |\n|---|---|\n| `photos` | The property's photos. Add `room_id` to read one room's gallery. |\n| `facilities` | Property facilities, or a room's with `room_id` (Booking.com's ids \u2014 `GET` returns them). |\n| `description` | The property description. Booking.com rewrites what you send into its own multilingual copy; allow about 3 hours to appear. |\n| `settings` | House rules, pets, children, damage deposit, invoice recipient, booking model. |\n| `policies` | Cancellation and prepayment policies. |\n| `licences` | The region's licence rules and the licence on file. |\n| `checkin_methods` | How guests get in (holiday homes). |\n| `contacts` | Who Booking.com contacts about the property. |\n\n`amenities` is accepted as another name for `facilities`, and `descriptions` for `description`.\n\n`property_id` must be a Booking.com property connected to this workspace (`GET /v1/channels/booking/properties` lists them). Any other id \u2014 including one connected to a different workspace \u2014 returns `404 not_found`, the same answer as an id that does not exist.\n\nReturns `403 listing_inactive` when any listing mapped to the Booking.com property is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
         "tags": [
           "Booking.com"
         ],
+        "parameters": [
+          {
+            "name": "property_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Booking.com property id."
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "photos",
+                "facilities",
+                "description",
+                "settings",
+                "policies",
+                "licences",
+                "checkin_methods",
+                "contacts"
+              ],
+              "default": "photos"
+            },
+            "description": "Which content to read."
+          },
+          {
+            "name": "room_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "A Booking.com room id, for `photos`, `facilities` and `licences`."
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Content"
+            "description": "The content, under a key named for the type (`photos`, `facilities`, `description`, `settings`, `policies`, `rules` + `data`, `methods` + `available`, `contacts`)."
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
             "$ref": "#/components/responses/ListingInactive"
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
           }
         }
       },
       "post": {
         "operationId": "update_booking_content",
         "summary": "Update Booking.com content",
-        "description": "Push content changes (descriptions, amenities, photos) to Booking.com. Booking enforces editorial review on text fields \u2014 changes appear after their content moderation queue clears.\n\n`property_id` must be a Booking.com property connected to this workspace (`GET /v1/channels/booking/properties` lists them). Any other id \u2014 including one connected to a different workspace \u2014 returns `404 not_found`, the same answer as an id that does not exist.\n\nReturns `403 listing_inactive` when any listing mapped to the Booking.com property is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "description": "Write one kind of content to a Booking.com property only. Nothing on the canonical listing or on Airbnb changes. To send the listing's own content to every channel instead, use `PUT /v1/listings/{id}/content` and publish.\n\n| `type` | What it is |\n|---|---|\n| `photos` | The property's photos. Add `room_id` to read one room's gallery. |\n| `facilities` | Property facilities, or a room's with `room_id` (Booking.com's ids \u2014 `GET` returns them). |\n| `description` | The property description. Booking.com rewrites what you send into its own multilingual copy; allow about 3 hours to appear. |\n| `settings` | House rules, pets, children, damage deposit, invoice recipient, booking model. |\n| `policies` | Cancellation and prepayment policies. |\n| `licences` | The region's licence rules and the licence on file. |\n| `checkin_methods` | How guests get in (holiday homes). |\n| `contacts` | Who Booking.com contacts about the property. |\n\n`amenities` is accepted as another name for `facilities`, and `descriptions` for `description`.\n\nWhat each `type` takes:\n\n- `description`: `text`, optional `language` (default `en`).\n- `facilities`: `facilities: [{ facility_id | room_facility_id, state: \"PRESENT\" | \"MISSING\", instances? }]`. Facilities you do not send stay as they are.\n- `photos`: `photos: [{ url }]`, uploaded in the background. With `room_id`, send `photo_ids` instead to add photos that have finished processing to that room.\n- `settings`: `settings: { <block>: {\u2026} }`, for example `{ \"pets\": { \"pets_allowed\": \"PETS_ALLOWED\" } }`. Each block is written separately and reported in `results`.\n- `policies`: `policyCode` (152 = free cancellation at any time, 1 = non-refundable, \u2026), optional `prepaymentRequired`; add `policyId` to change an existing policy. A property holds at most 7 policies and none can be deleted.\n- `licences`: `variantId` and `contentData: [{ name, value }]`, from the rules `GET ?type=licences` returns; optional `room_id`.\n- `checkin_methods`: `methods: [{ checkin_method }]`, using a name from `GET ?type=checkin_methods` `available`.\n- `contacts`: `contacts: [...]` in Booking.com's contact shape.\n\nIf Booking.com refuses the write, the response is `422 booking_rejected` with Booking.com's reason, even when Booking.com answered HTTP 200. Resending the same body will be refused again.\n\n`property_id` must be a Booking.com property connected to this workspace (`GET /v1/channels/booking/properties` lists them). Any other id \u2014 including one connected to a different workspace \u2014 returns `404 not_found`, the same answer as an id that does not exist.\n\nReturns `403 listing_inactive` when any listing mapped to the Booking.com property is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
         "tags": [
           "Booking.com"
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "property_id"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "photos",
+                      "facilities",
+                      "description",
+                      "settings",
+                      "policies",
+                      "licences",
+                      "checkin_methods",
+                      "contacts"
+                    ]
+                  },
+                  "property_id": {
+                    "type": "string",
+                    "description": "Booking.com property id."
+                  },
+                  "room_id": {
+                    "type": "string",
+                    "description": "A Booking.com room id, for `facilities`, `photos` (gallery) and `licences`."
+                  },
+                  "text": {
+                    "type": "string",
+                    "description": "`description`: the property description, up to 65,535 characters."
+                  },
+                  "language": {
+                    "type": "string",
+                    "description": "`description`: language code, e.g. `en` or `es`."
+                  },
+                  "facilities": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  },
+                  "photos": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "url": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "url"
+                      ]
+                    }
+                  },
+                  "photo_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "settings": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "policyCode": {
+                    "type": "integer"
+                  },
+                  "policyId": {
+                    "type": "string"
+                  },
+                  "prepaymentRequired": {
+                    "type": "boolean"
+                  },
+                  "variantId": {
+                    "type": "integer"
+                  },
+                  "contentData": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "methods": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": true
+                    },
+                    "description": "`checkin_methods`: [{ checkin_method }]."
+                  },
+                  "contacts": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              },
+              "example": {
+                "type": "description",
+                "property_id": "17319836",
+                "text": "Bright one-bedroom one block from the sand\u2026",
+                "language": "en"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
-            "description": "Updated"
+            "description": "Written. `settings` answers with `results` per block."
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
             "$ref": "#/components/responses/ListingInactive"
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
           }
         }
       }
@@ -22027,7 +22384,7 @@
             "schema": {
               "type": "boolean"
             },
-            "description": "When true, returns room-level (vs rate-plan-level) availability."
+            "description": "Defaults to `true`: availability per room, which is how Booking.com keeps inventory and how Vanio reads it. Send `false` for the per-rate read \u2014 its `roomsToSell` is often 0 for rooms that are on sale."
           },
           {
             "name": "hotel_id",
@@ -22559,7 +22916,7 @@
       "post": {
         "operationId": "booking_setup",
         "summary": "Booking.com property setup actions",
-        "description": "Action-router for putting a property onto Booking.com \u2014 including building one from nothing. Select the step with `action`.\n\n## Opening a property\n\n- `create-property` \u2014 create a NEW Booking.com property for a Repull listing (`listing_id`). Creates the property, its first room, a rate plan and the room-rate product that makes the room sellable, seeds availability and rates, syncs the calendar, then sends the notification that starts Booking's validation. Returns 201.\n- `add-room` \u2014 add another room type (and its sellable product) to a property (`listing_id`, `property_id`). Returns 201.\n- `add-unit` \u2014 raise the number of identical units on an existing room (`listing_id`, `property_id`, `room_id`).\n- `advance` \u2014 re-send the summary notification for a property (`property_id`) to move it out of the \"XML: Being built\" stage.\n\n## Account and policy steps\n\n- `create-legal-entity` \u2014 register a legal entity directly (returns 201). Not normally needed: see the legal-entity rules below.\n- `check-legal-status` \u2014 always `404`. A legal entity's details are readable for any id on the connectivity-provider credentials every workspace shares, and nothing records which workspace registered which entity, so no entity can be shown to be yours. `create-property` resolves it for you.\n- `check-readiness` \u2014 check whether a property is ready to open (`property_id`).\n- `open-property` \u2014 open the property for sale (`property_id`).\n- `set-contacts` \u2014 set property contacts (`property_id`, `contacts`).\n- `set-policies` \u2014 set property policies (`property_id`, plus policy fields).\n\n## Three things about Booking.com that cost real money\n\n**A newly created property is NOT sellable.** Booking holds it at \"XML: Being built\" until it validates the summary notification. `create-property` sends that notification, but it can fail on its own after everything else succeeded \u2014 the response always reports `status: \"being_built\"` and `sellable: false`, never a guess. Use `advance` to re-send it, and check the Extranet for the stage.\n\n**A room with no ACTIVE rate plan is invisible.** Booking only renders rooms that have at least one active product linkage (room \u00d7 rate plan). A room can be created successfully, return a `roomId`, and never appear on the property page. If `rateId` comes back `null` from `create-property` or `add-room`, that is exactly what happened: activate a rate plan on the property in the Extranet, then add the room again.\n\n**The room name is shown to travellers.** It is taken from the listing's name and appears on the Booking.com property page. Internal nicknames belong on the property's partner reference, not on the room.\n\n## The legal entity is resolved, not asked for\n\nA property is created against the legal entity Booking.com contracts with, invoices and pays. You do not normally send one:\n\n1. If this workspace already creates properties under a legal entity, that one is reused. A second is never registered.\n2. If it has none and the request carries `legal_entity` (`company_name`, `legal_contact_name`, `legal_contact_email`), one is registered and used. Booking.com emails the legal contact a contract; creation only succeeds once it is signed.\n3. If it has none and no `legal_entity`, the request is refused with `422 legal_entity_required` naming the fields \u2014 a contracted company is never invented.\n\n`legal_entity_id` overrides all of that. An id that already carries another workspace's properties is refused with `403 legal_entity_not_yours` before anything is created.\n\n## What you do not control\n\nProperties are created against Booking's **production** target only. A test-target property cannot be sold through and there is no route back from one, so `target` is not a parameter \u2014 sending it changes nothing.\n\nThese are fixed on every created property and are not parameters: property category (Apartment), initial room count (1), and the property contact record (a placeholder name, email and phone). Set the real contacts afterwards with `set-contacts`. Latitude and longitude come from the listing and are adjusted slightly to clear Booking.com's duplicate detection \u2014 send the property's true position on the listing and do not pre-adjust it yourself.\n\nThe listing's name, check-in/check-out times, currency, capacity and price come from the listing. Its postal code is taken from the listing's own `postalCode`; when the listing has none, it falls back to a connected Airbnb listing. A listing with neither is created without a postal code, so set `postalCode` on the listing first.\n\n## Guards\n\nEvery action that takes a `property_id` requires a property connected to this workspace; any other id returns `404 not_found`. Every action that takes a `listing_id` requires a listing in this workspace; any other id returns `404 not_found`.\n\n`create-property` refuses a listing with no coordinates (`422 missing_coordinates`) before anything is created \u2014 creating a Booking.com property cannot be undone.\n\n`create-property` is subject to the same published-listing gate as the dashboard: no plan, or the plan's listing limit reached, returns `403 billing_error` with `used` and `limit`, and nothing is created.\n\nReturns `403 listing_inactive` when the listing \u2014 or any listing mapped to the Booking.com property \u2014 is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.\n\nIf a property is created and a later step fails, the response is `422 booking_create_partial` carrying `property_id`. The property EXISTS. Do not retry `create-property`, which would open a second one \u2014 continue with `add-room` and `advance`.",
+        "description": "Action-router for putting a property onto Booking.com \u2014 including building one from nothing. Select the step with `action`.\n\n## Opening a property\n\n- `create-property` \u2014 create a NEW Booking.com property for a Repull listing (`listing_id`). Creates the property, its first room with the listing's beds, a rate plan and the room-rate product that makes the room sellable (under the listing's cancellation policy), sets the contact and invoice details and the facilities, seeds availability and rates, syncs the calendar, then runs Booking.com's readiness check and reports what still blocks opening in `warnings`. Send `contact` (`name`, `email`, `phone` in international form); without it the workspace owner is used, and a workspace with no usable contact is refused before anything is created. Returns 201.\n- `add-room` \u2014 add another room type (and its sellable product) to a property (`listing_id`, `property_id`). Returns 201.\n- `add-unit` \u2014 raise the number of identical units on an existing room (`listing_id`, `property_id`, `room_id`).\n- `advance` \u2014 run Booking.com's readiness check for a property (`property_id`) and, when it passes, open it. Returns `checked`, `opened`, `sellable` and `blockers` \u2014 Booking.com's own reasons it cannot open yet.\n\n## Account and policy steps\n\n- `create-legal-entity` \u2014 register a legal entity directly (returns 201). Not normally needed: see the legal-entity rules below.\n- `check-legal-status` \u2014 always `404`. A legal entity's details are readable for any id on the connectivity-provider credentials every workspace shares, and nothing records which workspace registered which entity, so no entity can be shown to be yours. `create-property` resolves it for you.\n- `check-readiness` \u2014 whether a property is ready to open (`property_id`): `ready` and `blockers`, without trying to open it.\n- `open-property` \u2014 open the property for sale (`property_id`). Refused with `422 booking_rejected` naming the blockers when it is not ready.\n- `set-contacts` \u2014 set property contacts (`property_id`, `contacts` in Booking.com's Contacts API shape; at most one carries the `general` profile).\n- `set-policies` \u2014 add a cancellation policy (`property_id`, `policyCode`, optional `prepaymentRequired`). House rules, pets, children and the damage deposit are `POST /v1/channels/booking/content` with `type: \"settings\"`.\n\n## Three things about Booking.com that cost real money\n\n**A newly created property is NOT sellable.** Booking.com opens it only when its readiness check passes, and the check names what is missing \u2014 a main photo still processing, no availability, a licence the region requires. The response always reports `status: \"being_built\"` and `sellable: false`, never a guess, with the reasons in `warnings`. Resolve them, then `advance`.\n\n**A room with no ACTIVE rate plan is invisible.** Booking only renders rooms that have at least one active product linkage (room \u00d7 rate plan). A room can be created successfully, return a `roomId`, and never appear on the property page. If `rateId` comes back `null` from `create-property` or `add-room`, that is exactly what happened: activate a rate plan on the property in the Extranet, then add the room again.\n\n**Room names are Booking.com's.** Travellers see one of Booking.com's standard names (\"Two-Bedroom Apartment\"), chosen from the listing's bedrooms. The listing's own name is kept as the operator-side reference, never shown to guests.\n\n## The legal entity is resolved, not asked for\n\nA property is created against the legal entity Booking.com contracts with, invoices and pays. You do not normally send one:\n\n1. If this workspace already creates properties under a legal entity, that one is reused. A second is never registered.\n2. If it has none and the request carries `legal_entity` (`company_name`, `legal_contact_name`, `legal_contact_email`), one is registered and used. Booking.com emails the legal contact a contract; creation only succeeds once it is signed.\n3. If it has none and no `legal_entity`, the request is refused with `422 legal_entity_required` naming the fields \u2014 a contracted company is never invented.\n\n`legal_entity_id` overrides all of that. An id that already carries another workspace's properties is refused with `403 legal_entity_not_yours` before anything is created.\n\n## What you do not control\n\nProperties are created against Booking's **production** target only. A test-target property cannot be sold through and there is no route back from one, so `target` is not a parameter \u2014 sending it changes nothing.\n\nThe property category comes from the listing's property type (Apartment when it has none; Holiday home, Villa or Chalet when it says so). The initial room count is 1. Latitude and longitude come from the listing and are adjusted slightly to clear Booking.com's duplicate detection \u2014 send the property's true position on the listing and do not pre-adjust it yourself.\n\nThe listing's name, check-in/check-out times, currency, capacity and price come from the listing. Its postal code is taken from the listing's own `postalCode`; when the listing has none, it falls back to a connected Airbnb listing. A listing with neither is created without a postal code, so set `postalCode` on the listing first.\n\n## Guards\n\nEvery action that takes a `property_id` requires a property connected to this workspace; any other id returns `404 not_found`. Every action that takes a `listing_id` requires a listing in this workspace; any other id returns `404 not_found`.\n\n`create-property` refuses a listing with no coordinates (`422 missing_coordinates`) before anything is created \u2014 creating a Booking.com property cannot be undone.\n\n`create-property` is subject to the same published-listing gate as the dashboard: no plan, or the plan's listing limit reached, returns `403 billing_error` with `used` and `limit`, and nothing is created.\n\nReturns `403 listing_inactive` when the listing \u2014 or any listing mapped to the Booking.com property \u2014 is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.\n\nIf a property is created and a later step fails, the response is `422 booking_create_partial` carrying `property_id`. The property EXISTS. Do not retry `create-property`, which would open a second one \u2014 continue with `add-room` and `advance`.",
         "tags": [
           "Booking.com"
         ],
@@ -29508,6 +29865,50 @@
           },
           "500": {
             "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/channels/booking/listings/map": {
+      "post": {
+        "operationId": "map_booking_room",
+        "summary": "Map a Booking.com room to a Repull listing",
+        "description": "Link a Booking.com room to a canonical Repull listing \u2014 the API-key equivalent of the room mapping the hosted Connect flow performs, and the counterpart of `POST /v1/channels/airbnb/listings/map`.\n\nDiscover `roomBookingId` with `GET /v1/channels/booking/properties/{id}/rooms`, which returns every room of a property with the `roomId` this route takes.\n\nBooking.com attaches at the ROOM level: a property is a building and its rooms are what a guest books, so each room maps to one listing. Pass `listingId: null` to unmap a room and remove its channel link.\n\nThe room mapping and its channel link are repointed together in one transaction, so a link can never outlive the mapping it describes \u2014 a stale link keeps routing that room's reservations to the previous listing. Re-sending a mapping that is already in place writes nothing (`alreadyMapped: true`).\n\n**The property's reservations are pulled as part of the call.** Once the room is mapped, every active reservation Booking.com holds for the property is imported and attached to its listing \u2014 `reservationsImported` says how many were processed. One already present is left as it is, so re-sending never duplicates. You do not need a follow-up call: reservations that arrived before the room was mapped are never picked up by the regular sync, so this is the moment they are brought in. It runs on every successful map, including a re-send, so re-sending retries an import that did not run. If the import cannot run, the mapping still stands and `reservationsImported` is `null`. A property with a long booking history can take tens of seconds. Unmapping pulls nothing.\n\nUnlike the Airbnb route, there is no conflict when the target listing already carries another Booking.com room: one listing served by several rooms is a normal arrangement and is not refused.\n\nScope is enforced on both sides against your workspace \u2014 the room's property and the target listing. A room or listing belonging to another workspace returns the same 404 as one that does not exist.\n\nReturns `403 listing_inactive` when the target listing, or the listing the room is mapped to now, is inactive; nothing is changed.",
+        "tags": [
+          "Booking.com"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MapBookingRoomRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Mapped",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MapBookingRoomResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
           }
         }
       }

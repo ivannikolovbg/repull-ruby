@@ -14,65 +14,43 @@ require 'date'
 require 'time'
 
 module Repull
-  # Canonical PMS-owned listing content. Every field is optional — this is a partial update, only the fields you send are written; absent fields are left untouched. This is a LOCAL write only: it does NOT push to Airbnb/Booking.com. Distribution is a separate explicit publish step. `photos` are ingested by URL and attached to the listing in order (full-replace by default, or append via `photosMode`).
-  class ListingContentUpdateRequest < ApiModelBase
-    # Which language the `title` / `description` / `summary` / `policies.houseRules` in THIS request are written in. Defaults to `en`. Canonical content is stored per locale — one row per (listing, locale) — so sending Italian copy with `locale: \"it\"` creates or updates the Italian row instead of overwriting the English one. Distribution of a non-primary locale to Airbnb is a separate call: `PUT /v1/channels/airbnb/listings/{id}/descriptions`.
-    attr_accessor :locale
+  class ListingContentUpdateRequestCheckoutTasksInner < ApiModelBase
+    # Any casing is accepted; stored lowercase.
+    attr_accessor :task_type
 
-    # Guest-facing title. Written to the listing name and the description row for `locale`.
-    attr_accessor :title
+    # Detail shown to the guest with the task, e.g. \"Leave the keys on the kitchen counter\".
+    attr_accessor :instructions
 
-    # Alias for `title`.
-    attr_accessor :name
+    attr_accessor :required
 
-    # Long-form listing description.
-    attr_accessor :description
+    class EnumAttributeValidator
+      attr_reader :datatype
+      attr_reader :allowable_values
 
-    # Short summary / tagline.
-    attr_accessor :summary
+      def initialize(datatype, allowable_values)
+        @allowable_values = allowable_values.map do |value|
+          case datatype.to_s
+          when /Integer/i
+            value.to_i
+          when /Float/i
+            value.to_f
+          else
+            value
+          end
+        end
+      end
 
-    attr_accessor :amenities
-
-    attr_accessor :address
-
-    attr_accessor :details
-
-    attr_accessor :occupancy
-
-    # The listing's rooms and the beds in each — what Airbnb shows as the sleeping arrangements and needs before a listing can go live. FULL replacement: the rooms you send become the whole set. Omit to leave rooms untouched; send `[]` to clear them.  Every entry is checked before anything is written, so a bad entry refuses the whole request with `422 invalid_params` naming it (e.g. `rooms[1].beds[0].quantity`) — a listing is never left with half its rooms.  Values use Airbnb's vocabulary, which Booking.com room mapping also reads. This is a local write; publish to send it to a channel.
-    attr_accessor :rooms
-
-    # What the guest is asked to do before leaving. FULL replacement: omit to leave untouched; send `[]` to clear. An unknown `taskType` refuses the whole request with `422 invalid_params`.  Published to Airbnb, which is the only channel with checkout tasks. Airbnb accepts them only from partner apps it has certified for the feature; until then the publish result reports Airbnb's own refusal for this section and every other section still lands.
-    attr_accessor :checkout_tasks
-
-    attr_accessor :pricing
-
-    attr_accessor :policies
-
-    # Photo set — full replacement by default (pass `photosMode: \"append\"` to add after existing photos, or `[]` to clear; omit to leave untouched). Each entry is a hosted image URL (string) or a structured ref. URL-ingest only: the URL is persisted and attached to the listing in order — the OTA push downloads it at publish time. Binary/multipart upload is a follow-up. A non-empty array with no valid http(s) URL is reported in `deferred` (existing photos left untouched).
-    attr_accessor :photos
-
-    # How `photos` is applied: `replace` (full replacement of the photo set) or `append` (add after the existing photos). Ignored when `photos` is absent.
-    attr_accessor :photos_mode
+      def valid?(value)
+        !value || allowable_values.include?(value)
+      end
+    end
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'locale' => :'locale',
-        :'title' => :'title',
-        :'name' => :'name',
-        :'description' => :'description',
-        :'summary' => :'summary',
-        :'amenities' => :'amenities',
-        :'address' => :'address',
-        :'details' => :'details',
-        :'occupancy' => :'occupancy',
-        :'rooms' => :'rooms',
-        :'checkout_tasks' => :'checkoutTasks',
-        :'pricing' => :'pricing',
-        :'policies' => :'policies',
-        :'photos' => :'photos',
-        :'photos_mode' => :'photosMode'
+        :'task_type' => :'taskType',
+        :'instructions' => :'instructions',
+        :'required' => :'required'
       }
     end
 
@@ -89,33 +67,17 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'locale' => :'String',
-        :'title' => :'String',
-        :'name' => :'String',
-        :'description' => :'String',
-        :'summary' => :'String',
-        :'amenities' => :'ListingContentUpdateRequestAmenities',
-        :'address' => :'ListingContentUpdateRequestAddress',
-        :'details' => :'ListingContentUpdateRequestDetails',
-        :'occupancy' => :'ListingContentUpdateRequestOccupancy',
-        :'rooms' => :'Array<ListingContentUpdateRequestRoomsInner>',
-        :'checkout_tasks' => :'Array<ListingContentUpdateRequestCheckoutTasksInner>',
-        :'pricing' => :'ListingContentUpdateRequestPricing',
-        :'policies' => :'ListingContentUpdateRequestPolicies',
-        :'photos' => :'Array<ListingContentUpdateRequestPhotosInner>',
-        :'photos_mode' => :'String'
+        :'task_type' => :'String',
+        :'instructions' => :'String',
+        :'required' => :'Boolean'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
-        :'title',
-        :'name',
-        :'description',
-        :'summary',
-        :'rooms',
-        :'checkout_tasks',
+        :'instructions',
+        :'required'
       ])
     end
 
@@ -123,84 +85,30 @@ module Repull
     # @param [Hash] attributes Model attributes in the form of hash
     def initialize(attributes = {})
       if (!attributes.is_a?(Hash))
-        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::ListingContentUpdateRequest` initialize method"
+        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::ListingContentUpdateRequestCheckoutTasksInner` initialize method"
       end
 
       # check to see if the attribute exists and convert string to symbol for hash key
       acceptable_attribute_map = self.class.acceptable_attribute_map
       attributes = attributes.each_with_object({}) { |(k, v), h|
         if (!acceptable_attribute_map.key?(k.to_sym))
-          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::ListingContentUpdateRequest`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
+          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::ListingContentUpdateRequestCheckoutTasksInner`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
         end
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'locale')
-        self.locale = attributes[:'locale']
-      end
-
-      if attributes.key?(:'title')
-        self.title = attributes[:'title']
-      end
-
-      if attributes.key?(:'name')
-        self.name = attributes[:'name']
-      end
-
-      if attributes.key?(:'description')
-        self.description = attributes[:'description']
-      end
-
-      if attributes.key?(:'summary')
-        self.summary = attributes[:'summary']
-      end
-
-      if attributes.key?(:'amenities')
-        self.amenities = attributes[:'amenities']
-      end
-
-      if attributes.key?(:'address')
-        self.address = attributes[:'address']
-      end
-
-      if attributes.key?(:'details')
-        self.details = attributes[:'details']
-      end
-
-      if attributes.key?(:'occupancy')
-        self.occupancy = attributes[:'occupancy']
-      end
-
-      if attributes.key?(:'rooms')
-        if (value = attributes[:'rooms']).is_a?(Array)
-          self.rooms = value
-        end
-      end
-
-      if attributes.key?(:'checkout_tasks')
-        if (value = attributes[:'checkout_tasks']).is_a?(Array)
-          self.checkout_tasks = value
-        end
-      end
-
-      if attributes.key?(:'pricing')
-        self.pricing = attributes[:'pricing']
-      end
-
-      if attributes.key?(:'policies')
-        self.policies = attributes[:'policies']
-      end
-
-      if attributes.key?(:'photos')
-        if (value = attributes[:'photos']).is_a?(Array)
-          self.photos = value
-        end
-      end
-
-      if attributes.key?(:'photos_mode')
-        self.photos_mode = attributes[:'photos_mode']
+      if attributes.key?(:'task_type')
+        self.task_type = attributes[:'task_type']
       else
-        self.photos_mode = 'replace'
+        self.task_type = nil
+      end
+
+      if attributes.key?(:'instructions')
+        self.instructions = attributes[:'instructions']
+      end
+
+      if attributes.key?(:'required')
+        self.required = attributes[:'required']
       end
     end
 
@@ -209,6 +117,10 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
+      if @task_type.nil?
+        invalid_properties.push('invalid value for "task_type", task_type cannot be nil.')
+      end
+
       invalid_properties
     end
 
@@ -216,7 +128,20 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
+      return false if @task_type.nil?
+      task_type_validator = EnumAttributeValidator.new('String', ["return_keys", "turn_things_off", "throw_trash", "lock_up", "gather_towels", "additional_requests"])
+      return false unless task_type_validator.valid?(@task_type)
       true
+    end
+
+    # Custom attribute writer method checking allowed values (enum).
+    # @param [Object] task_type Object to be assigned
+    def task_type=(task_type)
+      validator = EnumAttributeValidator.new('String', ["return_keys", "turn_things_off", "throw_trash", "lock_up", "gather_towels", "additional_requests"])
+      unless validator.valid?(task_type)
+        fail ArgumentError, "invalid value for \"task_type\", must be one of #{validator.allowable_values}."
+      end
+      @task_type = task_type
     end
 
     # Checks equality by comparing each attribute.
@@ -224,21 +149,9 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          locale == o.locale &&
-          title == o.title &&
-          name == o.name &&
-          description == o.description &&
-          summary == o.summary &&
-          amenities == o.amenities &&
-          address == o.address &&
-          details == o.details &&
-          occupancy == o.occupancy &&
-          rooms == o.rooms &&
-          checkout_tasks == o.checkout_tasks &&
-          pricing == o.pricing &&
-          policies == o.policies &&
-          photos == o.photos &&
-          photos_mode == o.photos_mode
+          task_type == o.task_type &&
+          instructions == o.instructions &&
+          required == o.required
     end
 
     # @see the `==` method
@@ -250,7 +163,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [locale, title, name, description, summary, amenities, address, details, occupancy, rooms, checkout_tasks, pricing, policies, photos, photos_mode].hash
+      [task_type, instructions, required].hash
     end
 
     # Builds the object from hash

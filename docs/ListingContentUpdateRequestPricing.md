@@ -9,8 +9,8 @@
 | **cleaning_fee** | **Float** |  | [optional] |
 | **price_per_extra_guest** | **Float** |  | [optional] |
 | **security_deposit** | **Float** |  | [optional] |
-| **weekly_discount** | **Float** | Fraction, not a percentage: &#x60;0.1&#x60; is 10% off a stay of a week or more. | [optional] |
-| **monthly_discount** | **Float** | Fraction, not a percentage. | [optional] |
+| **weekly_discount** | **Float** | A percentage, not a fraction: &#x60;10&#x60; is 10% off a stay of a week or more. A value between 0 and 1 is refused (it would publish as a fraction of one percent) — send &#x60;10&#x60;, not &#x60;0.1&#x60;. &#x60;0&#x60; clears it. | [optional] |
+| **monthly_discount** | **Float** | A percentage, not a fraction: &#x60;20&#x60; is 20% off a stay of 28 nights or more. Values between 0 and 1 are refused, as for &#x60;weeklyDiscount&#x60;. | [optional] |
 | **guests_included** | **Integer** | Guests covered by the nightly rate before &#x60;pricePerExtraGuest&#x60; applies. | [optional] |
 | **currency** | **String** | ISO 4217, e.g. &#x60;USD&#x60;. | [optional] |
 

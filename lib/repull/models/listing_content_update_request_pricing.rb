@@ -28,10 +28,10 @@ module Repull
 
     attr_accessor :security_deposit
 
-    # Fraction, not a percentage: `0.1` is 10% off a stay of a week or more.
+    # A percentage, not a fraction: `10` is 10% off a stay of a week or more. A value between 0 and 1 is refused (it would publish as a fraction of one percent) — send `10`, not `0.1`. `0` clears it.
     attr_accessor :weekly_discount
 
-    # Fraction, not a percentage.
+    # A percentage, not a fraction: `20` is 20% off a stay of 28 nights or more. Values between 0 and 1 are refused, as for `weeklyDiscount`.
     attr_accessor :monthly_discount
 
     # Guests covered by the nightly rate before `pricePerExtraGuest` applies.
@@ -153,6 +153,22 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
+      if !@weekly_discount.nil? && @weekly_discount > 99
+        invalid_properties.push('invalid value for "weekly_discount", must be smaller than or equal to 99.')
+      end
+
+      if !@weekly_discount.nil? && @weekly_discount < 0
+        invalid_properties.push('invalid value for "weekly_discount", must be greater than or equal to 0.')
+      end
+
+      if !@monthly_discount.nil? && @monthly_discount > 99
+        invalid_properties.push('invalid value for "monthly_discount", must be smaller than or equal to 99.')
+      end
+
+      if !@monthly_discount.nil? && @monthly_discount < 0
+        invalid_properties.push('invalid value for "monthly_discount", must be greater than or equal to 0.')
+      end
+
       invalid_properties
     end
 
@@ -160,7 +176,39 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
+      return false if !@weekly_discount.nil? && @weekly_discount > 99
+      return false if !@weekly_discount.nil? && @weekly_discount < 0
+      return false if !@monthly_discount.nil? && @monthly_discount > 99
+      return false if !@monthly_discount.nil? && @monthly_discount < 0
       true
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] weekly_discount Value to be assigned
+    def weekly_discount=(weekly_discount)
+      if !weekly_discount.nil? && weekly_discount > 99
+        fail ArgumentError, 'invalid value for "weekly_discount", must be smaller than or equal to 99.'
+      end
+
+      if !weekly_discount.nil? && weekly_discount < 0
+        fail ArgumentError, 'invalid value for "weekly_discount", must be greater than or equal to 0.'
+      end
+
+      @weekly_discount = weekly_discount
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] monthly_discount Value to be assigned
+    def monthly_discount=(monthly_discount)
+      if !monthly_discount.nil? && monthly_discount > 99
+        fail ArgumentError, 'invalid value for "monthly_discount", must be smaller than or equal to 99.'
+      end
+
+      if !monthly_discount.nil? && monthly_discount < 0
+        fail ArgumentError, 'invalid value for "monthly_discount", must be greater than or equal to 0.'
+      end
+
+      @monthly_discount = monthly_discount
     end
 
     # Checks equality by comparing each attribute.
