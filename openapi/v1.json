@@ -569,12 +569,12 @@
           "status": {
             "type": "string",
             "example": "confirmed",
-            "description": "Lifecycle status. The API normalises a multi-decade internal taxonomy down to these four buckets, so the value you receive is always one of the enum constants. `completed` is derived from `checkOut < today`. A `pending` booking request the channel already let lapse \u2014 Airbnb expires an unanswered request 24 hours after the guest asks, and no request can be answered once its check-in has passed \u2014 is reported as `cancelled` with `statusDetail: \"request_expired\"`, even when the channel never told us."
+            "description": "Lifecycle status. The API normalises a multi-decade internal taxonomy down to these four buckets, so the value you receive is always one of the enum constants. `completed` is derived from `checkOut < today`. A `pending` booking request the channel already let lapse \u2014 Airbnb expires an unanswered request 24 hours after the guest asks, and no request can be answered once its check-in has passed \u2014 is reported as `cancelled` with `statusDetail: \"request_expired\"`, even when the channel never told us. Every `cancelled` reservation says how it ended in `statusDetail` when the channel tells us."
           },
           "statusDetail": {
             "type": "string",
-            "description": "Present only when `status` was derived rather than reported by the channel. `request_expired` \u2014 a booking request nobody answered in time (Airbnb's 24-hour window passed, or the check-in did). Absent otherwise.",
-            "example": "request_expired"
+            "description": "On a `cancelled` reservation: how it ended. `request_expired` \u2014 a booking request nobody answered in time (Airbnb's 24-hour window passed, or the check-in did), whether the channel reported it or we derived it. `declined` \u2014 the host declined the request. `request_voided` \u2014 the request was withdrawn or voided before anyone answered it. `verification_failed` \u2014 the guest failed Airbnb's identity verification. `hold_voided` \u2014 Airbnb voided a booking it was holding for the guest's payment or verification. `cancelled_by_guest` / `cancelled_by_host` / `cancelled_by_platform` \u2014 a booking cancelled by that party (`platform` is the channel itself, e.g. Airbnb support). Matches what the webhooks report for the same change. Absent on every other status, and on a cancellation whose channel gives no reason.",
+            "example": "declined"
           },
           "pendingReason": {
             "type": "string",
