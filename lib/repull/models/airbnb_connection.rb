@@ -40,7 +40,7 @@ module Repull
 
     attr_accessor :primary
 
-    # Decimal markup (e.g. \"1.10\" for +10%).
+    # The Airbnb markup as a fraction: \"0.35\" = +35% on the listing's own price. Read or set it as a percentage with `/v1/listings/{id}/markups`.
     attr_accessor :markup
 
     # Airbnb's own API sync decision for THIS listing, as Airbnb reports it. Airbnb authorises sync one listing at a time, so a connected account can still contain listings it will not accept writes for.  - `sync_all` — Repull manages content, rates and availability. - `sync_rates_and_availability` — Repull manages rates and availability; listing content is managed by the host on Airbnb. - `none` — the listing is **not** connected to Repull on Airbnb's side. Every write to it is refused with `403 listing_not_api_connected`; reconnecting the Airbnb account does not change this, the host must switch the listing on in Airbnb.  `null` when the listing has not synced yet. Not to be confused with `syncEnabled`, which is a Repull-side flag and says nothing about what Airbnb accepts.

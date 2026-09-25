@@ -4801,7 +4801,7 @@
           "markup": {
             "type": "string",
             "nullable": true,
-            "description": "Decimal markup (e.g. \"1.10\" for +10%)."
+            "description": "The Airbnb markup as a fraction: \"0.35\" = +35% on the listing's own price. Read or set it as a percentage with `/v1/listings/{id}/markups`."
           },
           "syncCategory": {
             "type": "string",
@@ -4899,7 +4899,8 @@
           },
           "markup": {
             "type": "string",
-            "nullable": true
+            "nullable": true,
+            "description": "The Booking.com markup on this property, as a fraction: \"0.18\" = +18%, shared by every listing on the property. Read or set it as a percentage with `/v1/listings/{id}/markups`."
           },
           "syncCategory": {
             "type": "string",
@@ -12828,8 +12829,8 @@
     "/v1/properties": {
       "get": {
         "operationId": "list_properties",
-        "summary": "List properties",
-        "description": "Cursor-paginated list of properties for the authenticated workspace. Walk pages with `?cursor=<pagination.nextCursor>`; stop when `pagination.hasMore` is `false`. Cursor is opaque base64 \u2014 do not parse it.\n\n`?offset=` is also accepted as a first-class alias for shallow paging (0..10000) \u2014 see the `offset` parameter below. Mutually exclusive with `cursor`.\n\nFilters: `q` (substring on name/street/city), `status` (active|inactive|all), `lifecycle_status` (exact match on the listing's lifecycle state). Other unknown params (e.g. `?search=` or `?propertyId=`) are rejected with 422 \u2014 no silent unfiltered results.\n\n**Incremental sync (only changes since last poll):** pass `?updated_since=<ISO8601>` to receive only properties changed at or after that instant. Each property carries `updatedAt` \u2014 the last row of the final page is your next watermark. `updated_since` changes the page ordering to `updatedAt ASC, id ASC` (and the cursor with it); see the parameter description. `GET /v1/listings` does NOT yet accept `updated_since` \u2014 use this endpoint for property-side incremental sync.\n\n**Inactive properties:** an inactive property keeps syncing, but cannot be read or changed through the API until it is activated. They are only listed when `status` asks for them, and then with `id`, `name`, `status`, `lifecycleStatus`, `channels` and `updatedAt` only \u2014 enough to choose what to activate with `PATCH /v1/listings/{id}`.",
+        "summary": "List properties (older name for /v1/listings)",
+        "description": "**`/v1/properties` is the older name for `/v1/listings`** \u2014 the same listings, the same ids. It stays for existing integrations; new code should use `/v1/listings`, which is where create, content, publishing and markups live.\n\nCursor-paginated list of properties for the authenticated workspace. Walk pages with `?cursor=<pagination.nextCursor>`; stop when `pagination.hasMore` is `false`. Cursor is opaque base64 \u2014 do not parse it.\n\n`?offset=` is also accepted as a first-class alias for shallow paging (0..10000) \u2014 see the `offset` parameter below. Mutually exclusive with `cursor`.\n\nFilters: `q` (substring on name/street/city), `status` (active|inactive|all), `lifecycle_status` (exact match on the listing's lifecycle state). Other unknown params (e.g. `?search=` or `?propertyId=`) are rejected with 422 \u2014 no silent unfiltered results.\n\n**Incremental sync (only changes since last poll):** pass `?updated_since=<ISO8601>` to receive only properties changed at or after that instant. Each property carries `updatedAt` \u2014 the last row of the final page is your next watermark. `updated_since` changes the page ordering to `updatedAt ASC, id ASC` (and the cursor with it); see the parameter description. `GET /v1/listings` does NOT yet accept `updated_since` \u2014 use this endpoint for property-side incremental sync.\n\n**Inactive properties:** an inactive property keeps syncing, but cannot be read or changed through the API until it is activated. They are only listed when `status` asks for them, and then with `id`, `name`, `status`, `lifecycleStatus`, `channels` and `updatedAt` only \u2014 enough to choose what to activate with `PATCH /v1/listings/{id}`.",
         "tags": [
           "Properties"
         ],
@@ -12931,8 +12932,8 @@
     "/v1/properties/{id}": {
       "get": {
         "operationId": "get_property",
-        "description": "Fetch a single property by Repull id. Property ids are workspace-scoped \u2014 an id from one workspace is not valid in another. 404 means the id does not exist OR belongs to a different workspace.\n\n**Optional expansions:** Pass `?include=amenities` to enrich the response with the property's amenities (sourced from the unified `listings_amenities` table). Returns `[]` when the property has no amenity rows. The default response stays lean; consumers must opt in.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
-        "summary": "Get property details",
+        "description": "**`/v1/properties` is the older name for `/v1/listings`** \u2014 the same listings, the same ids. It stays for existing integrations; new code should use `/v1/listings`, which is where create, content, publishing and markups live.\n\nFetch a single property by Repull id. Property ids are workspace-scoped \u2014 an id from one workspace is not valid in another. 404 means the id does not exist OR belongs to a different workspace.\n\n**Optional expansions:** Pass `?include=amenities` to enrich the response with the property's amenities (sourced from the unified `listings_amenities` table). Returns `[]` when the property has no amenity rows. The default response stays lean; consumers must opt in.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "summary": "Get property details (older name for /v1/listings/{id})",
         "tags": [
           "Properties"
         ],
@@ -18038,13 +18039,26 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "`connection_reauth_required` \u2014 Airbnb no longer accepts the connection for this action (expired, revoked, or granted without messaging/reservation permissions). Reconnect; retrying cannot succeed. `listing_inactive` \u2014 the listing is inactive.",
+            "description": "`insufficient_access` \u2014 the Airbnb account is connected with read-only or messaging access; this action needs full access (Airbnb's `property_management` permission). Nothing was sent to Airbnb; reconnect with `accessType: full_access`. `connection_reauth_required` \u2014 Airbnb no longer accepts the connection for this action (expired or revoked). Reconnect; retrying cannot succeed. `listing_inactive` \u2014 the listing is inactive.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 },
                 "examples": {
+                  "insufficientAccess": {
+                    "summary": "The Airbnb account is not connected with full access",
+                    "value": {
+                      "error": {
+                        "code": "insufficient_access",
+                        "message": "This Airbnb account is connected with messaging access, which cannot accept or decline booking requests. It needs full access.",
+                        "fix": "Reconnect this Airbnb account with full access \u2014 `POST /v1/connect/airbnb` with `\"accessType\": \"full_access\"` \u2014 then retry.",
+                        "docs_url": "https://repull.dev/docs/errors/insufficient_access",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "accessType": "messaging"
+                      }
+                    }
+                  },
                   "reauth": {
                     "summary": "The Airbnb connection no longer allows this",
                     "value": {
@@ -20273,13 +20287,26 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "`connection_reauth_required` \u2014 Airbnb no longer accepts the connection for this action (expired, revoked, or granted without messaging/reservation permissions). Reconnect; retrying cannot succeed. `listing_inactive` \u2014 the listing is inactive.",
+            "description": "`insufficient_access` \u2014 the Airbnb account is connected with read-only or messaging access; this action needs full access (Airbnb's `property_management` permission). Nothing was sent to Airbnb; reconnect with `accessType: full_access`. `connection_reauth_required` \u2014 Airbnb no longer accepts the connection for this action (expired or revoked). Reconnect; retrying cannot succeed. `listing_inactive` \u2014 the listing is inactive.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 },
                 "examples": {
+                  "insufficientAccess": {
+                    "summary": "The Airbnb account is not connected with full access",
+                    "value": {
+                      "error": {
+                        "code": "insufficient_access",
+                        "message": "This Airbnb account is connected with messaging access, which cannot accept or decline booking requests. It needs full access.",
+                        "fix": "Reconnect this Airbnb account with full access \u2014 `POST /v1/connect/airbnb` with `\"accessType\": \"full_access\"` \u2014 then retry.",
+                        "docs_url": "https://repull.dev/docs/errors/insufficient_access",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "accessType": "messaging"
+                      }
+                    }
+                  },
                   "reauth": {
                     "summary": "The Airbnb connection no longer allows this",
                     "value": {
@@ -20605,13 +20632,26 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "`connection_reauth_required` \u2014 Airbnb no longer accepts the connection for this action (expired, revoked, or granted without messaging/reservation permissions). Reconnect; retrying cannot succeed. `listing_inactive` \u2014 the listing is inactive.",
+            "description": "`insufficient_access` \u2014 the Airbnb account is connected with read-only or messaging access; this action needs full access (Airbnb's `property_management` permission). Nothing was sent to Airbnb; reconnect with `accessType: full_access`. `connection_reauth_required` \u2014 Airbnb no longer accepts the connection for this action (expired or revoked). Reconnect; retrying cannot succeed. `listing_inactive` \u2014 the listing is inactive.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 },
                 "examples": {
+                  "insufficientAccess": {
+                    "summary": "The Airbnb account is not connected with full access",
+                    "value": {
+                      "error": {
+                        "code": "insufficient_access",
+                        "message": "This Airbnb account is connected with messaging access, which cannot accept or decline booking requests. It needs full access.",
+                        "fix": "Reconnect this Airbnb account with full access \u2014 `POST /v1/connect/airbnb` with `\"accessType\": \"full_access\"` \u2014 then retry.",
+                        "docs_url": "https://repull.dev/docs/errors/insufficient_access",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "accessType": "messaging"
+                      }
+                    }
+                  },
                   "reauth": {
                     "summary": "The Airbnb connection no longer allows this",
                     "value": {
@@ -20878,13 +20918,26 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "`connection_reauth_required` \u2014 Airbnb no longer accepts the connection for this action (expired, revoked, or granted without messaging/reservation permissions). Reconnect; retrying cannot succeed. `listing_inactive` \u2014 the listing is inactive.",
+            "description": "`insufficient_access` \u2014 the Airbnb account is connected with read-only or messaging access; this action needs full access (Airbnb's `property_management` permission). Nothing was sent to Airbnb; reconnect with `accessType: full_access`. `connection_reauth_required` \u2014 Airbnb no longer accepts the connection for this action (expired or revoked). Reconnect; retrying cannot succeed. `listing_inactive` \u2014 the listing is inactive.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 },
                 "examples": {
+                  "insufficientAccess": {
+                    "summary": "The Airbnb account is not connected with full access",
+                    "value": {
+                      "error": {
+                        "code": "insufficient_access",
+                        "message": "This Airbnb account is connected with messaging access, which cannot accept or decline booking requests. It needs full access.",
+                        "fix": "Reconnect this Airbnb account with full access \u2014 `POST /v1/connect/airbnb` with `\"accessType\": \"full_access\"` \u2014 then retry.",
+                        "docs_url": "https://repull.dev/docs/errors/insufficient_access",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "accessType": "messaging"
+                      }
+                    }
+                  },
                   "reauth": {
                     "summary": "The Airbnb connection no longer allows this",
                     "value": {
@@ -26861,13 +26914,26 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "`connection_reauth_required` \u2014 Airbnb no longer accepts the connection for this action (expired, revoked, or granted without messaging/reservation permissions). Reconnect; retrying cannot succeed. `listing_inactive` \u2014 the listing is inactive.",
+            "description": "`insufficient_access` \u2014 the Airbnb account is connected with read-only or messaging access; this action needs full access (Airbnb's `property_management` permission). Nothing was sent to Airbnb; reconnect with `accessType: full_access`. `connection_reauth_required` \u2014 Airbnb no longer accepts the connection for this action (expired or revoked). Reconnect; retrying cannot succeed. `listing_inactive` \u2014 the listing is inactive.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 },
                 "examples": {
+                  "insufficientAccess": {
+                    "summary": "The Airbnb account is not connected with full access",
+                    "value": {
+                      "error": {
+                        "code": "insufficient_access",
+                        "message": "This Airbnb account is connected with messaging access, which cannot accept or decline booking requests. It needs full access.",
+                        "fix": "Reconnect this Airbnb account with full access \u2014 `POST /v1/connect/airbnb` with `\"accessType\": \"full_access\"` \u2014 then retry.",
+                        "docs_url": "https://repull.dev/docs/errors/insufficient_access",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "accessType": "messaging"
+                      }
+                    }
+                  },
                   "reauth": {
                     "summary": "The Airbnb connection no longer allows this",
                     "value": {
@@ -27352,13 +27418,26 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "`connection_reauth_required` \u2014 Airbnb no longer accepts the connection for this action (expired, revoked, or granted without messaging/reservation permissions). Reconnect; retrying cannot succeed. `listing_inactive` \u2014 the listing is inactive.",
+            "description": "`insufficient_access` \u2014 the Airbnb account is connected with read-only or messaging access; this action needs full access (Airbnb's `property_management` permission). Nothing was sent to Airbnb; reconnect with `accessType: full_access`. `connection_reauth_required` \u2014 Airbnb no longer accepts the connection for this action (expired or revoked). Reconnect; retrying cannot succeed. `listing_inactive` \u2014 the listing is inactive.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 },
                 "examples": {
+                  "insufficientAccess": {
+                    "summary": "The Airbnb account is not connected with full access",
+                    "value": {
+                      "error": {
+                        "code": "insufficient_access",
+                        "message": "This Airbnb account is connected with messaging access, which cannot accept or decline booking requests. It needs full access.",
+                        "fix": "Reconnect this Airbnb account with full access \u2014 `POST /v1/connect/airbnb` with `\"accessType\": \"full_access\"` \u2014 then retry.",
+                        "docs_url": "https://repull.dev/docs/errors/insufficient_access",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "accessType": "messaging"
+                      }
+                    }
+                  },
                   "reauth": {
                     "summary": "The Airbnb connection no longer allows this",
                     "value": {
@@ -27764,13 +27843,26 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "`connection_reauth_required` \u2014 Airbnb no longer accepts the connection for this action (expired, revoked, or granted without messaging/reservation permissions). Reconnect; retrying cannot succeed. `listing_inactive` \u2014 the listing is inactive.",
+            "description": "`insufficient_access` \u2014 the Airbnb account is connected with read-only or messaging access; this action needs full access (Airbnb's `property_management` permission). Nothing was sent to Airbnb; reconnect with `accessType: full_access`. `connection_reauth_required` \u2014 Airbnb no longer accepts the connection for this action (expired or revoked). Reconnect; retrying cannot succeed. `listing_inactive` \u2014 the listing is inactive.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 },
                 "examples": {
+                  "insufficientAccess": {
+                    "summary": "The Airbnb account is not connected with full access",
+                    "value": {
+                      "error": {
+                        "code": "insufficient_access",
+                        "message": "This Airbnb account is connected with messaging access, which cannot accept or decline booking requests. It needs full access.",
+                        "fix": "Reconnect this Airbnb account with full access \u2014 `POST /v1/connect/airbnb` with `\"accessType\": \"full_access\"` \u2014 then retry.",
+                        "docs_url": "https://repull.dev/docs/errors/insufficient_access",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "accessType": "messaging"
+                      }
+                    }
+                  },
                   "reauth": {
                     "summary": "The Airbnb connection no longer allows this",
                     "value": {
@@ -28003,13 +28095,26 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "`connection_reauth_required` \u2014 Airbnb no longer accepts the connection for this action (expired, revoked, or granted without messaging/reservation permissions). Reconnect; retrying cannot succeed. `listing_inactive` \u2014 the listing is inactive.",
+            "description": "`insufficient_access` \u2014 the Airbnb account is connected with read-only or messaging access; this action needs full access (Airbnb's `property_management` permission). Nothing was sent to Airbnb; reconnect with `accessType: full_access`. `connection_reauth_required` \u2014 Airbnb no longer accepts the connection for this action (expired or revoked). Reconnect; retrying cannot succeed. `listing_inactive` \u2014 the listing is inactive.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 },
                 "examples": {
+                  "insufficientAccess": {
+                    "summary": "The Airbnb account is not connected with full access",
+                    "value": {
+                      "error": {
+                        "code": "insufficient_access",
+                        "message": "This Airbnb account is connected with messaging access, which cannot accept or decline booking requests. It needs full access.",
+                        "fix": "Reconnect this Airbnb account with full access \u2014 `POST /v1/connect/airbnb` with `\"accessType\": \"full_access\"` \u2014 then retry.",
+                        "docs_url": "https://repull.dev/docs/errors/insufficient_access",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "accessType": "messaging"
+                      }
+                    }
+                  },
                   "reauth": {
                     "summary": "The Airbnb connection no longer allows this",
                     "value": {
@@ -28548,13 +28653,26 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "`connection_reauth_required` \u2014 Airbnb no longer accepts the connection for this action (expired, revoked, or granted without messaging/reservation permissions). Reconnect; retrying cannot succeed. `listing_inactive` \u2014 the listing is inactive.",
+            "description": "`insufficient_access` \u2014 the Airbnb account is connected with read-only or messaging access; this action needs full access (Airbnb's `property_management` permission). Nothing was sent to Airbnb; reconnect with `accessType: full_access`. `connection_reauth_required` \u2014 Airbnb no longer accepts the connection for this action (expired or revoked). Reconnect; retrying cannot succeed. `listing_inactive` \u2014 the listing is inactive.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 },
                 "examples": {
+                  "insufficientAccess": {
+                    "summary": "The Airbnb account is not connected with full access",
+                    "value": {
+                      "error": {
+                        "code": "insufficient_access",
+                        "message": "This Airbnb account is connected with messaging access, which cannot accept or decline booking requests. It needs full access.",
+                        "fix": "Reconnect this Airbnb account with full access \u2014 `POST /v1/connect/airbnb` with `\"accessType\": \"full_access\"` \u2014 then retry.",
+                        "docs_url": "https://repull.dev/docs/errors/insufficient_access",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "accessType": "messaging"
+                      }
+                    }
+                  },
                   "reauth": {
                     "summary": "The Airbnb connection no longer allows this",
                     "value": {
@@ -28936,13 +29054,26 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "`connection_reauth_required` \u2014 Airbnb no longer accepts the connection for this action (expired, revoked, or granted without messaging/reservation permissions). Reconnect; retrying cannot succeed. `listing_inactive` \u2014 the listing is inactive.",
+            "description": "`insufficient_access` \u2014 the Airbnb account is connected with read-only or messaging access; this action needs full access (Airbnb's `property_management` permission). Nothing was sent to Airbnb; reconnect with `accessType: full_access`. `connection_reauth_required` \u2014 Airbnb no longer accepts the connection for this action (expired or revoked). Reconnect; retrying cannot succeed. `listing_inactive` \u2014 the listing is inactive.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 },
                 "examples": {
+                  "insufficientAccess": {
+                    "summary": "The Airbnb account is not connected with full access",
+                    "value": {
+                      "error": {
+                        "code": "insufficient_access",
+                        "message": "This Airbnb account is connected with messaging access, which cannot accept or decline booking requests. It needs full access.",
+                        "fix": "Reconnect this Airbnb account with full access \u2014 `POST /v1/connect/airbnb` with `\"accessType\": \"full_access\"` \u2014 then retry.",
+                        "docs_url": "https://repull.dev/docs/errors/insufficient_access",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "accessType": "messaging"
+                      }
+                    }
+                  },
                   "reauth": {
                     "summary": "The Airbnb connection no longer allows this",
                     "value": {
@@ -29906,6 +30037,175 @@
           },
           "409": {
             "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          }
+        }
+      }
+    },
+    "/v1/listings/{id}/markups": {
+      "get": {
+        "operationId": "get_listing_markups",
+        "summary": "Get a listing's channel markups",
+        "description": "The markup each channel adds to this listing's price.\n\nA listing's price on a channel is its own nightly price plus the channel's markup: a $200 night with a 35% Airbnb markup is sent to Airbnb as $270. The calendar keeps the listing's own price (`GET /v1/availability/{propertyId}` returns it); the markup is added only when a price is sent to the channel.\n\n- **Airbnb** \u2014 one markup per listing.\n- **Booking.com** \u2014 one markup per **property**, shared by every listing priced through it (`listingIds` names them).\n\nReturns `404 not_found` for a listing that does not exist or is not in this workspace, and `403 listing_inactive` for an inactive one.",
+        "tags": [
+          "Listings"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Repull listing id."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Markups per channel.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "Repull listing id."
+                    },
+                    "airbnb": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "airbnbId": {
+                            "type": "string",
+                            "description": "Airbnb listing id."
+                          },
+                          "markupPercent": {
+                            "type": "number",
+                            "nullable": true,
+                            "description": "Percent added to the listing's price on Airbnb. 35 = +35%. `null` = none.",
+                            "example": 35
+                          }
+                        }
+                      }
+                    },
+                    "booking": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "hotelId": {
+                            "type": "string",
+                            "description": "Booking.com property id."
+                          },
+                          "markupPercent": {
+                            "type": "number",
+                            "nullable": true,
+                            "description": "Percent added on Booking.com, for every listing on this property.",
+                            "example": 18
+                          },
+                          "listingIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "Listings in this workspace priced through this property \u2014 all share this markup."
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "operationId": "set_listing_markup",
+        "summary": "Set a listing's markup on a channel",
+        "description": "Set the markup one channel adds to this listing's price. When the value changes, the affected listings' prices are re-sent to that channel straight away (`pricesResent`); nothing else is sent.\n\nA listing's price on a channel is its own nightly price plus the channel's markup: a $200 night with a 35% Airbnb markup is sent to Airbnb as $270. The calendar keeps the listing's own price (`GET /v1/availability/{propertyId}` returns it); the markup is added only when a price is sent to the channel.\n\n- **Airbnb** \u2014 one markup per listing.\n- **Booking.com** \u2014 one markup per **property**, shared by every listing priced through it (`listingIds` names them).\n\nReturns `404 not_found` for a listing that does not exist or is not in this workspace, and `403 listing_inactive` for an inactive one.\n\nOn Booking.com the markup belongs to the property, so setting it reprices every listing on that property (`affectedListingIds`). A listing on more than one property must name one with `hotelId`; without it the request is refused with `409 ambiguous_booking_mapping` listing the candidates, rather than repricing a property it guessed.\n\n`markupPercent` is a percentage \u2014 `15` for 15%. A value between 0 and 1 is refused as a probable fraction, with the number to send instead.",
+        "tags": [
+          "Listings"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Repull listing id."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "channel",
+                  "markupPercent"
+                ],
+                "properties": {
+                  "channel": {
+                    "type": "string",
+                    "enum": [
+                      "airbnb",
+                      "booking"
+                    ]
+                  },
+                  "markupPercent": {
+                    "type": "number",
+                    "nullable": true,
+                    "minimum": 0,
+                    "maximum": 100,
+                    "exclusiveMaximum": true,
+                    "description": "15 = +15%. `null` removes the markup."
+                  },
+                  "hotelId": {
+                    "type": "string",
+                    "description": "Booking.com property \u2014 required when the listing is on more than one."
+                  }
+                }
+              },
+              "example": {
+                "channel": "booking",
+                "markupPercent": 18
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved. `{ id, channel, markupPercent, changed, hotelId?, affectedListingIds, pricesResent }`."
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "description": "`ambiguous_booking_mapping` \u2014 the listing is on several Booking.com properties; `valid_values` lists them."
           },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntity"

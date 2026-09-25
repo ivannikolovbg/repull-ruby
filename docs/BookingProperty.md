@@ -9,7 +9,7 @@
 | **active** | **Boolean** |  | [optional] |
 | **sync_enabled** | **Boolean** |  | [optional] |
 | **booking_url** | **String** |  | [optional] |
-| **markup** | **String** |  | [optional] |
+| **markup** | **String** | The Booking.com markup on this property, as a fraction: \&quot;0.18\&quot; &#x3D; +18%, shared by every listing on the property. Read or set it as a percentage with &#x60;/v1/listings/{id}/markups&#x60;. | [optional] |
 | **sync_category** | **String** |  | [optional] |
 | **suspended_at** | **Time** |  | [optional] |
 | **suspension_reason** | **String** |  | [optional] |

@@ -437,6 +437,69 @@ module Repull
       return data, status_code, headers
     end
 
+    # Get a listing's channel markups
+    # The markup each channel adds to this listing's price.  A listing's price on a channel is its own nightly price plus the channel's markup: a $200 night with a 35% Airbnb markup is sent to Airbnb as $270. The calendar keeps the listing's own price (`GET /v1/availability/{propertyId}` returns it); the markup is added only when a price is sent to the channel.  - **Airbnb** — one markup per listing. - **Booking.com** — one markup per **property**, shared by every listing priced through it (`listingIds` names them).  Returns `404 not_found` for a listing that does not exist or is not in this workspace, and `403 listing_inactive` for an inactive one.
+    # @param id [String] Repull listing id.
+    # @param [Hash] opts the optional parameters
+    # @return [GetListingMarkups200Response]
+    def get_listing_markups(id, opts = {})
+      data, _status_code, _headers = get_listing_markups_with_http_info(id, opts)
+      data
+    end
+
+    # Get a listing&#39;s channel markups
+    # The markup each channel adds to this listing&#39;s price.  A listing&#39;s price on a channel is its own nightly price plus the channel&#39;s markup: a $200 night with a 35% Airbnb markup is sent to Airbnb as $270. The calendar keeps the listing&#39;s own price (&#x60;GET /v1/availability/{propertyId}&#x60; returns it); the markup is added only when a price is sent to the channel.  - **Airbnb** — one markup per listing. - **Booking.com** — one markup per **property**, shared by every listing priced through it (&#x60;listingIds&#x60; names them).  Returns &#x60;404 not_found&#x60; for a listing that does not exist or is not in this workspace, and &#x60;403 listing_inactive&#x60; for an inactive one.
+    # @param id [String] Repull listing id.
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(GetListingMarkups200Response, Integer, Hash)>] GetListingMarkups200Response data, response status code and response headers
+    def get_listing_markups_with_http_info(id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ListingsApi.get_listing_markups ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling ListingsApi.get_listing_markups"
+      end
+      # resource path
+      local_var_path = '/v1/listings/{id}/markups'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'GetListingMarkups200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"ListingsApi.get_listing_markups",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ListingsApi#get_listing_markups\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # Per-channel publish status
     # Returns connection state and sync activity per channel. `channels` is sync activity (empty until first push). `connections` is connection state (populated as soon as a channel is linked). Recommended polling cadence: at most once per 30s per listing — for bulk views, prefer `GET /v1/listings` and filter client-side.  **When a push fails, this endpoint says why.** `channels[].pushError` carries the channel's own reason for the last failed push, verbatim — `\"Links and contact info can't be shared\"`, `\"Check-in start time must be before end time\"`, `\"property_type_group must be one of […]\"`. It is free text written by the channel, so render it next to the retry button rather than parsing it. `null` when the last push succeeded or none has run; pair it with `pushStatus` to tell those two apart.  **It also says what you will not be allowed to change.** The `airbnb` entry in `connections` carries `lockedFields` — attributes Airbnb has locked on this listing. Airbnb does not refuse a write to one: it answers 200, reports the field as locked, and applies nothing, so a locked write is indistinguishable from a successful one unless you looked first. Read it before you let someone edit. Airbnb-only; no other channel has the concept, and no other entry carries the field.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [Integer] 
@@ -880,6 +943,80 @@ module Repull
       data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: ListingsApi#pull_listing_from_airbnb\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Set a listing's markup on a channel
+    # Set the markup one channel adds to this listing's price. When the value changes, the affected listings' prices are re-sent to that channel straight away (`pricesResent`); nothing else is sent.  A listing's price on a channel is its own nightly price plus the channel's markup: a $200 night with a 35% Airbnb markup is sent to Airbnb as $270. The calendar keeps the listing's own price (`GET /v1/availability/{propertyId}` returns it); the markup is added only when a price is sent to the channel.  - **Airbnb** — one markup per listing. - **Booking.com** — one markup per **property**, shared by every listing priced through it (`listingIds` names them).  Returns `404 not_found` for a listing that does not exist or is not in this workspace, and `403 listing_inactive` for an inactive one.  On Booking.com the markup belongs to the property, so setting it reprices every listing on that property (`affectedListingIds`). A listing on more than one property must name one with `hotelId`; without it the request is refused with `409 ambiguous_booking_mapping` listing the candidates, rather than repricing a property it guessed.  `markupPercent` is a percentage — `15` for 15%. A value between 0 and 1 is refused as a probable fraction, with the number to send instead.
+    # @param id [String] Repull listing id.
+    # @param set_listing_markup_request [SetListingMarkupRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [nil]
+    def set_listing_markup(id, set_listing_markup_request, opts = {})
+      set_listing_markup_with_http_info(id, set_listing_markup_request, opts)
+      nil
+    end
+
+    # Set a listing&#39;s markup on a channel
+    # Set the markup one channel adds to this listing&#39;s price. When the value changes, the affected listings&#39; prices are re-sent to that channel straight away (&#x60;pricesResent&#x60;); nothing else is sent.  A listing&#39;s price on a channel is its own nightly price plus the channel&#39;s markup: a $200 night with a 35% Airbnb markup is sent to Airbnb as $270. The calendar keeps the listing&#39;s own price (&#x60;GET /v1/availability/{propertyId}&#x60; returns it); the markup is added only when a price is sent to the channel.  - **Airbnb** — one markup per listing. - **Booking.com** — one markup per **property**, shared by every listing priced through it (&#x60;listingIds&#x60; names them).  Returns &#x60;404 not_found&#x60; for a listing that does not exist or is not in this workspace, and &#x60;403 listing_inactive&#x60; for an inactive one.  On Booking.com the markup belongs to the property, so setting it reprices every listing on that property (&#x60;affectedListingIds&#x60;). A listing on more than one property must name one with &#x60;hotelId&#x60;; without it the request is refused with &#x60;409 ambiguous_booking_mapping&#x60; listing the candidates, rather than repricing a property it guessed.  &#x60;markupPercent&#x60; is a percentage — &#x60;15&#x60; for 15%. A value between 0 and 1 is refused as a probable fraction, with the number to send instead.
+    # @param id [String] Repull listing id.
+    # @param set_listing_markup_request [SetListingMarkupRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
+    def set_listing_markup_with_http_info(id, set_listing_markup_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ListingsApi.set_listing_markup ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling ListingsApi.set_listing_markup"
+      end
+      # verify the required parameter 'set_listing_markup_request' is set
+      if @api_client.config.client_side_validation && set_listing_markup_request.nil?
+        fail ArgumentError, "Missing the required parameter 'set_listing_markup_request' when calling ListingsApi.set_listing_markup"
+      end
+      # resource path
+      local_var_path = '/v1/listings/{id}/markups'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(set_listing_markup_request)
+
+      # return_type
+      return_type = opts[:debug_return_type]
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"ListingsApi.set_listing_markup",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:PUT, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ListingsApi#set_listing_markup\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end

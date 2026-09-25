@@ -14,52 +14,43 @@ require 'date'
 require 'time'
 
 module Repull
-  # A Booking.com property this workspace holds, with the Repull listings mapped under it. A property is a building; its rooms are what guests book, and each room maps to one Repull listing — so one property commonly carries many listings.
-  class BookingProperty < ApiModelBase
-    # Repull-side id for this Booking.com connection.
-    attr_accessor :connection_id
+  class SetListingMarkupRequest < ApiModelBase
+    attr_accessor :channel
 
-    # Booking.com hotel/property id. This is what `/v1/channels/booking/availability` takes as `property_id`.
+    # 15 = +15%. `null` removes the markup.
+    attr_accessor :markup_percent
+
+    # Booking.com property — required when the listing is on more than one.
     attr_accessor :hotel_id
 
-    attr_accessor :active
+    class EnumAttributeValidator
+      attr_reader :datatype
+      attr_reader :allowable_values
 
-    attr_accessor :sync_enabled
+      def initialize(datatype, allowable_values)
+        @allowable_values = allowable_values.map do |value|
+          case datatype.to_s
+          when /Integer/i
+            value.to_i
+          when /Float/i
+            value.to_f
+          else
+            value
+          end
+        end
+      end
 
-    attr_accessor :booking_url
-
-    # The Booking.com markup on this property, as a fraction: \"0.18\" = +18%, shared by every listing on the property. Read or set it as a percentage with `/v1/listings/{id}/markups`.
-    attr_accessor :markup
-
-    attr_accessor :sync_category
-
-    attr_accessor :suspended_at
-
-    attr_accessor :suspension_reason
-
-    attr_accessor :created_at
-
-    # `mapped` — at least one room points at a listing. `unmapped` — the property is claimed but its rooms are not mapped yet, so `listings` is empty; finish `POST /v1/connect/booking/map-rooms`. An unmapped property is listed rather than hidden, so a half-finished connection is visible instead of looking like no connection at all.
-    attr_accessor :mapping_status
-
-    # The Repull listings mapped under this property. Empty when `mappingStatus` is `unmapped`. Inactive listings are left out.
-    attr_accessor :listings
+      def valid?(value)
+        !value || allowable_values.include?(value)
+      end
+    end
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'connection_id' => :'connectionId',
-        :'hotel_id' => :'hotelId',
-        :'active' => :'active',
-        :'sync_enabled' => :'syncEnabled',
-        :'booking_url' => :'bookingUrl',
-        :'markup' => :'markup',
-        :'sync_category' => :'syncCategory',
-        :'suspended_at' => :'suspendedAt',
-        :'suspension_reason' => :'suspensionReason',
-        :'created_at' => :'createdAt',
-        :'mapping_status' => :'mappingStatus',
-        :'listings' => :'listings'
+        :'channel' => :'channel',
+        :'markup_percent' => :'markupPercent',
+        :'hotel_id' => :'hotelId'
       }
     end
 
@@ -76,30 +67,16 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'connection_id' => :'String',
-        :'hotel_id' => :'String',
-        :'active' => :'Boolean',
-        :'sync_enabled' => :'Boolean',
-        :'booking_url' => :'String',
-        :'markup' => :'String',
-        :'sync_category' => :'String',
-        :'suspended_at' => :'Time',
-        :'suspension_reason' => :'String',
-        :'created_at' => :'Time',
-        :'mapping_status' => :'String',
-        :'listings' => :'Array<BookingPropertyListingsInner>'
+        :'channel' => :'String',
+        :'markup_percent' => :'Float',
+        :'hotel_id' => :'String'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
-        :'booking_url',
-        :'markup',
-        :'sync_category',
-        :'suspended_at',
-        :'suspension_reason',
-        :'created_at',
+        :'markup_percent',
       ])
     end
 
@@ -107,66 +84,32 @@ module Repull
     # @param [Hash] attributes Model attributes in the form of hash
     def initialize(attributes = {})
       if (!attributes.is_a?(Hash))
-        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::BookingProperty` initialize method"
+        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::SetListingMarkupRequest` initialize method"
       end
 
       # check to see if the attribute exists and convert string to symbol for hash key
       acceptable_attribute_map = self.class.acceptable_attribute_map
       attributes = attributes.each_with_object({}) { |(k, v), h|
         if (!acceptable_attribute_map.key?(k.to_sym))
-          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::BookingProperty`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
+          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::SetListingMarkupRequest`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
         end
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'connection_id')
-        self.connection_id = attributes[:'connection_id']
+      if attributes.key?(:'channel')
+        self.channel = attributes[:'channel']
+      else
+        self.channel = nil
+      end
+
+      if attributes.key?(:'markup_percent')
+        self.markup_percent = attributes[:'markup_percent']
+      else
+        self.markup_percent = nil
       end
 
       if attributes.key?(:'hotel_id')
         self.hotel_id = attributes[:'hotel_id']
-      end
-
-      if attributes.key?(:'active')
-        self.active = attributes[:'active']
-      end
-
-      if attributes.key?(:'sync_enabled')
-        self.sync_enabled = attributes[:'sync_enabled']
-      end
-
-      if attributes.key?(:'booking_url')
-        self.booking_url = attributes[:'booking_url']
-      end
-
-      if attributes.key?(:'markup')
-        self.markup = attributes[:'markup']
-      end
-
-      if attributes.key?(:'sync_category')
-        self.sync_category = attributes[:'sync_category']
-      end
-
-      if attributes.key?(:'suspended_at')
-        self.suspended_at = attributes[:'suspended_at']
-      end
-
-      if attributes.key?(:'suspension_reason')
-        self.suspension_reason = attributes[:'suspension_reason']
-      end
-
-      if attributes.key?(:'created_at')
-        self.created_at = attributes[:'created_at']
-      end
-
-      if attributes.key?(:'mapping_status')
-        self.mapping_status = attributes[:'mapping_status']
-      end
-
-      if attributes.key?(:'listings')
-        if (value = attributes[:'listings']).is_a?(Array)
-          self.listings = value
-        end
       end
     end
 
@@ -175,6 +118,18 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
+      if @channel.nil?
+        invalid_properties.push('invalid value for "channel", channel cannot be nil.')
+      end
+
+      if @markup_percent >= 100
+        invalid_properties.push('invalid value for "markup_percent", must be smaller than 100.')
+      end
+
+      if @markup_percent < 0
+        invalid_properties.push('invalid value for "markup_percent", must be greater than or equal to 0.')
+      end
+
       invalid_properties
     end
 
@@ -182,7 +137,36 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
+      return false if @channel.nil?
+      channel_validator = EnumAttributeValidator.new('String', ["airbnb", "booking"])
+      return false unless channel_validator.valid?(@channel)
+      return false if @markup_percent >= 100
+      return false if @markup_percent < 0
       true
+    end
+
+    # Custom attribute writer method checking allowed values (enum).
+    # @param [Object] channel Object to be assigned
+    def channel=(channel)
+      validator = EnumAttributeValidator.new('String', ["airbnb", "booking"])
+      unless validator.valid?(channel)
+        fail ArgumentError, "invalid value for \"channel\", must be one of #{validator.allowable_values}."
+      end
+      @channel = channel
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] markup_percent Value to be assigned
+    def markup_percent=(markup_percent)
+      if !markup_percent.nil? && markup_percent >= 100
+        fail ArgumentError, 'invalid value for "markup_percent", must be smaller than 100.'
+      end
+
+      if !markup_percent.nil? && markup_percent < 0
+        fail ArgumentError, 'invalid value for "markup_percent", must be greater than or equal to 0.'
+      end
+
+      @markup_percent = markup_percent
     end
 
     # Checks equality by comparing each attribute.
@@ -190,18 +174,9 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          connection_id == o.connection_id &&
-          hotel_id == o.hotel_id &&
-          active == o.active &&
-          sync_enabled == o.sync_enabled &&
-          booking_url == o.booking_url &&
-          markup == o.markup &&
-          sync_category == o.sync_category &&
-          suspended_at == o.suspended_at &&
-          suspension_reason == o.suspension_reason &&
-          created_at == o.created_at &&
-          mapping_status == o.mapping_status &&
-          listings == o.listings
+          channel == o.channel &&
+          markup_percent == o.markup_percent &&
+          hotel_id == o.hotel_id
     end
 
     # @see the `==` method
@@ -213,7 +188,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [connection_id, hotel_id, active, sync_enabled, booking_url, markup, sync_category, suspended_at, suspension_reason, created_at, mapping_status, listings].hash
+      [channel, markup_percent, hotel_id].hash
     end
 
     # Builds the object from hash

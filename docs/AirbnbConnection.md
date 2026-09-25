@@ -13,7 +13,7 @@
 | **active** | **Boolean** |  | [optional] |
 | **sync_enabled** | **Boolean** |  | [optional] |
 | **primary** | **Boolean** |  | [optional] |
-| **markup** | **String** | Decimal markup (e.g. \&quot;1.10\&quot; for +10%). | [optional] |
+| **markup** | **String** | The Airbnb markup as a fraction: \&quot;0.35\&quot; &#x3D; +35% on the listing&#39;s own price. Read or set it as a percentage with &#x60;/v1/listings/{id}/markups&#x60;. | [optional] |
 | **sync_category** | **String** | Airbnb&#39;s own API sync decision for THIS listing, as Airbnb reports it. Airbnb authorises sync one listing at a time, so a connected account can still contain listings it will not accept writes for.  - &#x60;sync_all&#x60; — Repull manages content, rates and availability. - &#x60;sync_rates_and_availability&#x60; — Repull manages rates and availability; listing content is managed by the host on Airbnb. - &#x60;none&#x60; — the listing is **not** connected to Repull on Airbnb&#39;s side. Every write to it is refused with &#x60;403 listing_not_api_connected&#x60;; reconnecting the Airbnb account does not change this, the host must switch the listing on in Airbnb.  &#x60;null&#x60; when the listing has not synced yet. Not to be confused with &#x60;syncEnabled&#x60;, which is a Repull-side flag and says nothing about what Airbnb accepts. | [optional] |
 | **writable** | **Boolean** | Whether Repull will send a write for this listing to Airbnb. &#x60;false&#x60; exactly when &#x60;syncCategory&#x60; is &#x60;none&#x60; — such a write is refused with &#x60;403 listing_not_api_connected&#x60; before anything reaches Airbnb. Check this before a portfolio-wide push instead of discovering it one 403 at a time. | [optional] |
 | **created_at** | **Time** |  | [optional] |

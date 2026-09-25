@@ -10,12 +10,14 @@ All URIs are relative to *https://api.repull.dev*
 | [**delete_listing_photo**](ListingsApi.md#delete_listing_photo) | **DELETE** /v1/listings/{id}/photos | Delete a stored listing photo |
 | [**generate_listing_content**](ListingsApi.md#generate_listing_content) | **POST** /v1/listings/{id}/generate-content | AI-generate listing content |
 | [**get_listing**](ListingsApi.md#get_listing) | **GET** /v1/listings/{id} | Get a listing |
+| [**get_listing_markups**](ListingsApi.md#get_listing_markups) | **GET** /v1/listings/{id}/markups | Get a listing&#39;s channel markups |
 | [**get_listing_publish_status**](ListingsApi.md#get_listing_publish_status) | **GET** /v1/listings/{id}/publish-status | Per-channel publish status |
 | [**list_listing_photos**](ListingsApi.md#list_listing_photos) | **GET** /v1/listings/{id}/photos | List a listing&#39;s stored photos |
 | [**list_listings**](ListingsApi.md#list_listings) | **GET** /v1/listings | List listings |
 | [**publish_listing_to_airbnb**](ListingsApi.md#publish_listing_to_airbnb) | **POST** /v1/listings/{id}/publish/airbnb | Publish a listing to Airbnb |
 | [**publish_listing_to_booking**](ListingsApi.md#publish_listing_to_booking) | **POST** /v1/listings/{id}/publish/booking | Publish a listing to Booking.com |
 | [**pull_listing_from_airbnb**](ListingsApi.md#pull_listing_from_airbnb) | **POST** /v1/listings/{id}/pull/airbnb | Refresh a listing from Airbnb |
+| [**set_listing_markup**](ListingsApi.md#set_listing_markup) | **PUT** /v1/listings/{id}/markups | Set a listing&#39;s markup on a channel |
 | [**set_listings_status**](ListingsApi.md#set_listings_status) | **POST** /v1/listings/status | Activate or deactivate listings in bulk |
 | [**take_listing_offline**](ListingsApi.md#take_listing_offline) | **POST** /v1/listings/{id}/offline | Take a listing off the market |
 | [**take_listing_online**](ListingsApi.md#take_listing_online) | **POST** /v1/listings/{id}/online | Put a listing back on the market |
@@ -440,6 +442,75 @@ end
 ### Return type
 
 [**Listing**](Listing.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## get_listing_markups
+
+> <GetListingMarkups200Response> get_listing_markups(id)
+
+Get a listing's channel markups
+
+The markup each channel adds to this listing's price.  A listing's price on a channel is its own nightly price plus the channel's markup: a $200 night with a 35% Airbnb markup is sent to Airbnb as $270. The calendar keeps the listing's own price (`GET /v1/availability/{propertyId}` returns it); the markup is added only when a price is sent to the channel.  - **Airbnb** — one markup per listing. - **Booking.com** — one markup per **property**, shared by every listing priced through it (`listingIds` names them).  Returns `404 not_found` for a listing that does not exist or is not in this workspace, and `403 listing_inactive` for an inactive one.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ListingsApi.new
+id = 'id_example' # String | Repull listing id.
+
+begin
+  # Get a listing's channel markups
+  result = api_instance.get_listing_markups(id)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ListingsApi->get_listing_markups: #{e}"
+end
+```
+
+#### Using the get_listing_markups_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<GetListingMarkups200Response>, Integer, Hash)> get_listing_markups_with_http_info(id)
+
+```ruby
+begin
+  # Get a listing's channel markups
+  data, status_code, headers = api_instance.get_listing_markups_with_http_info(id)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <GetListingMarkups200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ListingsApi->get_listing_markups_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id. |  |
+
+### Return type
+
+[**GetListingMarkups200Response**](GetListingMarkups200Response.md)
 
 ### Authorization
 
@@ -886,6 +957,76 @@ end
 ### Return type
 
 [**ListingPullResponse**](ListingPullResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## set_listing_markup
+
+> set_listing_markup(id, set_listing_markup_request)
+
+Set a listing's markup on a channel
+
+Set the markup one channel adds to this listing's price. When the value changes, the affected listings' prices are re-sent to that channel straight away (`pricesResent`); nothing else is sent.  A listing's price on a channel is its own nightly price plus the channel's markup: a $200 night with a 35% Airbnb markup is sent to Airbnb as $270. The calendar keeps the listing's own price (`GET /v1/availability/{propertyId}` returns it); the markup is added only when a price is sent to the channel.  - **Airbnb** — one markup per listing. - **Booking.com** — one markup per **property**, shared by every listing priced through it (`listingIds` names them).  Returns `404 not_found` for a listing that does not exist or is not in this workspace, and `403 listing_inactive` for an inactive one.  On Booking.com the markup belongs to the property, so setting it reprices every listing on that property (`affectedListingIds`). A listing on more than one property must name one with `hotelId`; without it the request is refused with `409 ambiguous_booking_mapping` listing the candidates, rather than repricing a property it guessed.  `markupPercent` is a percentage — `15` for 15%. A value between 0 and 1 is refused as a probable fraction, with the number to send instead.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ListingsApi.new
+id = 'id_example' # String | Repull listing id.
+set_listing_markup_request = Repull::SetListingMarkupRequest.new({channel: 'airbnb', markup_percent: 3.56}) # SetListingMarkupRequest | 
+
+begin
+  # Set a listing's markup on a channel
+  api_instance.set_listing_markup(id, set_listing_markup_request)
+rescue Repull::ApiError => e
+  puts "Error when calling ListingsApi->set_listing_markup: #{e}"
+end
+```
+
+#### Using the set_listing_markup_with_http_info variant
+
+This returns an Array which contains the response data (`nil` in this case), status code and headers.
+
+> <Array(nil, Integer, Hash)> set_listing_markup_with_http_info(id, set_listing_markup_request)
+
+```ruby
+begin
+  # Set a listing's markup on a channel
+  data, status_code, headers = api_instance.set_listing_markup_with_http_info(id, set_listing_markup_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => nil
+rescue Repull::ApiError => e
+  puts "Error when calling ListingsApi->set_listing_markup_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id. |  |
+| **set_listing_markup_request** | [**SetListingMarkupRequest**](SetListingMarkupRequest.md) |  |  |
+
+### Return type
+
+nil (empty response body)
 
 ### Authorization
 

@@ -4,17 +4,17 @@ All URIs are relative to *https://api.repull.dev*
 
 | Method | HTTP request | Description |
 | ------ | ------------ | ----------- |
-| [**get_property**](PropertiesApi.md#get_property) | **GET** /v1/properties/{id} | Get property details |
-| [**list_properties**](PropertiesApi.md#list_properties) | **GET** /v1/properties | List properties |
+| [**get_property**](PropertiesApi.md#get_property) | **GET** /v1/properties/{id} | Get property details (older name for /v1/listings/{id}) |
+| [**list_properties**](PropertiesApi.md#list_properties) | **GET** /v1/properties | List properties (older name for /v1/listings) |
 
 
 ## get_property
 
 > <Property> get_property(id, opts)
 
-Get property details
+Get property details (older name for /v1/listings/{id})
 
-Fetch a single property by Repull id. Property ids are workspace-scoped — an id from one workspace is not valid in another. 404 means the id does not exist OR belongs to a different workspace.  **Optional expansions:** Pass `?include=amenities` to enrich the response with the property's amenities (sourced from the unified `listings_amenities` table). Returns `[]` when the property has no amenity rows. The default response stays lean; consumers must opt in.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+**`/v1/properties` is the older name for `/v1/listings`** — the same listings, the same ids. It stays for existing integrations; new code should use `/v1/listings`, which is where create, content, publishing and markups live.  Fetch a single property by Repull id. Property ids are workspace-scoped — an id from one workspace is not valid in another. 404 means the id does not exist OR belongs to a different workspace.  **Optional expansions:** Pass `?include=amenities` to enrich the response with the property's amenities (sourced from the unified `listings_amenities` table). Returns `[]` when the property has no amenity rows. The default response stays lean; consumers must opt in.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -34,7 +34,7 @@ opts = {
 }
 
 begin
-  # Get property details
+  # Get property details (older name for /v1/listings/{id})
   result = api_instance.get_property(id, opts)
   p result
 rescue Repull::ApiError => e
@@ -50,7 +50,7 @@ This returns an Array which contains the response data, status code and headers.
 
 ```ruby
 begin
-  # Get property details
+  # Get property details (older name for /v1/listings/{id})
   data, status_code, headers = api_instance.get_property_with_http_info(id, opts)
   p status_code # => 2xx
   p headers # => { ... }
@@ -85,9 +85,9 @@ end
 
 > <PropertyListResponse> list_properties(opts)
 
-List properties
+List properties (older name for /v1/listings)
 
-Cursor-paginated list of properties for the authenticated workspace. Walk pages with `?cursor=<pagination.nextCursor>`; stop when `pagination.hasMore` is `false`. Cursor is opaque base64 — do not parse it.  `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) — see the `offset` parameter below. Mutually exclusive with `cursor`.  Filters: `q` (substring on name/street/city), `status` (active|inactive|all), `lifecycle_status` (exact match on the listing's lifecycle state). Other unknown params (e.g. `?search=` or `?propertyId=`) are rejected with 422 — no silent unfiltered results.  **Incremental sync (only changes since last poll):** pass `?updated_since=<ISO8601>` to receive only properties changed at or after that instant. Each property carries `updatedAt` — the last row of the final page is your next watermark. `updated_since` changes the page ordering to `updatedAt ASC, id ASC` (and the cursor with it); see the parameter description. `GET /v1/listings` does NOT yet accept `updated_since` — use this endpoint for property-side incremental sync.  **Inactive properties:** an inactive property keeps syncing, but cannot be read or changed through the API until it is activated. They are only listed when `status` asks for them, and then with `id`, `name`, `status`, `lifecycleStatus`, `channels` and `updatedAt` only — enough to choose what to activate with `PATCH /v1/listings/{id}`.
+**`/v1/properties` is the older name for `/v1/listings`** — the same listings, the same ids. It stays for existing integrations; new code should use `/v1/listings`, which is where create, content, publishing and markups live.  Cursor-paginated list of properties for the authenticated workspace. Walk pages with `?cursor=<pagination.nextCursor>`; stop when `pagination.hasMore` is `false`. Cursor is opaque base64 — do not parse it.  `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) — see the `offset` parameter below. Mutually exclusive with `cursor`.  Filters: `q` (substring on name/street/city), `status` (active|inactive|all), `lifecycle_status` (exact match on the listing's lifecycle state). Other unknown params (e.g. `?search=` or `?propertyId=`) are rejected with 422 — no silent unfiltered results.  **Incremental sync (only changes since last poll):** pass `?updated_since=<ISO8601>` to receive only properties changed at or after that instant. Each property carries `updatedAt` — the last row of the final page is your next watermark. `updated_since` changes the page ordering to `updatedAt ASC, id ASC` (and the cursor with it); see the parameter description. `GET /v1/listings` does NOT yet accept `updated_since` — use this endpoint for property-side incremental sync.  **Inactive properties:** an inactive property keeps syncing, but cannot be read or changed through the API until it is activated. They are only listed when `status` asks for them, and then with `id`, `name`, `status`, `lifecycleStatus`, `channels` and `updatedAt` only — enough to choose what to activate with `PATCH /v1/listings/{id}`.
 
 ### Examples
 
@@ -114,7 +114,7 @@ opts = {
 }
 
 begin
-  # List properties
+  # List properties (older name for /v1/listings)
   result = api_instance.list_properties(opts)
   p result
 rescue Repull::ApiError => e
@@ -130,7 +130,7 @@ This returns an Array which contains the response data, status code and headers.
 
 ```ruby
 begin
-  # List properties
+  # List properties (older name for /v1/listings)
   data, status_code, headers = api_instance.list_properties_with_http_info(opts)
   p status_code # => 2xx
   p headers # => { ... }
