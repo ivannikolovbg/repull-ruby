@@ -5,6 +5,7 @@ All URIs are relative to *https://api.repull.dev*
 | Method | HTTP request | Description |
 | ------ | ------------ | ----------- |
 | [**accept_reservation_request**](ReservationsApi.md#accept_reservation_request) | **POST** /v1/reservations/{id}/accept | Accept a booking request |
+| [**cancel_reservation**](ReservationsApi.md#cancel_reservation) | **POST** /v1/reservations/{id}/cancel | Cancel a reservation |
 | [**create_reservation**](ReservationsApi.md#create_reservation) | **POST** /v1/reservations | Create a reservation |
 | [**decline_reservation_request**](ReservationsApi.md#decline_reservation_request) | **POST** /v1/reservations/{id}/decline | Decline a booking request |
 | [**get_reservation**](ReservationsApi.md#get_reservation) | **GET** /v1/reservations/{id} | Get reservation details |
@@ -82,6 +83,79 @@ end
 ### HTTP request headers
 
 - **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## cancel_reservation
+
+> <CancelReservation200Response> cancel_reservation(id, opts)
+
+Cancel a reservation
+
+Cancels a reservation where it lives.  - **Mews or Cloudbeds** (hotel-model PMS): cancelled in the PMS, then read back, so Repull and the PMS agree. No cancellation fee is charged. - **Direct, website or owner bookings**: cancelled in Repull — the nights are released and `reservation.cancelled` fires. - **A channel booking** (Airbnb, Booking.com, VRBO) or a booking owned by another PMS: `409 reservation_owned_by_channel`. Cancel it there; the cancellation reaches Repull with the next sync.  Cancelling an already-cancelled reservation is not an error: the response carries `alreadyCancelled: true`.  Returns `403 listing_inactive` when the listing is inactive.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ReservationsApi.new
+id = 56 # Integer | Reservation id.
+opts = {
+  cancel_reservation_request: Repull::CancelReservationRequest.new # CancelReservationRequest | 
+}
+
+begin
+  # Cancel a reservation
+  result = api_instance.cancel_reservation(id, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ReservationsApi->cancel_reservation: #{e}"
+end
+```
+
+#### Using the cancel_reservation_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<CancelReservation200Response>, Integer, Hash)> cancel_reservation_with_http_info(id, opts)
+
+```ruby
+begin
+  # Cancel a reservation
+  data, status_code, headers = api_instance.cancel_reservation_with_http_info(id, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <CancelReservation200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ReservationsApi->cancel_reservation_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **Integer** | Reservation id. |  |
+| **cancel_reservation_request** | [**CancelReservationRequest**](CancelReservationRequest.md) |  | [optional] |
+
+### Return type
+
+[**CancelReservation200Response**](CancelReservation200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 

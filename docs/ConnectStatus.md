@@ -23,7 +23,7 @@ instance = Repull::ConnectStatus.new(
   provider: airbnb,
   id: 3,
   status: active,
-  external_account_id: 23998907,
+  external_account_id: 10000001,
   created_at: null,
   host: null,
   accounts: null

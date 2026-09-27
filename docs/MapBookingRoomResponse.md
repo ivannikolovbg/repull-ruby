@@ -14,6 +14,7 @@
 | **room_name** | **String** |  | [optional] |
 | **platform_link_id** | **String** | Id of the resulting channel-link row. Null after an unmap, and for a room Booking.com has given us no room id for. | [optional] |
 | **reservations_imported** | **Integer** | Reservations Booking.com returned for the property and ran through the import after the room was mapped — the property&#39;s active bookings, which would otherwise never reach the listing. A reservation already present is left as it is, so this counts what was processed, not what was new, and re-sending never duplicates. Runs on every successful map, including a re-map to the same listing, so re-sending retries an import that did not run. &#x60;null&#x60; means the mapping succeeded but the import could not run; the room is still mapped. Absent after an unmap, when there is nothing to pull. | [optional] |
+| **reservations_found** | **Integer** | How many reservations Booking.com returned for the property. Equal to &#x60;reservationsImported&#x60; unless some could not be attached — so &#x60;0&#x60; here means Booking.com had none. Same &#x60;null&#x60; / absent rules as &#x60;reservationsImported&#x60;. | [optional] |
 
 ## Example
 
@@ -30,7 +31,8 @@ instance = Repull::MapBookingRoomResponse.new(
   room_id: null,
   room_name: null,
   platform_link_id: null,
-  reservations_imported: null
+  reservations_imported: null,
+  reservations_found: null
 )
 ```
 

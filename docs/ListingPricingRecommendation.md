@@ -5,7 +5,7 @@
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **date** | **Date** |  | [optional] |
-| **current_price** | **Float** | Current calendar price (from Vanio listings_calendar_days) before applying the recommendation. | [optional] |
+| **current_price** | **Float** | Current calendar price before applying the recommendation. | [optional] |
 | **recommended_price** | **Float** | Atlas model&#39;s recommended price. | [optional] |
 | **min_price** | **Float** |  | [optional] |
 | **max_price** | **Float** |  | [optional] |

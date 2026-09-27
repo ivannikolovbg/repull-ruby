@@ -13,6 +13,7 @@ All URIs are relative to *https://api.repull.dev*
 | [**get_listing_markups**](ListingsApi.md#get_listing_markups) | **GET** /v1/listings/{id}/markups | Get a listing&#39;s channel markups |
 | [**get_listing_publish_status**](ListingsApi.md#get_listing_publish_status) | **GET** /v1/listings/{id}/publish-status | Per-channel publish status |
 | [**list_listing_photos**](ListingsApi.md#list_listing_photos) | **GET** /v1/listings/{id}/photos | List a listing&#39;s stored photos |
+| [**list_listing_units**](ListingsApi.md#list_listing_units) | **GET** /v1/listings/{id}/units | List a listing&#39;s units (rooms) |
 | [**list_listings**](ListingsApi.md#list_listings) | **GET** /v1/listings | List listings |
 | [**publish_listing_to_airbnb**](ListingsApi.md#publish_listing_to_airbnb) | **POST** /v1/listings/{id}/publish/airbnb | Publish a listing to Airbnb |
 | [**publish_listing_to_booking**](ListingsApi.md#publish_listing_to_booking) | **POST** /v1/listings/{id}/publish/booking | Publish a listing to Booking.com |
@@ -31,7 +32,7 @@ All URIs are relative to *https://api.repull.dev*
 
 Create a Repull listing
 
-Create a new vacation-rental listing under the authenticated workspace. The listing is stored in the canonical Vanio listings tables and can be published to multiple channels (Airbnb, Booking.com) via the publish endpoints.
+Create a new vacation-rental listing under the authenticated workspace. The listing is stored as a canonical Repull listing and can be published to multiple channels (Airbnb, Booking.com) via the publish endpoints.
 
 ### Examples
 
@@ -100,7 +101,7 @@ end
 
 Mint a direct-to-storage photo upload URL
 
-Mints a short-lived signed upload URL + token for a listing photo. **The client PUTs the raw file bytes directly to the returned `uploadUrl` — the file bytes never pass through the Repull API or main vanio.** This endpoint only mints the URL; do not POST the file itself here, it will not be accepted.  Flow: (1) POST here with `fileName`/`fileType`/optional `fileSize` to get `{ uploadUrl, token, path, publicUrl, expiresIn }`; (2) PUT the raw file bytes to `uploadUrl` from the client; (3) `publicUrl` is the durable URL for the uploaded photo — attach it to the listing via `PUT /v1/listings/{id}/content` (`photos` field) or list it back via `GET /v1/listings/{id}/photos`.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+Mints a short-lived signed upload URL + token for a listing photo. **The client PUTs the raw file bytes directly to the returned `uploadUrl` — the file bytes never pass through the Repull API.** This endpoint only mints the URL; do not POST the file itself here, it will not be accepted.  Flow: (1) POST here with `fileName`, `fileType` and `fileSize` (bytes) to get `{ uploadUrl, token, path, publicUrl, expiresIn }`; (2) PUT the raw file bytes to `uploadUrl` from the client; (3) **attach it** — uploading does not put the photo on the listing: send `publicUrl` in `photos` on `PUT /v1/listings/{id}/content` (with `photosMode: \"append\"` to keep existing photos). The response's `nextStep` says the same.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -115,7 +116,7 @@ end
 
 api_instance = Repull::ListingsApi.new
 id = 56 # Integer | Repull listing id
-listing_photo_upload_url_request = Repull::ListingPhotoUploadUrlRequest.new({file_name: 'living-room.jpg', file_type: 'image/jpeg'}) # ListingPhotoUploadUrlRequest | 
+listing_photo_upload_url_request = Repull::ListingPhotoUploadUrlRequest.new({file_name: 'living-room.jpg', file_type: 'image/jpeg', file_size: 453631}) # ListingPhotoUploadUrlRequest | 
 
 begin
   # Mint a direct-to-storage photo upload URL
@@ -660,6 +661,75 @@ end
 - **Accept**: application/json
 
 
+## list_listing_units
+
+> <ListListingUnits200Response> list_listing_units(id)
+
+List a listing's units (rooms)
+
+The physical rooms under a listing. For a hotel-model PMS (Mews, Cloudbeds) a listing is a room type: prices, restrictions and availability are set on the room type, and each reservation is assigned one of these rooms (`reservation.unit.id`). A room can belong to more than one room type.  Any other listing is a single home, which is its own unit, and returns an empty list.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ListingsApi.new
+id = 56 # Integer | Listing id.
+
+begin
+  # List a listing's units (rooms)
+  result = api_instance.list_listing_units(id)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ListingsApi->list_listing_units: #{e}"
+end
+```
+
+#### Using the list_listing_units_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<ListListingUnits200Response>, Integer, Hash)> list_listing_units_with_http_info(id)
+
+```ruby
+begin
+  # List a listing's units (rooms)
+  data, status_code, headers = api_instance.list_listing_units_with_http_info(id)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <ListListingUnits200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ListingsApi->list_listing_units_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **Integer** | Listing id. |  |
+
+### Return type
+
+[**ListListingUnits200Response**](ListListingUnits200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
 ## list_listings
 
 > <ListingListResponse> list_listings(opts)
@@ -826,7 +896,7 @@ end
 
 Publish a listing to Booking.com
 
-Push a Repull listing's content to Booking.com. The listing must already be mapped to a Booking.com property + room — claim the hotel through the Connect Booking flow, then map its rooms with `POST /v1/connect/booking/map-rooms`.  **Which property the content lands in.** A listing can be mapped to more than one Booking.com property; the same unit re-listed under a new property keeps its old mapping, and workspaces routinely sit on five or six. When the listing has exactly one property you need send nothing. When it has several, name one with `hotelId` in the body (or `?hotel_id=` — the same value, accepted either way, body wins if you send both). Omit it on such a listing and the push is refused with **`409 ambiguous_booking_mapping`**, listing the candidate ids: content pushed into a property chosen for you lands on the wrong listing and reports success, which is worse than a refusal. `GET /v1/channels/booking/properties` lists every property with the listings mapped under it. Naming a property this listing is not mapped to is a `404` that names the ones it is.  The property that actually received the content comes back as `result.hotelId`.  **A publish is not one call to Booking.com.** It is several independent Content API calls — details, description, amenities, rooms, photos, pricing — and each can fail on its own. `result.published` is true only when every attempted section landed; `result.sections` lists the ones that did and `result.errors[]` carries Booking.com's own reason, per section, for the ones that did not. A property whose Content API credentials do not cover a section answers 403 for that section alone. **A partial publish is normal and is not rolled back**: what succeeded stays applied. Fix the failing sections and publish again — re-publishing an unchanged section is harmless.  A listing with no Booking.com property mapped at all is not an error: the call returns `result.published: false` with `result.reason` and `result.hotelId: null`, and nothing is pushed.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+Push a Repull listing's content to Booking.com. The listing must already be mapped to a Booking.com property + room — claim the hotel through the Connect Booking flow, then map its rooms with `POST /v1/connect/booking/map-rooms`.  **Which property the content lands in.** A listing can be mapped to more than one Booking.com property; the same unit re-listed under a new property keeps its old mapping, and workspaces routinely sit on five or six. When the listing has exactly one property you need send nothing. When it has several, name one with `hotelId` in the body (or `?hotel_id=` — the same value, accepted either way, body wins if you send both). Omit it on such a listing and the push is refused with **`409 ambiguous_booking_mapping`**, listing the candidate ids: content pushed into a property chosen for you lands on the wrong listing and reports success, which is worse than a refusal. `GET /v1/channels/booking/properties` lists every property with the listings mapped under it. Naming a property this listing is not mapped to is a `404` that names the ones it is.  The property that actually received the content comes back as `result.hotelId`.  **A publish is not one call to Booking.com.** It is several independent Content API calls — details, description, amenities, rooms, photos, pricing — and each can fail on its own. `result.published` is true only when every attempted section landed; `result.sections` lists the ones that did and `result.errors[]` carries Booking.com's own reason, per section, for the ones that did not. A property whose Content API credentials do not cover a section answers 403 for that section alone. **A partial publish is normal and is not rolled back**: what succeeded stays applied. Fix the failing sections and publish again — re-publishing an unchanged section is harmless.  A listing with no Booking.com property mapped at all is not an error: the call returns `result.published: false` with `result.reason` and `result.hotelId: null`, and nothing is pushed.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.  A listing with no Booking.com room linked is refused with `409 listing_not_on_booking` and the next step, rather than answered with `published: false`.
 
 ### Examples
 

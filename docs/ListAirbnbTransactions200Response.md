@@ -5,6 +5,7 @@
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **data** | [**Array&lt;AirbnbTransaction&gt;**](AirbnbTransaction.md) |  |  |
+| **pagination** | [**Pagination**](Pagination.md) |  |  |
 | **data_freshness** | [**AirbnbDataFreshness**](AirbnbDataFreshness.md) |  |  |
 
 ## Example
@@ -14,6 +15,7 @@ require 'repull'
 
 instance = Repull::ListAirbnbTransactions200Response.new(
   data: null,
+  pagination: null,
   data_freshness: null
 )
 ```

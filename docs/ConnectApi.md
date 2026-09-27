@@ -16,11 +16,13 @@ All URIs are relative to *https://api.repull.dev*
 | [**select_connect_provider**](ConnectApi.md#select_connect_provider) | **POST** /v1/connect/sessions/{sessionId}/select-provider | Bind a picker session to a provider |
 | [**submit_beds24_credentials**](ConnectApi.md#submit_beds24_credentials) | **POST** /v1/connect/beds24/credentials | Submit Beds24 credentials for a Connect session |
 | [**submit_bookingsync_credentials**](ConnectApi.md#submit_bookingsync_credentials) | **POST** /v1/connect/bookingsync/credentials | Submit BookingSync credentials for a Connect session |
+| [**submit_cloudbeds_credentials**](ConnectApi.md#submit_cloudbeds_credentials) | **POST** /v1/connect/cloudbeds/credentials | Submit Cloudbeds credentials for a Connect session |
 | [**submit_guesty_credentials**](ConnectApi.md#submit_guesty_credentials) | **POST** /v1/connect/guesty/credentials | Submit Guesty credentials for a Connect session |
 | [**submit_hospitable_credentials**](ConnectApi.md#submit_hospitable_credentials) | **POST** /v1/connect/hospitable/credentials | Submit Hospitable credentials for a Connect session |
 | [**submit_hostaway_credentials**](ConnectApi.md#submit_hostaway_credentials) | **POST** /v1/connect/hostaway/credentials | Submit Hostaway credentials for a Connect session |
 | [**submit_igms_credentials**](ConnectApi.md#submit_igms_credentials) | **POST** /v1/connect/igms/credentials | Submit iGMS credentials for a Connect session |
 | [**submit_lodgify_credentials**](ConnectApi.md#submit_lodgify_credentials) | **POST** /v1/connect/lodgify/credentials | Submit Lodgify credentials for a Connect session |
+| [**submit_mews_credentials**](ConnectApi.md#submit_mews_credentials) | **POST** /v1/connect/mews/credentials | Submit Mews credentials for a Connect session |
 | [**submit_ownerrez_credentials**](ConnectApi.md#submit_ownerrez_credentials) | **POST** /v1/connect/ownerrez/credentials | Submit OwnerRez credentials for a Connect session |
 | [**submit_smoobu_credentials**](ConnectApi.md#submit_smoobu_credentials) | **POST** /v1/connect/smoobu/credentials | Submit Smoobu credentials for a Connect session |
 | [**submit_vrbo_credentials**](ConnectApi.md#submit_vrbo_credentials) | **POST** /v1/connect/vrbo/credentials | Submit Vrbo credentials for a Connect session |
@@ -833,6 +835,75 @@ end
 - **Accept**: application/json
 
 
+## submit_cloudbeds_credentials
+
+> <SubmitCloudbedsCredentials200Response> submit_cloudbeds_credentials(submit_cloudbeds_credentials_request)
+
+Submit Cloudbeds credentials for a Connect session
+
+Completes a credentials-pattern connection for Cloudbeds with a property (or organization) API key, created in Cloudbeds under Apps & Marketplace → API Credentials.  In Cloudbeds a listing is a room type and its rooms are units. A booking with several rooms becomes one reservation per room.  The key is validated and the properties it can see are read before anything is stored. On success Repull subscribes to the property's Cloudbeds webhooks (reservations, guests, room blocks) and queues the first sync.  Cloudbeds keys expire if unused for 30 days; the connection's regular sync keeps them alive.  No API key required when called with a `sessionId` — the session is the capability token.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ConnectApi.new
+submit_cloudbeds_credentials_request = Repull::SubmitCloudbedsCredentialsRequest.new({credentials: Repull::SubmitCloudbedsCredentialsRequestCredentials.new({api_key: 'api_key_example'})}) # SubmitCloudbedsCredentialsRequest | 
+
+begin
+  # Submit Cloudbeds credentials for a Connect session
+  result = api_instance.submit_cloudbeds_credentials(submit_cloudbeds_credentials_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->submit_cloudbeds_credentials: #{e}"
+end
+```
+
+#### Using the submit_cloudbeds_credentials_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<SubmitCloudbedsCredentials200Response>, Integer, Hash)> submit_cloudbeds_credentials_with_http_info(submit_cloudbeds_credentials_request)
+
+```ruby
+begin
+  # Submit Cloudbeds credentials for a Connect session
+  data, status_code, headers = api_instance.submit_cloudbeds_credentials_with_http_info(submit_cloudbeds_credentials_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <SubmitCloudbedsCredentials200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->submit_cloudbeds_credentials_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **submit_cloudbeds_credentials_request** | [**SubmitCloudbedsCredentialsRequest**](SubmitCloudbedsCredentialsRequest.md) |  |  |
+
+### Return type
+
+[**SubmitCloudbedsCredentials200Response**](SubmitCloudbedsCredentials200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
 ## submit_guesty_credentials
 
 > <SubmitBeds24Credentials200Response> submit_guesty_credentials(submit_guesty_credentials_request)
@@ -1167,6 +1238,75 @@ end
 ### Return type
 
 [**SubmitBeds24Credentials200Response**](SubmitBeds24Credentials200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## submit_mews_credentials
+
+> <SubmitMewsCredentials200Response> submit_mews_credentials(submit_mews_credentials_request)
+
+Submit Mews credentials for a Connect session
+
+Completes a credentials-pattern connection for Mews. The property enables Repull in Mews and shares its Connector API access token.  In Mews a listing is a room type and its rooms are units: rates, restrictions and availability live on the room type, and each reservation names the room it was assigned.  The token is validated against Mews and the property it belongs to is read before anything is stored, so a bad token returns `invalid_credentials` rather than a dead connection. The first sync (listings, rooms, reservations) is queued on success.  To try it without a Mews customer, send the demo access token from Mews's documentation with `environment: \"demo\"`.  No API key required when called with a `sessionId` — the session is the capability token.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ConnectApi.new
+submit_mews_credentials_request = Repull::SubmitMewsCredentialsRequest.new({credentials: Repull::SubmitMewsCredentialsRequestCredentials.new({access_token: 'access_token_example'})}) # SubmitMewsCredentialsRequest | 
+
+begin
+  # Submit Mews credentials for a Connect session
+  result = api_instance.submit_mews_credentials(submit_mews_credentials_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->submit_mews_credentials: #{e}"
+end
+```
+
+#### Using the submit_mews_credentials_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<SubmitMewsCredentials200Response>, Integer, Hash)> submit_mews_credentials_with_http_info(submit_mews_credentials_request)
+
+```ruby
+begin
+  # Submit Mews credentials for a Connect session
+  data, status_code, headers = api_instance.submit_mews_credentials_with_http_info(submit_mews_credentials_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <SubmitMewsCredentials200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->submit_mews_credentials_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **submit_mews_credentials_request** | [**SubmitMewsCredentialsRequest**](SubmitMewsCredentialsRequest.md) |  |  |
+
+### Return type
+
+[**SubmitMewsCredentials200Response**](SubmitMewsCredentials200Response.md)
 
 ### Authorization
 

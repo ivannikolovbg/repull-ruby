@@ -18,6 +18,7 @@
 | **source** | **String** | Booking source / channel. Lowercase. May be null on legacy rows. Canonical name as of 2026-05; &#x60;platform&#x60; is kept as an alias. | [optional] |
 | **platform** | **String** | DEPRECATED alias for &#x60;source&#x60;. Same value, kept for back-compat. | [optional] |
 | **confirmation_code** | **String** | Channel-side confirmation code (Airbnb HMxxx, Booking.com numeric, etc.). |  |
+| **unit** | [**ReservationUnit**](ReservationUnit.md) |  | [optional] |
 | **primary_guest** | [**ReservationPrimaryGuest**](ReservationPrimaryGuest.md) | Inline guest summary. May be undefined for owner-blocks / pre-arrival rows. | [optional] |
 | **occupancy** | [**ReservationOccupancy**](ReservationOccupancy.md) | Normalized guest counts. May be undefined when the source channel did not provide counts. | [optional] |
 | **financials** | [**ReservationFinancials**](ReservationFinancials.md) | Normalized money block. Always populated for paid reservations. | [optional] |
@@ -49,6 +50,7 @@ instance = Repull::Reservation.new(
   source: airbnb,
   platform: airbnb,
   confirmation_code: HMXYZ123,
+  unit: null,
   primary_guest: null,
   occupancy: null,
   financials: null,

@@ -17,7 +17,7 @@
 | **currency** | **String** |  | [optional] |
 | **is_blacklisted** | **Boolean** |  | [optional] |
 | **blacklisted_reason** | **String** |  | [optional] |
-| **risk_level** | **String** | Main-vanio risk score (e.g. &#x60;low&#x60;, &#x60;medium&#x60;, &#x60;high&#x60;). | [optional] |
+| **risk_level** | **String** | Risk score (e.g. &#x60;low&#x60;, &#x60;medium&#x60;, &#x60;high&#x60;). | [optional] |
 | **verification_level** | **String** |  | [optional] |
 | **created_at** | **Time** |  | [optional] |
 | **contacts** | [**Array&lt;GuestContact&gt;**](GuestContact.md) |  | [optional] |

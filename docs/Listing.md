@@ -4,6 +4,7 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
+| **units** | [**Array&lt;ListingUnitsInner&gt;**](ListingUnitsInner.md) | &#x60;GET /v1/listings/{id}&#x60; only. The physical rooms under a hotel-model listing (a Mews or Cloudbeds room type); empty for a single home. Same items as &#x60;GET /v1/listings/{id}/units&#x60;. | [optional] |
 | **id** | **String** | Repull listing id | [optional] |
 | **name** | **String** |  | [optional] |
 | **address** | [**ListingAddress**](ListingAddress.md) |  | [optional] |
@@ -22,6 +23,7 @@
 require 'repull'
 
 instance = Repull::Listing.new(
+  units: null,
   id: null,
   name: I - Stafford Apartment,
   address: null,

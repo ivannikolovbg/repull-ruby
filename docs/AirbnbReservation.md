@@ -25,7 +25,7 @@ instance = Repull::AirbnbReservation.new(
   confirmation_code: HMABC12345,
   listing_id: null,
   account_id: 1772489413932732258,
-  account_name: Pomello,
+  account_name: Seaside Stays,
   status: accepted,
   check_in: null,
   check_out: null,

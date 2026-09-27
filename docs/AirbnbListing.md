@@ -4,10 +4,10 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **listing_id** | **String** | Vanio (Repull) listing id | [optional] |
+| **listing_id** | **String** | Repull listing id | [optional] |
 | **name** | **String** | Listing title | [optional] |
 | **city** | **String** |  | [optional] |
-| **thumbnail_url** | **String** | Cover photo URL for the Vanio listing. **Only present when the caller passes &#x60;?include&#x3D;thumbnail&#x60;.** &#x60;null&#x60; when the listing has no cover photo stored — the listing is still returned. | [optional] |
+| **thumbnail_url** | **String** | Cover photo URL for the listing. **Only present when the caller passes &#x60;?include&#x3D;thumbnail&#x60;.** &#x60;null&#x60; when the listing has no cover photo stored — the listing is still returned. | [optional] |
 | **connections** | [**Array&lt;AirbnbConnection&gt;**](AirbnbConnection.md) |  | [optional] |
 
 ## Example

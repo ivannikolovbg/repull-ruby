@@ -403,7 +403,7 @@ opts = {
   start_date: Date.parse('2013-10-20'), # Date | Window start (ISO YYYY-MM-DD).
   number_of_days: 56, # Integer | Window length in days.
   room_id: 'room_id_example', # String | Restrict to a single Booking.com room id.
-  room_level: true # Boolean | Defaults to `true`: availability per room, which is how Booking.com keeps inventory and how Vanio reads it. Send `false` for the per-rate read — its `roomsToSell` is often 0 for rooms that are on sale.
+  room_level: true # Boolean | Defaults to `true`: availability per room, which is how Booking.com keeps inventory. Send `false` for the per-rate read — its `roomsToSell` is often 0 for rooms that are on sale.
 }
 
 begin
@@ -441,7 +441,7 @@ end
 | **start_date** | **Date** | Window start (ISO YYYY-MM-DD). | [optional] |
 | **number_of_days** | **Integer** | Window length in days. | [optional] |
 | **room_id** | **String** | Restrict to a single Booking.com room id. | [optional] |
-| **room_level** | **Boolean** | Defaults to &#x60;true&#x60;: availability per room, which is how Booking.com keeps inventory and how Vanio reads it. Send &#x60;false&#x60; for the per-rate read — its &#x60;roomsToSell&#x60; is often 0 for rooms that are on sale. | [optional] |
+| **room_level** | **Boolean** | Defaults to &#x60;true&#x60;: availability per room, which is how Booking.com keeps inventory. Send &#x60;false&#x60; for the per-rate read — its &#x60;roomsToSell&#x60; is often 0 for rooms that are on sale. | [optional] |
 
 ### Return type
 
@@ -624,7 +624,7 @@ opts = {
   start_date: Date.parse('2013-10-20'), # Date | 
   number_of_days: 56, # Integer | 
   room_id: 'room_id_example', # String | 
-  room_level: true, # Boolean | Defaults to `true`: availability per room, which is how Booking.com keeps inventory and how Vanio reads it. Send `false` for the per-rate read — its `roomsToSell` is often 0 for rooms that are on sale.
+  room_level: true, # Boolean | Defaults to `true`: availability per room, which is how Booking.com keeps inventory. Send `false` for the per-rate read — its `roomsToSell` is often 0 for rooms that are on sale.
   hotel_id: 'hotel_id_example' # String | Booking.com hotel id, when this listing is published under more than one property. Omit it and a read uses the oldest mapping (reporting the rest in `otherHotelIds`), while a write is refused with `409 ambiguous_booking_mapping` rather than guess. `GET /v1/channels/booking/properties` lists the valid ids.
 }
 
@@ -663,7 +663,7 @@ end
 | **start_date** | **Date** |  | [optional] |
 | **number_of_days** | **Integer** |  | [optional] |
 | **room_id** | **String** |  | [optional] |
-| **room_level** | **Boolean** | Defaults to &#x60;true&#x60;: availability per room, which is how Booking.com keeps inventory and how Vanio reads it. Send &#x60;false&#x60; for the per-rate read — its &#x60;roomsToSell&#x60; is often 0 for rooms that are on sale. | [optional] |
+| **room_level** | **Boolean** | Defaults to &#x60;true&#x60;: availability per room, which is how Booking.com keeps inventory. Send &#x60;false&#x60; for the per-rate read — its &#x60;roomsToSell&#x60; is often 0 for rooms that are on sale. | [optional] |
 | **hotel_id** | **String** | Booking.com hotel id, when this listing is published under more than one property. Omit it and a read uses the oldest mapping (reporting the rest in &#x60;otherHotelIds&#x60;), while a write is refused with &#x60;409 ambiguous_booking_mapping&#x60; rather than guess. &#x60;GET /v1/channels/booking/properties&#x60; lists the valid ids. | [optional] |
 
 ### Return type

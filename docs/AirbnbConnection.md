@@ -28,9 +28,9 @@ require 'repull'
 
 instance = Repull::AirbnbConnection.new(
   id: null,
-  airbnb_id: 1116939745194659457,
+  airbnb_id: 1234567890123456789,
   account_id: 1772489413932732258,
-  account_name: Pomello,
+  account_name: Seaside Stays,
   host_id: null,
   host_name: null,
   active: null,

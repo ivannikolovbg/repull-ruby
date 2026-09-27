@@ -5,7 +5,8 @@
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **synced** | **Boolean** |  |  |
-| **count** | **Integer** | Number of transactions upserted. |  |
+| **count** | **Integer** | Ledger lines written, Payout rows included. |  |
+| **accounts** | [**Array&lt;SyncAirbnbTransactions200ResponseAccountsInner&gt;**](SyncAirbnbTransactions200ResponseAccountsInner.md) |  |  |
 
 ## Example
 
@@ -14,7 +15,8 @@ require 'repull'
 
 instance = Repull::SyncAirbnbTransactions200Response.new(
   synced: null,
-  count: null
+  count: null,
+  accounts: null
 )
 ```
 

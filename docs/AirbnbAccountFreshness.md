@@ -18,7 +18,7 @@ require 'repull'
 
 instance = Repull::AirbnbAccountFreshness.new(
   account_id: 1772489413932732258,
-  account_name: Pomello,
+  account_name: Seaside Stays,
   last_synced_at: null,
   stale: null,
   reason: null,

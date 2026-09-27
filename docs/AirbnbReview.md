@@ -22,7 +22,7 @@ instance = Repull::AirbnbReview.new(
   id: null,
   reservation_code: null,
   account_id: 1772489413932732258,
-  account_name: Pomello,
+  account_name: Seaside Stays,
   rating: null,
   comment: null,
   response: null,

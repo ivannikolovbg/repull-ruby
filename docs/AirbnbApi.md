@@ -41,14 +41,14 @@ All URIs are relative to *https://api.repull.dev*
 | [**list_airbnb_reviews**](AirbnbApi.md#list_airbnb_reviews) | **GET** /v1/channels/airbnb/reviews | List Airbnb reviews |
 | [**list_airbnb_thread_messages**](AirbnbApi.md#list_airbnb_thread_messages) | **GET** /v1/channels/airbnb/messaging/{threadId}/messages | Get Airbnb messages |
 | [**list_airbnb_threads**](AirbnbApi.md#list_airbnb_threads) | **GET** /v1/channels/airbnb/messaging | List Airbnb message threads |
-| [**list_airbnb_transactions**](AirbnbApi.md#list_airbnb_transactions) | **GET** /v1/channels/airbnb/transactions | List Airbnb transactions |
+| [**list_airbnb_transactions**](AirbnbApi.md#list_airbnb_transactions) | **GET** /v1/channels/airbnb/transactions | List Airbnb transactions (settlement ledger) |
 | [**map_airbnb_listing**](AirbnbApi.md#map_airbnb_listing) | **POST** /v1/channels/airbnb/listings/map | Map an Airbnb listing to a Repull listing |
 | [**reorder_airbnb_listing_photos**](AirbnbApi.md#reorder_airbnb_listing_photos) | **PUT** /v1/channels/airbnb/listings/{id}/photos/order | Reorder the Airbnb photo tour |
 | [**respond_airbnb_review**](AirbnbApi.md#respond_airbnb_review) | **POST** /v1/channels/airbnb/reviews/{id}/respond | Respond to Airbnb review |
 | [**respond_airbnb_review_legacy**](AirbnbApi.md#respond_airbnb_review_legacy) | **POST** /v1/channels/airbnb/reviews | Respond to / submit Airbnb review (legacy) |
 | [**send_airbnb_message**](AirbnbApi.md#send_airbnb_message) | **POST** /v1/channels/airbnb/messaging/{threadId}/messages | Send Airbnb message |
 | [**set_airbnb_listing_cover_photo**](AirbnbApi.md#set_airbnb_listing_cover_photo) | **PUT** /v1/channels/airbnb/listings/{id}/photos/cover | Set the Airbnb cover photo |
-| [**sync_airbnb_transactions**](AirbnbApi.md#sync_airbnb_transactions) | **POST** /v1/channels/airbnb/transactions | Sync Airbnb transactions |
+| [**sync_airbnb_transactions**](AirbnbApi.md#sync_airbnb_transactions) | **POST** /v1/channels/airbnb/transactions | Refresh Airbnb transactions |
 | [**update_airbnb_booking_settings**](AirbnbApi.md#update_airbnb_booking_settings) | **PUT** /v1/channels/airbnb/listings/{id}/booking-settings | Update Airbnb booking settings |
 | [**update_airbnb_checkin_guide**](AirbnbApi.md#update_airbnb_checkin_guide) | **PUT** /v1/channels/airbnb/listings/{id}/checkin-guide | Upsert Airbnb check-in guide |
 | [**update_airbnb_listing_amenities**](AirbnbApi.md#update_airbnb_listing_amenities) | **PUT** /v1/channels/airbnb/listings/{id}/amenities | Update Airbnb amenities |
@@ -143,7 +143,7 @@ nil (empty response body)
 
 Listing action (delete/push/publish/unlist/relist)
 
-Apply a state action to a listing by id. The path `id` is the canonical Repull listing id.  **`delete` here never touches Airbnb. Read this before you call it.**  | | `action: \"delete\"` (this endpoint) | `action: \"unlist\"` (this endpoint) | |---|---|---| | What it changes | The Repull record | The live Airbnb listing | | Calls Airbnb | **No. Never.** | Yes | | The guest-facing listing | Stays live and keeps taking bookings | **Goes down** and stops taking bookings | | Billing and plan limits | No longer billed, no longer counts toward the cap | Unchanged | | API access to the listing | `403 listing_inactive` until reactivated | Unchanged — you can still read and write it | | Reverse it with | `PATCH /v1/listings/{id}` `{ \"active\": true }` | `action: \"relist\"` | | Data kept | Yes, and it keeps syncing | Yes |  Neither one deletes anything on Airbnb. **There is no endpoint on this API that deletes an Airbnb listing** — the word `delete` on this route means \"deactivate the Repull record\" and nothing else. (Main vanio's internal listing-sync layer has a same-named action that DOES hard-delete on Airbnb; it is not exposed here, by any endpoint, deliberately. If you have read that code, note that the two names do not mean the same thing.)  `delete` is idempotent. To take a listing off the market on every channel at once — Airbnb and Booking.com together — use `POST /v1/listings/{id}/offline`.  `unlist` calls Airbnb and **takes the live listing down**: it is deactivated with a valid deactivation reason and then READ BACK, so \"Airbnb accepted the call but the listing is still live\" is reported as a failure rather than a success. Requires `airbnbConnectionId` — a listing can be connected to more than one Airbnb listing, and taking down the wrong one is not undoable through this API. `relist` puts it back up (re-enables sync and makes the listing available again); it does not push content.  `relist` goes through the channel-publish billing gate and `unlist` does not, so on a workspace whose subscription has lapsed a listing can be taken down and not put back until billing is sorted out. That refusal comes back as `402` with the action that fixes it — never as an Airbnb error, because retrying and reconnecting Airbnb do nothing for it.  `push` / `publish` push the listing's content to Airbnb via the same host-side sync orchestrator as `POST /v1/listings/{id}/publish/airbnb` — pass `airbnbConnectionId` to update an already-mapped Airbnb listing, or `hostId` to create + publish a new one under that host. `force` re-pushes every field, ignoring dirty-field tracking. The result is per-section: see `AirbnbPublishResult`.  Any other action (e.g. `pull`) returns a structured 422 naming the supported actions.  Returns `403 listing_inactive` for `push`/`publish`/`unlist`/`relist` when the listing is inactive. `delete` (deactivation) is always accepted.
+Apply a state action to a listing by id. The path `id` is the canonical Repull listing id.  **`delete` here never touches Airbnb. Read this before you call it.**  | | `action: \"delete\"` (this endpoint) | `action: \"unlist\"` (this endpoint) | |---|---|---| | What it changes | The Repull record | The live Airbnb listing | | Calls Airbnb | **No. Never.** | Yes | | The guest-facing listing | Stays live and keeps taking bookings | **Goes down** and stops taking bookings | | Billing and plan limits | No longer billed, no longer counts toward the cap | Unchanged | | API access to the listing | `403 listing_inactive` until reactivated | Unchanged — you can still read and write it | | Reverse it with | `PATCH /v1/listings/{id}` `{ \"active\": true }` | `action: \"relist\"` | | Data kept | Yes, and it keeps syncing | Yes |  Neither one deletes anything on Airbnb. **There is no endpoint on this API that deletes an Airbnb listing** — the word `delete` on this route means \"deactivate the Repull record\" and nothing else.  `delete` is idempotent. To take a listing off the market on every channel at once — Airbnb and Booking.com together — use `POST /v1/listings/{id}/offline`.  `unlist` calls Airbnb and **takes the live listing down**: it is deactivated with a valid deactivation reason and then READ BACK, so \"Airbnb accepted the call but the listing is still live\" is reported as a failure rather than a success. Requires `airbnbConnectionId` — a listing can be connected to more than one Airbnb listing, and taking down the wrong one is not undoable through this API. `relist` puts it back up (re-enables sync and makes the listing available again); it does not push content.  `relist` goes through the channel-publish billing gate and `unlist` does not, so on a workspace whose subscription has lapsed a listing can be taken down and not put back until billing is sorted out. That refusal comes back as `402` with the action that fixes it — never as an Airbnb error, because retrying and reconnecting Airbnb do nothing for it.  `push` / `publish` push the listing's content to Airbnb via the same host-side sync orchestrator as `POST /v1/listings/{id}/publish/airbnb` — pass `airbnbConnectionId` to update an already-mapped Airbnb listing, or `hostId` to create + publish a new one under that host. `force` re-pushes every field, ignoring dirty-field tracking. The result is per-section: see `AirbnbPublishResult`.  Any other action (e.g. `pull`) returns a structured 422 naming the supported actions.  Returns `403 listing_inactive` for `push`/`publish`/`unlist`/`relist` when the listing is inactive. `delete` (deactivation) is always accepted.
 
 ### Examples
 
@@ -504,7 +504,7 @@ nil (empty response body)
 
 Create Airbnb special offer or pre-approval
 
-Create a pre-approval or a special offer on an Airbnb thread, addressed by **Airbnb** ids. **Write-side** — calls Airbnb upstream. The Repull-id equivalents, which also update the inquiry in Vanio, are `POST /v1/conversations/{id}/pre-approval` and `POST /v1/conversations/{id}/special-offers` — prefer those unless you only hold Airbnb ids.  - `type: \"preapproval\"` — let the guest book the dates and price they asked about. Requires `thread_id`; optional `block_instant_booking`. - `type: \"offer\"` — your own terms. Requires `thread_id`, `listing_id` (the **Airbnb** listing id, as a string), `start_date`, `nights`, `total_price` (whole stay, listing currency) and `guest_details` with `number_of_guests` (or `number_of_adults`; Airbnb counts adults + children).  The body is validated before anything reaches Airbnb (a `422 invalid_params` names the field), and unknown fields are refused. The legacy spellings `threadId` and `blockInstantBooking` still work. The request is sent as the Airbnb account that owns the thread or listing.  Airbnb refusals are mapped rather than returned as a 500: `409 inquiry_no_longer_open` / `inquiry_expired` when the inquiry moved on, `422 airbnb_rejected` with Airbnb’s reason otherwise, `403 connection_reauth_required` when the grant does not allow it.  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.  Send `Idempotency-Key`: a repeat with the same key replays the first response instead of acting twice (a `409 idempotency_key_in_use` while the first is still running). A 5xx, a `429 airbnb_rate_limited` or a `403 connection_reauth_required` is not stored — nothing was done — so retrying with the same key reaches Airbnb again.
+Create a pre-approval or a special offer on an Airbnb thread, addressed by **Airbnb** ids. **Write-side** — calls Airbnb upstream. The Repull-id equivalents, which also update the inquiry in Repull, are `POST /v1/conversations/{id}/pre-approval` and `POST /v1/conversations/{id}/special-offers` — prefer those unless you only hold Airbnb ids.  - `type: \"preapproval\"` — let the guest book the dates and price they asked about. Requires `thread_id`; optional `block_instant_booking`. - `type: \"offer\"` — your own terms. Requires `thread_id`, `listing_id` (the **Airbnb** listing id, as a string), `start_date`, `nights`, `total_price` (whole stay, listing currency) and `guest_details` with `number_of_guests` (or `number_of_adults`; Airbnb counts adults + children).  The body is validated before anything reaches Airbnb (a `422 invalid_params` names the field), and unknown fields are refused. The legacy spellings `threadId` and `blockInstantBooking` still work. The request is sent as the Airbnb account that owns the thread or listing.  Airbnb refusals are mapped rather than returned as a 500: `409 inquiry_no_longer_open` / `inquiry_expired` when the inquiry moved on, `422 airbnb_rejected` with Airbnb’s reason otherwise, `403 connection_reauth_required` when the grant does not allow it.  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.  Send `Idempotency-Key`: a repeat with the same key replays the first response instead of acting twice (a `409 idempotency_key_in_use` while the first is still running). A 5xx, a `429 airbnb_rate_limited` or a `403 connection_reauth_required` is not stored — nothing was done — so retrying with the same key reaches Airbnb again.
 
 ### Examples
 
@@ -1208,7 +1208,7 @@ This endpoint does not need any parameter.
 
 Get Airbnb listing
 
-Fetch all Airbnb connection rows for a single Vanio listing id. A property may be linked from multiple Airbnb hosts — every match is returned. Pass `?include=amenities` to enrich each row with its current Airbnb amenities.  Each row carries `syncCategory` — Airbnb's own per-listing API sync decision (`sync_all`, `sync_rates_and_availability`, or `none`) — and `writable`, which is `false` exactly when that category is `none`, meaning Airbnb refuses every write to the listing and Repull returns `403 listing_not_api_connected` without sending anything. `GET /v1/channels/airbnb/listings` reports both fields for the whole portfolio in one call.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+Fetch all Airbnb connection rows for a single Repull listing id. A property may be linked from multiple Airbnb hosts — every match is returned. Pass `?include=amenities` to enrich each row with its current Airbnb amenities.  Each row carries `syncCategory` — Airbnb's own per-listing API sync decision (`sync_all`, `sync_rates_and_availability`, or `none`) — and `writable`, which is `false` exactly when that category is `none`, meaning Airbnb refuses every write to the listing and Repull returns `403 listing_not_api_connected` without sending anything. `GET /v1/channels/airbnb/listings` reports both fields for the whole portfolio in one call.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -2712,9 +2712,9 @@ end
 
 > <ListAirbnbTransactions200Response> list_airbnb_transactions(opts)
 
-List Airbnb transactions
+List Airbnb transactions (settlement ledger)
 
-List Airbnb host transactions (reservation earnings, payouts, resolution adjustments) for this workspace, newest first. **Pure DB read** — customer-facing reads never call Airbnb upstream; they serve the `airbnb_transactions` mirror. Each row carries the genuine host- and guest-side financial breakdown (accommodation subtotal, cleaning fee, host + guest service fees split base/VAT, tax buckets, expected/actual host payout with settlement status). Trigger a refresh with `POST` on this path. When the mirror is empty or the host disconnected, `dataFreshness.stale = true` with a `reason` (`never_synced`, `host_disconnected_<iso>`, `sync_lag_>_24h`).  Transactions of reservations on inactive listings are left out; payout rows, which belong to no listing, are always included.  **Several Airbnb accounts?** A workspace can connect more than one. By default this returns every connected account's rows; pass `?account_id=<airbnb host id>` to scope to one. Every row carries `accountId` + `accountName` either way, and `dataFreshness.accounts[]` reports each account's freshness separately, so one disconnected host no longer marks the whole response stale.
+The Airbnb settlement ledger for this workspace: every payout Airbnb sent to the host, each followed by the lines it paid — reservations and their installments, adjustments, resolution payouts and adjustments, cancellation fees. A payout's lines' signed `amount`s sum to its `payout.paidOutAmount` exactly, negative lines included (an adjustment offset against a later payout appears under that payout). `status: UPCOMING` lines are expected earnings not paid out yet; they belong to no payout.  **Ids are stable.** Airbnb sends no line id and no payout id on lines, so Repull derives them deterministically: a Payout row's id is Airbnb's payout id; a line's is `<payoutId>:<type>:<confirmationCode>:<n>`. The same line has the same id on every refresh and every page, so you can upsert on `transactionId`. A payout that nets to $0.00 has no Airbnb id; it gets a derived `Z-<date>-<hash>` id with `payout.payoutIdSynthetic: true`.  **Order:** newest first by the payout's date; each Payout row is followed by its lines in Airbnb's order (`payout.lineIndex`).  **Dates:** `start_date` / `end_date` match the payout's date for settled lines (a line can be dated the day before its payout, and is still returned with it) and the line's own date for UPCOMING lines.  **Pure DB read** — never calls Airbnb. Refresh with `POST` on this path. `dataFreshness` reports when each account's ledger was last refreshed.  Lines on listings that are inactive in Repull are included and flagged `onInactiveListing: true`, so every payout reconciles. Lines Repull cannot match to a reservation keep `reservationId: null`.  **Not in Airbnb's transaction history** (listed in `unavailableFields`): taxes Airbnb collects and remits itself, and the guest-paid total (see the reservation's financial breakdown); pass-through occupancy tax paid to the host does appear, as its own `Pass Through Tot` lines, the original line a refund or reversal reverses (it names the stay and the resolution), and currency-conversion amounts (only the payout currency is reported).
 
 ### Examples
 
@@ -2729,11 +2729,19 @@ end
 
 api_instance = Repull::AirbnbApi.new
 opts = {
-  account_id: '1772489413932732258' # String | Scope the response to ONE connected Airbnb account. The value is the Airbnb host id — the same `accounts[].externalAccountId` that `GET /v1/connect/airbnb` returns and `DELETE /v1/connect/airbnb?accountId=` accepts.  A workspace can connect several Airbnb accounts. Omit this and you get every account's rows (the default, unchanged). Every row carries `accountId` + `accountName` either way, so you can group without a second call.  An id that is not connected to THIS workspace returns `404 not_found` with your own ids in `valid_values` — we do not distinguish \"no such host\" from \"someone else's host\", because confirming the latter would leak another workspace's account.  Note this is NOT the `X-Account-Id` header, which carries a connection id and cannot tell two Airbnb hosts apart.
+  account_id: '1772489413932732258', # String | Scope the response to ONE connected Airbnb account. The value is the Airbnb host id — the same `accounts[].externalAccountId` that `GET /v1/connect/airbnb` returns and `DELETE /v1/connect/airbnb?accountId=` accepts.  A workspace can connect several Airbnb accounts. Omit this and you get every account's rows (the default, unchanged). Every row carries `accountId` + `accountName` either way, so you can group without a second call.  An id that is not connected to THIS workspace returns `404 not_found` with your own ids in `valid_values` — we do not distinguish \"no such host\" from \"someone else's host\", because confirming the latter would leak another workspace's account.  Note this is NOT the `X-Account-Id` header, which carries a connection id and cannot tell two Airbnb hosts apart.
+  start_date: Date.parse('2013-10-20'), # Date | Inclusive lower bound on the payout's date (the line's own date for UPCOMING lines). YYYY-MM-DD.
+  end_date: Date.parse('2013-10-20'), # Date | Inclusive upper bound, as `start_date`.
+  status: 'COMPLETED', # String | `COMPLETED` (settled) or `UPCOMING` (expected).
+  type: 'type_example', # String | Airbnb's line type, exact match ignoring case — e.g. `Payout`, `Reservation`, `Adjustment`, `Resolution Payout`.
+  payout_id: 'payout_id_example', # String | One payout: its Payout row and all its lines.
+  confirmation_code: 'confirmation_code_example', # String | Every line for one reservation — each installment, adjustment and resolution.
+  limit: 56, # Integer | Lines per page. Hard cap is 500.
+  cursor: 'cursor_example' # String | Opaque cursor returned by the previous response's `pagination.nextCursor`. Omit to fetch the first page.
 }
 
 begin
-  # List Airbnb transactions
+  # List Airbnb transactions (settlement ledger)
   result = api_instance.list_airbnb_transactions(opts)
   p result
 rescue Repull::ApiError => e
@@ -2749,7 +2757,7 @@ This returns an Array which contains the response data, status code and headers.
 
 ```ruby
 begin
-  # List Airbnb transactions
+  # List Airbnb transactions (settlement ledger)
   data, status_code, headers = api_instance.list_airbnb_transactions_with_http_info(opts)
   p status_code # => 2xx
   p headers # => { ... }
@@ -2764,6 +2772,14 @@ end
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **account_id** | **String** | Scope the response to ONE connected Airbnb account. The value is the Airbnb host id — the same &#x60;accounts[].externalAccountId&#x60; that &#x60;GET /v1/connect/airbnb&#x60; returns and &#x60;DELETE /v1/connect/airbnb?accountId&#x3D;&#x60; accepts.  A workspace can connect several Airbnb accounts. Omit this and you get every account&#39;s rows (the default, unchanged). Every row carries &#x60;accountId&#x60; + &#x60;accountName&#x60; either way, so you can group without a second call.  An id that is not connected to THIS workspace returns &#x60;404 not_found&#x60; with your own ids in &#x60;valid_values&#x60; — we do not distinguish \&quot;no such host\&quot; from \&quot;someone else&#39;s host\&quot;, because confirming the latter would leak another workspace&#39;s account.  Note this is NOT the &#x60;X-Account-Id&#x60; header, which carries a connection id and cannot tell two Airbnb hosts apart. | [optional] |
+| **start_date** | **Date** | Inclusive lower bound on the payout&#39;s date (the line&#39;s own date for UPCOMING lines). YYYY-MM-DD. | [optional] |
+| **end_date** | **Date** | Inclusive upper bound, as &#x60;start_date&#x60;. | [optional] |
+| **status** | **String** | &#x60;COMPLETED&#x60; (settled) or &#x60;UPCOMING&#x60; (expected). | [optional] |
+| **type** | **String** | Airbnb&#39;s line type, exact match ignoring case — e.g. &#x60;Payout&#x60;, &#x60;Reservation&#x60;, &#x60;Adjustment&#x60;, &#x60;Resolution Payout&#x60;. | [optional] |
+| **payout_id** | **String** | One payout: its Payout row and all its lines. | [optional] |
+| **confirmation_code** | **String** | Every line for one reservation — each installment, adjustment and resolution. | [optional] |
+| **limit** | **Integer** | Lines per page. Hard cap is 500. | [optional][default to 100] |
+| **cursor** | **String** | Opaque cursor returned by the previous response&#39;s &#x60;pagination.nextCursor&#x60;. Omit to fetch the first page. | [optional] |
 
 ### Return type
 
@@ -3201,9 +3217,9 @@ end
 
 > <SyncAirbnbTransactions200Response> sync_airbnb_transactions(opts)
 
-Sync Airbnb transactions
+Refresh Airbnb transactions
 
-Refresh the Airbnb transactions mirror for this workspace by pulling from Airbnb upstream and upserting the breakdown that `GET` serves. Optional JSON body `{ start_date, end_date, transaction_type }` (`transaction_type` is `COMPLETED` or `UPCOMING`; both are synced when omitted). Returns `{ synced, count }`.
+Pull the transaction history from Airbnb into the ledger `GET` serves. Every connected Airbnb account is refreshed, or only `?account_id=`. Without dates: settled lines from the last 12 months and the forecast for the next 12. Safe to repeat: settled lines are upserted on their stable ids, never duplicated or removed; the UPCOMING forecast inside the fetched window is replaced, so a line that has since been paid out moves to its payout. Each account reports its own outcome in `accounts[]`: one account Airbnb refuses (a revoked host, a listing Airbnb no longer serves) is reported there with Airbnb's reason and does not stop the others. When every account fails, the response is Airbnb's answer with its usual code.
 
 ### Examples
 
@@ -3218,11 +3234,12 @@ end
 
 api_instance = Repull::AirbnbApi.new
 opts = {
+  account_id: '1772489413932732258', # String | Scope the response to ONE connected Airbnb account. The value is the Airbnb host id — the same `accounts[].externalAccountId` that `GET /v1/connect/airbnb` returns and `DELETE /v1/connect/airbnb?accountId=` accepts.  A workspace can connect several Airbnb accounts. Omit this and you get every account's rows (the default, unchanged). Every row carries `accountId` + `accountName` either way, so you can group without a second call.  An id that is not connected to THIS workspace returns `404 not_found` with your own ids in `valid_values` — we do not distinguish \"no such host\" from \"someone else's host\", because confirming the latter would leak another workspace's account.  Note this is NOT the `X-Account-Id` header, which carries a connection id and cannot tell two Airbnb hosts apart.
   sync_airbnb_transactions_request: Repull::SyncAirbnbTransactionsRequest.new # SyncAirbnbTransactionsRequest | 
 }
 
 begin
-  # Sync Airbnb transactions
+  # Refresh Airbnb transactions
   result = api_instance.sync_airbnb_transactions(opts)
   p result
 rescue Repull::ApiError => e
@@ -3238,7 +3255,7 @@ This returns an Array which contains the response data, status code and headers.
 
 ```ruby
 begin
-  # Sync Airbnb transactions
+  # Refresh Airbnb transactions
   data, status_code, headers = api_instance.sync_airbnb_transactions_with_http_info(opts)
   p status_code # => 2xx
   p headers # => { ... }
@@ -3252,6 +3269,7 @@ end
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
+| **account_id** | **String** | Scope the response to ONE connected Airbnb account. The value is the Airbnb host id — the same &#x60;accounts[].externalAccountId&#x60; that &#x60;GET /v1/connect/airbnb&#x60; returns and &#x60;DELETE /v1/connect/airbnb?accountId&#x3D;&#x60; accepts.  A workspace can connect several Airbnb accounts. Omit this and you get every account&#39;s rows (the default, unchanged). Every row carries &#x60;accountId&#x60; + &#x60;accountName&#x60; either way, so you can group without a second call.  An id that is not connected to THIS workspace returns &#x60;404 not_found&#x60; with your own ids in &#x60;valid_values&#x60; — we do not distinguish \&quot;no such host\&quot; from \&quot;someone else&#39;s host\&quot;, because confirming the latter would leak another workspace&#39;s account.  Note this is NOT the &#x60;X-Account-Id&#x60; header, which carries a connection id and cannot tell two Airbnb hosts apart. | [optional] |
 | **sync_airbnb_transactions_request** | [**SyncAirbnbTransactionsRequest**](SyncAirbnbTransactionsRequest.md) |  | [optional] |
 
 ### Return type

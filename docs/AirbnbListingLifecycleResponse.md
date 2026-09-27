@@ -9,7 +9,7 @@
 | **channel** | **String** |  | [optional] |
 | **airbnb_connection_id** | **String** |  | [optional] |
 | **live** | **Boolean** | Whether the Airbnb listing is taking bookings after this call. &#x60;false&#x60; after &#x60;unlist&#x60;, &#x60;true&#x60; after &#x60;relist&#x60;. | [optional] |
-| **verified** | **Boolean** | True when the result was confirmed by reading the listing back from Airbnb (done on &#x60;unlist&#x60;: Airbnb accepting the call is not proof the listing came down). | [optional] |
+| **verified** | **Boolean** | True when the result was confirmed by reading the listing back from Airbnb, on &#x60;unlist&#x60; and &#x60;relist&#x60; alike: Airbnb accepting the call is not proof the listing came down or went live. &#x60;false&#x60; means the read-back could not run — an unknown, not a success. A read-back that shows the wrong state is returned as an error, not as &#x60;verified: false&#x60;. | [optional] |
 
 ## Example
 

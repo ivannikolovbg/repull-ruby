@@ -37,7 +37,7 @@ instance = Repull::AirbnbAlteration.new(
   alteration_id: null,
   reservation_id: null,
   account_id: 1772489413932732258,
-  account_name: Pomello,
+  account_name: Seaside Stays,
   platform: airbnb,
   status: null,
   initiator: null,

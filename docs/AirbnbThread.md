@@ -21,7 +21,7 @@ instance = Repull::AirbnbThread.new(
   id: null,
   listing_id: null,
   account_id: 1772489413932732258,
-  account_name: Pomello,
+  account_name: Seaside Stays,
   guest_name: null,
   last_message_at: null,
   unread_count: null

@@ -30,12 +30,15 @@ Repull::WebhookEvent.openapi_one_of
 #   :'MigrationFailedEvent',
 #   :'PaymentCompletedEvent',
 #   :'PaymentRefundedEvent',
+#   :'PayoutCompletedEvent',
 #   :'RepullPingEvent',
 #   :'ReservationAlterationCreatedEvent',
 #   :'ReservationAlterationRespondedEvent',
 #   :'ReservationCancelledEvent',
 #   :'ReservationCreatedEvent',
 #   :'ReservationMessageReceivedEvent',
+#   :'ReservationMessageSentEvent',
+#   :'ReservationMessageUpdatedEvent',
 #   :'ReservationRequestCreatedEvent',
 #   :'ReservationRequestUpdatedEvent',
 #   :'ReservationUpdatedEvent',
@@ -86,12 +89,15 @@ Repull::WebhookEvent.openapi_discriminator_mapping
 #   :'migration.failed' => :'MigrationFailedEvent',
 #   :'payment.completed' => :'PaymentCompletedEvent',
 #   :'payment.refunded' => :'PaymentRefundedEvent',
+#   :'payout.completed' => :'PayoutCompletedEvent',
 #   :'repull.ping' => :'RepullPingEvent',
 #   :'reservation.alteration.created' => :'ReservationAlterationCreatedEvent',
 #   :'reservation.alteration.responded' => :'ReservationAlterationRespondedEvent',
 #   :'reservation.cancelled' => :'ReservationCancelledEvent',
 #   :'reservation.created' => :'ReservationCreatedEvent',
 #   :'reservation.message.received' => :'ReservationMessageReceivedEvent',
+#   :'reservation.message.sent' => :'ReservationMessageSentEvent',
+#   :'reservation.message.updated' => :'ReservationMessageUpdatedEvent',
 #   :'reservation.request.created' => :'ReservationRequestCreatedEvent',
 #   :'reservation.request.updated' => :'ReservationRequestUpdatedEvent',
 #   :'reservation.updated' => :'ReservationUpdatedEvent',
@@ -141,12 +147,15 @@ Repull::WebhookEvent.build(data_that_doesnt_match)
 - `MigrationFailedEvent`
 - `PaymentCompletedEvent`
 - `PaymentRefundedEvent`
+- `PayoutCompletedEvent`
 - `RepullPingEvent`
 - `ReservationAlterationCreatedEvent`
 - `ReservationAlterationRespondedEvent`
 - `ReservationCancelledEvent`
 - `ReservationCreatedEvent`
 - `ReservationMessageReceivedEvent`
+- `ReservationMessageSentEvent`
+- `ReservationMessageUpdatedEvent`
 - `ReservationRequestCreatedEvent`
 - `ReservationRequestUpdatedEvent`
 - `ReservationUpdatedEvent`

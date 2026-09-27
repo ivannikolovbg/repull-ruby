@@ -4,9 +4,9 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **start_date** | **Date** | Inclusive lower bound on transaction date. | [optional] |
-| **end_date** | **Date** | Inclusive upper bound on transaction date. | [optional] |
-| **transaction_type** | **String** |  | [optional] |
+| **start_date** | **Date** | Inclusive lower bound (YYYY-MM-DD). | [optional] |
+| **end_date** | **Date** | Inclusive upper bound (YYYY-MM-DD). | [optional] |
+| **transaction_type** | **String** | Refresh only settled or only upcoming lines. Both when omitted. | [optional] |
 
 ## Example
 
