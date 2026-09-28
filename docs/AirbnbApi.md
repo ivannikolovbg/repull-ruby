@@ -14,7 +14,7 @@ All URIs are relative to *https://api.repull.dev*
 | [**decline_airbnb_alteration**](AirbnbApi.md#decline_airbnb_alteration) | **POST** /v1/channels/airbnb/alterations/{id}/decline | Decline Airbnb alteration |
 | [**delete_airbnb_listing_photo**](AirbnbApi.md#delete_airbnb_listing_photo) | **DELETE** /v1/channels/airbnb/listings/{id}/photos | Delete an Airbnb photo |
 | [**delete_airbnb_listing_room**](AirbnbApi.md#delete_airbnb_listing_room) | **DELETE** /v1/channels/airbnb/listings/{id}/rooms | Delete an Airbnb room |
-| [**edit_airbnb_review**](AirbnbApi.md#edit_airbnb_review) | **PUT** /v1/channels/airbnb/reviews/{id} | Edit Airbnb host review |
+| [**edit_airbnb_review**](AirbnbApi.md#edit_airbnb_review) | **PUT** /v1/channels/airbnb/reviews/{id} | Submit your review of a guest (publishes, final) |
 | [**get_airbnb_alteration**](AirbnbApi.md#get_airbnb_alteration) | **GET** /v1/channels/airbnb/alterations/{id} | Get Airbnb alteration |
 | [**get_airbnb_booking_settings**](AirbnbApi.md#get_airbnb_booking_settings) | **GET** /v1/channels/airbnb/listings/{id}/booking-settings | Get Airbnb booking settings |
 | [**get_airbnb_checkin_guide**](AirbnbApi.md#get_airbnb_checkin_guide) | **GET** /v1/channels/airbnb/listings/{id}/checkin-guide | Get Airbnb check-in guide |
@@ -787,11 +787,11 @@ end
 
 ## edit_airbnb_review
 
-> <AirbnbReview> edit_airbnb_review(id, airbnb_review)
+> <AirbnbReview> edit_airbnb_review(id, airbnb_host_review_submit)
 
-Edit Airbnb host review
+Submit your review of a guest (publishes, final)
 
-Edit a host-side review for an Airbnb stay. Airbnb collapses POST + PUT into the same upstream call (`PUT /v2/listing_reviews/{id}`), so this endpoint covers both initial submit and subsequent edits while the review window is open.  Body is a partial `AirbnbReview` — pass the fields you want to change (rating, public review, private feedback, category ratings).  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+Submit your review of a guest — the review with `reviewerRole: \"host\"`. **Submitting publishes it and is final:** Airbnb has no draft and does not allow edits; a second submission is `409 review_already_submitted`. Airbnb accepts it up to 14 days after checkout (`expiresAt`).  Required: `publicReview`, `isRevieweeRecommended` (whether you would host the guest again), and a 1–5 rating for **each** of `cleanliness`, `communication` and `respect_house_rules` — send `rating` to use one score for all three, `categoryRatings` to score them individually, or both (`rating` fills any category you did not rate). Optional: `privateFeedback`, a note to the guest that is not published. A request missing a required piece is refused with `422 invalid_params` naming it, before anything is sent to Airbnb.  ```json {   \"publicReview\": \"Joanne was a great guest.\",   \"rating\": 5,   \"privateFeedback\": \"Thanks for leaving the place so tidy!\",   \"isRevieweeRecommended\": true } ```  A guest's review of you (`reviewerRole: \"guest\"`) cannot be written here — `409 not_host_review`; reply to it with `POST /v1/channels/airbnb/reviews/{id}/respond`. After the window closes: `409 review_window_closed`. Full guide: https://repull.dev/docs/channels/airbnb/reviews
 
 ### Examples
 
@@ -805,12 +805,12 @@ Repull.configure do |config|
 end
 
 api_instance = Repull::AirbnbApi.new
-id = 'id_example' # String | Airbnb review id (`HRabc123` style).
-airbnb_review = Repull::AirbnbReview.new # AirbnbReview | 
+id = 'id_example' # String | The review's `id` or `externalReviewId`, both as returned by `GET /v1/reviews`.
+airbnb_host_review_submit = Repull::AirbnbHostReviewSubmit.new({public_review: 'Joanne was a great guest. The space was kept clean and communication was clear.', is_reviewee_recommended: false}) # AirbnbHostReviewSubmit | 
 
 begin
-  # Edit Airbnb host review
-  result = api_instance.edit_airbnb_review(id, airbnb_review)
+  # Submit your review of a guest (publishes, final)
+  result = api_instance.edit_airbnb_review(id, airbnb_host_review_submit)
   p result
 rescue Repull::ApiError => e
   puts "Error when calling AirbnbApi->edit_airbnb_review: #{e}"
@@ -821,12 +821,12 @@ end
 
 This returns an Array which contains the response data, status code and headers.
 
-> <Array(<AirbnbReview>, Integer, Hash)> edit_airbnb_review_with_http_info(id, airbnb_review)
+> <Array(<AirbnbReview>, Integer, Hash)> edit_airbnb_review_with_http_info(id, airbnb_host_review_submit)
 
 ```ruby
 begin
-  # Edit Airbnb host review
-  data, status_code, headers = api_instance.edit_airbnb_review_with_http_info(id, airbnb_review)
+  # Submit your review of a guest (publishes, final)
+  data, status_code, headers = api_instance.edit_airbnb_review_with_http_info(id, airbnb_host_review_submit)
   p status_code # => 2xx
   p headers # => { ... }
   p data # => <AirbnbReview>
@@ -839,8 +839,8 @@ end
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **id** | **String** | Airbnb review id (&#x60;HRabc123&#x60; style). |  |
-| **airbnb_review** | [**AirbnbReview**](AirbnbReview.md) |  |  |
+| **id** | **String** | The review&#39;s &#x60;id&#x60; or &#x60;externalReviewId&#x60;, both as returned by &#x60;GET /v1/reviews&#x60;. |  |
+| **airbnb_host_review_submit** | [**AirbnbHostReviewSubmit**](AirbnbHostReviewSubmit.md) |  |  |
 
 ### Return type
 

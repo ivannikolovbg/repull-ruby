@@ -744,24 +744,24 @@ module Repull
       return data, status_code, headers
     end
 
-    # Edit Airbnb host review
-    # Edit a host-side review for an Airbnb stay. Airbnb collapses POST + PUT into the same upstream call (`PUT /v2/listing_reviews/{id}`), so this endpoint covers both initial submit and subsequent edits while the review window is open.  Body is a partial `AirbnbReview` — pass the fields you want to change (rating, public review, private feedback, category ratings).  Returns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
-    # @param id [String] Airbnb review id (&#x60;HRabc123&#x60; style).
-    # @param airbnb_review [AirbnbReview] 
+    # Submit your review of a guest (publishes, final)
+    # Submit your review of a guest — the review with `reviewerRole: \"host\"`. **Submitting publishes it and is final:** Airbnb has no draft and does not allow edits; a second submission is `409 review_already_submitted`. Airbnb accepts it up to 14 days after checkout (`expiresAt`).  Required: `publicReview`, `isRevieweeRecommended` (whether you would host the guest again), and a 1–5 rating for **each** of `cleanliness`, `communication` and `respect_house_rules` — send `rating` to use one score for all three, `categoryRatings` to score them individually, or both (`rating` fills any category you did not rate). Optional: `privateFeedback`, a note to the guest that is not published. A request missing a required piece is refused with `422 invalid_params` naming it, before anything is sent to Airbnb.  ```json {   \"publicReview\": \"Joanne was a great guest.\",   \"rating\": 5,   \"privateFeedback\": \"Thanks for leaving the place so tidy!\",   \"isRevieweeRecommended\": true } ```  A guest's review of you (`reviewerRole: \"guest\"`) cannot be written here — `409 not_host_review`; reply to it with `POST /v1/channels/airbnb/reviews/{id}/respond`. After the window closes: `409 review_window_closed`. Full guide: https://repull.dev/docs/channels/airbnb/reviews
+    # @param id [String] The review&#39;s &#x60;id&#x60; or &#x60;externalReviewId&#x60;, both as returned by &#x60;GET /v1/reviews&#x60;.
+    # @param airbnb_host_review_submit [AirbnbHostReviewSubmit] 
     # @param [Hash] opts the optional parameters
     # @return [AirbnbReview]
-    def edit_airbnb_review(id, airbnb_review, opts = {})
-      data, _status_code, _headers = edit_airbnb_review_with_http_info(id, airbnb_review, opts)
+    def edit_airbnb_review(id, airbnb_host_review_submit, opts = {})
+      data, _status_code, _headers = edit_airbnb_review_with_http_info(id, airbnb_host_review_submit, opts)
       data
     end
 
-    # Edit Airbnb host review
-    # Edit a host-side review for an Airbnb stay. Airbnb collapses POST + PUT into the same upstream call (&#x60;PUT /v2/listing_reviews/{id}&#x60;), so this endpoint covers both initial submit and subsequent edits while the review window is open.  Body is a partial &#x60;AirbnbReview&#x60; — pass the fields you want to change (rating, public review, private feedback, category ratings).  Returns &#x60;403 listing_inactive&#x60; when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
-    # @param id [String] Airbnb review id (&#x60;HRabc123&#x60; style).
-    # @param airbnb_review [AirbnbReview] 
+    # Submit your review of a guest (publishes, final)
+    # Submit your review of a guest — the review with &#x60;reviewerRole: \&quot;host\&quot;&#x60;. **Submitting publishes it and is final:** Airbnb has no draft and does not allow edits; a second submission is &#x60;409 review_already_submitted&#x60;. Airbnb accepts it up to 14 days after checkout (&#x60;expiresAt&#x60;).  Required: &#x60;publicReview&#x60;, &#x60;isRevieweeRecommended&#x60; (whether you would host the guest again), and a 1–5 rating for **each** of &#x60;cleanliness&#x60;, &#x60;communication&#x60; and &#x60;respect_house_rules&#x60; — send &#x60;rating&#x60; to use one score for all three, &#x60;categoryRatings&#x60; to score them individually, or both (&#x60;rating&#x60; fills any category you did not rate). Optional: &#x60;privateFeedback&#x60;, a note to the guest that is not published. A request missing a required piece is refused with &#x60;422 invalid_params&#x60; naming it, before anything is sent to Airbnb.  &#x60;&#x60;&#x60;json {   \&quot;publicReview\&quot;: \&quot;Joanne was a great guest.\&quot;,   \&quot;rating\&quot;: 5,   \&quot;privateFeedback\&quot;: \&quot;Thanks for leaving the place so tidy!\&quot;,   \&quot;isRevieweeRecommended\&quot;: true } &#x60;&#x60;&#x60;  A guest&#39;s review of you (&#x60;reviewerRole: \&quot;guest\&quot;&#x60;) cannot be written here — &#x60;409 not_host_review&#x60;; reply to it with &#x60;POST /v1/channels/airbnb/reviews/{id}/respond&#x60;. After the window closes: &#x60;409 review_window_closed&#x60;. Full guide: https://repull.dev/docs/channels/airbnb/reviews
+    # @param id [String] The review&#39;s &#x60;id&#x60; or &#x60;externalReviewId&#x60;, both as returned by &#x60;GET /v1/reviews&#x60;.
+    # @param airbnb_host_review_submit [AirbnbHostReviewSubmit] 
     # @param [Hash] opts the optional parameters
     # @return [Array<(AirbnbReview, Integer, Hash)>] AirbnbReview data, response status code and response headers
-    def edit_airbnb_review_with_http_info(id, airbnb_review, opts = {})
+    def edit_airbnb_review_with_http_info(id, airbnb_host_review_submit, opts = {})
       if @api_client.config.debugging
         @api_client.config.logger.debug 'Calling API: AirbnbApi.edit_airbnb_review ...'
       end
@@ -769,9 +769,9 @@ module Repull
       if @api_client.config.client_side_validation && id.nil?
         fail ArgumentError, "Missing the required parameter 'id' when calling AirbnbApi.edit_airbnb_review"
       end
-      # verify the required parameter 'airbnb_review' is set
-      if @api_client.config.client_side_validation && airbnb_review.nil?
-        fail ArgumentError, "Missing the required parameter 'airbnb_review' when calling AirbnbApi.edit_airbnb_review"
+      # verify the required parameter 'airbnb_host_review_submit' is set
+      if @api_client.config.client_side_validation && airbnb_host_review_submit.nil?
+        fail ArgumentError, "Missing the required parameter 'airbnb_host_review_submit' when calling AirbnbApi.edit_airbnb_review"
       end
       # resource path
       local_var_path = '/v1/channels/airbnb/reviews/{id}'.sub('{id}', CGI.escape(id.to_s))
@@ -793,7 +793,7 @@ module Repull
       form_params = opts[:form_params] || {}
 
       # http body (model)
-      post_body = opts[:debug_body] || @api_client.object_to_http_body(airbnb_review)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(airbnb_host_review_submit)
 
       # return_type
       return_type = opts[:debug_return_type] || 'AirbnbReview'
