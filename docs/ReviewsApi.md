@@ -7,6 +7,7 @@ All URIs are relative to *https://api.repull.dev*
 | [**get_review**](ReviewsApi.md#get_review) | **GET** /v1/reviews/{id} | Get review |
 | [**list_reviews**](ReviewsApi.md#list_reviews) | **GET** /v1/reviews | List reviews |
 | [**reply_to_review**](ReviewsApi.md#reply_to_review) | **POST** /v1/reviews/{id}/reply | Reply to a review on any channel |
+| [**submit_guest_review**](ReviewsApi.md#submit_guest_review) | **POST** /v1/reviews/{id}/guest-review | Review a guest (publishes, final) |
 
 
 ## get_review
@@ -177,7 +178,7 @@ end
 
 Reply to a review on any channel
 
-Resolves the review, reads its channel and dispatches the reply. Channel-neutral: you do not need to know where the review came from.  Replies are available on Airbnb today; a review from a channel without a reply API returns `422 unsupported_channel` naming the channels that do work.  **Inactive listings:** a review of an inactive listing returns `403 listing_inactive` and no reply reaches the channel. Activate the listing first.
+Resolves the review, reads its channel and dispatches the reply. Channel-neutral: you do not need to know where the review came from.  Replies work on Airbnb and Booking.com. Each channel accepts one reply per review. A review from a channel without a reply API returns `422 unsupported_channel` naming the channels that do work.  To review a guest (Airbnb only), use `POST /v1/reviews/{id}/guest-review`.  **Inactive listings:** a review of an inactive listing returns `403 listing_inactive` and no reply reaches the channel. Activate the listing first.
 
 ### Examples
 
@@ -231,6 +232,77 @@ end
 ### Return type
 
 [**ReplyToReview201Response**](ReplyToReview201Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## submit_guest_review
+
+> <SubmitGuestReview200Response> submit_guest_review(id, airbnb_host_review_submit)
+
+Review a guest (publishes, final)
+
+Submit your review of a guest — a review with `reviewerRole: \"host\"` from `GET /v1/reviews?reviewerRole=host`. Only Airbnb lets hosts review guests; a review from another channel returns `422 unsupported_channel`.  **Submitting publishes it and is final:** Airbnb has no draft and does not allow edits; a second submission is `409 review_already_submitted`. Airbnb accepts it up to 14 days after checkout (`expiresAt`); after that, `409 review_window_closed`.  Required: `publicReview`, `isRevieweeRecommended` (whether you would host the guest again), and a 1–5 rating for **each** of `cleanliness`, `communication` and `respect_house_rules` — send `rating` to use one score for all three, `categoryRatings` to score them individually, or both (`rating` fills any category you did not rate). Optional: `privateFeedback`, a note to the guest that is not published. A request missing a required piece is refused with `422 invalid_params` naming it, before anything is sent to Airbnb.  ```json {   \"publicReview\": \"Joanne was a great guest.\",   \"rating\": 5,   \"privateFeedback\": \"Thanks for leaving the place so tidy!\",   \"isRevieweeRecommended\": true } ```  A guest's review of you (`reviewerRole: \"guest\"`) cannot be written here — `409 not_host_review`; answer it with `POST /v1/reviews/{id}/reply`. Same behaviour as `PUT /v1/channels/airbnb/reviews/{id}`. Guide: https://repull.dev/docs/reviews#review-a-guest
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ReviewsApi.new
+id = 56 # Integer | The review `id` from `GET /v1/reviews`.
+airbnb_host_review_submit = Repull::AirbnbHostReviewSubmit.new({public_review: 'Joanne was a great guest. The space was kept clean and communication was clear.', is_reviewee_recommended: false}) # AirbnbHostReviewSubmit | 
+
+begin
+  # Review a guest (publishes, final)
+  result = api_instance.submit_guest_review(id, airbnb_host_review_submit)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ReviewsApi->submit_guest_review: #{e}"
+end
+```
+
+#### Using the submit_guest_review_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<SubmitGuestReview200Response>, Integer, Hash)> submit_guest_review_with_http_info(id, airbnb_host_review_submit)
+
+```ruby
+begin
+  # Review a guest (publishes, final)
+  data, status_code, headers = api_instance.submit_guest_review_with_http_info(id, airbnb_host_review_submit)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <SubmitGuestReview200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ReviewsApi->submit_guest_review_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **Integer** | The review &#x60;id&#x60; from &#x60;GET /v1/reviews&#x60;. |  |
+| **airbnb_host_review_submit** | [**AirbnbHostReviewSubmit**](AirbnbHostReviewSubmit.md) |  |  |
+
+### Return type
+
+[**SubmitGuestReview200Response**](SubmitGuestReview200Response.md)
 
 ### Authorization
 

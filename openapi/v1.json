@@ -16421,7 +16421,7 @@
       "post": {
         "operationId": "replyToReview",
         "summary": "Reply to a review on any channel",
-        "description": "Resolves the review, reads its channel and dispatches the reply. Channel-neutral: you do not need to know where the review came from.\n\nReplies are available on Airbnb today; a review from a channel without a reply API returns `422 unsupported_channel` naming the channels that do work.\n\n**Inactive listings:** a review of an inactive listing returns `403 listing_inactive` and no reply reaches the channel. Activate the listing first.",
+        "description": "Resolves the review, reads its channel and dispatches the reply. Channel-neutral: you do not need to know where the review came from.\n\nReplies work on Airbnb and Booking.com. Each channel accepts one reply per review. A review from a channel without a reply API returns `422 unsupported_channel` naming the channels that do work.\n\nTo review a guest (Airbnb only), use `POST /v1/reviews/{id}/guest-review`.\n\n**Inactive listings:** a review of an inactive listing returns `403 listing_inactive` and no reply reaches the channel. Activate the listing first.",
         "tags": [
           "Reviews"
         ],
@@ -18775,7 +18775,7 @@
       "post": {
         "operationId": "respond_airbnb_review_legacy",
         "summary": "Respond to / submit Airbnb review (legacy)",
-        "description": "Legacy action-based shape. Body `{ action: \"respond\"|\"submit\", reviewId, response?, review? }`. Kept for backwards compatibility \u2014 prefer `PUT /v1/channels/airbnb/reviews/{id}` (edit) and `POST /v1/channels/airbnb/reviews/{id}/respond` (reply) for new integrations.\n\nReturns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "description": "Legacy action-based shape. Body `{ action: \"respond\"|\"submit\", reviewId, response?, review? }`. Kept for backwards compatibility \u2014 prefer `POST /v1/reviews/{id}/guest-review` (review a guest) and `POST /v1/reviews/{id}/reply` (reply) for new integrations.\n\nReturns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
         "tags": [
           "Airbnb"
         ],
@@ -18806,7 +18806,7 @@
       "put": {
         "operationId": "edit_airbnb_review",
         "summary": "Submit your review of a guest (publishes, final)",
-        "description": "Submit your review of a guest \u2014 the review with `reviewerRole: \"host\"`. **Submitting publishes it and is final:** Airbnb has no draft and does not allow edits; a second submission is `409 review_already_submitted`. Airbnb accepts it up to 14 days after checkout (`expiresAt`).\n\nRequired: `publicReview`, `isRevieweeRecommended` (whether you would host the guest again), and a 1\u20135 rating for **each** of `cleanliness`, `communication` and `respect_house_rules` \u2014 send `rating` to use one score for all three, `categoryRatings` to score them individually, or both (`rating` fills any category you did not rate). Optional: `privateFeedback`, a note to the guest that is not published. A request missing a required piece is refused with `422 invalid_params` naming it, before anything is sent to Airbnb.\n\n```json\n{\n  \"publicReview\": \"Joanne was a great guest.\",\n  \"rating\": 5,\n  \"privateFeedback\": \"Thanks for leaving the place so tidy!\",\n  \"isRevieweeRecommended\": true\n}\n```\n\nA guest's review of you (`reviewerRole: \"guest\"`) cannot be written here \u2014 `409 not_host_review`; reply to it with `POST /v1/channels/airbnb/reviews/{id}/respond`. After the window closes: `409 review_window_closed`. Full guide: https://repull.dev/docs/channels/airbnb/reviews",
+        "description": "Submit your review of a guest \u2014 the review with `reviewerRole: \"host\"`. **Submitting publishes it and is final:** Airbnb has no draft and does not allow edits; a second submission is `409 review_already_submitted`. Airbnb accepts it up to 14 days after checkout (`expiresAt`).\n\nRequired: `publicReview`, `isRevieweeRecommended` (whether you would host the guest again), and a 1\u20135 rating for **each** of `cleanliness`, `communication` and `respect_house_rules` \u2014 send `rating` to use one score for all three, `categoryRatings` to score them individually, or both (`rating` fills any category you did not rate). Optional: `privateFeedback`, a note to the guest that is not published. A request missing a required piece is refused with `422 invalid_params` naming it, before anything is sent to Airbnb.\n\n```json\n{\n  \"publicReview\": \"Joanne was a great guest.\",\n  \"rating\": 5,\n  \"privateFeedback\": \"Thanks for leaving the place so tidy!\",\n  \"isRevieweeRecommended\": true\n}\n```\n\nA guest's review of you (`reviewerRole: \"guest\"`) cannot be written here \u2014 `409 not_host_review`; reply to it with `POST /v1/reviews/{id}/reply`. After the window closes: `409 review_window_closed`.\n\nThe same submission is available channel-neutrally as `POST /v1/reviews/{id}/guest-review`. Guide: https://repull.dev/docs/reviews#review-a-guest",
         "tags": [
           "Airbnb"
         ],
@@ -18870,7 +18870,8 @@
       "post": {
         "operationId": "respond_airbnb_review",
         "summary": "Respond to Airbnb review",
-        "description": "Post a public host response to a guest review. Airbnb allows one response per review \u2014 repeated POSTs return 409. Response text is capped at 1000 characters.\n\nReturns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "deprecated": true,
+        "description": "**Deprecated \u2014 use `POST /v1/reviews/{id}/reply`**, which replies to a review from any channel. This route keeps working unchanged.\n\nPost a public host response to a guest review. Airbnb allows one response per review \u2014 repeated POSTs return 409. Response text is capped at 1000 characters.\n\nReturns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
         "tags": [
           "Airbnb"
         ],
@@ -31387,6 +31388,95 @@
           },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntity"
+          }
+        }
+      }
+    },
+    "/v1/reviews/{id}/guest-review": {
+      "post": {
+        "operationId": "submitGuestReview",
+        "summary": "Review a guest (publishes, final)",
+        "description": "Submit your review of a guest \u2014 a review with `reviewerRole: \"host\"` from `GET /v1/reviews?reviewerRole=host`. Only Airbnb lets hosts review guests; a review from another channel returns `422 unsupported_channel`.\n\n**Submitting publishes it and is final:** Airbnb has no draft and does not allow edits; a second submission is `409 review_already_submitted`. Airbnb accepts it up to 14 days after checkout (`expiresAt`); after that, `409 review_window_closed`.\n\nRequired: `publicReview`, `isRevieweeRecommended` (whether you would host the guest again), and a 1\u20135 rating for **each** of `cleanliness`, `communication` and `respect_house_rules` \u2014 send `rating` to use one score for all three, `categoryRatings` to score them individually, or both (`rating` fills any category you did not rate). Optional: `privateFeedback`, a note to the guest that is not published. A request missing a required piece is refused with `422 invalid_params` naming it, before anything is sent to Airbnb.\n\n```json\n{\n  \"publicReview\": \"Joanne was a great guest.\",\n  \"rating\": 5,\n  \"privateFeedback\": \"Thanks for leaving the place so tidy!\",\n  \"isRevieweeRecommended\": true\n}\n```\n\nA guest's review of you (`reviewerRole: \"guest\"`) cannot be written here \u2014 `409 not_host_review`; answer it with `POST /v1/reviews/{id}/reply`. Same behaviour as `PUT /v1/channels/airbnb/reviews/{id}`. Guide: https://repull.dev/docs/reviews#review-a-guest",
+        "tags": [
+          "Reviews"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "The review `id` from `GET /v1/reviews`."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AirbnbHostReviewSubmit"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Review published on Airbnb",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "externalReviewId": {
+                      "type": "string"
+                    },
+                    "submitted": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "description": "`review_already_submitted`, `not_host_review` or `review_window_closed`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`invalid_params` (a required piece is missing, named in `field`) or `unsupported_channel` (the review is not from Airbnb).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/AirbnbRateLimited"
+          },
+          "502": {
+            "$ref": "#/components/responses/AirbnbUpstreamError"
           }
         }
       }
