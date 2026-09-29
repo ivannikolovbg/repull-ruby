@@ -17,12 +17,17 @@ module Repull
   class PreapproveConversation201Response < ApiModelBase
     attr_accessor :conversation_id
 
+    attr_accessor :channel
+
     attr_accessor :status
 
     attr_accessor :block_instant_booking
 
-    # When the guest can no longer book on the pre-approval, if Airbnb reported it.
+    # When the guest can no longer book on the pre-approval, if the channel reported it.
     attr_accessor :expires_at
+
+    # The message sent to the guest with the pre-approval (VRBO).
+    attr_accessor :message
 
     class EnumAttributeValidator
       attr_reader :datatype
@@ -50,9 +55,11 @@ module Repull
     def self.attribute_map
       {
         :'conversation_id' => :'conversationId',
+        :'channel' => :'channel',
         :'status' => :'status',
         :'block_instant_booking' => :'blockInstantBooking',
-        :'expires_at' => :'expiresAt'
+        :'expires_at' => :'expiresAt',
+        :'message' => :'message'
       }
     end
 
@@ -70,16 +77,19 @@ module Repull
     def self.openapi_types
       {
         :'conversation_id' => :'String',
+        :'channel' => :'String',
         :'status' => :'String',
         :'block_instant_booking' => :'Boolean',
-        :'expires_at' => :'Time'
+        :'expires_at' => :'Time',
+        :'message' => :'String'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
-        :'expires_at'
+        :'expires_at',
+        :'message'
       ])
     end
 
@@ -105,6 +115,12 @@ module Repull
         self.conversation_id = nil
       end
 
+      if attributes.key?(:'channel')
+        self.channel = attributes[:'channel']
+      else
+        self.channel = nil
+      end
+
       if attributes.key?(:'status')
         self.status = attributes[:'status']
       else
@@ -122,6 +138,12 @@ module Repull
       else
         self.expires_at = nil
       end
+
+      if attributes.key?(:'message')
+        self.message = attributes[:'message']
+      else
+        self.message = nil
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -131,6 +153,10 @@ module Repull
       invalid_properties = Array.new
       if @conversation_id.nil?
         invalid_properties.push('invalid value for "conversation_id", conversation_id cannot be nil.')
+      end
+
+      if @channel.nil?
+        invalid_properties.push('invalid value for "channel", channel cannot be nil.')
       end
 
       if @status.nil?
@@ -149,6 +175,9 @@ module Repull
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
       return false if @conversation_id.nil?
+      return false if @channel.nil?
+      channel_validator = EnumAttributeValidator.new('String', ["airbnb", "vrbo"])
+      return false unless channel_validator.valid?(@channel)
       return false if @status.nil?
       status_validator = EnumAttributeValidator.new('String', ["pre_approved"])
       return false unless status_validator.valid?(@status)
@@ -164,6 +193,16 @@ module Repull
       end
 
       @conversation_id = conversation_id
+    end
+
+    # Custom attribute writer method checking allowed values (enum).
+    # @param [Object] channel Object to be assigned
+    def channel=(channel)
+      validator = EnumAttributeValidator.new('String', ["airbnb", "vrbo"])
+      unless validator.valid?(channel)
+        fail ArgumentError, "invalid value for \"channel\", must be one of #{validator.allowable_values}."
+      end
+      @channel = channel
     end
 
     # Custom attribute writer method checking allowed values (enum).
@@ -192,9 +231,11 @@ module Repull
       return true if self.equal?(o)
       self.class == o.class &&
           conversation_id == o.conversation_id &&
+          channel == o.channel &&
           status == o.status &&
           block_instant_booking == o.block_instant_booking &&
-          expires_at == o.expires_at
+          expires_at == o.expires_at &&
+          message == o.message
     end
 
     # @see the `==` method
@@ -206,7 +247,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [conversation_id, status, block_instant_booking, expires_at].hash
+      [conversation_id, channel, status, block_instant_booking, expires_at, message].hash
     end
 
     # Builds the object from hash

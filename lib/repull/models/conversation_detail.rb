@@ -50,6 +50,8 @@ module Repull
 
     attr_accessor :guest
 
+    attr_accessor :capabilities
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
@@ -67,7 +69,8 @@ module Repull
         :'created_at' => :'createdAt',
         :'updated_at' => :'updatedAt',
         :'host' => :'host',
-        :'guest' => :'guest'
+        :'guest' => :'guest',
+        :'capabilities' => :'capabilities'
       }
     end
 
@@ -98,7 +101,8 @@ module Repull
         :'created_at' => :'Time',
         :'updated_at' => :'Time',
         :'host' => :'ConversationHost',
-        :'guest' => :'ConversationGuest'
+        :'guest' => :'ConversationGuest',
+        :'capabilities' => :'ConversationCapabilities'
       }
     end
 
@@ -114,7 +118,7 @@ module Repull
         :'last_message_at',
         :'last_message_preview',
         :'host',
-        :'guest'
+        :'guest',
       ])
     end
 
@@ -200,6 +204,10 @@ module Repull
       if attributes.key?(:'guest')
         self.guest = attributes[:'guest']
       end
+
+      if attributes.key?(:'capabilities')
+        self.capabilities = attributes[:'capabilities']
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -236,7 +244,8 @@ module Repull
           created_at == o.created_at &&
           updated_at == o.updated_at &&
           host == o.host &&
-          guest == o.guest
+          guest == o.guest &&
+          capabilities == o.capabilities
     end
 
     # @see the `==` method
@@ -248,7 +257,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, platform, external_thread_id, guest_id, listing_id, reservation_id, subject, last_message_at, last_message_preview, unread_count, status, created_at, updated_at, host, guest].hash
+      [id, platform, external_thread_id, guest_id, listing_id, reservation_id, subject, last_message_at, last_message_preview, unread_count, status, created_at, updated_at, host, guest, capabilities].hash
     end
 
     # Builds the object from hash

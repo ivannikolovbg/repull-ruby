@@ -15,13 +15,16 @@ require 'time'
 
 module Repull
   class CreateConversationSpecialOffer201Response < ApiModelBase
-    # Airbnb special-offer id. Use it to read or withdraw the offer.
+    # The offer id — use it to read or withdraw the offer. Airbnb’s special-offer id; on VRBO, where a conversation has one live offer, `current`.
     attr_accessor :id
 
     # Repull conversation id the offer was sent on.
     attr_accessor :conversation_id
 
-    # Airbnb’s status for the offer: `active` (the guest can book it), `accepted`, `declined`, `expired` or `voided` (withdrawn).
+    # The channel the offer is on.
+    attr_accessor :channel
+
+    # Airbnb: its status for the offer — `active` (the guest can book it), `accepted`, `declined`, `expired` or `voided` (withdrawn). VRBO: `sent` (just sent), `current` (the live offer) or `preview` (recalculated, not sent).
     attr_accessor :status
 
     # Repull listing id, when known.
@@ -38,19 +41,63 @@ module Repull
 
     attr_accessor :guests
 
-    # Total for the stay, in the listing’s Airbnb currency.
+    # What the guest pays for the stay. Airbnb: the total you set. VRBO: VRBO’s own total, including its taxes and service fee.
     attr_accessor :total_price
+
+    # Currency of the amounts, when the channel states it (VRBO).
+    attr_accessor :currency
+
+    # VRBO: rent for the stay, excluding fees and taxes. Null on Airbnb (priced by one total).
+    attr_accessor :rental_amount
+
+    # VRBO: its automatic stay discount on the rent, when the offer carries one.
+    attr_accessor :discount
+
+    # VRBO: the offer’s fees by type. Empty on Airbnb.
+    attr_accessor :fees
+
+    # VRBO: refundable damage deposit; null for none.
+    attr_accessor :damage_deposit
+
+    # VRBO: its offer summary line by line, in VRBO’s words (nights, fees, taxes, total traveler payment, payout).
+    attr_accessor :lines
+
+    # The message sent to the guest with the offer (VRBO).
+    attr_accessor :message
 
     attr_accessor :created_at
 
     # When the guest can no longer book the offer (Airbnb gives them 24 hours).
     attr_accessor :expires_at
 
+    class EnumAttributeValidator
+      attr_reader :datatype
+      attr_reader :allowable_values
+
+      def initialize(datatype, allowable_values)
+        @allowable_values = allowable_values.map do |value|
+          case datatype.to_s
+          when /Integer/i
+            value.to_i
+          when /Float/i
+            value.to_f
+          else
+            value
+          end
+        end
+      end
+
+      def valid?(value)
+        !value || allowable_values.include?(value)
+      end
+    end
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
         :'id' => :'id',
         :'conversation_id' => :'conversationId',
+        :'channel' => :'channel',
         :'status' => :'status',
         :'listing_id' => :'listingId',
         :'airbnb_listing_id' => :'airbnbListingId',
@@ -59,6 +106,13 @@ module Repull
         :'nights' => :'nights',
         :'guests' => :'guests',
         :'total_price' => :'totalPrice',
+        :'currency' => :'currency',
+        :'rental_amount' => :'rentalAmount',
+        :'discount' => :'discount',
+        :'fees' => :'fees',
+        :'damage_deposit' => :'damageDeposit',
+        :'lines' => :'lines',
+        :'message' => :'message',
         :'created_at' => :'createdAt',
         :'expires_at' => :'expiresAt'
       }
@@ -79,6 +133,7 @@ module Repull
       {
         :'id' => :'String',
         :'conversation_id' => :'String',
+        :'channel' => :'String',
         :'status' => :'String',
         :'listing_id' => :'String',
         :'airbnb_listing_id' => :'String',
@@ -87,6 +142,13 @@ module Repull
         :'nights' => :'Integer',
         :'guests' => :'CreateConversationSpecialOffer201ResponseGuests',
         :'total_price' => :'Float',
+        :'currency' => :'String',
+        :'rental_amount' => :'Float',
+        :'discount' => :'Float',
+        :'fees' => :'Array<CreateConversationSpecialOffer201ResponseFeesInner>',
+        :'damage_deposit' => :'Float',
+        :'lines' => :'Array<CreateConversationSpecialOffer201ResponseLinesInner>',
+        :'message' => :'String',
         :'created_at' => :'Time',
         :'expires_at' => :'Time'
       }
@@ -104,6 +166,11 @@ module Repull
         :'nights',
         :'guests',
         :'total_price',
+        :'currency',
+        :'rental_amount',
+        :'discount',
+        :'damage_deposit',
+        :'message',
         :'created_at',
         :'expires_at'
       ])
@@ -135,6 +202,10 @@ module Repull
         self.conversation_id = attributes[:'conversation_id']
       else
         self.conversation_id = nil
+      end
+
+      if attributes.key?(:'channel')
+        self.channel = attributes[:'channel']
       end
 
       if attributes.key?(:'status')
@@ -179,6 +250,38 @@ module Repull
         self.total_price = nil
       end
 
+      if attributes.key?(:'currency')
+        self.currency = attributes[:'currency']
+      end
+
+      if attributes.key?(:'rental_amount')
+        self.rental_amount = attributes[:'rental_amount']
+      end
+
+      if attributes.key?(:'discount')
+        self.discount = attributes[:'discount']
+      end
+
+      if attributes.key?(:'fees')
+        if (value = attributes[:'fees']).is_a?(Array)
+          self.fees = value
+        end
+      end
+
+      if attributes.key?(:'damage_deposit')
+        self.damage_deposit = attributes[:'damage_deposit']
+      end
+
+      if attributes.key?(:'lines')
+        if (value = attributes[:'lines']).is_a?(Array)
+          self.lines = value
+        end
+      end
+
+      if attributes.key?(:'message')
+        self.message = attributes[:'message']
+      end
+
       if attributes.key?(:'created_at')
         self.created_at = attributes[:'created_at']
       end
@@ -205,6 +308,8 @@ module Repull
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
       return false if @conversation_id.nil?
+      channel_validator = EnumAttributeValidator.new('String', ["airbnb", "vrbo"])
+      return false unless channel_validator.valid?(@channel)
       true
     end
 
@@ -218,6 +323,16 @@ module Repull
       @conversation_id = conversation_id
     end
 
+    # Custom attribute writer method checking allowed values (enum).
+    # @param [Object] channel Object to be assigned
+    def channel=(channel)
+      validator = EnumAttributeValidator.new('String', ["airbnb", "vrbo"])
+      unless validator.valid?(channel)
+        fail ArgumentError, "invalid value for \"channel\", must be one of #{validator.allowable_values}."
+      end
+      @channel = channel
+    end
+
     # Checks equality by comparing each attribute.
     # @param [Object] Object to be compared
     def ==(o)
@@ -225,6 +340,7 @@ module Repull
       self.class == o.class &&
           id == o.id &&
           conversation_id == o.conversation_id &&
+          channel == o.channel &&
           status == o.status &&
           listing_id == o.listing_id &&
           airbnb_listing_id == o.airbnb_listing_id &&
@@ -233,6 +349,13 @@ module Repull
           nights == o.nights &&
           guests == o.guests &&
           total_price == o.total_price &&
+          currency == o.currency &&
+          rental_amount == o.rental_amount &&
+          discount == o.discount &&
+          fees == o.fees &&
+          damage_deposit == o.damage_deposit &&
+          lines == o.lines &&
+          message == o.message &&
           created_at == o.created_at &&
           expires_at == o.expires_at
     end
@@ -246,7 +369,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, conversation_id, status, listing_id, airbnb_listing_id, check_in, check_out, nights, guests, total_price, created_at, expires_at].hash
+      [id, conversation_id, channel, status, listing_id, airbnb_listing_id, check_in, check_out, nights, guests, total_price, currency, rental_amount, discount, fees, damage_deposit, lines, message, created_at, expires_at].hash
     end
 
     # Builds the object from hash

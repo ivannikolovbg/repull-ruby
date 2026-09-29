@@ -8,12 +8,19 @@ All URIs are relative to *https://api.repull.dev*
 | [**create_connect_session**](ConnectApi.md#create_connect_session) | **POST** /v1/connect | Create a multi-channel Connect picker session |
 | [**create_connection**](ConnectApi.md#create_connection) | **POST** /v1/connect/{provider} | Connect to PMS/OTA provider |
 | [**delete_connection**](ConnectApi.md#delete_connection) | **DELETE** /v1/connect/{provider} | Disconnect provider |
+| [**get_booking_extranet_login_config**](ConnectApi.md#get_booking_extranet_login_config) | **GET** /v1/connect/booking-extranet-login/session | Booking.com direct-login config |
+| [**get_booking_extranet_login_status**](ConnectApi.md#get_booking_extranet_login_status) | **GET** /v1/connect/booking-extranet-login/status | Booking.com direct-login status |
 | [**get_connect_status**](ConnectApi.md#get_connect_status) | **GET** /v1/connect/{provider} | Get connection status |
+| [**get_connect_write_policy**](ConnectApi.md#get_connect_write_policy) | **GET** /v1/connect/{provider}/write-policy | Get what the app may change in a PMS |
+| [**get_vrbo_connect_import**](ConnectApi.md#get_vrbo_connect_import) | **GET** /v1/connect/vrbo-login/session | Import progress of the session&#39;s Vrbo account |
+| [**invite_booking_extranet_user**](ConnectApi.md#invite_booking_extranet_user) | **POST** /v1/connect/booking-extranet-login/invite | Connect Booking.com by inviting a user |
 | [**list_connect_booking_rooms**](ConnectApi.md#list_connect_booking_rooms) | **GET** /v1/connect/booking/rooms | List Booking.com rooms imported for a Connect session |
 | [**list_connect_providers**](ConnectApi.md#list_connect_providers) | **GET** /v1/connect/providers | List Connect channels |
 | [**list_connections**](ConnectApi.md#list_connections) | **GET** /v1/connect | List PMS/OTA connections |
 | [**map_connect_booking_rooms**](ConnectApi.md#map_connect_booking_rooms) | **POST** /v1/connect/booking/map-rooms | Submit room→listing mappings for a Booking.com Connect session |
+| [**search_connect_session_listing_options**](ConnectApi.md#search_connect_session_listing_options) | **GET** /v1/connect/sessions/{sessionId}/listing-options | Search listings for a Connect mapping picker |
 | [**select_connect_provider**](ConnectApi.md#select_connect_provider) | **POST** /v1/connect/sessions/{sessionId}/select-provider | Bind a picker session to a provider |
+| [**start_booking_extranet_login**](ConnectApi.md#start_booking_extranet_login) | **POST** /v1/connect/booking-extranet-login/session | Sign in with a Booking.com Extranet user |
 | [**submit_beds24_credentials**](ConnectApi.md#submit_beds24_credentials) | **POST** /v1/connect/beds24/credentials | Submit Beds24 credentials for a Connect session |
 | [**submit_bookingsync_credentials**](ConnectApi.md#submit_bookingsync_credentials) | **POST** /v1/connect/bookingsync/credentials | Submit BookingSync credentials for a Connect session |
 | [**submit_cloudbeds_credentials**](ConnectApi.md#submit_cloudbeds_credentials) | **POST** /v1/connect/cloudbeds/credentials | Submit Cloudbeds credentials for a Connect session |
@@ -26,7 +33,9 @@ All URIs are relative to *https://api.repull.dev*
 | [**submit_ownerrez_credentials**](ConnectApi.md#submit_ownerrez_credentials) | **POST** /v1/connect/ownerrez/credentials | Submit OwnerRez credentials for a Connect session |
 | [**submit_smoobu_credentials**](ConnectApi.md#submit_smoobu_credentials) | **POST** /v1/connect/smoobu/credentials | Submit Smoobu credentials for a Connect session |
 | [**submit_vrbo_credentials**](ConnectApi.md#submit_vrbo_credentials) | **POST** /v1/connect/vrbo/credentials | Submit Vrbo credentials for a Connect session |
+| [**update_connect_write_policy**](ConnectApi.md#update_connect_write_policy) | **PATCH** /v1/connect/{provider}/write-policy | Change what the app may change in a PMS |
 | [**verify_booking_hotel**](ConnectApi.md#verify_booking_hotel) | **POST** /v1/connect/booking/verify | Verify a Booking.com hotel ID for a Connect session |
+| [**vrbo_login**](ConnectApi.md#vrbo_login) | **POST** /v1/connect/vrbo-login/session | Sign in with a Vrbo host account |
 
 
 ## booking_connect_callback
@@ -307,6 +316,136 @@ end
 - **Accept**: application/json
 
 
+## get_booking_extranet_login_config
+
+> <GetBookingExtranetLoginConfig200Response> get_booking_extranet_login_config(session_id)
+
+Booking.com direct-login config
+
+Returns the 2FA number the host adds to their Extranet user.  Called by the hosted Connect page. No API key — the session ID is the capability token.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+
+api_instance = Repull::ConnectApi.new
+session_id = 'session_id_example' # String | The Connect session ID (capability token).
+
+begin
+  # Booking.com direct-login config
+  result = api_instance.get_booking_extranet_login_config(session_id)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->get_booking_extranet_login_config: #{e}"
+end
+```
+
+#### Using the get_booking_extranet_login_config_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<GetBookingExtranetLoginConfig200Response>, Integer, Hash)> get_booking_extranet_login_config_with_http_info(session_id)
+
+```ruby
+begin
+  # Booking.com direct-login config
+  data, status_code, headers = api_instance.get_booking_extranet_login_config_with_http_info(session_id)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <GetBookingExtranetLoginConfig200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->get_booking_extranet_login_config_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **session_id** | **String** | The Connect session ID (capability token). |  |
+
+### Return type
+
+[**GetBookingExtranetLoginConfig200Response**](GetBookingExtranetLoginConfig200Response.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## get_booking_extranet_login_status
+
+> <GetBookingExtranetLoginStatus200Response> get_booking_extranet_login_status(session_id, account_id)
+
+Booking.com direct-login status
+
+Live sign-in status, polled by the hosted page.  Called by the hosted Connect page. No API key — the session ID is the capability token.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+
+api_instance = Repull::ConnectApi.new
+session_id = 'session_id_example' # String | The Connect session ID (capability token).
+account_id = 56 # Integer | 
+
+begin
+  # Booking.com direct-login status
+  result = api_instance.get_booking_extranet_login_status(session_id, account_id)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->get_booking_extranet_login_status: #{e}"
+end
+```
+
+#### Using the get_booking_extranet_login_status_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<GetBookingExtranetLoginStatus200Response>, Integer, Hash)> get_booking_extranet_login_status_with_http_info(session_id, account_id)
+
+```ruby
+begin
+  # Booking.com direct-login status
+  data, status_code, headers = api_instance.get_booking_extranet_login_status_with_http_info(session_id, account_id)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <GetBookingExtranetLoginStatus200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->get_booking_extranet_login_status_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **session_id** | **String** | The Connect session ID (capability token). |  |
+| **account_id** | **Integer** |  |  |
+
+### Return type
+
+[**GetBookingExtranetLoginStatus200Response**](GetBookingExtranetLoginStatus200Response.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
 ## get_connect_status
 
 > <ConnectStatus> get_connect_status(provider)
@@ -373,6 +512,203 @@ end
 ### HTTP request headers
 
 - **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## get_connect_write_policy
+
+> <GetConnectWritePolicy200Response> get_connect_write_policy(provider)
+
+Get what the app may change in a PMS
+
+Returns the connection's write policy: whether the app may open and close nights, change prices and minimum stay in the PMS, and whether bookings may be created or changed there from the booking website, the dashboard or the reservations API.  Hotel PMSs (Cloudbeds, Mews) start with every calendar switch off — the PMS owns its room inventory. Every other PMS starts with everything on. PMS connections only.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ConnectApi.new
+provider = 'provider_example' # String | PMS provider slug (e.g., hostaway, guesty, ownerrez)
+
+begin
+  # Get what the app may change in a PMS
+  result = api_instance.get_connect_write_policy(provider)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->get_connect_write_policy: #{e}"
+end
+```
+
+#### Using the get_connect_write_policy_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<GetConnectWritePolicy200Response>, Integer, Hash)> get_connect_write_policy_with_http_info(provider)
+
+```ruby
+begin
+  # Get what the app may change in a PMS
+  data, status_code, headers = api_instance.get_connect_write_policy_with_http_info(provider)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <GetConnectWritePolicy200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->get_connect_write_policy_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **provider** | **String** | PMS provider slug (e.g., hostaway, guesty, ownerrez) |  |
+
+### Return type
+
+[**GetConnectWritePolicy200Response**](GetConnectWritePolicy200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## get_vrbo_connect_import
+
+> <VrboImportStatus> get_vrbo_connect_import(session_id)
+
+Import progress of the session's Vrbo account
+
+After the mapping is confirmed: `importing` (upcoming bookings and the last 30 days of messages) → `importing_history` (the rest of the account, in the background) → `imported`.  Called by the hosted Connect page. No API key — the session ID is the capability token.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+
+api_instance = Repull::ConnectApi.new
+session_id = 'session_id_example' # String | 
+
+begin
+  # Import progress of the session's Vrbo account
+  result = api_instance.get_vrbo_connect_import(session_id)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->get_vrbo_connect_import: #{e}"
+end
+```
+
+#### Using the get_vrbo_connect_import_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<VrboImportStatus>, Integer, Hash)> get_vrbo_connect_import_with_http_info(session_id)
+
+```ruby
+begin
+  # Import progress of the session's Vrbo account
+  data, status_code, headers = api_instance.get_vrbo_connect_import_with_http_info(session_id)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <VrboImportStatus>
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->get_vrbo_connect_import_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **session_id** | **String** |  |  |
+
+### Return type
+
+[**VrboImportStatus**](VrboImportStatus.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## invite_booking_extranet_user
+
+> <InviteBookingExtranetUser200Response> invite_booking_extranet_user(invite_booking_extranet_user_request)
+
+Connect Booking.com by inviting a user
+
+Generates the user the host invites in their Extranet; progress is read from the status route.  Called by the hosted Connect page. No API key — the session ID is the capability token.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+
+api_instance = Repull::ConnectApi.new
+invite_booking_extranet_user_request = Repull::InviteBookingExtranetUserRequest.new({session_id: 'session_id_example'}) # InviteBookingExtranetUserRequest | 
+
+begin
+  # Connect Booking.com by inviting a user
+  result = api_instance.invite_booking_extranet_user(invite_booking_extranet_user_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->invite_booking_extranet_user: #{e}"
+end
+```
+
+#### Using the invite_booking_extranet_user_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<InviteBookingExtranetUser200Response>, Integer, Hash)> invite_booking_extranet_user_with_http_info(invite_booking_extranet_user_request)
+
+```ruby
+begin
+  # Connect Booking.com by inviting a user
+  data, status_code, headers = api_instance.invite_booking_extranet_user_with_http_info(invite_booking_extranet_user_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <InviteBookingExtranetUser200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->invite_booking_extranet_user_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **invite_booking_extranet_user_request** | [**InviteBookingExtranetUserRequest**](InviteBookingExtranetUserRequest.md) |  |  |
+
+### Return type
+
+[**InviteBookingExtranetUser200Response**](InviteBookingExtranetUser200Response.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 
@@ -631,6 +967,76 @@ No authorization required
 - **Accept**: application/json
 
 
+## search_connect_session_listing_options
+
+> <SearchConnectSessionListingOptions200Response> search_connect_session_listing_options(session_id, opts)
+
+Search listings for a Connect mapping picker
+
+The hosted Connect pages' listing search for their mapping pickers: the session workspace's active listings by name, city or id, `limit` at a time.  Called by the hosted Connect page. No API key — the session ID is the capability token.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+
+api_instance = Repull::ConnectApi.new
+session_id = 'session_id_example' # String | 
+opts = {
+  q: 'q_example', # String | 
+  limit: 56 # Integer | 
+}
+
+begin
+  # Search listings for a Connect mapping picker
+  result = api_instance.search_connect_session_listing_options(session_id, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->search_connect_session_listing_options: #{e}"
+end
+```
+
+#### Using the search_connect_session_listing_options_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<SearchConnectSessionListingOptions200Response>, Integer, Hash)> search_connect_session_listing_options_with_http_info(session_id, opts)
+
+```ruby
+begin
+  # Search listings for a Connect mapping picker
+  data, status_code, headers = api_instance.search_connect_session_listing_options_with_http_info(session_id, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <SearchConnectSessionListingOptions200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->search_connect_session_listing_options_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **session_id** | **String** |  |  |
+| **q** | **String** |  | [optional] |
+| **limit** | **Integer** |  | [optional][default to 20] |
+
+### Return type
+
+[**SearchConnectSessionListingOptions200Response**](SearchConnectSessionListingOptions200Response.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
 ## select_connect_provider
 
 > <SelectProviderResponse> select_connect_provider(session_id, select_connect_provider_request)
@@ -686,6 +1092,70 @@ end
 ### Return type
 
 [**SelectProviderResponse**](SelectProviderResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## start_booking_extranet_login
+
+> <StartBookingExtranetLogin200Response> start_booking_extranet_login(start_booking_extranet_login_request)
+
+Sign in with a Booking.com Extranet user
+
+Starts the sign-in with the host's Extranet credentials.  Called by the hosted Connect page. No API key — the session ID is the capability token.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+
+api_instance = Repull::ConnectApi.new
+start_booking_extranet_login_request = Repull::StartBookingExtranetLoginRequest.new({session_id: 'session_id_example', email: 'email_example', password: 'password_example'}) # StartBookingExtranetLoginRequest | 
+
+begin
+  # Sign in with a Booking.com Extranet user
+  result = api_instance.start_booking_extranet_login(start_booking_extranet_login_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->start_booking_extranet_login: #{e}"
+end
+```
+
+#### Using the start_booking_extranet_login_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<StartBookingExtranetLogin200Response>, Integer, Hash)> start_booking_extranet_login_with_http_info(start_booking_extranet_login_request)
+
+```ruby
+begin
+  # Sign in with a Booking.com Extranet user
+  data, status_code, headers = api_instance.start_booking_extranet_login_with_http_info(start_booking_extranet_login_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <StartBookingExtranetLogin200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->start_booking_extranet_login_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **start_booking_extranet_login_request** | [**StartBookingExtranetLoginRequest**](StartBookingExtranetLoginRequest.md) |  |  |
+
+### Return type
+
+[**StartBookingExtranetLogin200Response**](StartBookingExtranetLogin200Response.md)
 
 ### Authorization
 
@@ -1525,6 +1995,77 @@ end
 - **Accept**: application/json
 
 
+## update_connect_write_policy
+
+> <GetConnectWritePolicy200Response> update_connect_write_policy(provider, update_connect_write_policy_request)
+
+Change what the app may change in a PMS
+
+Turns individual write switches on or off for the connection. Only the switches you send change. Takes effect on the next write — nothing already sent to the PMS is undone. The policy is kept when the PMS is reconnected.  With `reservations.api` off, the reservations API returns `409 pms_writes_off` for bookings on this PMS. With `reservations.website` off, booking sites stop taking bookings for it before the guest is charged.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ConnectApi.new
+provider = 'provider_example' # String | PMS provider slug (e.g., hostaway, guesty, ownerrez)
+update_connect_write_policy_request = Repull::UpdateConnectWritePolicyRequest.new # UpdateConnectWritePolicyRequest | 
+
+begin
+  # Change what the app may change in a PMS
+  result = api_instance.update_connect_write_policy(provider, update_connect_write_policy_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->update_connect_write_policy: #{e}"
+end
+```
+
+#### Using the update_connect_write_policy_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<GetConnectWritePolicy200Response>, Integer, Hash)> update_connect_write_policy_with_http_info(provider, update_connect_write_policy_request)
+
+```ruby
+begin
+  # Change what the app may change in a PMS
+  data, status_code, headers = api_instance.update_connect_write_policy_with_http_info(provider, update_connect_write_policy_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <GetConnectWritePolicy200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->update_connect_write_policy_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **provider** | **String** | PMS provider slug (e.g., hostaway, guesty, ownerrez) |  |
+| **update_connect_write_policy_request** | [**UpdateConnectWritePolicyRequest**](UpdateConnectWritePolicyRequest.md) |  |  |
+
+### Return type
+
+[**GetConnectWritePolicy200Response**](GetConnectWritePolicy200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
 ## verify_booking_hotel
 
 > <BookingVerifyHotelResponse> verify_booking_hotel(booking_verify_hotel_request)
@@ -1578,6 +2119,70 @@ end
 ### Return type
 
 [**BookingVerifyHotelResponse**](BookingVerifyHotelResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## vrbo_login
+
+> <VrboLogin200Response> vrbo_login(vrbo_login_request)
+
+Sign in with a Vrbo host account
+
+`action: login` checks the email and password and answers in seconds: `connected`, `otp_required` (Vrbo sent a code to `destination`) or `failed` with a `reason` (`bad_credentials`, `blocked`, …). `action: otp` submits the code; a refused code comes back as `otp_required` with `reason: bad_code`.  Signing in imports nothing. `accessType` (`full_access` or `messaging`, when the session did not lock it) is the host's choice of whether mapped listings push the calendar. The import starts when the mapping is confirmed.  Called by the hosted Connect page. No API key — the session ID is the capability token.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+
+api_instance = Repull::ConnectApi.new
+vrbo_login_request = Repull::VrboLoginRequest.new({session_id: 'session_id_example', action: 'login'}) # VrboLoginRequest | 
+
+begin
+  # Sign in with a Vrbo host account
+  result = api_instance.vrbo_login(vrbo_login_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->vrbo_login: #{e}"
+end
+```
+
+#### Using the vrbo_login_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<VrboLogin200Response>, Integer, Hash)> vrbo_login_with_http_info(vrbo_login_request)
+
+```ruby
+begin
+  # Sign in with a Vrbo host account
+  data, status_code, headers = api_instance.vrbo_login_with_http_info(vrbo_login_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <VrboLogin200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->vrbo_login_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **vrbo_login_request** | [**VrboLoginRequest**](VrboLoginRequest.md) |  |  |
+
+### Return type
+
+[**VrboLogin200Response**](VrboLogin200Response.md)
 
 ### Authorization
 

@@ -14,6 +14,7 @@ require 'date'
 require 'time'
 
 module Repull
+  # Priced by `totalPrice` (Airbnb) OR by its parts — `rentalAmount`, `fees`, `damageDeposit` (VRBO) — never both. With `totalPrice`, `checkIn`, `checkOut` and `guests` are required.
   class CreateConversationSpecialOfferRequest < ApiModelBase
     # Repull listing id to offer. Defaults to the listing the conversation is about.
     attr_accessor :listing_id
@@ -25,8 +26,20 @@ module Repull
 
     attr_accessor :guests
 
-    # Total the guest pays for the whole stay, in the listing’s Airbnb currency.
+    # Airbnb: the total the guest pays for the whole stay, in the listing’s Airbnb currency.
     attr_accessor :total_price
+
+    # VRBO: rent for the whole stay, excluding fees and taxes.
+    attr_accessor :rental_amount
+
+    # VRBO: the offer’s fees — replaces its fee list. `type` is VRBO’s fee type (`CLEANING`, `PET`, …).
+    attr_accessor :fees
+
+    # VRBO: refundable damage deposit; `null` for none.
+    attr_accessor :damage_deposit
+
+    # VRBO: the message sent to the guest with the offer (a friendly default otherwise).
+    attr_accessor :message
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
@@ -35,7 +48,11 @@ module Repull
         :'check_in' => :'checkIn',
         :'check_out' => :'checkOut',
         :'guests' => :'guests',
-        :'total_price' => :'totalPrice'
+        :'total_price' => :'totalPrice',
+        :'rental_amount' => :'rentalAmount',
+        :'fees' => :'fees',
+        :'damage_deposit' => :'damageDeposit',
+        :'message' => :'message'
       }
     end
 
@@ -56,13 +73,18 @@ module Repull
         :'check_in' => :'Date',
         :'check_out' => :'Date',
         :'guests' => :'CreateConversationSpecialOfferRequestGuests',
-        :'total_price' => :'Float'
+        :'total_price' => :'Float',
+        :'rental_amount' => :'Float',
+        :'fees' => :'Array<CreateConversationSpecialOfferRequestFeesInner>',
+        :'damage_deposit' => :'Float',
+        :'message' => :'String'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'damage_deposit',
       ])
     end
 
@@ -88,26 +110,36 @@ module Repull
 
       if attributes.key?(:'check_in')
         self.check_in = attributes[:'check_in']
-      else
-        self.check_in = nil
       end
 
       if attributes.key?(:'check_out')
         self.check_out = attributes[:'check_out']
-      else
-        self.check_out = nil
       end
 
       if attributes.key?(:'guests')
         self.guests = attributes[:'guests']
-      else
-        self.guests = nil
       end
 
       if attributes.key?(:'total_price')
         self.total_price = attributes[:'total_price']
-      else
-        self.total_price = nil
+      end
+
+      if attributes.key?(:'rental_amount')
+        self.rental_amount = attributes[:'rental_amount']
+      end
+
+      if attributes.key?(:'fees')
+        if (value = attributes[:'fees']).is_a?(Array)
+          self.fees = value
+        end
+      end
+
+      if attributes.key?(:'damage_deposit')
+        self.damage_deposit = attributes[:'damage_deposit']
+      end
+
+      if attributes.key?(:'message')
+        self.message = attributes[:'message']
       end
     end
 
@@ -116,24 +148,20 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
-      if @check_in.nil?
-        invalid_properties.push('invalid value for "check_in", check_in cannot be nil.')
-      end
-
-      if @check_out.nil?
-        invalid_properties.push('invalid value for "check_out", check_out cannot be nil.')
-      end
-
-      if @guests.nil?
-        invalid_properties.push('invalid value for "guests", guests cannot be nil.')
-      end
-
-      if @total_price.nil?
-        invalid_properties.push('invalid value for "total_price", total_price cannot be nil.')
-      end
-
-      if @total_price <= 0
+      if !@total_price.nil? && @total_price <= 0
         invalid_properties.push('invalid value for "total_price", must be greater than 0.')
+      end
+
+      if !@rental_amount.nil? && @rental_amount <= 0
+        invalid_properties.push('invalid value for "rental_amount", must be greater than 0.')
+      end
+
+      if !@damage_deposit.nil? && @damage_deposit < 0
+        invalid_properties.push('invalid value for "damage_deposit", must be greater than or equal to 0.')
+      end
+
+      if !@message.nil? && @message.to_s.length > 2000
+        invalid_properties.push('invalid value for "message", the character length must be smaller than or equal to 2000.')
       end
 
       invalid_properties
@@ -143,42 +171,11 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
-      return false if @check_in.nil?
-      return false if @check_out.nil?
-      return false if @guests.nil?
-      return false if @total_price.nil?
-      return false if @total_price <= 0
+      return false if !@total_price.nil? && @total_price <= 0
+      return false if !@rental_amount.nil? && @rental_amount <= 0
+      return false if !@damage_deposit.nil? && @damage_deposit < 0
+      return false if !@message.nil? && @message.to_s.length > 2000
       true
-    end
-
-    # Custom attribute writer method with validation
-    # @param [Object] check_in Value to be assigned
-    def check_in=(check_in)
-      if check_in.nil?
-        fail ArgumentError, 'check_in cannot be nil'
-      end
-
-      @check_in = check_in
-    end
-
-    # Custom attribute writer method with validation
-    # @param [Object] check_out Value to be assigned
-    def check_out=(check_out)
-      if check_out.nil?
-        fail ArgumentError, 'check_out cannot be nil'
-      end
-
-      @check_out = check_out
-    end
-
-    # Custom attribute writer method with validation
-    # @param [Object] guests Value to be assigned
-    def guests=(guests)
-      if guests.nil?
-        fail ArgumentError, 'guests cannot be nil'
-      end
-
-      @guests = guests
     end
 
     # Custom attribute writer method with validation
@@ -195,6 +192,44 @@ module Repull
       @total_price = total_price
     end
 
+    # Custom attribute writer method with validation
+    # @param [Object] rental_amount Value to be assigned
+    def rental_amount=(rental_amount)
+      if rental_amount.nil?
+        fail ArgumentError, 'rental_amount cannot be nil'
+      end
+
+      if rental_amount <= 0
+        fail ArgumentError, 'invalid value for "rental_amount", must be greater than 0.'
+      end
+
+      @rental_amount = rental_amount
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] damage_deposit Value to be assigned
+    def damage_deposit=(damage_deposit)
+      if !damage_deposit.nil? && damage_deposit < 0
+        fail ArgumentError, 'invalid value for "damage_deposit", must be greater than or equal to 0.'
+      end
+
+      @damage_deposit = damage_deposit
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] message Value to be assigned
+    def message=(message)
+      if message.nil?
+        fail ArgumentError, 'message cannot be nil'
+      end
+
+      if message.to_s.length > 2000
+        fail ArgumentError, 'invalid value for "message", the character length must be smaller than or equal to 2000.'
+      end
+
+      @message = message
+    end
+
     # Checks equality by comparing each attribute.
     # @param [Object] Object to be compared
     def ==(o)
@@ -204,7 +239,11 @@ module Repull
           check_in == o.check_in &&
           check_out == o.check_out &&
           guests == o.guests &&
-          total_price == o.total_price
+          total_price == o.total_price &&
+          rental_amount == o.rental_amount &&
+          fees == o.fees &&
+          damage_deposit == o.damage_deposit &&
+          message == o.message
     end
 
     # @see the `==` method
@@ -216,7 +255,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [listing_id, check_in, check_out, guests, total_price].hash
+      [listing_id, check_in, check_out, guests, total_price, rental_amount, fees, damage_deposit, message].hash
     end
 
     # Builds the object from hash

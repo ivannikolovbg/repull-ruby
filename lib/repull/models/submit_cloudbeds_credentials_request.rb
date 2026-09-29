@@ -18,12 +18,16 @@ module Repull
     # Connect session id from `POST /v1/connect/cloudbeds`. Omit when calling with your API key.
     attr_accessor :session_id
 
+    # Optional: what the app may change in the PMS, set before the first sync. Same shape as `PATCH /v1/connect/{provider}/write-policy`; switches you leave out keep the provider default (calendar off for hotel PMSs, bookings on).
+    attr_accessor :write_policy
+
     attr_accessor :credentials
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
         :'session_id' => :'sessionId',
+        :'write_policy' => :'writePolicy',
         :'credentials' => :'credentials'
       }
     end
@@ -42,6 +46,7 @@ module Repull
     def self.openapi_types
       {
         :'session_id' => :'String',
+        :'write_policy' => :'Object',
         :'credentials' => :'SubmitCloudbedsCredentialsRequestCredentials'
       }
     end
@@ -70,6 +75,10 @@ module Repull
 
       if attributes.key?(:'session_id')
         self.session_id = attributes[:'session_id']
+      end
+
+      if attributes.key?(:'write_policy')
+        self.write_policy = attributes[:'write_policy']
       end
 
       if attributes.key?(:'credentials')
@@ -115,6 +124,7 @@ module Repull
       return true if self.equal?(o)
       self.class == o.class &&
           session_id == o.session_id &&
+          write_policy == o.write_policy &&
           credentials == o.credentials
     end
 
@@ -127,7 +137,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [session_id, credentials].hash
+      [session_id, write_policy, credentials].hash
     end
 
     # Builds the object from hash

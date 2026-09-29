@@ -77,20 +77,20 @@ module Repull
     end
 
     # Per-channel connectivity health
-    # Reports reachability and auth state for one channel (`airbnb`, `booking`, `vrbo`, `plumguide`). Use it to tell \"the channel is down\" apart from \"this workspace's connection expired\".
+    # Reports reachability and auth state for one channel (`airbnb`, `booking`, `vrbo`, `plumguide`). Use it to tell \"the channel is down\" apart from \"this workspace's connection expired\". `200` when `status` is `ok`, `503` when `degraded` or `down` (the body's `status` and `message` say which and why).  **`vrbo`** reports the connector's own signals in a `vrbo` block: connected accounts, accounts VRBO signed out (their bookings, messages and calendar stop until reconnected — `down`), accounts whose inbox sync is late (`degraded`), and the calendar push queue backlog and its oldest wait (`degraded` past 3 hours). Its rate is failed calendar pushes over finished ones in the last 3 hours (`vrbo.window_hours`; `refresh_attempts_24h` / `refresh_rejections_24h` count that window for VRBO), judged only once at least 50 pushes finished and at least 5 failed — VRBO pushes run in bursts, so a day-long window would keep reporting a problem already fixed.
     # @param channel [String] 
     # @param [Hash] opts the optional parameters
-    # @return [Hash<String, Object>]
+    # @return [GetChannelHealth200Response]
     def get_channel_health(channel, opts = {})
       data, _status_code, _headers = get_channel_health_with_http_info(channel, opts)
       data
     end
 
     # Per-channel connectivity health
-    # Reports reachability and auth state for one channel (&#x60;airbnb&#x60;, &#x60;booking&#x60;, &#x60;vrbo&#x60;, &#x60;plumguide&#x60;). Use it to tell \&quot;the channel is down\&quot; apart from \&quot;this workspace&#39;s connection expired\&quot;.
+    # Reports reachability and auth state for one channel (&#x60;airbnb&#x60;, &#x60;booking&#x60;, &#x60;vrbo&#x60;, &#x60;plumguide&#x60;). Use it to tell \&quot;the channel is down\&quot; apart from \&quot;this workspace&#39;s connection expired\&quot;. &#x60;200&#x60; when &#x60;status&#x60; is &#x60;ok&#x60;, &#x60;503&#x60; when &#x60;degraded&#x60; or &#x60;down&#x60; (the body&#39;s &#x60;status&#x60; and &#x60;message&#x60; say which and why).  **&#x60;vrbo&#x60;** reports the connector&#39;s own signals in a &#x60;vrbo&#x60; block: connected accounts, accounts VRBO signed out (their bookings, messages and calendar stop until reconnected — &#x60;down&#x60;), accounts whose inbox sync is late (&#x60;degraded&#x60;), and the calendar push queue backlog and its oldest wait (&#x60;degraded&#x60; past 3 hours). Its rate is failed calendar pushes over finished ones in the last 3 hours (&#x60;vrbo.window_hours&#x60;; &#x60;refresh_attempts_24h&#x60; / &#x60;refresh_rejections_24h&#x60; count that window for VRBO), judged only once at least 50 pushes finished and at least 5 failed — VRBO pushes run in bursts, so a day-long window would keep reporting a problem already fixed.
     # @param channel [String] 
     # @param [Hash] opts the optional parameters
-    # @return [Array<(Hash<String, Object>, Integer, Hash)>] Hash<String, Object> data, response status code and response headers
+    # @return [Array<(GetChannelHealth200Response, Integer, Hash)>] GetChannelHealth200Response data, response status code and response headers
     def get_channel_health_with_http_info(channel, opts = {})
       if @api_client.config.debugging
         @api_client.config.logger.debug 'Calling API: HealthApi.get_channel_health ...'
@@ -122,7 +122,7 @@ module Repull
       post_body = opts[:debug_body]
 
       # return_type
-      return_type = opts[:debug_return_type] || 'Hash<String, Object>'
+      return_type = opts[:debug_return_type] || 'GetChannelHealth200Response'
 
       # auth_names
       auth_names = opts[:debug_auth_names] || []

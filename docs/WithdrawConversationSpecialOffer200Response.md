@@ -6,6 +6,7 @@
 | ---- | ---- | ----------- | ----- |
 | **id** | **String** |  |  |
 | **conversation_id** | **String** |  |  |
+| **channel** | **String** |  |  |
 | **status** | **String** |  |  |
 
 ## Example
@@ -16,6 +17,7 @@ require 'repull'
 instance = Repull::WithdrawConversationSpecialOffer200Response.new(
   id: 1459920384,
   conversation_id: 164743,
+  channel: airbnb,
   status: null
 )
 ```

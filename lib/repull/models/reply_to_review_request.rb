@@ -18,10 +18,14 @@ module Repull
     # Reply text. `response` is accepted as an alias.
     attr_accessor :message
 
+    # VRBO: the name the response is signed with (the connected account's host name otherwise). Ignored on other channels.
+    attr_accessor :name
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'message' => :'message'
+        :'message' => :'message',
+        :'name' => :'name'
       }
     end
 
@@ -38,7 +42,8 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'message' => :'String'
+        :'message' => :'String',
+        :'name' => :'String'
       }
     end
 
@@ -69,6 +74,10 @@ module Repull
       else
         self.message = nil
       end
+
+      if attributes.key?(:'name')
+        self.name = attributes[:'name']
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -80,6 +89,10 @@ module Repull
         invalid_properties.push('invalid value for "message", message cannot be nil.')
       end
 
+      if !@name.nil? && @name.to_s.length > 80
+        invalid_properties.push('invalid value for "name", the character length must be smaller than or equal to 80.')
+      end
+
       invalid_properties
     end
 
@@ -88,6 +101,7 @@ module Repull
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
       return false if @message.nil?
+      return false if !@name.nil? && @name.to_s.length > 80
       true
     end
 
@@ -101,12 +115,27 @@ module Repull
       @message = message
     end
 
+    # Custom attribute writer method with validation
+    # @param [Object] name Value to be assigned
+    def name=(name)
+      if name.nil?
+        fail ArgumentError, 'name cannot be nil'
+      end
+
+      if name.to_s.length > 80
+        fail ArgumentError, 'invalid value for "name", the character length must be smaller than or equal to 80.'
+      end
+
+      @name = name
+    end
+
     # Checks equality by comparing each attribute.
     # @param [Object] Object to be compared
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          message == o.message
+          message == o.message &&
+          name == o.name
     end
 
     # @see the `==` method
@@ -118,7 +147,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [message].hash
+      [message, name].hash
     end
 
     # Builds the object from hash

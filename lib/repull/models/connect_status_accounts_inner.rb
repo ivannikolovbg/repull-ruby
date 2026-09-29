@@ -27,6 +27,37 @@ module Repull
     # True while the account is active and its authorization is usable.
     attr_accessor :connected
 
+    # Vrbo only: the account email.
+    attr_accessor :email
+
+    # Vrbo only.
+    attr_accessor :access_type
+
+    # Vrbo only: where the account import stands.
+    attr_accessor :import
+
+    class EnumAttributeValidator
+      attr_reader :datatype
+      attr_reader :allowable_values
+
+      def initialize(datatype, allowable_values)
+        @allowable_values = allowable_values.map do |value|
+          case datatype.to_s
+          when /Integer/i
+            value.to_i
+          when /Float/i
+            value.to_f
+          else
+            value
+          end
+        end
+      end
+
+      def valid?(value)
+        !value || allowable_values.include?(value)
+      end
+    end
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
@@ -34,7 +65,10 @@ module Repull
         :'name' => :'name',
         :'picture_url' => :'pictureUrl',
         :'status' => :'status',
-        :'connected' => :'connected'
+        :'connected' => :'connected',
+        :'email' => :'email',
+        :'access_type' => :'accessType',
+        :'import' => :'import'
       }
     end
 
@@ -55,7 +89,10 @@ module Repull
         :'name' => :'String',
         :'picture_url' => :'String',
         :'status' => :'String',
-        :'connected' => :'Boolean'
+        :'connected' => :'Boolean',
+        :'email' => :'String',
+        :'access_type' => :'String',
+        :'import' => :'VrboImportStatus'
       }
     end
 
@@ -65,6 +102,9 @@ module Repull
         :'name',
         :'picture_url',
         :'status',
+        :'email',
+        :'access_type',
+        :'import'
       ])
     end
 
@@ -103,6 +143,18 @@ module Repull
       if attributes.key?(:'connected')
         self.connected = attributes[:'connected']
       end
+
+      if attributes.key?(:'email')
+        self.email = attributes[:'email']
+      end
+
+      if attributes.key?(:'access_type')
+        self.access_type = attributes[:'access_type']
+      end
+
+      if attributes.key?(:'import')
+        self.import = attributes[:'import']
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -117,7 +169,19 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
+      access_type_validator = EnumAttributeValidator.new('String', ["messaging", "full_access"])
+      return false unless access_type_validator.valid?(@access_type)
       true
+    end
+
+    # Custom attribute writer method checking allowed values (enum).
+    # @param [Object] access_type Object to be assigned
+    def access_type=(access_type)
+      validator = EnumAttributeValidator.new('String', ["messaging", "full_access"])
+      unless validator.valid?(access_type)
+        fail ArgumentError, "invalid value for \"access_type\", must be one of #{validator.allowable_values}."
+      end
+      @access_type = access_type
     end
 
     # Checks equality by comparing each attribute.
@@ -129,7 +193,10 @@ module Repull
           name == o.name &&
           picture_url == o.picture_url &&
           status == o.status &&
-          connected == o.connected
+          connected == o.connected &&
+          email == o.email &&
+          access_type == o.access_type &&
+          import == o.import
     end
 
     # @see the `==` method
@@ -141,7 +208,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [external_account_id, name, picture_url, status, connected].hash
+      [external_account_id, name, picture_url, status, connected, email, access_type, import].hash
     end
 
     # Builds the object from hash

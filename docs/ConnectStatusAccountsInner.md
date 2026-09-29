@@ -9,6 +9,9 @@
 | **picture_url** | **String** |  | [optional] |
 | **status** | **String** |  | [optional] |
 | **connected** | **Boolean** | True while the account is active and its authorization is usable. | [optional] |
+| **email** | **String** | Vrbo only: the account email. | [optional] |
+| **access_type** | **String** | Vrbo only. | [optional] |
+| **import** | [**VrboImportStatus**](VrboImportStatus.md) | Vrbo only: where the account import stands. | [optional] |
 
 ## Example
 
@@ -20,7 +23,10 @@ instance = Repull::ConnectStatusAccountsInner.new(
   name: Raiden,
   picture_url: null,
   status: active,
-  connected: true
+  connected: true,
+  email: null,
+  access_type: null,
+  import: null
 )
 ```
 

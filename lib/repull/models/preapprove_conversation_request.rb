@@ -15,13 +15,17 @@ require 'time'
 
 module Repull
   class PreapproveConversationRequest < ApiModelBase
-    # When `true`, the guest cannot Instant Book the listing and must book through this pre-approval. Leave `false` unless you need that.
+    # Airbnb: when `true`, the guest cannot Instant Book the listing and must book through this pre-approval. Leave `false` unless you need that.
     attr_accessor :block_instant_booking
+
+    # VRBO: the message sent to the guest with the pre-approval (a friendly default otherwise).
+    attr_accessor :message
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'block_instant_booking' => :'blockInstantBooking'
+        :'block_instant_booking' => :'blockInstantBooking',
+        :'message' => :'message'
       }
     end
 
@@ -38,7 +42,8 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'block_instant_booking' => :'Boolean'
+        :'block_instant_booking' => :'Boolean',
+        :'message' => :'String'
       }
     end
 
@@ -69,6 +74,10 @@ module Repull
       else
         self.block_instant_booking = false
       end
+
+      if attributes.key?(:'message')
+        self.message = attributes[:'message']
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -76,6 +85,10 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
+      if !@message.nil? && @message.to_s.length > 2000
+        invalid_properties.push('invalid value for "message", the character length must be smaller than or equal to 2000.')
+      end
+
       invalid_properties
     end
 
@@ -83,7 +96,22 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
+      return false if !@message.nil? && @message.to_s.length > 2000
       true
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] message Value to be assigned
+    def message=(message)
+      if message.nil?
+        fail ArgumentError, 'message cannot be nil'
+      end
+
+      if message.to_s.length > 2000
+        fail ArgumentError, 'invalid value for "message", the character length must be smaller than or equal to 2000.'
+      end
+
+      @message = message
     end
 
     # Checks equality by comparing each attribute.
@@ -91,7 +119,8 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          block_instant_booking == o.block_instant_booking
+          block_instant_booking == o.block_instant_booking &&
+          message == o.message
     end
 
     # @see the `==` method
@@ -103,7 +132,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [block_instant_booking].hash
+      [block_instant_booking, message].hash
     end
 
     # Builds the object from hash

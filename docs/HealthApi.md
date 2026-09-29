@@ -73,11 +73,11 @@ No authorization required
 
 ## get_channel_health
 
-> Hash&lt;String, Object&gt; get_channel_health(channel)
+> <GetChannelHealth200Response> get_channel_health(channel)
 
 Per-channel connectivity health
 
-Reports reachability and auth state for one channel (`airbnb`, `booking`, `vrbo`, `plumguide`). Use it to tell \"the channel is down\" apart from \"this workspace's connection expired\".
+Reports reachability and auth state for one channel (`airbnb`, `booking`, `vrbo`, `plumguide`). Use it to tell \"the channel is down\" apart from \"this workspace's connection expired\". `200` when `status` is `ok`, `503` when `degraded` or `down` (the body's `status` and `message` say which and why).  **`vrbo`** reports the connector's own signals in a `vrbo` block: connected accounts, accounts VRBO signed out (their bookings, messages and calendar stop until reconnected — `down`), accounts whose inbox sync is late (`degraded`), and the calendar push queue backlog and its oldest wait (`degraded` past 3 hours). Its rate is failed calendar pushes over finished ones in the last 3 hours (`vrbo.window_hours`; `refresh_attempts_24h` / `refresh_rejections_24h` count that window for VRBO), judged only once at least 50 pushes finished and at least 5 failed — VRBO pushes run in bursts, so a day-long window would keep reporting a problem already fixed.
 
 ### Examples
 
@@ -101,7 +101,7 @@ end
 
 This returns an Array which contains the response data, status code and headers.
 
-> <Array(Hash&lt;String, Object&gt;, Integer, Hash)> get_channel_health_with_http_info(channel)
+> <Array(<GetChannelHealth200Response>, Integer, Hash)> get_channel_health_with_http_info(channel)
 
 ```ruby
 begin
@@ -109,7 +109,7 @@ begin
   data, status_code, headers = api_instance.get_channel_health_with_http_info(channel)
   p status_code # => 2xx
   p headers # => { ... }
-  p data # => Hash&lt;String, Object&gt;
+  p data # => <GetChannelHealth200Response>
 rescue Repull::ApiError => e
   puts "Error when calling HealthApi->get_channel_health_with_http_info: #{e}"
 end
@@ -123,7 +123,7 @@ end
 
 ### Return type
 
-**Hash&lt;String, Object&gt;**
+[**GetChannelHealth200Response**](GetChannelHealth200Response.md)
 
 ### Authorization
 

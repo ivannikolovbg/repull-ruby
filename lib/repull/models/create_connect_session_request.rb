@@ -21,6 +21,9 @@ module Repull
     # Opaque pass-through correlation token. Echoed back in the response.
     attr_accessor :state
 
+    # What the connection may do. Airbnb: the OAuth scope tier. Vrbo: `messaging` (or `read_only`) imports bookings and messages and never pushes the calendar; `full_access` also pushes prices and availability. Setting it locks the choice; omit it to let the host choose on the hosted page (default `full_access`).
+    attr_accessor :access_type
+
     # Optional whitelist of provider IDs the picker should expose. Omit to show every channel in the registry.
     attr_accessor :allowed_providers
 
@@ -64,6 +67,7 @@ module Repull
       {
         :'redirect_url' => :'redirectUrl',
         :'state' => :'state',
+        :'access_type' => :'accessType',
         :'allowed_providers' => :'allowedProviders',
         :'locale' => :'locale',
         :'purpose' => :'purpose',
@@ -88,6 +92,7 @@ module Repull
       {
         :'redirect_url' => :'String',
         :'state' => :'String',
+        :'access_type' => :'String',
         :'allowed_providers' => :'Array<String>',
         :'locale' => :'String',
         :'purpose' => :'String',
@@ -130,6 +135,10 @@ module Repull
 
       if attributes.key?(:'state')
         self.state = attributes[:'state']
+      end
+
+      if attributes.key?(:'access_type')
+        self.access_type = attributes[:'access_type']
       end
 
       if attributes.key?(:'allowed_providers')
@@ -180,6 +189,8 @@ module Repull
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
       return false if @redirect_url.nil?
+      access_type_validator = EnumAttributeValidator.new('String', ["full_access", "messaging", "read_only"])
+      return false unless access_type_validator.valid?(@access_type)
       purpose_validator = EnumAttributeValidator.new('String', ["connect", "migrate"])
       return false unless purpose_validator.valid?(@purpose)
       true
@@ -193,6 +204,16 @@ module Repull
       end
 
       @redirect_url = redirect_url
+    end
+
+    # Custom attribute writer method checking allowed values (enum).
+    # @param [Object] access_type Object to be assigned
+    def access_type=(access_type)
+      validator = EnumAttributeValidator.new('String', ["full_access", "messaging", "read_only"])
+      unless validator.valid?(access_type)
+        fail ArgumentError, "invalid value for \"access_type\", must be one of #{validator.allowable_values}."
+      end
+      @access_type = access_type
     end
 
     # Custom attribute writer method checking allowed values (enum).
@@ -212,6 +233,7 @@ module Repull
       self.class == o.class &&
           redirect_url == o.redirect_url &&
           state == o.state &&
+          access_type == o.access_type &&
           allowed_providers == o.allowed_providers &&
           locale == o.locale &&
           purpose == o.purpose &&
@@ -229,7 +251,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [redirect_url, state, allowed_providers, locale, purpose, workspace, copy, scope].hash
+      [redirect_url, state, access_type, allowed_providers, locale, purpose, workspace, copy, scope].hash
     end
 
     # Builds the object from hash

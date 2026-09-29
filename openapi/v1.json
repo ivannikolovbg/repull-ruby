@@ -1124,10 +1124,54 @@
                     "$ref": "#/components/schemas/ConversationGuest"
                   }
                 ]
+              },
+              "capabilities": {
+                "$ref": "#/components/schemas/ConversationCapabilities"
               }
             }
           }
         ]
+      },
+      "ConversationCapabilities": {
+        "type": "object",
+        "description": "What the inquiry actions can do on this conversation right now \u2014 one set of endpoints for every channel, so an app shows the right actions instead of learning from a `422`. All `false` / `null` when nothing applies (a booked or closed inquiry, Booking.com, direct, an Airbnb inquiry relayed by a PMS).",
+        "required": [
+          "canPreApprove",
+          "canWithdraw",
+          "canSendOffer",
+          "offerPrice",
+          "canPreviewOffer"
+        ],
+        "properties": {
+          "canPreApprove": {
+            "type": "boolean",
+            "description": "`POST /v1/conversations/{id}/pre-approval` would pre-approve the open inquiry (Airbnb connected directly, VRBO)."
+          },
+          "canWithdraw": {
+            "type": "boolean",
+            "description": "A pre-approval or offer is live and can be withdrawn \u2014 `DELETE /v1/conversations/{id}/pre-approval` (VRBO) or `DELETE \u2026/special-offers/{offerId}` (Airbnb)."
+          },
+          "canSendOffer": {
+            "type": "boolean",
+            "description": "`POST /v1/conversations/{id}/special-offers` would send an offer."
+          },
+          "offerPrice": {
+            "type": "string",
+            "nullable": true,
+            "description": "How an offer is priced here: `total` \u2014 one `totalPrice` for the stay (Airbnb); `breakdown` \u2014 `rentalAmount`, `fees`, `damageDeposit`, and the channel computes the guest total (VRBO)."
+          },
+          "canPreviewOffer": {
+            "type": "boolean",
+            "description": "`POST /v1/conversations/{id}/special-offers/preview` returns the channel\u2019s recalculated offer (VRBO)."
+          }
+        },
+        "example": {
+          "canPreApprove": false,
+          "canWithdraw": true,
+          "canSendOffer": true,
+          "offerPrice": "breakdown",
+          "canPreviewOffer": true
+        }
       },
       "ConversationMessageAttachment": {
         "type": "object",
@@ -1986,7 +2030,7 @@
           },
           "accounts": {
             "type": "array",
-            "description": "Airbnb only: every Airbnb account this workspace has connected, including ones since disconnected. Pass `externalAccountId` as `accountId` to `DELETE /v1/connect/airbnb` to disconnect one account.",
+            "description": "Airbnb: every Airbnb account this workspace has connected, including ones since disconnected. Pass `externalAccountId` as `accountId` to `DELETE /v1/connect/airbnb` to disconnect one account. Vrbo (`GET /v1/connect/vrbo-login`): every signed-in Vrbo account, each with `accessType` and `import` (a `VrboImportStatus`), plus a top-level `dataFreshness`.",
             "items": {
               "type": "object",
               "properties": {
@@ -2013,9 +2057,164 @@
                   "type": "boolean",
                   "description": "True while the account is active and its authorization is usable.",
                   "example": true
+                },
+                "email": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Vrbo only: the account email."
+                },
+                "accessType": {
+                  "type": "string",
+                  "nullable": true,
+                  "enum": [
+                    "messaging",
+                    "full_access"
+                  ],
+                  "description": "Vrbo only."
+                },
+                "import": {
+                  "nullable": true,
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/VrboImportStatus"
+                    }
+                  ],
+                  "description": "Vrbo only: where the account import stands."
                 }
               }
             }
+          },
+          "writePolicy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PmsWritePolicy"
+              }
+            ],
+            "description": "PMS connections only: what the app may change in the PMS. Change it with `PATCH /v1/connect/{provider}/write-policy`."
+          },
+          "dataFreshness": {
+            "type": "object",
+            "description": "Vrbo only: the same freshness envelope the Airbnb read endpoints return, per account and in aggregate. Its reason is never_synced until a mapping is confirmed and importing while upcoming bookings come in."
+          }
+        }
+      },
+      "PmsWritePolicy": {
+        "type": "object",
+        "description": "What the app may change in a connected PMS. Hotel PMSs (Cloudbeds, Mews) start with every `calendar` switch off, because the PMS owns its room inventory; every other PMS starts with everything on. Reading from the PMS is never affected.",
+        "properties": {
+          "calendar": {
+            "type": "object",
+            "properties": {
+              "availability": {
+                "type": "boolean",
+                "description": "Open and close nights. Off also means the PMS's bookings never block the calendar on other channels."
+              },
+              "rates": {
+                "type": "boolean",
+                "description": "Nightly prices."
+              },
+              "restrictions": {
+                "type": "boolean",
+                "description": "Minimum stay and other stay restrictions."
+              }
+            },
+            "required": [
+              "availability",
+              "rates",
+              "restrictions"
+            ]
+          },
+          "reservations": {
+            "type": "object",
+            "properties": {
+              "website": {
+                "type": "boolean",
+                "description": "Create bookings from booking websites."
+              },
+              "dashboard": {
+                "type": "boolean",
+                "description": "Change and cancel bookings from the dashboard."
+              },
+              "api": {
+                "type": "boolean",
+                "description": "Create, change and cancel bookings through the reservations API."
+              }
+            },
+            "required": [
+              "website",
+              "dashboard",
+              "api"
+            ]
+          }
+        },
+        "required": [
+          "calendar",
+          "reservations"
+        ],
+        "example": {
+          "calendar": {
+            "availability": false,
+            "rates": true,
+            "restrictions": false
+          },
+          "reservations": {
+            "website": true,
+            "dashboard": true,
+            "api": true
+          }
+        }
+      },
+      "VrboImportStatus": {
+        "type": "object",
+        "description": "Where a Vrbo account import stands. Nothing is imported until its unit mapping is confirmed; then upcoming bookings and the last 30 days of messages come first, and the whole account history after.",
+        "properties": {
+          "accountId": {
+            "type": "integer"
+          },
+          "state": {
+            "type": "string"
+          },
+          "accessType": {
+            "type": "string",
+            "nullable": true,
+            "description": "`messaging`: bookings and messages only, the calendar is never pushed."
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the mapping was confirmed."
+          },
+          "priorityImportedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Upcoming bookings and the last 30 days are in."
+          },
+          "historyCompletedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "historyComplete": {
+            "type": "boolean",
+            "description": "The whole account history is imported."
+          },
+          "lastSyncedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Last completed sync (Vrbo is read every few minutes and on each Vrbo notification email)."
+          },
+          "conversationsSeen": {
+            "type": "integer"
+          },
+          "conversationsImported": {
+            "type": "integer"
+          },
+          "reservations": {
+            "type": "integer",
+            "description": "Bookings imported so far."
           }
         }
       },
@@ -8143,6 +8342,24 @@
             "nullable": true,
             "description": "ISO timestamp the connection was first established."
           },
+          "platformId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The listing's id on the channel \u2014 Airbnb listing id, Booking.com room/property id, VRBO listing number.",
+            "example": "5121372"
+          },
+          "channelStatus": {
+            "type": "string",
+            "nullable": true,
+            "description": "Where the listing stands on the channel itself, when the channel reports it (VRBO): `online` \u2014 live and bookable; `offline` \u2014 hidden by the owner (`POST /v1/listings/{id}/online` brings it back); `not_live` \u2014 expired, new, still onboarding or deactivated by the channel (see `channelStatusDetail`). Null when not reported.",
+            "example": "online"
+          },
+          "channelStatusDetail": {
+            "type": "string",
+            "nullable": true,
+            "description": "The channel's own status word behind `channelStatus` (VRBO: `LIVE`, `InactiveByOwnerRequest`, `Expired`, `New`, \u2026).",
+            "example": "LIVE"
+          },
           "lockedFields": {
             "type": "array",
             "items": {
@@ -11069,7 +11286,7 @@
       },
       "SendMessageRequest": {
         "type": "object",
-        "description": "`message`, `attachments`, or both. Per-channel limits for `attachments`:\n\n| Channel | Accepted types | Per file | Per request | Text |\n|---|---|---|---|---|\n| Airbnb | JPEG, PNG, GIF, WebP (sent as JPEG), MP4, QuickTime | 10 MB | 5 | optional \u2014 each file is sent as its own message, then the text |\n| Booking.com | JPEG, PNG | 10 MB | 5 | **required** \u2014 all files ride on the one text message |\n| SMS, email, direct-booking site chat | \u2014 | \u2014 | \u2014 | `422 attachments_not_supported`; nothing is sent |",
+        "description": "`message`, `attachments`, or both. Per-channel limits for `attachments`:\n\n| Channel | Accepted types | Per file | Per request | Text |\n|---|---|---|---|---|\n| Airbnb | JPEG, PNG, GIF, WebP (sent as JPEG), MP4, QuickTime | 10 MB | 5 | optional \u2014 each file is sent as its own message, then the text |\n| Booking.com | JPEG, PNG | 10 MB | 5 | **required** \u2014 all files ride on the one text message |\n| VRBO, SMS, email, direct-booking site chat | \u2014 | \u2014 | \u2014 | `422 attachments_not_supported`; nothing is sent |",
         "properties": {
           "message": {
             "type": "string",
@@ -12057,7 +12274,7 @@
       },
       "ChannelMarketStateItem": {
         "type": "object",
-        "description": "What happened on ONE channel item \u2014 one Airbnb connection, or one Booking.com property. A listing can carry several Airbnb connections (a re-list, or a move between host accounts) and each gets its own entry.",
+        "description": "What happened on ONE channel item \u2014 one Airbnb connection, one Booking.com property, or one VRBO unit. A listing can carry several Airbnb connections (a re-list, or a move between host accounts) and each gets its own entry.",
         "required": [
           "channel",
           "state",
@@ -12085,9 +12302,14 @@
             "nullable": true,
             "description": "The Booking.com property acted on. Present on Booking.com items; null when the property could not be resolved."
           },
+          "platformId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The VRBO listing number of the unit hidden or reactivated. Present on VRBO items."
+          },
           "code": {
             "type": "string",
-            "description": "Error code when `ok` is false \u2014 the SAME code the channel-specific endpoint returns for this failure, so one vocabulary covers both surfaces. Absent when `ok` is true.\n\nThe channel codes come in pairs, and the pair is the retryable split \u2014 the most useful bit in the whole item:\n\n- `airbnb_rejected` / `booking_rejected` \u2014 the channel refused the request AS SENT. `message` carries its own reason. Correct it and send again; resending the same thing is refused again.\n- `airbnb_error` / `booking_error` \u2014 the channel did not complete the request (outage, timeout, server error). Nothing about the request needs to change: retry with backoff.\n\nPlus `ambiguous_booking_mapping` (name the property with `hotelId`) and `payment_required` (a billing refusal, which keeps its own code rather than being buried under a channel one)."
+            "description": "Error code when `ok` is false \u2014 the SAME code the channel-specific endpoint returns for this failure, so one vocabulary covers both surfaces. Absent when `ok` is true.\n\nThe channel codes come in pairs, and the pair is the retryable split \u2014 the most useful bit in the whole item:\n\n- `airbnb_rejected` / `booking_rejected` \u2014 the channel refused the request AS SENT. `message` carries its own reason. Correct it and send again; resending the same thing is refused again.\n- `airbnb_error` / `booking_error` \u2014 the channel did not complete the request (outage, timeout, server error). Nothing about the request needs to change: retry with backoff.\n\nPlus `ambiguous_booking_mapping` (name the property with `hotelId`) and `payment_required` (a billing refusal, which keeps its own code rather than being buried under a channel one). VRBO items: `vrbo_rejected` (VRBO still shows the unit in the old state after the change), `vrbo_error` (VRBO did not complete it \u2014 retry), `vrbo_not_ready` (the unit's VRBO details have not synced yet \u2014 retry in a few minutes), `vrbo_session_expired` (reconnect the VRBO account)."
           },
           "previousCode": {
             "type": "string",
@@ -12105,7 +12327,7 @@
           },
           "verified": {
             "type": "boolean",
-            "description": "Airbnb only: the listing was READ BACK afterwards and is in the state asked for \u2014 down after `offline`, live after `online`. Airbnb can accept a deactivation and leave a listing live, or accept an activation and keep it offline; either is returned as a failure, never as success. `false` means the read-back could not run \u2014 an unknown, not a success."
+            "description": "Airbnb and VRBO: the listing was READ BACK afterwards and is in the state asked for \u2014 down after `offline`, live after `online`. Airbnb can accept a deactivation and leave a listing live, or accept an activation and keep it offline; either is returned as a failure, never as success. `false` means the read-back could not run \u2014 an unknown, not a success."
           }
         }
       },
@@ -14473,7 +14695,7 @@
       "post": {
         "operationId": "send_conversation_message",
         "summary": "Send a message to the guest",
-        "description": "Sends a message to the guest on this conversation and records it in the thread.\n\nOmit `channel` and the message goes out on whichever channel the conversation already uses (Airbnb, Booking.com, SMS, email or the direct-booking site) \u2014 that is the right default. Pass `channel` only to force a specific one.\n\nThe message is attributed to the API: it is recorded with `aiGenerated` false so an API send is never counted as an automated reply.\n\n### Airbnb rewrites links \u2014 check `contentRewritten`\n\nAirbnb rejects guest messages containing a link, an email address or a phone number, and names the offending text. When that happens the offending fragment is stripped and the remainder is re-sent once, which means **the guest receives a message that is not the one you wrote**. Reporting that as a plain success would be a lie, so every response carries `contentRewritten`; when it is `true`, `deliveredContent` is the text that actually reached the guest. Check it before assuming your message went out verbatim.\n\nWhen the text cannot be salvaged (the link is most of the message) nothing is delivered and the call returns `422 message_not_sent` with the channel's verbatim refusal in `statusReason`.\n\nSend `Idempotency-Key` \u2014 without it, retrying after a network timeout sends the guest the same message twice.\n\n### Attachments\n\nSend files with `attachments: [{ url, contentType?, filename? }]` \u2014 public `https://` URLs, up to 5 per request, 10 MB each. `message` may be omitted when there are attachments (except on Booking.com). Repull downloads each file, reads its real type from the bytes, keeps a durable copy and delivers it through the channel's own file flow. **Every file is checked before anything is sent**: if one is unreachable, too large or of a type the channel refuses, the call returns 422 naming the file (`index`) and the guest receives nothing.\n\n| Channel | Accepted types | Text | How it arrives |\n|---|---|---|---|\n| Airbnb | JPEG, PNG, GIF, WebP (converted to JPEG), MP4, QuickTime | optional | each file as its own message, then the text as a separate message |\n| Booking.com | JPEG, PNG | **required** | one message carrying the text and every file |\n| SMS, email, direct-booking site chat | \u2014 | \u2014 | `422 attachments_not_supported`, nothing sent |\n\nAirbnb does not allow files in pre-booking (inquiry) conversations; that refusal comes back as `422 message_not_sent`. Because Airbnb delivers files one message at a time, a later file can be refused after earlier ones arrived \u2014 that returns `422 message_partially_sent` with `parts` saying exactly which messages reached the guest; resend only the rest.\n\nThe response's `attachments` lists each file's durable `url`, and `parts` lists every channel message the send produced. Read-back (`GET /v1/conversations/{id}/messages`) shows the same files in each message's `attachments`.\n\n**Inactive listings:** a conversation that belongs to an inactive listing returns `403 listing_inactive` and no message is sent. Activate the listing first.",
+        "description": "Sends a message to the guest on this conversation and records it in the thread.\n\nOmit `channel` and the message goes out on whichever channel the conversation already uses (Airbnb, Booking.com, VRBO, SMS, email or the direct-booking site) \u2014 that is the right default. Pass `channel` only to force a specific one.\n\nThe message is attributed to the API: it is recorded with `aiGenerated` false so an API send is never counted as an automated reply.\n\n### Airbnb rewrites links \u2014 check `contentRewritten`\n\nAirbnb rejects guest messages containing a link, an email address or a phone number, and names the offending text. When that happens the offending fragment is stripped and the remainder is re-sent once, which means **the guest receives a message that is not the one you wrote**. Reporting that as a plain success would be a lie, so every response carries `contentRewritten`; when it is `true`, `deliveredContent` is the text that actually reached the guest. Check it before assuming your message went out verbatim.\n\nWhen the text cannot be salvaged (the link is most of the message) nothing is delivered and the call returns `422 message_not_sent` with the channel's verbatim refusal in `statusReason`.\n\nSend `Idempotency-Key` \u2014 without it, retrying after a network timeout sends the guest the same message twice.\n\n### Attachments\n\nSend files with `attachments: [{ url, contentType?, filename? }]` \u2014 public `https://` URLs, up to 5 per request, 10 MB each. `message` may be omitted when there are attachments (except on Booking.com). Repull downloads each file, reads its real type from the bytes, keeps a durable copy and delivers it through the channel's own file flow. **Every file is checked before anything is sent**: if one is unreachable, too large or of a type the channel refuses, the call returns 422 naming the file (`index`) and the guest receives nothing.\n\n| Channel | Accepted types | Text | How it arrives |\n|---|---|---|---|\n| Airbnb | JPEG, PNG, GIF, WebP (converted to JPEG), MP4, QuickTime | optional | each file as its own message, then the text as a separate message |\n| Booking.com | JPEG, PNG | **required** | one message carrying the text and every file |\n| VRBO, SMS, email, direct-booking site chat | \u2014 | \u2014 | `422 attachments_not_supported`, nothing sent |\n\nAirbnb does not allow files in pre-booking (inquiry) conversations; that refusal comes back as `422 message_not_sent`. Because Airbnb delivers files one message at a time, a later file can be refused after earlier ones arrived \u2014 that returns `422 message_partially_sent` with `parts` saying exactly which messages reached the guest; resend only the rest.\n\nThe response's `attachments` lists each file's durable `url`, and `parts` lists every channel message the send produced. Read-back (`GET /v1/conversations/{id}/messages`) shows the same files in each message's `attachments`.\n\n**Inactive listings:** a conversation that belongs to an inactive listing returns `403 listing_inactive` and no message is sent. Activate the listing first.",
         "tags": [
           "Conversations"
         ],
@@ -15108,6 +15330,15 @@
                     "type": "string",
                     "nullable": true,
                     "description": "Opaque pass-through correlation token. Echoed back in the response."
+                  },
+                  "accessType": {
+                    "type": "string",
+                    "enum": [
+                      "full_access",
+                      "messaging",
+                      "read_only"
+                    ],
+                    "description": "What the connection may do. Airbnb: the OAuth scope tier. Vrbo: `messaging` (or `read_only`) imports bookings and messages and never pushes the calendar; `full_access` also pushes prices and availability. Setting it locks the choice; omit it to let the host choose on the hosted page (default `full_access`)."
                   },
                   "allowedProviders": {
                     "type": "array",
@@ -16217,7 +16448,7 @@
       "get": {
         "operationId": "getChannelHealth",
         "summary": "Per-channel connectivity health",
-        "description": "Reports reachability and auth state for one channel (`airbnb`, `booking`, `vrbo`, `plumguide`). Use it to tell \"the channel is down\" apart from \"this workspace's connection expired\".",
+        "description": "Reports reachability and auth state for one channel (`airbnb`, `booking`, `vrbo`, `plumguide`). Use it to tell \"the channel is down\" apart from \"this workspace's connection expired\". `200` when `status` is `ok`, `503` when `degraded` or `down` (the body's `status` and `message` say which and why).\n\n**`vrbo`** reports the connector's own signals in a `vrbo` block: connected accounts, accounts VRBO signed out (their bookings, messages and calendar stop until reconnected \u2014 `down`), accounts whose inbox sync is late (`degraded`), and the calendar push queue backlog and its oldest wait (`degraded` past 3 hours). Its rate is failed calendar pushes over finished ones in the last 3 hours (`vrbo.window_hours`; `refresh_attempts_24h` / `refresh_rejections_24h` count that window for VRBO), judged only once at least 50 pushes finished and at least 5 failed \u2014 VRBO pushes run in bursts, so a day-long window would keep reporting a problem already fixed.",
         "tags": [
           "Health"
         ],
@@ -16245,7 +16476,45 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true
+                  "additionalProperties": true,
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "ok",
+                        "degraded",
+                        "down"
+                      ]
+                    },
+                    "vrbo": {
+                      "type": "object",
+                      "description": "VRBO only \u2014 the connector's own signals.",
+                      "properties": {
+                        "accounts_connected": {
+                          "type": "integer"
+                        },
+                        "accounts_signed_out": {
+                          "type": "integer",
+                          "description": "Accounts VRBO signed out; `status` is `down` while any is."
+                        },
+                        "inbox_sync_late": {
+                          "type": "integer",
+                          "description": "Accounts whose last full inbox sync is older than 30 minutes (it runs every 5)."
+                        },
+                        "calendar_queue_backlog": {
+                          "type": "integer",
+                          "description": "Listings with a calendar push waiting."
+                        },
+                        "calendar_oldest_wait_minutes": {
+                          "type": "integer"
+                        },
+                        "window_hours": {
+                          "type": "integer",
+                          "description": "Hours the push failure rate is judged over."
+                        }
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -16421,7 +16690,7 @@
       "post": {
         "operationId": "replyToReview",
         "summary": "Reply to a review on any channel",
-        "description": "Resolves the review, reads its channel and dispatches the reply. Channel-neutral: you do not need to know where the review came from.\n\nReplies work on Airbnb and Booking.com. Each channel accepts one reply per review. A review from a channel without a reply API returns `422 unsupported_channel` naming the channels that do work.\n\nTo review a guest (Airbnb only), use `POST /v1/reviews/{id}/guest-review`.\n\n**Inactive listings:** a review of an inactive listing returns `403 listing_inactive` and no reply reaches the channel. Activate the listing first.",
+        "description": "Resolves the review, reads its channel and dispatches the reply. Channel-neutral: you do not need to know where the review came from.\n\nReplies work on Airbnb, Booking.com and VRBO. Each channel accepts one reply per review (VRBO: a second is `409 already_replied`; a review VRBO no longer takes a response to is `409 reply_not_allowed`). On VRBO the response is signed with a name \u2014 the connected account's host name, or `name` if you send it. A review from a channel without a reply API returns `422 unsupported_channel` naming the channels that do work.\n\nTo review a guest (Airbnb only), use `POST /v1/reviews/{id}/guest-review`.\n\n**Inactive listings:** a review of an inactive listing returns `403 listing_inactive` and no reply reaches the channel. Activate the listing first.",
         "tags": [
           "Reviews"
         ],
@@ -16446,6 +16715,11 @@
                   "message": {
                     "type": "string",
                     "description": "Reply text. `response` is accepted as an alias."
+                  },
+                  "name": {
+                    "type": "string",
+                    "maxLength": 80,
+                    "description": "VRBO: the name the response is signed with (the connected account's host name otherwise). Ignored on other channels."
                   }
                 },
                 "required": [
@@ -27521,8 +27795,8 @@
     "/v1/conversations/{id}/pre-approval": {
       "post": {
         "operationId": "preapprove_conversation",
-        "summary": "Pre-approve an inquiry",
-        "description": "Pre-approve the Airbnb inquiry on this conversation: the guest who asked about dates may now book them at the listed price, without waiting on you. To change the dates, guests or price, send a special offer instead (`POST /v1/conversations/{id}/special-offers`).\n\nFind inquiries that need an answer with `GET /v1/inquiries` (default `status=open`); each carries the `conversationId` to use here.\n\n**Airbnb only**, and only for listings connected to Airbnb directly. A Booking.com, VRBO or direct-booking conversation, or an Airbnb one relayed through a PMS (Hostaway, Guesty), returns `422 channel_not_supported` and nothing is sent.\n\nThe inquiry is marked `pre_approved` everywhere, the same as pre-approving in Airbnb.\n\nAn Airbnb refusal is never reported as a success: an inquiry that already moved on is `409 inquiry_no_longer_open`, an expired one `409 inquiry_expired`, a conversation that already has a booking `409 conversation_already_booked`.\n\nSend `Idempotency-Key`: a repeat with the same key replays the first response instead of acting twice (a `409 idempotency_key_in_use` while the first is still running). A 5xx, a `429 airbnb_rate_limited` or a `403 connection_reauth_required` is not stored \u2014 nothing was done \u2014 so retrying with the same key reaches Airbnb again.",
+        "summary": "Pre-approve an inquiry (Airbnb, VRBO)",
+        "description": "Pre-approve the inquiry on this conversation: the guest who asked about dates may now book them at the listed price, without waiting on you. To change the dates, guests or price, send a special offer instead (`POST /v1/conversations/{id}/special-offers`).\n\nFind inquiries that need an answer with `GET /v1/inquiries` (default `status=open`); each carries the `conversationId` to use here.\n\nOne endpoint for every channel with pre-approvals: **Airbnb** (listings connected directly) and **VRBO**. A Booking.com or direct-booking conversation, or an Airbnb one relayed through a PMS (Hostaway, Guesty), returns `422 channel_not_supported` and nothing is sent \u2014 `GET /v1/conversations/{id}` \u2192 `capabilities.canPreApprove` says where it works.\n\n`blockInstantBooking` is Airbnb only (VRBO has no such switch: `422 invalid_params`). `message` is sent to the guest with a VRBO pre-approval (a friendly default otherwise).\n\nThe inquiry is marked `pre_approved` everywhere, the same as pre-approving on the channel. Withdraw it with `DELETE /v1/conversations/{id}/pre-approval` (VRBO).\n\nA channel\u2019s refusal is never reported as a success: an inquiry that already moved on is `409 inquiry_no_longer_open`, an expired one `409 inquiry_expired`, a conversation that already has a booking `409 conversation_already_booked`.\n\nSend `Idempotency-Key`: a repeat with the same key replays the first response instead of acting twice (a `409 idempotency_key_in_use` while the first is still running). A 5xx, a `429 airbnb_rate_limited` or a `403 connection_reauth_required` is not stored \u2014 nothing was done \u2014 so retrying with the same key reaches Airbnb again.",
         "tags": [
           "Conversations"
         ],
@@ -27551,7 +27825,12 @@
                   "blockInstantBooking": {
                     "type": "boolean",
                     "default": false,
-                    "description": "When `true`, the guest cannot Instant Book the listing and must book through this pre-approval. Leave `false` unless you need that."
+                    "description": "Airbnb: when `true`, the guest cannot Instant Book the listing and must book through this pre-approval. Leave `false` unless you need that."
+                  },
+                  "message": {
+                    "type": "string",
+                    "maxLength": 2000,
+                    "description": "VRBO: the message sent to the guest with the pre-approval (a friendly default otherwise)."
                   }
                 }
               },
@@ -27579,14 +27858,24 @@
                   "type": "object",
                   "required": [
                     "conversationId",
+                    "channel",
                     "status",
                     "blockInstantBooking",
-                    "expiresAt"
+                    "expiresAt",
+                    "message"
                   ],
                   "properties": {
                     "conversationId": {
                       "type": "string",
                       "example": "164743"
+                    },
+                    "channel": {
+                      "type": "string",
+                      "enum": [
+                        "airbnb",
+                        "vrbo"
+                      ],
+                      "example": "airbnb"
                     },
                     "status": {
                       "type": "string",
@@ -27602,15 +27891,22 @@
                       "type": "string",
                       "format": "date-time",
                       "nullable": true,
-                      "description": "When the guest can no longer book on the pre-approval, if Airbnb reported it."
+                      "description": "When the guest can no longer book on the pre-approval, if the channel reported it."
+                    },
+                    "message": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "The message sent to the guest with the pre-approval (VRBO)."
                     }
                   }
                 },
                 "example": {
                   "conversationId": "164743",
+                  "channel": "airbnb",
                   "status": "pre_approved",
                   "blockInstantBooking": false,
-                  "expiresAt": "2026-09-23T17:40:38Z"
+                  "expiresAt": "2026-09-23T17:40:38Z",
+                  "message": null
                 }
               }
             }
@@ -27756,7 +28052,7 @@
                       "error": {
                         "code": "channel_not_supported",
                         "message": "Reservation 233530 came from Booking.com. Booking requests can only be accepted or declined on Airbnb \u2014 other channels confirm instantly or have no request step.",
-                        "fix": "Pre-approvals, special offers and accepting/declining requests exist only on Airbnb, and only for listings connected to Airbnb directly (not through a PMS such as Hostaway or Guesty). Booking.com, VRBO and direct bookings confirm without a request step.",
+                        "fix": "Pre-approvals and special offers work on Airbnb (connected directly, not through a PMS such as Hostaway or Guesty) and VRBO; accepting/declining booking requests on Airbnb. `GET /v1/conversations/{id}` \u2192 `capabilities` says what works on a conversation. Booking.com and direct bookings confirm without a request step.",
                         "docs_url": "https://repull.dev/docs/channels/airbnb/inquiries-and-requests",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "channel": "booking"
@@ -27878,13 +28174,233 @@
             }
           }
         }
+      },
+      "delete": {
+        "operationId": "withdraw_conversation_preapproval",
+        "summary": "Withdraw a pre-approval",
+        "description": "Withdraw the live pre-approval (or offer) on this conversation: the guest can no longer book on it, and the inquiry is open again. **VRBO**. On Airbnb a pre-approval is a special offer \u2014 withdraw it with `DELETE /v1/conversations/{id}/special-offers/{offerId}`; here it is `422 channel_not_supported`.\n\n`GET /v1/conversations/{id}` \u2192 `capabilities.canWithdraw` says whether there is something to withdraw.",
+        "tags": [
+          "Conversations"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Repull conversation id (from `GET /v1/conversations` or `conversationId` on `GET /v1/inquiries`) \u2014 not the Airbnb thread id."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Withdrawn.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "conversationId",
+                    "channel",
+                    "status"
+                  ],
+                  "properties": {
+                    "conversationId": {
+                      "type": "string",
+                      "example": "166599"
+                    },
+                    "channel": {
+                      "type": "string",
+                      "nullable": true,
+                      "example": "vrbo"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "withdrawn"
+                      ]
+                    }
+                  }
+                },
+                "example": {
+                  "conversationId": "166599",
+                  "channel": "vrbo",
+                  "status": "withdrawn"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "description": "The conversation does not exist in this workspace.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "notFound": {
+                    "summary": "No such conversation in this workspace",
+                    "value": {
+                      "error": {
+                        "code": "not_found",
+                        "message": "Conversation 164743 not found in this workspace.",
+                        "fix": "List reachable conversations with `GET /v1/conversations`, or open inquiries with `GET /v1/inquiries`.",
+                        "docs_url": "https://repull.dev/docs/channels/airbnb/inquiries-and-requests",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Nothing to withdraw: the inquiry is closed on the channel (`inquiry_no_longer_open`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "noLongerOpen": {
+                    "summary": "Airbnb says the inquiry already moved on",
+                    "value": {
+                      "error": {
+                        "code": "inquiry_no_longer_open",
+                        "message": "This thread is not eligible for a special offer.",
+                        "fix": "The inquiry was already booked, declined, pre-approved or closed. Re-read the conversation \u2014 do not retry.",
+                        "docs_url": "https://repull.dev/docs/channels/airbnb/inquiries-and-requests",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`channel_not_supported` \u2014 not a VRBO conversation (on Airbnb, withdraw the special offer); `channel_rejected` \u2014 VRBO refused (its reason is in `message`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "channelNotSupported": {
+                    "summary": "Not a direct Airbnb conversation or booking",
+                    "value": {
+                      "error": {
+                        "code": "channel_not_supported",
+                        "message": "Reservation 233530 came from Booking.com. Booking requests can only be accepted or declined on Airbnb \u2014 other channels confirm instantly or have no request step.",
+                        "fix": "Pre-approvals and special offers work on Airbnb (connected directly, not through a PMS such as Hostaway or Guesty) and VRBO; accepting/declining booking requests on Airbnb. `GET /v1/conversations/{id}` \u2192 `capabilities` says what works on a conversation. Booking.com and direct bookings confirm without a request step.",
+                        "docs_url": "https://repull.dev/docs/channels/airbnb/inquiries-and-requests",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "channel": "booking"
+                      }
+                    }
+                  },
+                  "channelRejected": {
+                    "summary": "The channel refused the action",
+                    "value": {
+                      "error": {
+                        "code": "channel_rejected",
+                        "message": "The dates are no longer available.",
+                        "fix": "VRBO refused the action; its reason is in `message`. Do not retry unchanged.",
+                        "docs_url": "https://repull.dev/docs/channels/airbnb/inquiries-and-requests",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "channel": "vrbo"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`airbnb_rate_limited` \u2014 back off and retry with the same `Idempotency-Key`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "rateLimited": {
+                    "summary": "Airbnb rate-limited the request",
+                    "value": {
+                      "error": {
+                        "code": "airbnb_rate_limited",
+                        "message": "Too many requests.",
+                        "fix": "Back off and retry. Send the same `Idempotency-Key` so a retry cannot act twice.",
+                        "docs_url": "https://repull.dev/docs/channels/airbnb/inquiries-and-requests",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`service_misconfigured` \u2014 Repull could not reach the service that performs the action (its route was missing or refused our credentials). Nothing was sent to Airbnb. A fault on our side, not in the request: `retryable` is `false` and resending will not help until it is fixed. Any other 500 is `internal_error`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "serviceMisconfigured": {
+                    "summary": "Repull could not reach the action (our fault, not retryable)",
+                    "value": {
+                      "error": {
+                        "code": "service_misconfigured",
+                        "message": "Pre-approval failed: Repull could not reach this action \u2014 the service that performs it answered HTTP 404 for its own endpoint. Nothing was sent to the channel.",
+                        "fix": "This is a fault in Repull, not in your request, and retrying will not help until it is fixed \u2014 do not change or resend the request. If it persists, contact support with the `request_id`.",
+                        "docs_url": "https://repull.dev/docs/errors/service_misconfigured",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "retryable": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "`airbnb_error` \u2014 Airbnb outage or timeout. Nothing about the request needs to change; retry with backoff.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "airbnbDown": {
+                    "summary": "Airbnb did not complete the request",
+                    "value": {
+                      "error": {
+                        "code": "airbnb_error",
+                        "message": "Airbnb error (503): Service Unavailable",
+                        "fix": "Airbnb did not complete the request (outage or timeout). Retry with backoff and the same `Idempotency-Key`.",
+                        "docs_url": "https://repull.dev/docs/channels/airbnb/inquiries-and-requests",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/v1/conversations/{id}/special-offers": {
       "post": {
         "operationId": "create_conversation_special_offer",
-        "summary": "Send a special offer",
-        "description": "Send the guest on this conversation an Airbnb special offer: your own dates, guest count and total price. The guest has 24 hours to book it. Use it to answer an inquiry with different terms, or to make a returning guest a custom price. To accept the guest\u2019s own dates and price as they asked, pre-approve instead (`POST /v1/conversations/{id}/pre-approval`).\n\n`listingId` is optional: omit it to offer the listing the guest asked about. It is a **Repull** listing id; Repull sends Airbnb its own listing id, using the link that belongs to this conversation\u2019s Airbnb account.\n\n`totalPrice` is the whole stay, in the listing\u2019s Airbnb currency \u2014 Airbnb does not take a currency on an offer.\n\n**Airbnb only**, and only for listings connected to Airbnb directly; anything else is `422 channel_not_supported` and nothing is sent. The inquiry is marked `special_offer_sent`.\n\nAn offer Airbnb refuses is never a `201`: dates that are taken, a price below Airbnb\u2019s minimum, too many guests and the like are `422 airbnb_rejected` with Airbnb\u2019s own reason in `message`.\n\nSend `Idempotency-Key`: a repeat with the same key replays the first response instead of acting twice (a `409 idempotency_key_in_use` while the first is still running). A 5xx, a `429 airbnb_rate_limited` or a `403 connection_reauth_required` is not stored \u2014 nothing was done \u2014 so retrying with the same key reaches Airbnb again. Without it, a retry after a timeout can send the guest two offers.\n\nRead or withdraw the offer with `GET` / `DELETE /v1/conversations/{id}/special-offers/{offerId}`.",
+        "summary": "Send a special offer (Airbnb, VRBO)",
+        "description": "Send the guest on this conversation a special offer: your own dates, guest count and price. One endpoint for every channel that has offers \u2014 **Airbnb** (connected directly) and **VRBO** (its \u201cEdit quote\u201d). Use it to answer an inquiry with different terms. To accept the guest\u2019s own dates and price as they asked, pre-approve instead (`POST /v1/conversations/{id}/pre-approval`).\n\n**How the price is set depends on the channel** \u2014 `GET /v1/conversations/{id}` \u2192 `capabilities.offerPrice` says which:\n- `total` (Airbnb): send `totalPrice`, the whole stay in the listing\u2019s Airbnb currency, with `checkIn`, `checkOut` and `guests`.\n- `breakdown` (VRBO): send the price\u2019s parts \u2014 `rentalAmount` (rent, excluding fees), `fees` by VRBO fee type, `damageDeposit` \u2014 and VRBO computes the guest total, adding its taxes and service fee. Dates and party are optional (omitted \u2192 the inquiry\u2019s own). Only what you send is changed. Preview the result first with `POST /v1/conversations/{id}/special-offers/preview`.\n\nSending the other kind is `422 offer_price_total_required` / `offer_price_breakdown_required` naming the field; nothing is sent. A channel without offers (Booking.com, direct, an Airbnb inquiry relayed by a PMS) is `422 channel_not_supported`.\n\n`listingId` (Airbnb) is optional: omit it to offer the listing the guest asked about. It is a **Repull** listing id. `message` (VRBO) is sent to the guest with the offer.\n\nAn offer the channel refuses is never a `201`: dates that are taken, a price below the channel\u2019s minimum and the like are `422` with the channel\u2019s own reason in `message`.\n\nSend `Idempotency-Key`: a repeat with the same key replays the first response instead of acting twice (a `409 idempotency_key_in_use` while the first is still running). A 5xx, a `429 airbnb_rate_limited` or a `403 connection_reauth_required` is not stored \u2014 nothing was done \u2014 so retrying with the same key reaches Airbnb again. Without it, a retry after a timeout can send the guest two offers.\n\nRead or withdraw the offer with `GET` / `DELETE /v1/conversations/{id}/special-offers/{offerId}` (VRBO: `offerId` = `current`).",
         "tags": [
           "Conversations"
         ],
@@ -27909,12 +28425,7 @@
               "schema": {
                 "type": "object",
                 "additionalProperties": false,
-                "required": [
-                  "checkIn",
-                  "checkOut",
-                  "guests",
-                  "totalPrice"
-                ],
+                "description": "Priced by `totalPrice` (Airbnb) OR by its parts \u2014 `rentalAmount`, `fees`, `damageDeposit` (VRBO) \u2014 never both. With `totalPrice`, `checkIn`, `checkOut` and `guests` are required.",
                 "properties": {
                   "listingId": {
                     "type": "integer",
@@ -27965,19 +28476,79 @@
                     "type": "number",
                     "exclusiveMinimum": true,
                     "minimum": 0,
-                    "description": "Total the guest pays for the whole stay, in the listing\u2019s Airbnb currency.",
+                    "description": "Airbnb: the total the guest pays for the whole stay, in the listing\u2019s Airbnb currency.",
                     "example": 880
+                  },
+                  "rentalAmount": {
+                    "type": "number",
+                    "exclusiveMinimum": true,
+                    "minimum": 0,
+                    "description": "VRBO: rent for the whole stay, excluding fees and taxes.",
+                    "example": 4636
+                  },
+                  "fees": {
+                    "type": "array",
+                    "description": "VRBO: the offer\u2019s fees \u2014 replaces its fee list. `type` is VRBO\u2019s fee type (`CLEANING`, `PET`, \u2026).",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "type",
+                        "value"
+                      ],
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "example": "CLEANING"
+                        },
+                        "value": {
+                          "type": "number",
+                          "minimum": 0,
+                          "example": 390
+                        }
+                      }
+                    }
+                  },
+                  "damageDeposit": {
+                    "type": "number",
+                    "nullable": true,
+                    "minimum": 0,
+                    "description": "VRBO: refundable damage deposit; `null` for none.",
+                    "example": 500
+                  },
+                  "message": {
+                    "type": "string",
+                    "maxLength": 2000,
+                    "description": "VRBO: the message sent to the guest with the offer (a friendly default otherwise)."
                   }
                 }
               },
-              "example": {
-                "checkIn": "2026-10-01",
-                "checkOut": "2026-10-05",
-                "guests": {
-                  "adults": 2,
-                  "children": 1
+              "examples": {
+                "airbnb": {
+                  "summary": "Airbnb \u2014 one total",
+                  "value": {
+                    "checkIn": "2026-10-01",
+                    "checkOut": "2026-10-05",
+                    "guests": {
+                      "adults": 2,
+                      "children": 1
+                    },
+                    "totalPrice": 880
+                  }
                 },
-                "totalPrice": 880
+                "vrbo": {
+                  "summary": "VRBO \u2014 the price\u2019s parts (VRBO computes the total)",
+                  "value": {
+                    "rentalAmount": 4636,
+                    "fees": [
+                      {
+                        "type": "CLEANING",
+                        "value": 390
+                      }
+                    ],
+                    "damageDeposit": 500,
+                    "message": "Here is a custom quote for your stay."
+                  }
+                }
               }
             }
           }
@@ -28002,7 +28573,7 @@
                     "id": {
                       "type": "string",
                       "nullable": true,
-                      "description": "Airbnb special-offer id. Use it to read or withdraw the offer.",
+                      "description": "The offer id \u2014 use it to read or withdraw the offer. Airbnb\u2019s special-offer id; on VRBO, where a conversation has one live offer, `current`.",
                       "example": "1459920384"
                     },
                     "conversationId": {
@@ -28010,10 +28581,19 @@
                       "description": "Repull conversation id the offer was sent on.",
                       "example": "164743"
                     },
+                    "channel": {
+                      "type": "string",
+                      "enum": [
+                        "airbnb",
+                        "vrbo"
+                      ],
+                      "description": "The channel the offer is on.",
+                      "example": "airbnb"
+                    },
                     "status": {
                       "type": "string",
                       "nullable": true,
-                      "description": "Airbnb\u2019s status for the offer: `active` (the guest can book it), `accepted`, `declined`, `expired` or `voided` (withdrawn).",
+                      "description": "Airbnb: its status for the offer \u2014 `active` (the guest can book it), `accepted`, `declined`, `expired` or `voided` (withdrawn). VRBO: `sent` (just sent), `current` (the live offer) or `preview` (recalculated, not sent).",
                       "example": "active"
                     },
                     "listingId": {
@@ -28080,8 +28660,74 @@
                     "totalPrice": {
                       "type": "number",
                       "nullable": true,
-                      "description": "Total for the stay, in the listing\u2019s Airbnb currency.",
+                      "description": "What the guest pays for the stay. Airbnb: the total you set. VRBO: VRBO\u2019s own total, including its taxes and service fee.",
                       "example": 880
+                    },
+                    "currency": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Currency of the amounts, when the channel states it (VRBO).",
+                      "example": "CAD"
+                    },
+                    "rentalAmount": {
+                      "type": "number",
+                      "nullable": true,
+                      "description": "VRBO: rent for the stay, excluding fees and taxes. Null on Airbnb (priced by one total).",
+                      "example": 4041.9
+                    },
+                    "discount": {
+                      "type": "number",
+                      "nullable": true,
+                      "description": "VRBO: its automatic stay discount on the rent, when the offer carries one."
+                    },
+                    "fees": {
+                      "type": "array",
+                      "description": "VRBO: the offer\u2019s fees by type. Empty on Airbnb.",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "example": "CLEANING"
+                          },
+                          "value": {
+                            "type": "number",
+                            "example": 400
+                          },
+                          "label": {
+                            "type": "string",
+                            "nullable": true,
+                            "example": "Cleaning Fee"
+                          }
+                        }
+                      }
+                    },
+                    "damageDeposit": {
+                      "type": "number",
+                      "nullable": true,
+                      "description": "VRBO: refundable damage deposit; null for none.",
+                      "example": 500
+                    },
+                    "lines": {
+                      "type": "array",
+                      "description": "VRBO: its offer summary line by line, in VRBO\u2019s words (nights, fees, taxes, total traveler payment, payout).",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "label": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "type": "string",
+                            "nullable": true
+                          }
+                        }
+                      }
+                    },
+                    "message": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "The message sent to the guest with the offer (VRBO)."
                     },
                     "createdAt": {
                       "type": "string",
@@ -28099,6 +28745,7 @@
                 "example": {
                   "id": "1459920384",
                   "conversationId": "164743",
+                  "channel": "airbnb",
                   "status": "active",
                   "listingId": "23892",
                   "airbnbListingId": "955656266214757921",
@@ -28113,6 +28760,13 @@
                     "pets": 0
                   },
                   "totalPrice": 880,
+                  "currency": null,
+                  "rentalAmount": null,
+                  "discount": null,
+                  "fees": [],
+                  "damageDeposit": null,
+                  "lines": [],
+                  "message": null,
                   "createdAt": "2026-09-22T18:00:00Z",
                   "expiresAt": "2026-09-23T18:00:00Z"
                 }
@@ -28199,7 +28853,7 @@
             }
           },
           "409": {
-            "description": "The inquiry cannot take an offer any more. `inquiry_no_longer_open` \u2014 Airbnb says it was booked or closed; `inquiry_expired` \u2014 it lapsed. Do not retry.",
+            "description": "The inquiry cannot take an offer any more. `inquiry_no_longer_open` \u2014 the channel says it was booked or closed; `inquiry_expired` \u2014 it lapsed; `offer_already_sent` (VRBO) \u2014 a pre-approval or offer is live, withdraw it first. Do not retry unchanged.",
             "content": {
               "application/json": {
                 "schema": {
@@ -28229,19 +28883,71 @@
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
                       }
                     }
+                  },
+                  "alreadySent": {
+                    "summary": "A pre-approval or offer is already live (VRBO)",
+                    "value": {
+                      "error": {
+                        "code": "offer_already_sent",
+                        "message": "This conversation already has a live pre-approval.",
+                        "fix": "A pre-approval or offer is already live. Withdraw it first \u2014 `DELETE /v1/conversations/{id}/pre-approval` \u2014 then send the new one.",
+                        "docs_url": "https://repull.dev/docs/channels/airbnb/inquiries-and-requests",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
                   }
                 }
               }
             }
           },
           "422": {
-            "description": "`invalid_params` \u2014 the body is wrong and `field` names it; `airbnb_rejected` \u2014 Airbnb refused the offer (its reason is in `message`); `listing_not_on_airbnb` \u2014 the offered listing is not on Airbnb; `channel_not_supported` \u2014 not a direct Airbnb conversation; `airbnb_link_missing` \u2014 no Airbnb thread or host on record.",
+            "description": "`invalid_params` \u2014 the body is wrong and `field` names it; `offer_price_total_required` / `offer_price_breakdown_required` \u2014 the price is the other kind than this channel takes; `airbnb_rejected` / `channel_rejected` \u2014 the channel refused the offer (its reason is in `message`); `listing_not_on_airbnb` \u2014 the offered listing is not on Airbnb; `channel_not_supported` \u2014 the conversation has no offers; `airbnb_link_missing` \u2014 no Airbnb thread or host on record.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 },
                 "examples": {
+                  "breakdownRequired": {
+                    "summary": "A total on VRBO, which prices an offer by its parts",
+                    "value": {
+                      "error": {
+                        "code": "offer_price_breakdown_required",
+                        "message": "VRBO calculates the guest total itself (it adds its taxes and service fee), so an offer on VRBO is priced by its parts: send `rentalAmount` and/or `fees` and `damageDeposit`, not `totalPrice`.",
+                        "fix": "Send the parts \u2014 `rentalAmount` and/or `fees`, `damageDeposit` \u2014 instead of `totalPrice`; VRBO adds its taxes and service fee to reach the guest total. Preview it first with `POST /v1/conversations/{id}/special-offers/preview`.",
+                        "docs_url": "https://repull.dev/docs/channels/airbnb/inquiries-and-requests",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "field": "totalPrice",
+                        "channel": "vrbo"
+                      }
+                    }
+                  },
+                  "totalRequired": {
+                    "summary": "Price parts on Airbnb, which takes one total",
+                    "value": {
+                      "error": {
+                        "code": "offer_price_total_required",
+                        "message": "Airbnb takes one price for the whole stay: send `totalPrice`, not `rentalAmount` / `fees` / `damageDeposit`.",
+                        "fix": "Send `totalPrice` (the total for the stay) instead of `rentalAmount` / `fees` / `damageDeposit`.",
+                        "docs_url": "https://repull.dev/docs/channels/airbnb/inquiries-and-requests",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "field": "totalPrice"
+                      }
+                    }
+                  },
+                  "channelRejected": {
+                    "summary": "The channel refused the action",
+                    "value": {
+                      "error": {
+                        "code": "channel_rejected",
+                        "message": "The dates are no longer available.",
+                        "fix": "VRBO refused the action; its reason is in `message`. Do not retry unchanged.",
+                        "docs_url": "https://repull.dev/docs/channels/airbnb/inquiries-and-requests",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "channel": "vrbo"
+                      }
+                    }
+                  },
                   "checkOut": {
                     "summary": "Invalid `checkOut`",
                     "value": {
@@ -28299,7 +29005,7 @@
                       "error": {
                         "code": "channel_not_supported",
                         "message": "Reservation 233530 came from Booking.com. Booking requests can only be accepted or declined on Airbnb \u2014 other channels confirm instantly or have no request step.",
-                        "fix": "Pre-approvals, special offers and accepting/declining requests exist only on Airbnb, and only for listings connected to Airbnb directly (not through a PMS such as Hostaway or Guesty). Booking.com, VRBO and direct bookings confirm without a request step.",
+                        "fix": "Pre-approvals and special offers work on Airbnb (connected directly, not through a PMS such as Hostaway or Guesty) and VRBO; accepting/declining booking requests on Airbnb. `GET /v1/conversations/{id}` \u2192 `capabilities` says what works on a conversation. Booking.com and direct bookings confirm without a request step.",
                         "docs_url": "https://repull.dev/docs/channels/airbnb/inquiries-and-requests",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "channel": "booking"
@@ -28402,7 +29108,7 @@
       "get": {
         "operationId": "get_conversation_special_offer",
         "summary": "Get a special offer",
-        "description": "Read a special offer on this conversation back from Airbnb \u2014 typically to check its `status` (`active` until the guest books it, it expires, or you withdraw it). Read live from Airbnb with the conversation\u2019s own Airbnb account.",
+        "description": "Read a special offer on this conversation \u2014 typically to check its `status`. Airbnb: read live with the conversation\u2019s own Airbnb account (`active` until the guest books it, it expires, or you withdraw it). VRBO (`offerId` = `current`): the live offer as last synced from VRBO, priced by its parts with VRBO\u2019s total.",
         "tags": [
           "Conversations"
         ],
@@ -28423,7 +29129,7 @@
             "schema": {
               "type": "string"
             },
-            "description": "The special offer\u2019s `id`, as returned by `POST /v1/conversations/{id}/special-offers`.",
+            "description": "The special offer\u2019s `id`, as returned by `POST /v1/conversations/{id}/special-offers`. On VRBO, where a conversation has one live offer, `current`.",
             "example": "1459920384"
           }
         ],
@@ -28447,7 +29153,7 @@
                     "id": {
                       "type": "string",
                       "nullable": true,
-                      "description": "Airbnb special-offer id. Use it to read or withdraw the offer.",
+                      "description": "The offer id \u2014 use it to read or withdraw the offer. Airbnb\u2019s special-offer id; on VRBO, where a conversation has one live offer, `current`.",
                       "example": "1459920384"
                     },
                     "conversationId": {
@@ -28455,10 +29161,19 @@
                       "description": "Repull conversation id the offer was sent on.",
                       "example": "164743"
                     },
+                    "channel": {
+                      "type": "string",
+                      "enum": [
+                        "airbnb",
+                        "vrbo"
+                      ],
+                      "description": "The channel the offer is on.",
+                      "example": "airbnb"
+                    },
                     "status": {
                       "type": "string",
                       "nullable": true,
-                      "description": "Airbnb\u2019s status for the offer: `active` (the guest can book it), `accepted`, `declined`, `expired` or `voided` (withdrawn).",
+                      "description": "Airbnb: its status for the offer \u2014 `active` (the guest can book it), `accepted`, `declined`, `expired` or `voided` (withdrawn). VRBO: `sent` (just sent), `current` (the live offer) or `preview` (recalculated, not sent).",
                       "example": "active"
                     },
                     "listingId": {
@@ -28525,8 +29240,74 @@
                     "totalPrice": {
                       "type": "number",
                       "nullable": true,
-                      "description": "Total for the stay, in the listing\u2019s Airbnb currency.",
+                      "description": "What the guest pays for the stay. Airbnb: the total you set. VRBO: VRBO\u2019s own total, including its taxes and service fee.",
                       "example": 880
+                    },
+                    "currency": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Currency of the amounts, when the channel states it (VRBO).",
+                      "example": "CAD"
+                    },
+                    "rentalAmount": {
+                      "type": "number",
+                      "nullable": true,
+                      "description": "VRBO: rent for the stay, excluding fees and taxes. Null on Airbnb (priced by one total).",
+                      "example": 4041.9
+                    },
+                    "discount": {
+                      "type": "number",
+                      "nullable": true,
+                      "description": "VRBO: its automatic stay discount on the rent, when the offer carries one."
+                    },
+                    "fees": {
+                      "type": "array",
+                      "description": "VRBO: the offer\u2019s fees by type. Empty on Airbnb.",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "example": "CLEANING"
+                          },
+                          "value": {
+                            "type": "number",
+                            "example": 400
+                          },
+                          "label": {
+                            "type": "string",
+                            "nullable": true,
+                            "example": "Cleaning Fee"
+                          }
+                        }
+                      }
+                    },
+                    "damageDeposit": {
+                      "type": "number",
+                      "nullable": true,
+                      "description": "VRBO: refundable damage deposit; null for none.",
+                      "example": 500
+                    },
+                    "lines": {
+                      "type": "array",
+                      "description": "VRBO: its offer summary line by line, in VRBO\u2019s words (nights, fees, taxes, total traveler payment, payout).",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "label": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "type": "string",
+                            "nullable": true
+                          }
+                        }
+                      }
+                    },
+                    "message": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "The message sent to the guest with the offer (VRBO)."
                     },
                     "createdAt": {
                       "type": "string",
@@ -28624,7 +29405,7 @@
             }
           },
           "422": {
-            "description": "`invalid_params` \u2014 `id` or `offerId` is malformed; `channel_not_supported` \u2014 not a direct Airbnb conversation.",
+            "description": "`invalid_params` \u2014 `id` or `offerId` is malformed; `channel_not_supported` \u2014 the conversation has no offers (only Airbnb connected directly, and VRBO, do).",
             "content": {
               "application/json": {
                 "schema": {
@@ -28636,7 +29417,7 @@
                     "value": {
                       "error": {
                         "code": "invalid_params",
-                        "message": "`offerId` must be the special-offer id Airbnb returned.",
+                        "message": "`offerId` must be the special-offer id the offer was sent with.",
                         "fix": "Correct the field named in `field` and resend.",
                         "docs_url": "https://repull.dev/docs/channels/airbnb/inquiries-and-requests",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
@@ -28650,7 +29431,7 @@
                       "error": {
                         "code": "channel_not_supported",
                         "message": "Reservation 233530 came from Booking.com. Booking requests can only be accepted or declined on Airbnb \u2014 other channels confirm instantly or have no request step.",
-                        "fix": "Pre-approvals, special offers and accepting/declining requests exist only on Airbnb, and only for listings connected to Airbnb directly (not through a PMS such as Hostaway or Guesty). Booking.com, VRBO and direct bookings confirm without a request step.",
+                        "fix": "Pre-approvals and special offers work on Airbnb (connected directly, not through a PMS such as Hostaway or Guesty) and VRBO; accepting/declining booking requests on Airbnb. `GET /v1/conversations/{id}` \u2192 `capabilities` says what works on a conversation. Booking.com and direct bookings confirm without a request step.",
                         "docs_url": "https://repull.dev/docs/channels/airbnb/inquiries-and-requests",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "channel": "booking"
@@ -28739,7 +29520,7 @@
       "delete": {
         "operationId": "withdraw_conversation_special_offer",
         "summary": "Withdraw a special offer",
-        "description": "Withdraw a special offer the guest has not booked yet, so it can no longer be booked. An offer the guest already booked cannot be withdrawn \u2014 Airbnb refuses with `409 inquiry_no_longer_open`; cancel the booking instead.",
+        "description": "Withdraw a special offer the guest has not booked yet, so it can no longer be booked (VRBO: `offerId` = `current`, the same as `DELETE /v1/conversations/{id}/pre-approval`). An offer the guest already booked cannot be withdrawn \u2014 the channel refuses with `409 inquiry_no_longer_open`; cancel the booking instead.",
         "tags": [
           "Conversations"
         ],
@@ -28760,7 +29541,7 @@
             "schema": {
               "type": "string"
             },
-            "description": "The special offer\u2019s `id`, as returned by `POST /v1/conversations/{id}/special-offers`.",
+            "description": "The special offer\u2019s `id`, as returned by `POST /v1/conversations/{id}/special-offers`. On VRBO, where a conversation has one live offer, `current`.",
             "example": "1459920384"
           }
         ],
@@ -28774,6 +29555,7 @@
                   "required": [
                     "id",
                     "conversationId",
+                    "channel",
                     "status"
                   ],
                   "properties": {
@@ -28784,6 +29566,14 @@
                     "conversationId": {
                       "type": "string",
                       "example": "164743"
+                    },
+                    "channel": {
+                      "type": "string",
+                      "enum": [
+                        "airbnb",
+                        "vrbo"
+                      ],
+                      "example": "airbnb"
                     },
                     "status": {
                       "type": "string",
@@ -28876,7 +29666,7 @@
             }
           },
           "409": {
-            "description": "Airbnb says the offer can no longer be withdrawn (the guest booked it, or it already expired).",
+            "description": "The channel says the offer can no longer be withdrawn (the guest booked it, or it already expired).",
             "content": {
               "application/json": {
                 "schema": {
@@ -28900,7 +29690,7 @@
             }
           },
           "422": {
-            "description": "`invalid_params` \u2014 `id` or `offerId` is malformed; `channel_not_supported` \u2014 not a direct Airbnb conversation.",
+            "description": "`invalid_params` \u2014 `id` or `offerId` is malformed; `channel_not_supported` \u2014 the conversation has no offers (only Airbnb connected directly, and VRBO, do).",
             "content": {
               "application/json": {
                 "schema": {
@@ -28912,7 +29702,7 @@
                     "value": {
                       "error": {
                         "code": "invalid_params",
-                        "message": "`offerId` must be the special-offer id Airbnb returned.",
+                        "message": "`offerId` must be the special-offer id the offer was sent with.",
                         "fix": "Correct the field named in `field` and resend.",
                         "docs_url": "https://repull.dev/docs/channels/airbnb/inquiries-and-requests",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
@@ -28926,7 +29716,7 @@
                       "error": {
                         "code": "channel_not_supported",
                         "message": "Reservation 233530 came from Booking.com. Booking requests can only be accepted or declined on Airbnb \u2014 other channels confirm instantly or have no request step.",
-                        "fix": "Pre-approvals, special offers and accepting/declining requests exist only on Airbnb, and only for listings connected to Airbnb directly (not through a PMS such as Hostaway or Guesty). Booking.com, VRBO and direct bookings confirm without a request step.",
+                        "fix": "Pre-approvals and special offers work on Airbnb (connected directly, not through a PMS such as Hostaway or Guesty) and VRBO; accepting/declining booking requests on Airbnb. `GET /v1/conversations/{id}` \u2192 `capabilities` says what works on a conversation. Booking.com and direct bookings confirm without a request step.",
                         "docs_url": "https://repull.dev/docs/channels/airbnb/inquiries-and-requests",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "channel": "booking"
@@ -29496,7 +30286,7 @@
                       "error": {
                         "code": "channel_not_supported",
                         "message": "Reservation 233530 came from Booking.com. Booking requests can only be accepted or declined on Airbnb \u2014 other channels confirm instantly or have no request step.",
-                        "fix": "Pre-approvals, special offers and accepting/declining requests exist only on Airbnb, and only for listings connected to Airbnb directly (not through a PMS such as Hostaway or Guesty). Booking.com, VRBO and direct bookings confirm without a request step.",
+                        "fix": "Pre-approvals and special offers work on Airbnb (connected directly, not through a PMS such as Hostaway or Guesty) and VRBO; accepting/declining booking requests on Airbnb. `GET /v1/conversations/{id}` \u2192 `capabilities` says what works on a conversation. Booking.com and direct bookings confirm without a request step.",
                         "docs_url": "https://repull.dev/docs/channels/airbnb/inquiries-and-requests",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "channel": "booking"
@@ -29932,7 +30722,7 @@
                       "error": {
                         "code": "channel_not_supported",
                         "message": "Reservation 233530 came from Booking.com. Booking requests can only be accepted or declined on Airbnb \u2014 other channels confirm instantly or have no request step.",
-                        "fix": "Pre-approvals, special offers and accepting/declining requests exist only on Airbnb, and only for listings connected to Airbnb directly (not through a PMS such as Hostaway or Guesty). Booking.com, VRBO and direct bookings confirm without a request step.",
+                        "fix": "Pre-approvals and special offers work on Airbnb (connected directly, not through a PMS such as Hostaway or Guesty) and VRBO; accepting/declining booking requests on Airbnb. `GET /v1/conversations/{id}` \u2192 `capabilities` says what works on a conversation. Booking.com and direct bookings confirm without a request step.",
                         "docs_url": "https://repull.dev/docs/channels/airbnb/inquiries-and-requests",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "channel": "booking"
@@ -30035,7 +30825,7 @@
       "post": {
         "operationId": "takeListingOffline",
         "summary": "Take a listing off the market",
-        "description": "Stop this listing being sold, on every channel it is connected to, in one call.\n\nWhat that means differs per channel and you do not have to know which is which. On **Airbnb** the live listing is deactivated with a valid deactivation reason and then READ BACK \u2014 Airbnb accepts some deactivations and leaves the listing up, so \"we sent the request\" is never reported as success. On **Booking.com** there is no unlist at all; the equivalent is closing the room's availability across the whole forward window, which is what happens.\n\n**This is not the same as deactivating the listing in Repull.** The two get confused because both sound like removal, and they have opposite consequences:\n\n| | Take offline (this endpoint) | Deactivate in Repull (`PATCH /v1/listings/{id}` `{\"active\": false}`) |\n|---|---|---|\n| The guest-facing listing | **Stops taking bookings** | Stays live and keeps taking bookings |\n| Billing and plan limits | Unchanged | No longer billed, no longer counts toward the cap |\n| API access to the listing | Unchanged \u2014 you can still read and write it | `403 listing_inactive` until reactivated |\n| Reverse it with | `POST /v1/listings/{id}/online` | `PATCH /v1/listings/{id}` `{\"active\": true}` |\n| Data kept | Yes | Yes, and it keeps syncing |\n\nNeither one deletes anything, on either side.\n\n**The answer is per channel item.** A listing can sit on several Airbnb connections and a Booking.com property at once; they fail independently and a partial result is the ordinary outcome, so every item reports its own `state`, `code` and `message` and there is no top-level success flag to mislead you. Nothing is rolled back \u2014 re-send the same request to retry the items that did not land.\n\n**Booking.com ambiguity is reported, not fanned out.** A listing mapped to more than one active Booking.com property comes back with that item refused (`ambiguous_booking_mapping`) while the Airbnb items still run: closing the wrong property's availability takes real inventory off sale, and taking a listing off Airbnb is not less urgent because its Booking.com mapping is untidy. Name the property with `hotelId` and send it again.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "description": "Stop this listing being sold, on every channel it is connected to, in one call.\n\nWhat that means differs per channel and you do not have to know which is which. On **Airbnb** the live listing is deactivated with a valid deactivation reason and then READ BACK \u2014 Airbnb accepts some deactivations and leaves the listing up, so \"we sent the request\" is never reported as success. On **Booking.com** there is no unlist at all; the equivalent is closing the room's availability across the whole forward window, which is what happens. On **VRBO** each mapped unit is hidden (VRBO's own \"Hide listing\") and read back \u2014 a hidden unit is out of VRBO search and cannot be booked; its item carries the VRBO listing number as `platformId`.\n\n**This is not the same as deactivating the listing in Repull.** The two get confused because both sound like removal, and they have opposite consequences:\n\n| | Take offline (this endpoint) | Deactivate in Repull (`PATCH /v1/listings/{id}` `{\"active\": false}`) |\n|---|---|---|\n| The guest-facing listing | **Stops taking bookings** | Stays live and keeps taking bookings |\n| Billing and plan limits | Unchanged | No longer billed, no longer counts toward the cap |\n| API access to the listing | Unchanged \u2014 you can still read and write it | `403 listing_inactive` until reactivated |\n| Reverse it with | `POST /v1/listings/{id}/online` | `PATCH /v1/listings/{id}` `{\"active\": true}` |\n| Data kept | Yes | Yes, and it keeps syncing |\n\nNeither one deletes anything, on either side.\n\n**The answer is per channel item.** A listing can sit on several Airbnb connections and a Booking.com property at once; they fail independently and a partial result is the ordinary outcome, so every item reports its own `state`, `code` and `message` and there is no top-level success flag to mislead you. Nothing is rolled back \u2014 re-send the same request to retry the items that did not land.\n\n**Booking.com ambiguity is reported, not fanned out.** A listing mapped to more than one active Booking.com property comes back with that item refused (`ambiguous_booking_mapping`) while the Airbnb items still run: closing the wrong property's availability takes real inventory off sale, and taking a listing off Airbnb is not less urgent because its Booking.com mapping is untidy. Name the property with `hotelId` and send it again.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
         "tags": [
           "Listings"
         ],
@@ -30112,7 +30902,7 @@
       "post": {
         "operationId": "takeListingOnline",
         "summary": "Put a listing back on the market",
-        "description": "Put this listing back on sale, on every channel it is connected to. The counterpart of `POST /v1/listings/{id}/offline`, which documents the per-item response and the difference between this and deactivating a listing in Repull.\n\n**It does not push content.** On **Airbnb** it re-enables sync and makes the listing available again; anything that changed while the listing was down is still unpublished, so follow with `POST /v1/listings/{id}/publish/airbnb` if the content moved. On **Booking.com** it re-syncs the true calendar rather than opening everything: dates that are genuinely blocked \u2014 a reservation, an owner stay \u2014 stay blocked, and only the closure `offline` wrote lifts. The two directions are not mirror images, and that is deliberate.\n\n**One asymmetry worth planning for.** Taking a listing down passes no billing gate; putting it back up goes through the channel-publish gate. So on a workspace whose subscription has lapsed, `offline` still works and this endpoint answers `402 payment_required` \u2014 a listing can be left off the market until billing is sorted out. That refusal is reported as a billing refusal with the action that fixes it, never as a channel error: retrying, or reconnecting the channel, does nothing for it.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "description": "Put this listing back on sale, on every channel it is connected to. The counterpart of `POST /v1/listings/{id}/offline`, which documents the per-item response and the difference between this and deactivating a listing in Repull.\n\n**It does not push content.** On **Airbnb** it re-enables sync and makes the listing available again; anything that changed while the listing was down is still unpublished, so follow with `POST /v1/listings/{id}/publish/airbnb` if the content moved. On **Booking.com** it re-syncs the true calendar rather than opening everything: dates that are genuinely blocked \u2014 a reservation, an owner stay \u2014 stay blocked, and only the closure `offline` wrote lifts. On **VRBO** each hidden unit is reactivated (VRBO's own \"Reactivate\") and read back; VRBO can refuse a reactivation (e.g. while it is verifying the property), which comes back as that item's `message`. The two directions are not mirror images, and that is deliberate.\n\n**One asymmetry worth planning for.** Taking a listing down passes no billing gate; putting it back up goes through the channel-publish gate. So on a workspace whose subscription has lapsed, `offline` still works and this endpoint answers `402 payment_required` \u2014 a listing can be left off the market until billing is sorted out. That refusal is reported as a billing refusal with the action that fixes it, never as a channel error: retrying, or reconnecting the channel, does nothing for it.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
         "tags": [
           "Listings"
         ],
@@ -30937,6 +31727,15 @@
                     "type": "string",
                     "description": "Connect session id from `POST /v1/connect/cloudbeds`. Omit when calling with your API key."
                   },
+                  "writePolicy": {
+                    "type": "object",
+                    "description": "Optional: what the app may change in the PMS, set before the first sync. Same shape as `PATCH /v1/connect/{provider}/write-policy`; switches you leave out keep the provider default (calendar off for hotel PMSs, bookings on).",
+                    "example": {
+                      "calendar": {
+                        "rates": true
+                      }
+                    }
+                  },
                   "credentials": {
                     "type": "object",
                     "properties": {
@@ -30979,6 +31778,9 @@
                     },
                     "connected": {
                       "type": "boolean"
+                    },
+                    "writePolicy": {
+                      "$ref": "#/components/schemas/PmsWritePolicy"
                     },
                     "pmsConnectionId": {
                       "type": "string",
@@ -31064,6 +31866,15 @@
                     "type": "string",
                     "description": "Connect session id from `POST /v1/connect/mews`. Omit when calling with your API key."
                   },
+                  "writePolicy": {
+                    "type": "object",
+                    "description": "Optional: what the app may change in the PMS, set before the first sync. Same shape as `PATCH /v1/connect/{provider}/write-policy`; switches you leave out keep the provider default (calendar off for hotel PMSs, bookings on).",
+                    "example": {
+                      "calendar": {
+                        "rates": true
+                      }
+                    }
+                  },
                   "credentials": {
                     "type": "object",
                     "properties": {
@@ -31108,6 +31919,9 @@
                     },
                     "connected": {
                       "type": "boolean"
+                    },
+                    "writePolicy": {
+                      "$ref": "#/components/schemas/PmsWritePolicy"
                     },
                     "pmsConnectionId": {
                       "type": "string",
@@ -31477,6 +32291,1771 @@
           },
           "502": {
             "$ref": "#/components/responses/AirbnbUpstreamError"
+          }
+        }
+      }
+    },
+    "/v1/conversations/{id}/special-offers/preview": {
+      "post": {
+        "operationId": "preview_conversation_special_offer",
+        "summary": "Preview a special offer",
+        "description": "See what a special offer would be \u2014 as the channel itself recalculates it, with its taxes, service fee and guest total \u2014 **without sending anything** to the guest. Same body as `POST /v1/conversations/{id}/special-offers`; the price may be omitted to see only a date or party change, and `{}` shows the current offer recalculated.\n\n**VRBO** (its \u201cEdit quote\u201d recalculation). A channel without a preview \u2014 Airbnb takes your total as it is \u2014 returns `422 preview_not_supported`; `GET /v1/conversations/{id}` \u2192 `capabilities.canPreviewOffer` says which.\n\nRead-only: safe to call as often as you need while a user edits an offer.",
+        "tags": [
+          "Conversations"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Repull conversation id (from `GET /v1/conversations` or `conversationId` on `GET /v1/inquiries`) \u2014 not the Airbnb thread id."
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "description": "Any of the offer fields; only what is sent is changed.",
+                "properties": {
+                  "checkIn": {
+                    "type": "string",
+                    "format": "date",
+                    "example": "2026-11-26"
+                  },
+                  "checkOut": {
+                    "type": "string",
+                    "format": "date",
+                    "example": "2026-12-06"
+                  },
+                  "guests": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "adults": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "example": 2
+                      },
+                      "children": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "infants": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "pets": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    }
+                  },
+                  "rentalAmount": {
+                    "type": "number",
+                    "exclusiveMinimum": true,
+                    "minimum": 0,
+                    "description": "Rent for the stay, excluding fees and taxes."
+                  },
+                  "fees": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "type",
+                        "value"
+                      ],
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "example": "CLEANING"
+                        },
+                        "value": {
+                          "type": "number",
+                          "minimum": 0,
+                          "example": 400
+                        }
+                      }
+                    }
+                  },
+                  "damageDeposit": {
+                    "type": "number",
+                    "nullable": true,
+                    "minimum": 0
+                  }
+                }
+              },
+              "example": {
+                "fees": [
+                  {
+                    "type": "CLEANING",
+                    "value": 400
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The offer as the channel would make it. `status` is `preview`; nothing was sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "conversationId",
+                    "status",
+                    "checkIn",
+                    "checkOut",
+                    "nights",
+                    "totalPrice"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "The offer id \u2014 use it to read or withdraw the offer. Airbnb\u2019s special-offer id; on VRBO, where a conversation has one live offer, `current`.",
+                      "example": "1459920384"
+                    },
+                    "conversationId": {
+                      "type": "string",
+                      "description": "Repull conversation id the offer was sent on.",
+                      "example": "164743"
+                    },
+                    "channel": {
+                      "type": "string",
+                      "enum": [
+                        "airbnb",
+                        "vrbo"
+                      ],
+                      "description": "The channel the offer is on.",
+                      "example": "airbnb"
+                    },
+                    "status": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Airbnb: its status for the offer \u2014 `active` (the guest can book it), `accepted`, `declined`, `expired` or `voided` (withdrawn). VRBO: `sent` (just sent), `current` (the live offer) or `preview` (recalculated, not sent).",
+                      "example": "active"
+                    },
+                    "listingId": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Repull listing id, when known.",
+                      "example": "23892"
+                    },
+                    "airbnbListingId": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Airbnb listing id the offer is for (a string \u2014 it exceeds 2^53).",
+                      "example": "955656266214757921"
+                    },
+                    "checkIn": {
+                      "type": "string",
+                      "format": "date",
+                      "nullable": true,
+                      "example": "2026-10-01"
+                    },
+                    "checkOut": {
+                      "type": "string",
+                      "format": "date",
+                      "nullable": true,
+                      "example": "2026-10-05"
+                    },
+                    "nights": {
+                      "type": "integer",
+                      "nullable": true,
+                      "example": 4
+                    },
+                    "guests": {
+                      "type": "object",
+                      "nullable": true,
+                      "description": "Guests on the offer. Airbnb counts adults + children as guests; infants and pets are extra.",
+                      "properties": {
+                        "total": {
+                          "type": "integer",
+                          "nullable": true,
+                          "example": 3
+                        },
+                        "adults": {
+                          "type": "integer",
+                          "nullable": true,
+                          "example": 2
+                        },
+                        "children": {
+                          "type": "integer",
+                          "nullable": true,
+                          "example": 1
+                        },
+                        "infants": {
+                          "type": "integer",
+                          "nullable": true,
+                          "example": 0
+                        },
+                        "pets": {
+                          "type": "integer",
+                          "nullable": true,
+                          "example": 0
+                        }
+                      }
+                    },
+                    "totalPrice": {
+                      "type": "number",
+                      "nullable": true,
+                      "description": "What the guest pays for the stay. Airbnb: the total you set. VRBO: VRBO\u2019s own total, including its taxes and service fee.",
+                      "example": 880
+                    },
+                    "currency": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Currency of the amounts, when the channel states it (VRBO).",
+                      "example": "CAD"
+                    },
+                    "rentalAmount": {
+                      "type": "number",
+                      "nullable": true,
+                      "description": "VRBO: rent for the stay, excluding fees and taxes. Null on Airbnb (priced by one total).",
+                      "example": 4041.9
+                    },
+                    "discount": {
+                      "type": "number",
+                      "nullable": true,
+                      "description": "VRBO: its automatic stay discount on the rent, when the offer carries one."
+                    },
+                    "fees": {
+                      "type": "array",
+                      "description": "VRBO: the offer\u2019s fees by type. Empty on Airbnb.",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "example": "CLEANING"
+                          },
+                          "value": {
+                            "type": "number",
+                            "example": 400
+                          },
+                          "label": {
+                            "type": "string",
+                            "nullable": true,
+                            "example": "Cleaning Fee"
+                          }
+                        }
+                      }
+                    },
+                    "damageDeposit": {
+                      "type": "number",
+                      "nullable": true,
+                      "description": "VRBO: refundable damage deposit; null for none.",
+                      "example": 500
+                    },
+                    "lines": {
+                      "type": "array",
+                      "description": "VRBO: its offer summary line by line, in VRBO\u2019s words (nights, fees, taxes, total traveler payment, payout).",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "label": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "type": "string",
+                            "nullable": true
+                          }
+                        }
+                      }
+                    },
+                    "message": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "The message sent to the guest with the offer (VRBO)."
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "nullable": true
+                    },
+                    "expiresAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "nullable": true,
+                      "description": "When the guest can no longer book the offer (Airbnb gives them 24 hours)."
+                    }
+                  }
+                },
+                "example": {
+                  "id": "current",
+                  "conversationId": "166599",
+                  "channel": "vrbo",
+                  "status": "preview",
+                  "listingId": null,
+                  "airbnbListingId": null,
+                  "checkIn": "2026-11-26",
+                  "checkOut": "2026-12-06",
+                  "nights": 10,
+                  "guests": {
+                    "total": 2,
+                    "adults": 2,
+                    "children": 0,
+                    "infants": null,
+                    "pets": 0
+                  },
+                  "totalPrice": 5519.17,
+                  "currency": "CAD",
+                  "rentalAmount": 4041.9,
+                  "discount": null,
+                  "fees": [
+                    {
+                      "type": "CLEANING",
+                      "value": 400,
+                      "label": "Cleaning Fee"
+                    }
+                  ],
+                  "damageDeposit": 500,
+                  "lines": [
+                    {
+                      "label": "10 nights",
+                      "value": "C$ 4,041.90"
+                    },
+                    {
+                      "label": "Cleaning Fee",
+                      "value": "C$ 400.00"
+                    },
+                    {
+                      "label": "Total traveler payment",
+                      "value": "C$ 5,519.17"
+                    }
+                  ],
+                  "message": null,
+                  "createdAt": null,
+                  "expiresAt": null
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "description": "The conversation does not exist in this workspace.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "notFound": {
+                    "summary": "No such conversation in this workspace",
+                    "value": {
+                      "error": {
+                        "code": "not_found",
+                        "message": "Conversation 164743 not found in this workspace.",
+                        "fix": "List reachable conversations with `GET /v1/conversations`, or open inquiries with `GET /v1/inquiries`.",
+                        "docs_url": "https://repull.dev/docs/channels/airbnb/inquiries-and-requests",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The inquiry is closed on the channel (`inquiry_no_longer_open`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "noLongerOpen": {
+                    "summary": "Airbnb says the inquiry already moved on",
+                    "value": {
+                      "error": {
+                        "code": "inquiry_no_longer_open",
+                        "message": "This thread is not eligible for a special offer.",
+                        "fix": "The inquiry was already booked, declined, pre-approved or closed. Re-read the conversation \u2014 do not retry.",
+                        "docs_url": "https://repull.dev/docs/channels/airbnb/inquiries-and-requests",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`preview_not_supported` \u2014 the channel has no preview (Airbnb); `channel_not_supported` \u2014 the conversation has no offers; `invalid_params` \u2014 the body is wrong and `field` names it; `channel_rejected` \u2014 the channel refused the change (its reason is in `message`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "previewNotSupported": {
+                    "summary": "A preview on a channel without one",
+                    "value": {
+                      "error": {
+                        "code": "preview_not_supported",
+                        "message": "Only VRBO recalculates an offer before it is sent; on this channel send the offer with its total directly.",
+                        "fix": "Send the offer directly with `POST /v1/conversations/{id}/special-offers`; `capabilities.canPreviewOffer` says where a preview exists.",
+                        "docs_url": "https://repull.dev/docs/channels/airbnb/inquiries-and-requests",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  },
+                  "channelNotSupported": {
+                    "summary": "Not a direct Airbnb conversation or booking",
+                    "value": {
+                      "error": {
+                        "code": "channel_not_supported",
+                        "message": "Reservation 233530 came from Booking.com. Booking requests can only be accepted or declined on Airbnb \u2014 other channels confirm instantly or have no request step.",
+                        "fix": "Pre-approvals and special offers work on Airbnb (connected directly, not through a PMS such as Hostaway or Guesty) and VRBO; accepting/declining booking requests on Airbnb. `GET /v1/conversations/{id}` \u2192 `capabilities` says what works on a conversation. Booking.com and direct bookings confirm without a request step.",
+                        "docs_url": "https://repull.dev/docs/channels/airbnb/inquiries-and-requests",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "channel": "booking"
+                      }
+                    }
+                  },
+                  "fees": {
+                    "summary": "Invalid `fees`",
+                    "value": {
+                      "error": {
+                        "code": "invalid_params",
+                        "message": "Each fee needs a `type` (the channel's fee type, e.g. `CLEANING`, `PET`) and a `value` of 0 or more.",
+                        "fix": "Correct the field named in `field` and resend.",
+                        "docs_url": "https://repull.dev/docs/channels/airbnb/inquiries-and-requests",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "field": "fees"
+                      }
+                    }
+                  },
+                  "channelRejected": {
+                    "summary": "The channel refused the action",
+                    "value": {
+                      "error": {
+                        "code": "channel_rejected",
+                        "message": "The dates are no longer available.",
+                        "fix": "VRBO refused the action; its reason is in `message`. Do not retry unchanged.",
+                        "docs_url": "https://repull.dev/docs/channels/airbnb/inquiries-and-requests",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "channel": "vrbo"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`airbnb_rate_limited` \u2014 back off and retry with the same `Idempotency-Key`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "rateLimited": {
+                    "summary": "Airbnb rate-limited the request",
+                    "value": {
+                      "error": {
+                        "code": "airbnb_rate_limited",
+                        "message": "Too many requests.",
+                        "fix": "Back off and retry. Send the same `Idempotency-Key` so a retry cannot act twice.",
+                        "docs_url": "https://repull.dev/docs/channels/airbnb/inquiries-and-requests",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`service_misconfigured` \u2014 Repull could not reach the service that performs the action (its route was missing or refused our credentials). Nothing was sent to Airbnb. A fault on our side, not in the request: `retryable` is `false` and resending will not help until it is fixed. Any other 500 is `internal_error`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "serviceMisconfigured": {
+                    "summary": "Repull could not reach the action (our fault, not retryable)",
+                    "value": {
+                      "error": {
+                        "code": "service_misconfigured",
+                        "message": "Pre-approval failed: Repull could not reach this action \u2014 the service that performs it answered HTTP 404 for its own endpoint. Nothing was sent to the channel.",
+                        "fix": "This is a fault in Repull, not in your request, and retrying will not help until it is fixed \u2014 do not change or resend the request. If it persists, contact support with the `request_id`.",
+                        "docs_url": "https://repull.dev/docs/errors/service_misconfigured",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "retryable": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "`airbnb_error` \u2014 Airbnb outage or timeout. Nothing about the request needs to change; retry with backoff.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "airbnbDown": {
+                    "summary": "Airbnb did not complete the request",
+                    "value": {
+                      "error": {
+                        "code": "airbnb_error",
+                        "message": "Airbnb error (503): Service Unavailable",
+                        "fix": "Airbnb did not complete the request (outage or timeout). Retry with backoff and the same `Idempotency-Key`.",
+                        "docs_url": "https://repull.dev/docs/channels/airbnb/inquiries-and-requests",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/listings/{id}/calendar-sync": {
+      "get": {
+        "operationId": "get_listing_calendar_sync",
+        "summary": "Calendar sync status per channel",
+        "description": "Is this listing's calendar \u2014 prices, minimum stays, availability \u2014 actually on every channel it is connected to, and if not, which nights and why. One shape for every channel.\n\nEvery push records each night's outcome per channel; a night the channel does not show as sent is listed in `problems` with the channel's own reason (a price the channel still shows differently, a block it refused, a unit that is not live, a night held by a booking or an imported calendar). A later successful push clears it.\n\n**VRBO** pushes run through a paced queue \u2014 VRBO accepts about 90 calendar writes a minute per account, and only what differs on VRBO is sent \u2014 so the `vrbo` entry adds `queue`: whether a push is waiting or running now, and what the last one did (prices and minimum stays changed, blocks, calls, nights still differing).\n\nFuture nights only. `problems` lists up to 100 nights per channel; `nightsWithProblems` is always the full count.\n\nReturns `403 listing_inactive` for an inactive listing.",
+        "tags": [
+          "Listings"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Repull listing id."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Calendar sync status per connected channel.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "listingId",
+                    "channels"
+                  ],
+                  "properties": {
+                    "listingId": {
+                      "type": "string",
+                      "example": "6199"
+                    },
+                    "channels": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "channel",
+                          "platformId",
+                          "syncEnabled",
+                          "status",
+                          "lastSyncAt",
+                          "nightsWithProblems",
+                          "problems"
+                        ],
+                        "properties": {
+                          "channel": {
+                            "type": "string",
+                            "example": "vrbo"
+                          },
+                          "platformId": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "The listing's id on the channel.",
+                            "example": "5121372"
+                          },
+                          "syncEnabled": {
+                            "type": "boolean",
+                            "description": "Calendar pushes to this channel are on."
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "in_sync",
+                              "problems",
+                              "off"
+                            ],
+                            "description": "`in_sync` \u2014 no future night has a problem; `problems` \u2014 see `problems`; `off` \u2014 calendar sync is off for this channel."
+                          },
+                          "lastSyncAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true,
+                            "description": "When a push last wrote to this listing's calendar."
+                          },
+                          "nightsWithProblems": {
+                            "type": "integer",
+                            "example": 0
+                          },
+                          "problems": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "date": {
+                                  "type": "string",
+                                  "format": "date",
+                                  "example": "2026-12-18"
+                                },
+                                "error": {
+                                  "type": "string",
+                                  "description": "The channel's reason, in words \u2014 render it next to the night.",
+                                  "example": "VRBO shows 305 instead of 293"
+                                }
+                              }
+                            }
+                          },
+                          "queue": {
+                            "type": "object",
+                            "description": "VRBO only \u2014 the paced push queue.",
+                            "properties": {
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "idle",
+                                  "queued",
+                                  "running"
+                                ]
+                              },
+                              "queuedNights": {
+                                "type": "integer",
+                                "description": "Nights waiting to be pushed."
+                              },
+                              "queuedAt": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "lastPush": {
+                                "type": "object",
+                                "nullable": true,
+                                "properties": {
+                                  "finishedAt": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "nullable": true
+                                  },
+                                  "result": {
+                                    "type": "string",
+                                    "enum": [
+                                      "in_sync",
+                                      "problems",
+                                      "skipped"
+                                    ],
+                                    "description": "`skipped` \u2014 not sent because the unit is not live on VRBO (`reason`)."
+                                  },
+                                  "reason": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "nights": {
+                                    "type": "integer",
+                                    "description": "Nights the push covered."
+                                  },
+                                  "pricesChanged": {
+                                    "type": "integer"
+                                  },
+                                  "minStaysChanged": {
+                                    "type": "integer"
+                                  },
+                                  "blocksCreated": {
+                                    "type": "integer"
+                                  },
+                                  "blocksRemoved": {
+                                    "type": "integer"
+                                  },
+                                  "calls": {
+                                    "type": "integer",
+                                    "description": "VRBO calls made \u2014 only what differed was sent."
+                                  },
+                                  "nightsDiffering": {
+                                    "type": "integer",
+                                    "description": "Nights VRBO still showed differently after the push (they are retried)."
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "listingId": "6199",
+                  "channels": [
+                    {
+                      "channel": "airbnb",
+                      "platformId": "1608268807524171722",
+                      "syncEnabled": true,
+                      "status": "in_sync",
+                      "lastSyncAt": "2026-09-28T16:47:02.000Z",
+                      "nightsWithProblems": 0,
+                      "problems": []
+                    },
+                    {
+                      "channel": "vrbo",
+                      "platformId": "5121372",
+                      "syncEnabled": true,
+                      "status": "problems",
+                      "lastSyncAt": "2026-09-28T16:47:02.000Z",
+                      "nightsWithProblems": 1,
+                      "problems": [
+                        {
+                          "date": "2027-09-28",
+                          "error": "Closed on VRBO by an imported calendar (iCal)"
+                        }
+                      ],
+                      "queue": {
+                        "state": "idle",
+                        "queuedNights": 0,
+                        "queuedAt": null,
+                        "lastPush": {
+                          "finishedAt": "2026-09-28T16:49:10.000Z",
+                          "result": "in_sync",
+                          "reason": null,
+                          "nights": 366,
+                          "pricesChanged": 12,
+                          "minStaysChanged": 0,
+                          "blocksCreated": 0,
+                          "blocksRemoved": 0,
+                          "calls": 4,
+                          "nightsDiffering": 0
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          }
+        }
+      }
+    },
+    "/v1/connect/booking-extranet-login/invite": {
+      "post": {
+        "operationId": "inviteBookingExtranetUser",
+        "summary": "Connect Booking.com by inviting a user",
+        "description": "Generates the user the host invites in their Extranet; progress is read from the status route.\n\nCalled by the hosted Connect page. No API key \u2014 the session ID is the capability token.",
+        "tags": [
+          "Connect"
+        ],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "sessionId"
+                ],
+                "properties": {
+                  "sessionId": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Invite details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "accountId": {
+                      "type": "integer"
+                    },
+                    "inviteEmail": {
+                      "type": "string"
+                    },
+                    "inviteName": {
+                      "type": "string"
+                    },
+                    "twoFactorNumber": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/connect/booking-extranet-login/session": {
+      "get": {
+        "operationId": "getBookingExtranetLoginConfig",
+        "summary": "Booking.com direct-login config",
+        "description": "Returns the 2FA number the host adds to their Extranet user.\n\nCalled by the hosted Connect page. No API key \u2014 the session ID is the capability token.",
+        "tags": [
+          "Connect"
+        ],
+        "security": [],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The Connect session ID (capability token)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Config",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "twoFactorNumber": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "startBookingExtranetLogin",
+        "summary": "Sign in with a Booking.com Extranet user",
+        "description": "Starts the sign-in with the host's Extranet credentials.\n\nCalled by the hosted Connect page. No API key \u2014 the session ID is the capability token.",
+        "tags": [
+          "Connect"
+        ],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "sessionId",
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "sessionId": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sign-in started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "accountId": {
+                      "type": "integer"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "twoFactorNumber": {
+                      "type": "string"
+                    },
+                    "notificationEmail": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/connect/booking-extranet-login/status": {
+      "get": {
+        "operationId": "getBookingExtranetLoginStatus",
+        "summary": "Booking.com direct-login status",
+        "description": "Live sign-in status, polled by the hosted page.\n\nCalled by the hosted Connect page. No API key \u2014 the session ID is the capability token.",
+        "tags": [
+          "Connect"
+        ],
+        "security": [],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The Connect session ID (capability token)."
+          },
+          {
+            "name": "accountId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "accountId": {
+                      "type": "integer"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "errorMessage": {
+                      "type": "string"
+                    },
+                    "friendlyError": {
+                      "type": "string"
+                    },
+                    "completed": {
+                      "type": "boolean"
+                    },
+                    "awaitingMapping": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/connect/vrbo-login/session": {
+      "post": {
+        "operationId": "vrboLogin",
+        "summary": "Sign in with a Vrbo host account",
+        "description": "`action: login` checks the email and password and answers in seconds: `connected`, `otp_required` (Vrbo sent a code to `destination`) or `failed` with a `reason` (`bad_credentials`, `blocked`, \u2026). `action: otp` submits the code; a refused code comes back as `otp_required` with `reason: bad_code`.\n\nSigning in imports nothing. `accessType` (`full_access` or `messaging`, when the session did not lock it) is the host's choice of whether mapped listings push the calendar. The import starts when the mapping is confirmed.\n\nCalled by the hosted Connect page. No API key \u2014 the session ID is the capability token.",
+        "tags": [
+          "Connect"
+        ],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "sessionId",
+                  "action"
+                ],
+                "properties": {
+                  "sessionId": {
+                    "type": "string"
+                  },
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "login",
+                      "otp"
+                    ]
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "accountId": {
+                    "type": "integer"
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "accessType": {
+                    "type": "string",
+                    "enum": [
+                      "full_access",
+                      "messaging"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sign-in outcome",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "accountId": {
+                      "type": "integer"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "connected",
+                        "otp_required",
+                        "pending",
+                        "failed"
+                      ]
+                    },
+                    "reason": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "destination": {
+                      "type": "string"
+                    },
+                    "notificationEmail": {
+                      "type": "string"
+                    },
+                    "awaitingMapping": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "getVrboConnectImport",
+        "summary": "Import progress of the session's Vrbo account",
+        "description": "After the mapping is confirmed: `importing` (upcoming bookings and the last 30 days of messages) \u2192 `importing_history` (the rest of the account, in the background) \u2192 `imported`.\n\nCalled by the hosted Connect page. No API key \u2014 the session ID is the capability token.",
+        "tags": [
+          "Connect"
+        ],
+        "security": [],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Import status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VrboImportStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/connections/{id}/mappings": {
+      "post": {
+        "operationId": "applyConnectionMappings",
+        "summary": "Map, unmap or create listings for units",
+        "description": "One instruction per unit: `{unitId, listingId}` maps, `{unitId, listingId: null}` unmaps, `{unitId, create: true}` creates a listing. Answers per unit.\n\nVrbo: nothing is imported when the account is signed in. Applying a mapping that maps at least one unit starts the import: upcoming bookings and the last 30 days of messages first, then the whole account history. Follow it on `GET /v1/connect/vrbo-login` (`accounts[].import`).\n\nAuth: a Repull API key, or a Connect session token (`sessionId`) while the hosted flow is mapping.",
+        "tags": [
+          "Connections"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Connection handle `{channel}:{externalAccountId}`, e.g. `vrbo:12` or `booking_extranet:36`."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "mappings"
+                ],
+                "properties": {
+                  "sessionId": {
+                    "type": "string"
+                  },
+                  "mappings": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "unitId"
+                      ],
+                      "properties": {
+                        "unitId": {
+                          "type": "string"
+                        },
+                        "listingId": {
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "create": {
+                          "type": "boolean"
+                        },
+                        "calendarSync": {
+                          "type": "boolean",
+                          "description": "Vrbo: push this listing's prices and availability to Vrbo. Omit to follow the connection's access type (`messaging` = off, `full_access` = on). A new listing (`create`) always follows the access type. Other channels ignore it."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Per-unit results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "connection_id": {
+                      "type": "string"
+                    },
+                    "channel": {
+                      "type": "string"
+                    },
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "unit_id": {
+                            "type": "string"
+                          },
+                          "listing_id": {
+                            "type": "integer",
+                            "nullable": true
+                          },
+                          "created": {
+                            "type": "boolean"
+                          },
+                          "ok": {
+                            "type": "boolean"
+                          },
+                          "error": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/connections/{id}/mappings/automap": {
+      "post": {
+        "operationId": "autoMapConnectionUnits",
+        "summary": "Auto-map units by exact name",
+        "description": "Proposes (or with `apply: true` applies) mappings where a unit's name exactly matches one listing. Never guesses on ambiguity.\n\nAuth: a Repull API key, or a Connect session token (`sessionId`) while the hosted flow is mapping.",
+        "tags": [
+          "Connections"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Connection handle `{channel}:{externalAccountId}`, e.g. `vrbo:12` or `booking_extranet:36`."
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sessionId": {
+                    "type": "string"
+                  },
+                  "apply": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Proposed or applied mappings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "connection_id": {
+                      "type": "string"
+                    },
+                    "channel": {
+                      "type": "string"
+                    },
+                    "applied": {
+                      "type": "boolean"
+                    },
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "unit_id": {
+                            "type": "string"
+                          },
+                          "listing_id": {
+                            "type": "integer",
+                            "nullable": true
+                          },
+                          "created": {
+                            "type": "boolean"
+                          },
+                          "ok": {
+                            "type": "boolean"
+                          },
+                          "error": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/connections/{id}/units": {
+      "get": {
+        "operationId": "listConnectionUnits",
+        "summary": "List a connection's mappable units",
+        "description": "The units of a connected account with their current listing, a safe suggestion, and the workspace's listing options. `status: ready` with no units means the account has no properties.\n\nAuth: a Repull API key, or a Connect session token (`sessionId`) while the hosted flow is mapping.\n\n`listing_options` carries only the listings the units already point at (mapped or suggested); `listing_options_total` says how many the workspace has. Search the rest with `GET /v1/connections/{id}/listing-options?q=`.",
+        "tags": [
+          "Connections"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Connection handle `{channel}:{externalAccountId}`, e.g. `vrbo:12` or `booking_extranet:36`."
+          },
+          {
+            "name": "sessionId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The Connect session ID (capability token)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Units",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "connection_id": {
+                      "type": "string"
+                    },
+                    "channel": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "importing",
+                        "ready",
+                        "completed"
+                      ]
+                    },
+                    "units": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "unit_id": {
+                            "type": "string"
+                          },
+                          "unit_name": {
+                            "type": "string"
+                          },
+                          "grain": {
+                            "type": "string"
+                          },
+                          "current_listing_id": {
+                            "type": "integer",
+                            "nullable": true
+                          },
+                          "suggested_listing_id": {
+                            "type": "integer",
+                            "nullable": true
+                          },
+                          "meta": {
+                            "type": "object"
+                          }
+                        }
+                      }
+                    },
+                    "listing_options": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "city": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "missing_capabilities": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "listing_options_total": {
+                      "type": "integer",
+                      "description": "How many listings the workspace has to map to."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/connect/sessions/{sessionId}/listing-options": {
+      "get": {
+        "operationId": "searchConnectSessionListingOptions",
+        "summary": "Search listings for a Connect mapping picker",
+        "description": "The hosted Connect pages' listing search for their mapping pickers: the session workspace's active listings by name, city or id, `limit` at a time.\n\nCalled by the hosted Connect page. No API key \u2014 the session ID is the capability token.",
+        "tags": [
+          "Connect"
+        ],
+        "security": [],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matching listings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "city": {
+                            "type": "string",
+                            "nullable": true
+                          }
+                        }
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/connections/{id}/listing-options": {
+      "get": {
+        "operationId": "searchConnectionListingOptions",
+        "summary": "Search listings a unit can be mapped to",
+        "description": "Search the workspace's active listings by name, city or id, for a mapping picker. A workspace can hold tens of thousands of listings, so pickers search here as the user types rather than loading them all. Empty `q` returns the first `limit` listings by name.\n\nAuth: a Repull API key, or a Connect session token (`sessionId`) while the hosted flow is mapping.",
+        "tags": [
+          "Connections"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Connection handle `{channel}:{externalAccountId}`."
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Text to match (name, city or listing id)."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20
+            }
+          },
+          {
+            "name": "sessionId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matching listings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "city": {
+                            "type": "string",
+                            "nullable": true
+                          }
+                        }
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "description": "How many listings match `q` in total."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/connect/{provider}/write-policy": {
+      "get": {
+        "operationId": "get_connect_write_policy",
+        "summary": "Get what the app may change in a PMS",
+        "description": "Returns the connection's write policy: whether the app may open and close nights, change prices and minimum stay in the PMS, and whether bookings may be created or changed there from the booking website, the dashboard or the reservations API.\n\nHotel PMSs (Cloudbeds, Mews) start with every calendar switch off \u2014 the PMS owns its room inventory. Every other PMS starts with everything on. PMS connections only.",
+        "tags": [
+          "Connect"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/provider"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The connection's write policy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "provider": {
+                      "type": "string",
+                      "example": "cloudbeds"
+                    },
+                    "writePolicy": {
+                      "$ref": "#/components/schemas/PmsWritePolicy"
+                    },
+                    "defaults": {
+                      "allOf": [
+                        {
+                          "$ref": "#/components/schemas/PmsWritePolicy"
+                        }
+                      ],
+                      "description": "What this provider starts with."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a PMS provider, or an invalid switch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No connection for this provider (`no_connection`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "update_connect_write_policy",
+        "summary": "Change what the app may change in a PMS",
+        "description": "Turns individual write switches on or off for the connection. Only the switches you send change. Takes effect on the next write \u2014 nothing already sent to the PMS is undone. The policy is kept when the PMS is reconnected.\n\nWith `reservations.api` off, the reservations API returns `409 pms_writes_off` for bookings on this PMS. With `reservations.website` off, booking sites stop taking bookings for it before the guest is charged.",
+        "tags": [
+          "Connect"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/provider"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Only the switches you send change. Every value must be a boolean.",
+                "properties": {
+                  "calendar": {
+                    "type": "object",
+                    "properties": {
+                      "availability": {
+                        "type": "boolean"
+                      },
+                      "rates": {
+                        "type": "boolean"
+                      },
+                      "restrictions": {
+                        "type": "boolean"
+                      }
+                    }
+                  },
+                  "reservations": {
+                    "type": "object",
+                    "properties": {
+                      "website": {
+                        "type": "boolean"
+                      },
+                      "dashboard": {
+                        "type": "boolean"
+                      },
+                      "api": {
+                        "type": "boolean"
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "calendar": {
+                    "availability": false,
+                    "rates": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The connection's write policy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "provider": {
+                      "type": "string",
+                      "example": "cloudbeds"
+                    },
+                    "writePolicy": {
+                      "$ref": "#/components/schemas/PmsWritePolicy"
+                    },
+                    "defaults": {
+                      "allOf": [
+                        {
+                          "$ref": "#/components/schemas/PmsWritePolicy"
+                        }
+                      ],
+                      "description": "What this provider starts with."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a PMS provider, or an invalid switch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No connection for this provider (`no_connection`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }

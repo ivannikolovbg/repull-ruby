@@ -28,6 +28,15 @@ module Repull
     # ISO timestamp the connection was first established.
     attr_accessor :since
 
+    # The listing's id on the channel — Airbnb listing id, Booking.com room/property id, VRBO listing number.
+    attr_accessor :platform_id
+
+    # Where the listing stands on the channel itself, when the channel reports it (VRBO): `online` — live and bookable; `offline` — hidden by the owner (`POST /v1/listings/{id}/online` brings it back); `not_live` — expired, new, still onboarding or deactivated by the channel (see `channelStatusDetail`). Null when not reported.
+    attr_accessor :channel_status
+
+    # The channel's own status word behind `channelStatus` (VRBO: `LIVE`, `InactiveByOwnerRequest`, `Expired`, `New`, …).
+    attr_accessor :channel_status_detail
+
     # Fields the channel will not let this listing change. **Airbnb only** — present on the `airbnb` entry and absent on every other channel, because no other channel has the concept.  Airbnb does not refuse a write to a locked field: the request returns 200, reports the field as locked, and applies nothing. So a write to one of these looks exactly like a write that worked. Read this before you let a user edit — it is here, rather than only on `GET /v1/channels/airbnb/listings/{id}`, because this is the endpoint a listing editor already calls.  Empty for a listing with nothing locked, and for one that has not synced since we began recording them — the two are not distinguished, because a caller acts the same way on both. This is what Airbnb last told us, not a promise: a lock can appear between syncs, which is why a publish result also reports `lockedFields`.
     attr_accessor :locked_fields
 
@@ -38,6 +47,9 @@ module Repull
         :'connected' => :'connected',
         :'sync_enabled' => :'syncEnabled',
         :'since' => :'since',
+        :'platform_id' => :'platformId',
+        :'channel_status' => :'channelStatus',
+        :'channel_status_detail' => :'channelStatusDetail',
         :'locked_fields' => :'lockedFields'
       }
     end
@@ -59,6 +71,9 @@ module Repull
         :'connected' => :'Boolean',
         :'sync_enabled' => :'Boolean',
         :'since' => :'Time',
+        :'platform_id' => :'String',
+        :'channel_status' => :'String',
+        :'channel_status_detail' => :'String',
         :'locked_fields' => :'Array<String>'
       }
     end
@@ -67,6 +82,9 @@ module Repull
     def self.openapi_nullable
       Set.new([
         :'since',
+        :'platform_id',
+        :'channel_status',
+        :'channel_status_detail',
       ])
     end
 
@@ -102,6 +120,18 @@ module Repull
         self.since = attributes[:'since']
       end
 
+      if attributes.key?(:'platform_id')
+        self.platform_id = attributes[:'platform_id']
+      end
+
+      if attributes.key?(:'channel_status')
+        self.channel_status = attributes[:'channel_status']
+      end
+
+      if attributes.key?(:'channel_status_detail')
+        self.channel_status_detail = attributes[:'channel_status_detail']
+      end
+
       if attributes.key?(:'locked_fields')
         if (value = attributes[:'locked_fields']).is_a?(Array)
           self.locked_fields = value
@@ -133,6 +163,9 @@ module Repull
           connected == o.connected &&
           sync_enabled == o.sync_enabled &&
           since == o.since &&
+          platform_id == o.platform_id &&
+          channel_status == o.channel_status &&
+          channel_status_detail == o.channel_status_detail &&
           locked_fields == o.locked_fields
     end
 
@@ -145,7 +178,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [channel, connected, sync_enabled, since, locked_fields].hash
+      [channel, connected, sync_enabled, since, platform_id, channel_status, channel_status_detail, locked_fields].hash
     end
 
     # Builds the object from hash

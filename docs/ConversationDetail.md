@@ -19,6 +19,7 @@
 | **updated_at** | **Time** |  | [optional] |
 | **host** | [**ConversationHost**](ConversationHost.md) |  | [optional] |
 | **guest** | [**ConversationGuest**](ConversationGuest.md) |  | [optional] |
+| **capabilities** | [**ConversationCapabilities**](ConversationCapabilities.md) |  | [optional] |
 
 ## Example
 
@@ -40,7 +41,8 @@ instance = Repull::ConversationDetail.new(
   created_at: null,
   updated_at: null,
   host: null,
-  guest: null
+  guest: null,
+  capabilities: null
 )
 ```
 

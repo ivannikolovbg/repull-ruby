@@ -6,6 +6,7 @@
 | ---- | ---- | ----------- | ----- |
 | **provider** | **String** |  | [optional] |
 | **connected** | **Boolean** |  | [optional] |
+| **write_policy** | [**PmsWritePolicy**](PmsWritePolicy.md) |  | [optional] |
 | **pms_connection_id** | **String** | Id of the stored connection. | [optional] |
 | **created** | **Boolean** | False when an existing connection was updated. | [optional] |
 | **session_id** | **String** |  | [optional] |
@@ -20,6 +21,7 @@ require 'repull'
 instance = Repull::SubmitMewsCredentials200Response.new(
   provider: mews,
   connected: null,
+  write_policy: null,
   pms_connection_id: null,
   created: null,
   session_id: null,

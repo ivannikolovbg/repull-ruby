@@ -10,6 +10,7 @@ All URIs are relative to *https://api.repull.dev*
 | [**delete_listing_photo**](ListingsApi.md#delete_listing_photo) | **DELETE** /v1/listings/{id}/photos | Delete a stored listing photo |
 | [**generate_listing_content**](ListingsApi.md#generate_listing_content) | **POST** /v1/listings/{id}/generate-content | AI-generate listing content |
 | [**get_listing**](ListingsApi.md#get_listing) | **GET** /v1/listings/{id} | Get a listing |
+| [**get_listing_calendar_sync**](ListingsApi.md#get_listing_calendar_sync) | **GET** /v1/listings/{id}/calendar-sync | Calendar sync status per channel |
 | [**get_listing_markups**](ListingsApi.md#get_listing_markups) | **GET** /v1/listings/{id}/markups | Get a listing&#39;s channel markups |
 | [**get_listing_publish_status**](ListingsApi.md#get_listing_publish_status) | **GET** /v1/listings/{id}/publish-status | Per-channel publish status |
 | [**list_listing_photos**](ListingsApi.md#list_listing_photos) | **GET** /v1/listings/{id}/photos | List a listing&#39;s stored photos |
@@ -443,6 +444,75 @@ end
 ### Return type
 
 [**Listing**](Listing.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## get_listing_calendar_sync
+
+> <GetListingCalendarSync200Response> get_listing_calendar_sync(id)
+
+Calendar sync status per channel
+
+Is this listing's calendar — prices, minimum stays, availability — actually on every channel it is connected to, and if not, which nights and why. One shape for every channel.  Every push records each night's outcome per channel; a night the channel does not show as sent is listed in `problems` with the channel's own reason (a price the channel still shows differently, a block it refused, a unit that is not live, a night held by a booking or an imported calendar). A later successful push clears it.  **VRBO** pushes run through a paced queue — VRBO accepts about 90 calendar writes a minute per account, and only what differs on VRBO is sent — so the `vrbo` entry adds `queue`: whether a push is waiting or running now, and what the last one did (prices and minimum stays changed, blocks, calls, nights still differing).  Future nights only. `problems` lists up to 100 nights per channel; `nightsWithProblems` is always the full count.  Returns `403 listing_inactive` for an inactive listing.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ListingsApi.new
+id = 56 # Integer | Repull listing id.
+
+begin
+  # Calendar sync status per channel
+  result = api_instance.get_listing_calendar_sync(id)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ListingsApi->get_listing_calendar_sync: #{e}"
+end
+```
+
+#### Using the get_listing_calendar_sync_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<GetListingCalendarSync200Response>, Integer, Hash)> get_listing_calendar_sync_with_http_info(id)
+
+```ruby
+begin
+  # Calendar sync status per channel
+  data, status_code, headers = api_instance.get_listing_calendar_sync_with_http_info(id)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <GetListingCalendarSync200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ListingsApi->get_listing_calendar_sync_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **Integer** | Repull listing id. |  |
+
+### Return type
+
+[**GetListingCalendarSync200Response**](GetListingCalendarSync200Response.md)
 
 ### Authorization
 
@@ -1183,7 +1253,7 @@ end
 
 Take a listing off the market
 
-Stop this listing being sold, on every channel it is connected to, in one call.  What that means differs per channel and you do not have to know which is which. On **Airbnb** the live listing is deactivated with a valid deactivation reason and then READ BACK — Airbnb accepts some deactivations and leaves the listing up, so \"we sent the request\" is never reported as success. On **Booking.com** there is no unlist at all; the equivalent is closing the room's availability across the whole forward window, which is what happens.  **This is not the same as deactivating the listing in Repull.** The two get confused because both sound like removal, and they have opposite consequences:  | | Take offline (this endpoint) | Deactivate in Repull (`PATCH /v1/listings/{id}` `{\"active\": false}`) | |---|---|---| | The guest-facing listing | **Stops taking bookings** | Stays live and keeps taking bookings | | Billing and plan limits | Unchanged | No longer billed, no longer counts toward the cap | | API access to the listing | Unchanged — you can still read and write it | `403 listing_inactive` until reactivated | | Reverse it with | `POST /v1/listings/{id}/online` | `PATCH /v1/listings/{id}` `{\"active\": true}` | | Data kept | Yes | Yes, and it keeps syncing |  Neither one deletes anything, on either side.  **The answer is per channel item.** A listing can sit on several Airbnb connections and a Booking.com property at once; they fail independently and a partial result is the ordinary outcome, so every item reports its own `state`, `code` and `message` and there is no top-level success flag to mislead you. Nothing is rolled back — re-send the same request to retry the items that did not land.  **Booking.com ambiguity is reported, not fanned out.** A listing mapped to more than one active Booking.com property comes back with that item refused (`ambiguous_booking_mapping`) while the Airbnb items still run: closing the wrong property's availability takes real inventory off sale, and taking a listing off Airbnb is not less urgent because its Booking.com mapping is untidy. Name the property with `hotelId` and send it again.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+Stop this listing being sold, on every channel it is connected to, in one call.  What that means differs per channel and you do not have to know which is which. On **Airbnb** the live listing is deactivated with a valid deactivation reason and then READ BACK — Airbnb accepts some deactivations and leaves the listing up, so \"we sent the request\" is never reported as success. On **Booking.com** there is no unlist at all; the equivalent is closing the room's availability across the whole forward window, which is what happens. On **VRBO** each mapped unit is hidden (VRBO's own \"Hide listing\") and read back — a hidden unit is out of VRBO search and cannot be booked; its item carries the VRBO listing number as `platformId`.  **This is not the same as deactivating the listing in Repull.** The two get confused because both sound like removal, and they have opposite consequences:  | | Take offline (this endpoint) | Deactivate in Repull (`PATCH /v1/listings/{id}` `{\"active\": false}`) | |---|---|---| | The guest-facing listing | **Stops taking bookings** | Stays live and keeps taking bookings | | Billing and plan limits | Unchanged | No longer billed, no longer counts toward the cap | | API access to the listing | Unchanged — you can still read and write it | `403 listing_inactive` until reactivated | | Reverse it with | `POST /v1/listings/{id}/online` | `PATCH /v1/listings/{id}` `{\"active\": true}` | | Data kept | Yes | Yes, and it keeps syncing |  Neither one deletes anything, on either side.  **The answer is per channel item.** A listing can sit on several Airbnb connections and a Booking.com property at once; they fail independently and a partial result is the ordinary outcome, so every item reports its own `state`, `code` and `message` and there is no top-level success flag to mislead you. Nothing is rolled back — re-send the same request to retry the items that did not land.  **Booking.com ambiguity is reported, not fanned out.** A listing mapped to more than one active Booking.com property comes back with that item refused (`ambiguous_booking_mapping`) while the Airbnb items still run: closing the wrong property's availability takes real inventory off sale, and taking a listing off Airbnb is not less urgent because its Booking.com mapping is untidy. Name the property with `hotelId` and send it again.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -1260,7 +1330,7 @@ end
 
 Put a listing back on the market
 
-Put this listing back on sale, on every channel it is connected to. The counterpart of `POST /v1/listings/{id}/offline`, which documents the per-item response and the difference between this and deactivating a listing in Repull.  **It does not push content.** On **Airbnb** it re-enables sync and makes the listing available again; anything that changed while the listing was down is still unpublished, so follow with `POST /v1/listings/{id}/publish/airbnb` if the content moved. On **Booking.com** it re-syncs the true calendar rather than opening everything: dates that are genuinely blocked — a reservation, an owner stay — stay blocked, and only the closure `offline` wrote lifts. The two directions are not mirror images, and that is deliberate.  **One asymmetry worth planning for.** Taking a listing down passes no billing gate; putting it back up goes through the channel-publish gate. So on a workspace whose subscription has lapsed, `offline` still works and this endpoint answers `402 payment_required` — a listing can be left off the market until billing is sorted out. That refusal is reported as a billing refusal with the action that fixes it, never as a channel error: retrying, or reconnecting the channel, does nothing for it.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+Put this listing back on sale, on every channel it is connected to. The counterpart of `POST /v1/listings/{id}/offline`, which documents the per-item response and the difference between this and deactivating a listing in Repull.  **It does not push content.** On **Airbnb** it re-enables sync and makes the listing available again; anything that changed while the listing was down is still unpublished, so follow with `POST /v1/listings/{id}/publish/airbnb` if the content moved. On **Booking.com** it re-syncs the true calendar rather than opening everything: dates that are genuinely blocked — a reservation, an owner stay — stay blocked, and only the closure `offline` wrote lifts. On **VRBO** each hidden unit is reactivated (VRBO's own \"Reactivate\") and read back; VRBO can refuse a reactivation (e.g. while it is verifying the property), which comes back as that item's `message`. The two directions are not mirror images, and that is deliberate.  **One asymmetry worth planning for.** Taking a listing down passes no billing gate; putting it back up goes through the channel-publish gate. So on a workspace whose subscription has lapsed, `offline` still works and this endpoint answers `402 payment_required` — a listing can be left off the market until billing is sorted out. That refusal is reported as a billing refusal with the action that fixes it, never as a channel error: retrying, or reconnecting the channel, does nothing for it.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 

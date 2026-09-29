@@ -19,6 +19,8 @@ module Repull
 
     attr_accessor :conversation_id
 
+    attr_accessor :channel
+
     attr_accessor :status
 
     class EnumAttributeValidator
@@ -48,6 +50,7 @@ module Repull
       {
         :'id' => :'id',
         :'conversation_id' => :'conversationId',
+        :'channel' => :'channel',
         :'status' => :'status'
       }
     end
@@ -67,6 +70,7 @@ module Repull
       {
         :'id' => :'String',
         :'conversation_id' => :'String',
+        :'channel' => :'String',
         :'status' => :'String'
       }
     end
@@ -105,6 +109,12 @@ module Repull
         self.conversation_id = nil
       end
 
+      if attributes.key?(:'channel')
+        self.channel = attributes[:'channel']
+      else
+        self.channel = nil
+      end
+
       if attributes.key?(:'status')
         self.status = attributes[:'status']
       else
@@ -125,6 +135,10 @@ module Repull
         invalid_properties.push('invalid value for "conversation_id", conversation_id cannot be nil.')
       end
 
+      if @channel.nil?
+        invalid_properties.push('invalid value for "channel", channel cannot be nil.')
+      end
+
       if @status.nil?
         invalid_properties.push('invalid value for "status", status cannot be nil.')
       end
@@ -138,6 +152,9 @@ module Repull
       warn '[DEPRECATED] the `valid?` method is obsolete'
       return false if @id.nil?
       return false if @conversation_id.nil?
+      return false if @channel.nil?
+      channel_validator = EnumAttributeValidator.new('String', ["airbnb", "vrbo"])
+      return false unless channel_validator.valid?(@channel)
       return false if @status.nil?
       status_validator = EnumAttributeValidator.new('String', ["withdrawn"])
       return false unless status_validator.valid?(@status)
@@ -165,6 +182,16 @@ module Repull
     end
 
     # Custom attribute writer method checking allowed values (enum).
+    # @param [Object] channel Object to be assigned
+    def channel=(channel)
+      validator = EnumAttributeValidator.new('String', ["airbnb", "vrbo"])
+      unless validator.valid?(channel)
+        fail ArgumentError, "invalid value for \"channel\", must be one of #{validator.allowable_values}."
+      end
+      @channel = channel
+    end
+
+    # Custom attribute writer method checking allowed values (enum).
     # @param [Object] status Object to be assigned
     def status=(status)
       validator = EnumAttributeValidator.new('String', ["withdrawn"])
@@ -181,6 +208,7 @@ module Repull
       self.class == o.class &&
           id == o.id &&
           conversation_id == o.conversation_id &&
+          channel == o.channel &&
           status == o.status
     end
 
@@ -193,7 +221,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, conversation_id, status].hash
+      [id, conversation_id, channel, status].hash
     end
 
     # Builds the object from hash

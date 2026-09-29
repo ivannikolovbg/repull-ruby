@@ -291,6 +291,141 @@ module Repull
       return data, status_code, headers
     end
 
+    # Booking.com direct-login config
+    # Returns the 2FA number the host adds to their Extranet user.  Called by the hosted Connect page. No API key — the session ID is the capability token.
+    # @param session_id [String] The Connect session ID (capability token).
+    # @param [Hash] opts the optional parameters
+    # @return [GetBookingExtranetLoginConfig200Response]
+    def get_booking_extranet_login_config(session_id, opts = {})
+      data, _status_code, _headers = get_booking_extranet_login_config_with_http_info(session_id, opts)
+      data
+    end
+
+    # Booking.com direct-login config
+    # Returns the 2FA number the host adds to their Extranet user.  Called by the hosted Connect page. No API key — the session ID is the capability token.
+    # @param session_id [String] The Connect session ID (capability token).
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(GetBookingExtranetLoginConfig200Response, Integer, Hash)>] GetBookingExtranetLoginConfig200Response data, response status code and response headers
+    def get_booking_extranet_login_config_with_http_info(session_id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ConnectApi.get_booking_extranet_login_config ...'
+      end
+      # verify the required parameter 'session_id' is set
+      if @api_client.config.client_side_validation && session_id.nil?
+        fail ArgumentError, "Missing the required parameter 'session_id' when calling ConnectApi.get_booking_extranet_login_config"
+      end
+      # resource path
+      local_var_path = '/v1/connect/booking-extranet-login/session'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+      query_params[:'sessionId'] = session_id
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'GetBookingExtranetLoginConfig200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || []
+
+      new_options = opts.merge(
+        :operation => :"ConnectApi.get_booking_extranet_login_config",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ConnectApi#get_booking_extranet_login_config\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Booking.com direct-login status
+    # Live sign-in status, polled by the hosted page.  Called by the hosted Connect page. No API key — the session ID is the capability token.
+    # @param session_id [String] The Connect session ID (capability token).
+    # @param account_id [Integer] 
+    # @param [Hash] opts the optional parameters
+    # @return [GetBookingExtranetLoginStatus200Response]
+    def get_booking_extranet_login_status(session_id, account_id, opts = {})
+      data, _status_code, _headers = get_booking_extranet_login_status_with_http_info(session_id, account_id, opts)
+      data
+    end
+
+    # Booking.com direct-login status
+    # Live sign-in status, polled by the hosted page.  Called by the hosted Connect page. No API key — the session ID is the capability token.
+    # @param session_id [String] The Connect session ID (capability token).
+    # @param account_id [Integer] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(GetBookingExtranetLoginStatus200Response, Integer, Hash)>] GetBookingExtranetLoginStatus200Response data, response status code and response headers
+    def get_booking_extranet_login_status_with_http_info(session_id, account_id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ConnectApi.get_booking_extranet_login_status ...'
+      end
+      # verify the required parameter 'session_id' is set
+      if @api_client.config.client_side_validation && session_id.nil?
+        fail ArgumentError, "Missing the required parameter 'session_id' when calling ConnectApi.get_booking_extranet_login_status"
+      end
+      # verify the required parameter 'account_id' is set
+      if @api_client.config.client_side_validation && account_id.nil?
+        fail ArgumentError, "Missing the required parameter 'account_id' when calling ConnectApi.get_booking_extranet_login_status"
+      end
+      # resource path
+      local_var_path = '/v1/connect/booking-extranet-login/status'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+      query_params[:'sessionId'] = session_id
+      query_params[:'accountId'] = account_id
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'GetBookingExtranetLoginStatus200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || []
+
+      new_options = opts.merge(
+        :operation => :"ConnectApi.get_booking_extranet_login_status",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ConnectApi#get_booking_extranet_login_status\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # Get connection status
     # Returns the current connection status for a provider, including host metadata (display name + avatar) for Airbnb so clients can render an account-level confirmation UI.
     # @param provider [String] PMS provider slug (e.g., hostaway, guesty, ownerrez)
@@ -350,6 +485,201 @@ module Repull
       data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: ConnectApi#get_connect_status\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Get what the app may change in a PMS
+    # Returns the connection's write policy: whether the app may open and close nights, change prices and minimum stay in the PMS, and whether bookings may be created or changed there from the booking website, the dashboard or the reservations API.  Hotel PMSs (Cloudbeds, Mews) start with every calendar switch off — the PMS owns its room inventory. Every other PMS starts with everything on. PMS connections only.
+    # @param provider [String] PMS provider slug (e.g., hostaway, guesty, ownerrez)
+    # @param [Hash] opts the optional parameters
+    # @return [GetConnectWritePolicy200Response]
+    def get_connect_write_policy(provider, opts = {})
+      data, _status_code, _headers = get_connect_write_policy_with_http_info(provider, opts)
+      data
+    end
+
+    # Get what the app may change in a PMS
+    # Returns the connection&#39;s write policy: whether the app may open and close nights, change prices and minimum stay in the PMS, and whether bookings may be created or changed there from the booking website, the dashboard or the reservations API.  Hotel PMSs (Cloudbeds, Mews) start with every calendar switch off — the PMS owns its room inventory. Every other PMS starts with everything on. PMS connections only.
+    # @param provider [String] PMS provider slug (e.g., hostaway, guesty, ownerrez)
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(GetConnectWritePolicy200Response, Integer, Hash)>] GetConnectWritePolicy200Response data, response status code and response headers
+    def get_connect_write_policy_with_http_info(provider, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ConnectApi.get_connect_write_policy ...'
+      end
+      # verify the required parameter 'provider' is set
+      if @api_client.config.client_side_validation && provider.nil?
+        fail ArgumentError, "Missing the required parameter 'provider' when calling ConnectApi.get_connect_write_policy"
+      end
+      # resource path
+      local_var_path = '/v1/connect/{provider}/write-policy'.sub('{provider}', CGI.escape(provider.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'GetConnectWritePolicy200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"ConnectApi.get_connect_write_policy",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ConnectApi#get_connect_write_policy\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Import progress of the session's Vrbo account
+    # After the mapping is confirmed: `importing` (upcoming bookings and the last 30 days of messages) → `importing_history` (the rest of the account, in the background) → `imported`.  Called by the hosted Connect page. No API key — the session ID is the capability token.
+    # @param session_id [String] 
+    # @param [Hash] opts the optional parameters
+    # @return [VrboImportStatus]
+    def get_vrbo_connect_import(session_id, opts = {})
+      data, _status_code, _headers = get_vrbo_connect_import_with_http_info(session_id, opts)
+      data
+    end
+
+    # Import progress of the session&#39;s Vrbo account
+    # After the mapping is confirmed: &#x60;importing&#x60; (upcoming bookings and the last 30 days of messages) → &#x60;importing_history&#x60; (the rest of the account, in the background) → &#x60;imported&#x60;.  Called by the hosted Connect page. No API key — the session ID is the capability token.
+    # @param session_id [String] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(VrboImportStatus, Integer, Hash)>] VrboImportStatus data, response status code and response headers
+    def get_vrbo_connect_import_with_http_info(session_id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ConnectApi.get_vrbo_connect_import ...'
+      end
+      # verify the required parameter 'session_id' is set
+      if @api_client.config.client_side_validation && session_id.nil?
+        fail ArgumentError, "Missing the required parameter 'session_id' when calling ConnectApi.get_vrbo_connect_import"
+      end
+      # resource path
+      local_var_path = '/v1/connect/vrbo-login/session'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+      query_params[:'sessionId'] = session_id
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'VrboImportStatus'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || []
+
+      new_options = opts.merge(
+        :operation => :"ConnectApi.get_vrbo_connect_import",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ConnectApi#get_vrbo_connect_import\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Connect Booking.com by inviting a user
+    # Generates the user the host invites in their Extranet; progress is read from the status route.  Called by the hosted Connect page. No API key — the session ID is the capability token.
+    # @param invite_booking_extranet_user_request [InviteBookingExtranetUserRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [InviteBookingExtranetUser200Response]
+    def invite_booking_extranet_user(invite_booking_extranet_user_request, opts = {})
+      data, _status_code, _headers = invite_booking_extranet_user_with_http_info(invite_booking_extranet_user_request, opts)
+      data
+    end
+
+    # Connect Booking.com by inviting a user
+    # Generates the user the host invites in their Extranet; progress is read from the status route.  Called by the hosted Connect page. No API key — the session ID is the capability token.
+    # @param invite_booking_extranet_user_request [InviteBookingExtranetUserRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(InviteBookingExtranetUser200Response, Integer, Hash)>] InviteBookingExtranetUser200Response data, response status code and response headers
+    def invite_booking_extranet_user_with_http_info(invite_booking_extranet_user_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ConnectApi.invite_booking_extranet_user ...'
+      end
+      # verify the required parameter 'invite_booking_extranet_user_request' is set
+      if @api_client.config.client_side_validation && invite_booking_extranet_user_request.nil?
+        fail ArgumentError, "Missing the required parameter 'invite_booking_extranet_user_request' when calling ConnectApi.invite_booking_extranet_user"
+      end
+      # resource path
+      local_var_path = '/v1/connect/booking-extranet-login/invite'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(invite_booking_extranet_user_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'InviteBookingExtranetUser200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || []
+
+      new_options = opts.merge(
+        :operation => :"ConnectApi.invite_booking_extranet_user",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ConnectApi#invite_booking_extranet_user\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end
@@ -600,6 +930,83 @@ module Repull
       return data, status_code, headers
     end
 
+    # Search listings for a Connect mapping picker
+    # The hosted Connect pages' listing search for their mapping pickers: the session workspace's active listings by name, city or id, `limit` at a time.  Called by the hosted Connect page. No API key — the session ID is the capability token.
+    # @param session_id [String] 
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :q 
+    # @option opts [Integer] :limit  (default to 20)
+    # @return [SearchConnectSessionListingOptions200Response]
+    def search_connect_session_listing_options(session_id, opts = {})
+      data, _status_code, _headers = search_connect_session_listing_options_with_http_info(session_id, opts)
+      data
+    end
+
+    # Search listings for a Connect mapping picker
+    # The hosted Connect pages&#39; listing search for their mapping pickers: the session workspace&#39;s active listings by name, city or id, &#x60;limit&#x60; at a time.  Called by the hosted Connect page. No API key — the session ID is the capability token.
+    # @param session_id [String] 
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :q 
+    # @option opts [Integer] :limit  (default to 20)
+    # @return [Array<(SearchConnectSessionListingOptions200Response, Integer, Hash)>] SearchConnectSessionListingOptions200Response data, response status code and response headers
+    def search_connect_session_listing_options_with_http_info(session_id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ConnectApi.search_connect_session_listing_options ...'
+      end
+      # verify the required parameter 'session_id' is set
+      if @api_client.config.client_side_validation && session_id.nil?
+        fail ArgumentError, "Missing the required parameter 'session_id' when calling ConnectApi.search_connect_session_listing_options"
+      end
+      if @api_client.config.client_side_validation && !opts[:'limit'].nil? && opts[:'limit'] > 50
+        fail ArgumentError, 'invalid value for "opts[:"limit"]" when calling ConnectApi.search_connect_session_listing_options, must be smaller than or equal to 50.'
+      end
+
+      if @api_client.config.client_side_validation && !opts[:'limit'].nil? && opts[:'limit'] < 1
+        fail ArgumentError, 'invalid value for "opts[:"limit"]" when calling ConnectApi.search_connect_session_listing_options, must be greater than or equal to 1.'
+      end
+
+      # resource path
+      local_var_path = '/v1/connect/sessions/{sessionId}/listing-options'.sub('{sessionId}', CGI.escape(session_id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+      query_params[:'q'] = opts[:'q'] if !opts[:'q'].nil?
+      query_params[:'limit'] = opts[:'limit'] if !opts[:'limit'].nil?
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'SearchConnectSessionListingOptions200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || []
+
+      new_options = opts.merge(
+        :operation => :"ConnectApi.search_connect_session_listing_options",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ConnectApi#search_connect_session_listing_options\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # Bind a picker session to a provider
     # Called by the hosted picker page once the user clicks a channel card. Validates the provider exists and is permitted by the session's `allowedProviders` whitelist (if any), then returns the next-step URL the picker should navigate to.  No API key required — the session ID is the capability token. The session must still be pending and unexpired.
     # @param session_id [String] The picker session ID returned by &#x60;createConnectSession&#x60;.
@@ -670,6 +1077,74 @@ module Repull
       data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: ConnectApi#select_connect_provider\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Sign in with a Booking.com Extranet user
+    # Starts the sign-in with the host's Extranet credentials.  Called by the hosted Connect page. No API key — the session ID is the capability token.
+    # @param start_booking_extranet_login_request [StartBookingExtranetLoginRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [StartBookingExtranetLogin200Response]
+    def start_booking_extranet_login(start_booking_extranet_login_request, opts = {})
+      data, _status_code, _headers = start_booking_extranet_login_with_http_info(start_booking_extranet_login_request, opts)
+      data
+    end
+
+    # Sign in with a Booking.com Extranet user
+    # Starts the sign-in with the host&#39;s Extranet credentials.  Called by the hosted Connect page. No API key — the session ID is the capability token.
+    # @param start_booking_extranet_login_request [StartBookingExtranetLoginRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(StartBookingExtranetLogin200Response, Integer, Hash)>] StartBookingExtranetLogin200Response data, response status code and response headers
+    def start_booking_extranet_login_with_http_info(start_booking_extranet_login_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ConnectApi.start_booking_extranet_login ...'
+      end
+      # verify the required parameter 'start_booking_extranet_login_request' is set
+      if @api_client.config.client_side_validation && start_booking_extranet_login_request.nil?
+        fail ArgumentError, "Missing the required parameter 'start_booking_extranet_login_request' when calling ConnectApi.start_booking_extranet_login"
+      end
+      # resource path
+      local_var_path = '/v1/connect/booking-extranet-login/session'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(start_booking_extranet_login_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'StartBookingExtranetLogin200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || []
+
+      new_options = opts.merge(
+        :operation => :"ConnectApi.start_booking_extranet_login",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ConnectApi#start_booking_extranet_login\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end
@@ -1490,6 +1965,80 @@ module Repull
       return data, status_code, headers
     end
 
+    # Change what the app may change in a PMS
+    # Turns individual write switches on or off for the connection. Only the switches you send change. Takes effect on the next write — nothing already sent to the PMS is undone. The policy is kept when the PMS is reconnected.  With `reservations.api` off, the reservations API returns `409 pms_writes_off` for bookings on this PMS. With `reservations.website` off, booking sites stop taking bookings for it before the guest is charged.
+    # @param provider [String] PMS provider slug (e.g., hostaway, guesty, ownerrez)
+    # @param update_connect_write_policy_request [UpdateConnectWritePolicyRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [GetConnectWritePolicy200Response]
+    def update_connect_write_policy(provider, update_connect_write_policy_request, opts = {})
+      data, _status_code, _headers = update_connect_write_policy_with_http_info(provider, update_connect_write_policy_request, opts)
+      data
+    end
+
+    # Change what the app may change in a PMS
+    # Turns individual write switches on or off for the connection. Only the switches you send change. Takes effect on the next write — nothing already sent to the PMS is undone. The policy is kept when the PMS is reconnected.  With &#x60;reservations.api&#x60; off, the reservations API returns &#x60;409 pms_writes_off&#x60; for bookings on this PMS. With &#x60;reservations.website&#x60; off, booking sites stop taking bookings for it before the guest is charged.
+    # @param provider [String] PMS provider slug (e.g., hostaway, guesty, ownerrez)
+    # @param update_connect_write_policy_request [UpdateConnectWritePolicyRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(GetConnectWritePolicy200Response, Integer, Hash)>] GetConnectWritePolicy200Response data, response status code and response headers
+    def update_connect_write_policy_with_http_info(provider, update_connect_write_policy_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ConnectApi.update_connect_write_policy ...'
+      end
+      # verify the required parameter 'provider' is set
+      if @api_client.config.client_side_validation && provider.nil?
+        fail ArgumentError, "Missing the required parameter 'provider' when calling ConnectApi.update_connect_write_policy"
+      end
+      # verify the required parameter 'update_connect_write_policy_request' is set
+      if @api_client.config.client_side_validation && update_connect_write_policy_request.nil?
+        fail ArgumentError, "Missing the required parameter 'update_connect_write_policy_request' when calling ConnectApi.update_connect_write_policy"
+      end
+      # resource path
+      local_var_path = '/v1/connect/{provider}/write-policy'.sub('{provider}', CGI.escape(provider.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(update_connect_write_policy_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'GetConnectWritePolicy200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"ConnectApi.update_connect_write_policy",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:PATCH, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ConnectApi#update_connect_write_policy\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # Verify a Booking.com hotel ID for a Connect session
     # Manual-paste fallback that closes the Booking.com claim flow. Call this after the customer completes Stage 1 designation in their Booking Extranet (ticking FantasticStay/Repull as their connectivity provider) and pastes their Hotel ID into the hosted picker.  Validates the hotel against Booking's property API, persists the `pms_connections` row, kicks off the room import, and transitions the Connect session to `awaiting_room_mapping`.  No API key required — the `sessionId` is the capability token. Sessions in any terminal state are rejected.
     # @param booking_verify_hotel_request [BookingVerifyHotelRequest] 
@@ -1554,6 +2103,74 @@ module Repull
       data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: ConnectApi#verify_booking_hotel\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Sign in with a Vrbo host account
+    # `action: login` checks the email and password and answers in seconds: `connected`, `otp_required` (Vrbo sent a code to `destination`) or `failed` with a `reason` (`bad_credentials`, `blocked`, …). `action: otp` submits the code; a refused code comes back as `otp_required` with `reason: bad_code`.  Signing in imports nothing. `accessType` (`full_access` or `messaging`, when the session did not lock it) is the host's choice of whether mapped listings push the calendar. The import starts when the mapping is confirmed.  Called by the hosted Connect page. No API key — the session ID is the capability token.
+    # @param vrbo_login_request [VrboLoginRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [VrboLogin200Response]
+    def vrbo_login(vrbo_login_request, opts = {})
+      data, _status_code, _headers = vrbo_login_with_http_info(vrbo_login_request, opts)
+      data
+    end
+
+    # Sign in with a Vrbo host account
+    # &#x60;action: login&#x60; checks the email and password and answers in seconds: &#x60;connected&#x60;, &#x60;otp_required&#x60; (Vrbo sent a code to &#x60;destination&#x60;) or &#x60;failed&#x60; with a &#x60;reason&#x60; (&#x60;bad_credentials&#x60;, &#x60;blocked&#x60;, …). &#x60;action: otp&#x60; submits the code; a refused code comes back as &#x60;otp_required&#x60; with &#x60;reason: bad_code&#x60;.  Signing in imports nothing. &#x60;accessType&#x60; (&#x60;full_access&#x60; or &#x60;messaging&#x60;, when the session did not lock it) is the host&#39;s choice of whether mapped listings push the calendar. The import starts when the mapping is confirmed.  Called by the hosted Connect page. No API key — the session ID is the capability token.
+    # @param vrbo_login_request [VrboLoginRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(VrboLogin200Response, Integer, Hash)>] VrboLogin200Response data, response status code and response headers
+    def vrbo_login_with_http_info(vrbo_login_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ConnectApi.vrbo_login ...'
+      end
+      # verify the required parameter 'vrbo_login_request' is set
+      if @api_client.config.client_side_validation && vrbo_login_request.nil?
+        fail ArgumentError, "Missing the required parameter 'vrbo_login_request' when calling ConnectApi.vrbo_login"
+      end
+      # resource path
+      local_var_path = '/v1/connect/vrbo-login/session'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(vrbo_login_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'VrboLogin200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || []
+
+      new_options = opts.merge(
+        :operation => :"ConnectApi.vrbo_login",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ConnectApi#vrbo_login\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end

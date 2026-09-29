@@ -4,14 +4,16 @@ All URIs are relative to *https://api.repull.dev*
 
 | Method | HTTP request | Description |
 | ------ | ------------ | ----------- |
-| [**create_conversation_special_offer**](ConversationsApi.md#create_conversation_special_offer) | **POST** /v1/conversations/{id}/special-offers | Send a special offer |
+| [**create_conversation_special_offer**](ConversationsApi.md#create_conversation_special_offer) | **POST** /v1/conversations/{id}/special-offers | Send a special offer (Airbnb, VRBO) |
 | [**get_conversation**](ConversationsApi.md#get_conversation) | **GET** /v1/conversations/{id} | Get conversation detail |
 | [**get_conversation_special_offer**](ConversationsApi.md#get_conversation_special_offer) | **GET** /v1/conversations/{id}/special-offers/{offerId} | Get a special offer |
 | [**list_conversation_messages**](ConversationsApi.md#list_conversation_messages) | **GET** /v1/conversations/{id}/messages | List messages in a conversation |
 | [**list_conversations**](ConversationsApi.md#list_conversations) | **GET** /v1/conversations | List conversations |
 | [**list_inquiries**](ConversationsApi.md#list_inquiries) | **GET** /v1/inquiries | List inquiries |
-| [**preapprove_conversation**](ConversationsApi.md#preapprove_conversation) | **POST** /v1/conversations/{id}/pre-approval | Pre-approve an inquiry |
+| [**preapprove_conversation**](ConversationsApi.md#preapprove_conversation) | **POST** /v1/conversations/{id}/pre-approval | Pre-approve an inquiry (Airbnb, VRBO) |
+| [**preview_conversation_special_offer**](ConversationsApi.md#preview_conversation_special_offer) | **POST** /v1/conversations/{id}/special-offers/preview | Preview a special offer |
 | [**send_conversation_message**](ConversationsApi.md#send_conversation_message) | **POST** /v1/conversations/{id}/messages | Send a message to the guest |
+| [**withdraw_conversation_preapproval**](ConversationsApi.md#withdraw_conversation_preapproval) | **DELETE** /v1/conversations/{id}/pre-approval | Withdraw a pre-approval |
 | [**withdraw_conversation_special_offer**](ConversationsApi.md#withdraw_conversation_special_offer) | **DELETE** /v1/conversations/{id}/special-offers/{offerId} | Withdraw a special offer |
 
 
@@ -19,9 +21,9 @@ All URIs are relative to *https://api.repull.dev*
 
 > <CreateConversationSpecialOffer201Response> create_conversation_special_offer(id, create_conversation_special_offer_request, opts)
 
-Send a special offer
+Send a special offer (Airbnb, VRBO)
 
-Send the guest on this conversation an Airbnb special offer: your own dates, guest count and total price. The guest has 24 hours to book it. Use it to answer an inquiry with different terms, or to make a returning guest a custom price. To accept the guest’s own dates and price as they asked, pre-approve instead (`POST /v1/conversations/{id}/pre-approval`).  `listingId` is optional: omit it to offer the listing the guest asked about. It is a **Repull** listing id; Repull sends Airbnb its own listing id, using the link that belongs to this conversation’s Airbnb account.  `totalPrice` is the whole stay, in the listing’s Airbnb currency — Airbnb does not take a currency on an offer.  **Airbnb only**, and only for listings connected to Airbnb directly; anything else is `422 channel_not_supported` and nothing is sent. The inquiry is marked `special_offer_sent`.  An offer Airbnb refuses is never a `201`: dates that are taken, a price below Airbnb’s minimum, too many guests and the like are `422 airbnb_rejected` with Airbnb’s own reason in `message`.  Send `Idempotency-Key`: a repeat with the same key replays the first response instead of acting twice (a `409 idempotency_key_in_use` while the first is still running). A 5xx, a `429 airbnb_rate_limited` or a `403 connection_reauth_required` is not stored — nothing was done — so retrying with the same key reaches Airbnb again. Without it, a retry after a timeout can send the guest two offers.  Read or withdraw the offer with `GET` / `DELETE /v1/conversations/{id}/special-offers/{offerId}`.
+Send the guest on this conversation a special offer: your own dates, guest count and price. One endpoint for every channel that has offers — **Airbnb** (connected directly) and **VRBO** (its “Edit quote”). Use it to answer an inquiry with different terms. To accept the guest’s own dates and price as they asked, pre-approve instead (`POST /v1/conversations/{id}/pre-approval`).  **How the price is set depends on the channel** — `GET /v1/conversations/{id}` → `capabilities.offerPrice` says which: - `total` (Airbnb): send `totalPrice`, the whole stay in the listing’s Airbnb currency, with `checkIn`, `checkOut` and `guests`. - `breakdown` (VRBO): send the price’s parts — `rentalAmount` (rent, excluding fees), `fees` by VRBO fee type, `damageDeposit` — and VRBO computes the guest total, adding its taxes and service fee. Dates and party are optional (omitted → the inquiry’s own). Only what you send is changed. Preview the result first with `POST /v1/conversations/{id}/special-offers/preview`.  Sending the other kind is `422 offer_price_total_required` / `offer_price_breakdown_required` naming the field; nothing is sent. A channel without offers (Booking.com, direct, an Airbnb inquiry relayed by a PMS) is `422 channel_not_supported`.  `listingId` (Airbnb) is optional: omit it to offer the listing the guest asked about. It is a **Repull** listing id. `message` (VRBO) is sent to the guest with the offer.  An offer the channel refuses is never a `201`: dates that are taken, a price below the channel’s minimum and the like are `422` with the channel’s own reason in `message`.  Send `Idempotency-Key`: a repeat with the same key replays the first response instead of acting twice (a `409 idempotency_key_in_use` while the first is still running). A 5xx, a `429 airbnb_rate_limited` or a `403 connection_reauth_required` is not stored — nothing was done — so retrying with the same key reaches Airbnb again. Without it, a retry after a timeout can send the guest two offers.  Read or withdraw the offer with `GET` / `DELETE /v1/conversations/{id}/special-offers/{offerId}` (VRBO: `offerId` = `current`).
 
 ### Examples
 
@@ -36,13 +38,13 @@ end
 
 api_instance = Repull::ConversationsApi.new
 id = 56 # Integer | Repull conversation id (from `GET /v1/conversations` or `conversationId` on `GET /v1/inquiries`) — not the Airbnb thread id.
-create_conversation_special_offer_request = Repull::CreateConversationSpecialOfferRequest.new({check_in: Date.parse('Thu Oct 01 00:00:00 UTC 2026'), check_out: Date.parse('Mon Oct 05 00:00:00 UTC 2026'), guests: Repull::CreateConversationSpecialOfferRequestGuests.new({adults: 2}), total_price: 880}) # CreateConversationSpecialOfferRequest | 
+create_conversation_special_offer_request = Repull::CreateConversationSpecialOfferRequest.new # CreateConversationSpecialOfferRequest | 
 opts = {
   idempotency_key: '9f1c2f7e-4a3b-4f2e-9c8d-1b6a0e5d7c31' # String | Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged `Idempotency-Status: cached` — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → `409 idempotency_key_in_use`. - Same key with a DIFFERENT payload → `422 idempotency_key_reused`. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status >= 500, `408`, `425` and `429`, and the refusals that happen before anything is done and tell you to fix something outside the request first — `connection_reauth_required`, `listing_inactive`, and the rate/daily limits. Every other answer, including a final refusal such as `422 airbnb_rejected`, is stored and replayed.
 }
 
 begin
-  # Send a special offer
+  # Send a special offer (Airbnb, VRBO)
   result = api_instance.create_conversation_special_offer(id, create_conversation_special_offer_request, opts)
   p result
 rescue Repull::ApiError => e
@@ -58,7 +60,7 @@ This returns an Array which contains the response data, status code and headers.
 
 ```ruby
 begin
-  # Send a special offer
+  # Send a special offer (Airbnb, VRBO)
   data, status_code, headers = api_instance.create_conversation_special_offer_with_http_info(id, create_conversation_special_offer_request, opts)
   p status_code # => 2xx
   p headers # => { ... }
@@ -169,7 +171,7 @@ end
 
 Get a special offer
 
-Read a special offer on this conversation back from Airbnb — typically to check its `status` (`active` until the guest books it, it expires, or you withdraw it). Read live from Airbnb with the conversation’s own Airbnb account.
+Read a special offer on this conversation — typically to check its `status`. Airbnb: read live with the conversation’s own Airbnb account (`active` until the guest books it, it expires, or you withdraw it). VRBO (`offerId` = `current`): the live offer as last synced from VRBO, priced by its parts with VRBO’s total.
 
 ### Examples
 
@@ -184,7 +186,7 @@ end
 
 api_instance = Repull::ConversationsApi.new
 id = 56 # Integer | Repull conversation id (from `GET /v1/conversations` or `conversationId` on `GET /v1/inquiries`) — not the Airbnb thread id.
-offer_id = '1459920384' # String | The special offer’s `id`, as returned by `POST /v1/conversations/{id}/special-offers`.
+offer_id = '1459920384' # String | The special offer’s `id`, as returned by `POST /v1/conversations/{id}/special-offers`. On VRBO, where a conversation has one live offer, `current`.
 
 begin
   # Get a special offer
@@ -218,7 +220,7 @@ end
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **id** | **Integer** | Repull conversation id (from &#x60;GET /v1/conversations&#x60; or &#x60;conversationId&#x60; on &#x60;GET /v1/inquiries&#x60;) — not the Airbnb thread id. |  |
-| **offer_id** | **String** | The special offer’s &#x60;id&#x60;, as returned by &#x60;POST /v1/conversations/{id}/special-offers&#x60;. |  |
+| **offer_id** | **String** | The special offer’s &#x60;id&#x60;, as returned by &#x60;POST /v1/conversations/{id}/special-offers&#x60;. On VRBO, where a conversation has one live offer, &#x60;current&#x60;. |  |
 
 ### Return type
 
@@ -483,9 +485,9 @@ end
 
 > <PreapproveConversation201Response> preapprove_conversation(id, opts)
 
-Pre-approve an inquiry
+Pre-approve an inquiry (Airbnb, VRBO)
 
-Pre-approve the Airbnb inquiry on this conversation: the guest who asked about dates may now book them at the listed price, without waiting on you. To change the dates, guests or price, send a special offer instead (`POST /v1/conversations/{id}/special-offers`).  Find inquiries that need an answer with `GET /v1/inquiries` (default `status=open`); each carries the `conversationId` to use here.  **Airbnb only**, and only for listings connected to Airbnb directly. A Booking.com, VRBO or direct-booking conversation, or an Airbnb one relayed through a PMS (Hostaway, Guesty), returns `422 channel_not_supported` and nothing is sent.  The inquiry is marked `pre_approved` everywhere, the same as pre-approving in Airbnb.  An Airbnb refusal is never reported as a success: an inquiry that already moved on is `409 inquiry_no_longer_open`, an expired one `409 inquiry_expired`, a conversation that already has a booking `409 conversation_already_booked`.  Send `Idempotency-Key`: a repeat with the same key replays the first response instead of acting twice (a `409 idempotency_key_in_use` while the first is still running). A 5xx, a `429 airbnb_rate_limited` or a `403 connection_reauth_required` is not stored — nothing was done — so retrying with the same key reaches Airbnb again.
+Pre-approve the inquiry on this conversation: the guest who asked about dates may now book them at the listed price, without waiting on you. To change the dates, guests or price, send a special offer instead (`POST /v1/conversations/{id}/special-offers`).  Find inquiries that need an answer with `GET /v1/inquiries` (default `status=open`); each carries the `conversationId` to use here.  One endpoint for every channel with pre-approvals: **Airbnb** (listings connected directly) and **VRBO**. A Booking.com or direct-booking conversation, or an Airbnb one relayed through a PMS (Hostaway, Guesty), returns `422 channel_not_supported` and nothing is sent — `GET /v1/conversations/{id}` → `capabilities.canPreApprove` says where it works.  `blockInstantBooking` is Airbnb only (VRBO has no such switch: `422 invalid_params`). `message` is sent to the guest with a VRBO pre-approval (a friendly default otherwise).  The inquiry is marked `pre_approved` everywhere, the same as pre-approving on the channel. Withdraw it with `DELETE /v1/conversations/{id}/pre-approval` (VRBO).  A channel’s refusal is never reported as a success: an inquiry that already moved on is `409 inquiry_no_longer_open`, an expired one `409 inquiry_expired`, a conversation that already has a booking `409 conversation_already_booked`.  Send `Idempotency-Key`: a repeat with the same key replays the first response instead of acting twice (a `409 idempotency_key_in_use` while the first is still running). A 5xx, a `429 airbnb_rate_limited` or a `403 connection_reauth_required` is not stored — nothing was done — so retrying with the same key reaches Airbnb again.
 
 ### Examples
 
@@ -506,7 +508,7 @@ opts = {
 }
 
 begin
-  # Pre-approve an inquiry
+  # Pre-approve an inquiry (Airbnb, VRBO)
   result = api_instance.preapprove_conversation(id, opts)
   p result
 rescue Repull::ApiError => e
@@ -522,7 +524,7 @@ This returns an Array which contains the response data, status code and headers.
 
 ```ruby
 begin
-  # Pre-approve an inquiry
+  # Pre-approve an inquiry (Airbnb, VRBO)
   data, status_code, headers = api_instance.preapprove_conversation_with_http_info(id, opts)
   p status_code # => 2xx
   p headers # => { ... }
@@ -554,13 +556,86 @@ end
 - **Accept**: application/json
 
 
+## preview_conversation_special_offer
+
+> <CreateConversationSpecialOffer201Response> preview_conversation_special_offer(id, opts)
+
+Preview a special offer
+
+See what a special offer would be — as the channel itself recalculates it, with its taxes, service fee and guest total — **without sending anything** to the guest. Same body as `POST /v1/conversations/{id}/special-offers`; the price may be omitted to see only a date or party change, and `{}` shows the current offer recalculated.  **VRBO** (its “Edit quote” recalculation). A channel without a preview — Airbnb takes your total as it is — returns `422 preview_not_supported`; `GET /v1/conversations/{id}` → `capabilities.canPreviewOffer` says which.  Read-only: safe to call as often as you need while a user edits an offer.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ConversationsApi.new
+id = 56 # Integer | Repull conversation id (from `GET /v1/conversations` or `conversationId` on `GET /v1/inquiries`) — not the Airbnb thread id.
+opts = {
+  preview_conversation_special_offer_request: Repull::PreviewConversationSpecialOfferRequest.new # PreviewConversationSpecialOfferRequest | 
+}
+
+begin
+  # Preview a special offer
+  result = api_instance.preview_conversation_special_offer(id, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ConversationsApi->preview_conversation_special_offer: #{e}"
+end
+```
+
+#### Using the preview_conversation_special_offer_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<CreateConversationSpecialOffer201Response>, Integer, Hash)> preview_conversation_special_offer_with_http_info(id, opts)
+
+```ruby
+begin
+  # Preview a special offer
+  data, status_code, headers = api_instance.preview_conversation_special_offer_with_http_info(id, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <CreateConversationSpecialOffer201Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ConversationsApi->preview_conversation_special_offer_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **Integer** | Repull conversation id (from &#x60;GET /v1/conversations&#x60; or &#x60;conversationId&#x60; on &#x60;GET /v1/inquiries&#x60;) — not the Airbnb thread id. |  |
+| **preview_conversation_special_offer_request** | [**PreviewConversationSpecialOfferRequest**](PreviewConversationSpecialOfferRequest.md) |  | [optional] |
+
+### Return type
+
+[**CreateConversationSpecialOffer201Response**](CreateConversationSpecialOffer201Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
 ## send_conversation_message
 
 > <SendMessageResponse> send_conversation_message(id, send_message_request, opts)
 
 Send a message to the guest
 
-Sends a message to the guest on this conversation and records it in the thread.  Omit `channel` and the message goes out on whichever channel the conversation already uses (Airbnb, Booking.com, SMS, email or the direct-booking site) — that is the right default. Pass `channel` only to force a specific one.  The message is attributed to the API: it is recorded with `aiGenerated` false so an API send is never counted as an automated reply.  ### Airbnb rewrites links — check `contentRewritten`  Airbnb rejects guest messages containing a link, an email address or a phone number, and names the offending text. When that happens the offending fragment is stripped and the remainder is re-sent once, which means **the guest receives a message that is not the one you wrote**. Reporting that as a plain success would be a lie, so every response carries `contentRewritten`; when it is `true`, `deliveredContent` is the text that actually reached the guest. Check it before assuming your message went out verbatim.  When the text cannot be salvaged (the link is most of the message) nothing is delivered and the call returns `422 message_not_sent` with the channel's verbatim refusal in `statusReason`.  Send `Idempotency-Key` — without it, retrying after a network timeout sends the guest the same message twice.  ### Attachments  Send files with `attachments: [{ url, contentType?, filename? }]` — public `https://` URLs, up to 5 per request, 10 MB each. `message` may be omitted when there are attachments (except on Booking.com). Repull downloads each file, reads its real type from the bytes, keeps a durable copy and delivers it through the channel's own file flow. **Every file is checked before anything is sent**: if one is unreachable, too large or of a type the channel refuses, the call returns 422 naming the file (`index`) and the guest receives nothing.  | Channel | Accepted types | Text | How it arrives | |---|---|---|---| | Airbnb | JPEG, PNG, GIF, WebP (converted to JPEG), MP4, QuickTime | optional | each file as its own message, then the text as a separate message | | Booking.com | JPEG, PNG | **required** | one message carrying the text and every file | | SMS, email, direct-booking site chat | — | — | `422 attachments_not_supported`, nothing sent |  Airbnb does not allow files in pre-booking (inquiry) conversations; that refusal comes back as `422 message_not_sent`. Because Airbnb delivers files one message at a time, a later file can be refused after earlier ones arrived — that returns `422 message_partially_sent` with `parts` saying exactly which messages reached the guest; resend only the rest.  The response's `attachments` lists each file's durable `url`, and `parts` lists every channel message the send produced. Read-back (`GET /v1/conversations/{id}/messages`) shows the same files in each message's `attachments`.  **Inactive listings:** a conversation that belongs to an inactive listing returns `403 listing_inactive` and no message is sent. Activate the listing first.
+Sends a message to the guest on this conversation and records it in the thread.  Omit `channel` and the message goes out on whichever channel the conversation already uses (Airbnb, Booking.com, VRBO, SMS, email or the direct-booking site) — that is the right default. Pass `channel` only to force a specific one.  The message is attributed to the API: it is recorded with `aiGenerated` false so an API send is never counted as an automated reply.  ### Airbnb rewrites links — check `contentRewritten`  Airbnb rejects guest messages containing a link, an email address or a phone number, and names the offending text. When that happens the offending fragment is stripped and the remainder is re-sent once, which means **the guest receives a message that is not the one you wrote**. Reporting that as a plain success would be a lie, so every response carries `contentRewritten`; when it is `true`, `deliveredContent` is the text that actually reached the guest. Check it before assuming your message went out verbatim.  When the text cannot be salvaged (the link is most of the message) nothing is delivered and the call returns `422 message_not_sent` with the channel's verbatim refusal in `statusReason`.  Send `Idempotency-Key` — without it, retrying after a network timeout sends the guest the same message twice.  ### Attachments  Send files with `attachments: [{ url, contentType?, filename? }]` — public `https://` URLs, up to 5 per request, 10 MB each. `message` may be omitted when there are attachments (except on Booking.com). Repull downloads each file, reads its real type from the bytes, keeps a durable copy and delivers it through the channel's own file flow. **Every file is checked before anything is sent**: if one is unreachable, too large or of a type the channel refuses, the call returns 422 naming the file (`index`) and the guest receives nothing.  | Channel | Accepted types | Text | How it arrives | |---|---|---|---| | Airbnb | JPEG, PNG, GIF, WebP (converted to JPEG), MP4, QuickTime | optional | each file as its own message, then the text as a separate message | | Booking.com | JPEG, PNG | **required** | one message carrying the text and every file | | VRBO, SMS, email, direct-booking site chat | — | — | `422 attachments_not_supported`, nothing sent |  Airbnb does not allow files in pre-booking (inquiry) conversations; that refusal comes back as `422 message_not_sent`. Because Airbnb delivers files one message at a time, a later file can be refused after earlier ones arrived — that returns `422 message_partially_sent` with `parts` saying exactly which messages reached the guest; resend only the rest.  The response's `attachments` lists each file's durable `url`, and `parts` lists every channel message the send produced. Read-back (`GET /v1/conversations/{id}/messages`) shows the same files in each message's `attachments`.  **Inactive listings:** a conversation that belongs to an inactive listing returns `403 listing_inactive` and no message is sent. Activate the listing first.
 
 ### Examples
 
@@ -629,13 +704,13 @@ end
 - **Accept**: application/json
 
 
-## withdraw_conversation_special_offer
+## withdraw_conversation_preapproval
 
-> <WithdrawConversationSpecialOffer200Response> withdraw_conversation_special_offer(id, offer_id)
+> <WithdrawConversationPreapproval200Response> withdraw_conversation_preapproval(id)
 
-Withdraw a special offer
+Withdraw a pre-approval
 
-Withdraw a special offer the guest has not booked yet, so it can no longer be booked. An offer the guest already booked cannot be withdrawn — Airbnb refuses with `409 inquiry_no_longer_open`; cancel the booking instead.
+Withdraw the live pre-approval (or offer) on this conversation: the guest can no longer book on it, and the inquiry is open again. **VRBO**. On Airbnb a pre-approval is a special offer — withdraw it with `DELETE /v1/conversations/{id}/special-offers/{offerId}`; here it is `422 channel_not_supported`.  `GET /v1/conversations/{id}` → `capabilities.canWithdraw` says whether there is something to withdraw.
 
 ### Examples
 
@@ -650,7 +725,76 @@ end
 
 api_instance = Repull::ConversationsApi.new
 id = 56 # Integer | Repull conversation id (from `GET /v1/conversations` or `conversationId` on `GET /v1/inquiries`) — not the Airbnb thread id.
-offer_id = '1459920384' # String | The special offer’s `id`, as returned by `POST /v1/conversations/{id}/special-offers`.
+
+begin
+  # Withdraw a pre-approval
+  result = api_instance.withdraw_conversation_preapproval(id)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ConversationsApi->withdraw_conversation_preapproval: #{e}"
+end
+```
+
+#### Using the withdraw_conversation_preapproval_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<WithdrawConversationPreapproval200Response>, Integer, Hash)> withdraw_conversation_preapproval_with_http_info(id)
+
+```ruby
+begin
+  # Withdraw a pre-approval
+  data, status_code, headers = api_instance.withdraw_conversation_preapproval_with_http_info(id)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <WithdrawConversationPreapproval200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ConversationsApi->withdraw_conversation_preapproval_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **Integer** | Repull conversation id (from &#x60;GET /v1/conversations&#x60; or &#x60;conversationId&#x60; on &#x60;GET /v1/inquiries&#x60;) — not the Airbnb thread id. |  |
+
+### Return type
+
+[**WithdrawConversationPreapproval200Response**](WithdrawConversationPreapproval200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## withdraw_conversation_special_offer
+
+> <WithdrawConversationSpecialOffer200Response> withdraw_conversation_special_offer(id, offer_id)
+
+Withdraw a special offer
+
+Withdraw a special offer the guest has not booked yet, so it can no longer be booked (VRBO: `offerId` = `current`, the same as `DELETE /v1/conversations/{id}/pre-approval`). An offer the guest already booked cannot be withdrawn — the channel refuses with `409 inquiry_no_longer_open`; cancel the booking instead.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ConversationsApi.new
+id = 56 # Integer | Repull conversation id (from `GET /v1/conversations` or `conversationId` on `GET /v1/inquiries`) — not the Airbnb thread id.
+offer_id = '1459920384' # String | The special offer’s `id`, as returned by `POST /v1/conversations/{id}/special-offers`. On VRBO, where a conversation has one live offer, `current`.
 
 begin
   # Withdraw a special offer
@@ -684,7 +828,7 @@ end
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **id** | **Integer** | Repull conversation id (from &#x60;GET /v1/conversations&#x60; or &#x60;conversationId&#x60; on &#x60;GET /v1/inquiries&#x60;) — not the Airbnb thread id. |  |
-| **offer_id** | **String** | The special offer’s &#x60;id&#x60;, as returned by &#x60;POST /v1/conversations/{id}/special-offers&#x60;. |  |
+| **offer_id** | **String** | The special offer’s &#x60;id&#x60;, as returned by &#x60;POST /v1/conversations/{id}/special-offers&#x60;. On VRBO, where a conversation has one live offer, &#x60;current&#x60;. |  |
 
 ### Return type
 

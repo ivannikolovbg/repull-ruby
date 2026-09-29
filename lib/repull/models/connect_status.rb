@@ -33,8 +33,14 @@ module Repull
     # Host metadata, populated for Airbnb when the host row exists. Null for other providers (per-provider enrichment is incremental).
     attr_accessor :host
 
-    # Airbnb only: every Airbnb account this workspace has connected, including ones since disconnected. Pass `externalAccountId` as `accountId` to `DELETE /v1/connect/airbnb` to disconnect one account.
+    # Airbnb: every Airbnb account this workspace has connected, including ones since disconnected. Pass `externalAccountId` as `accountId` to `DELETE /v1/connect/airbnb` to disconnect one account. Vrbo (`GET /v1/connect/vrbo-login`): every signed-in Vrbo account, each with `accessType` and `import` (a `VrboImportStatus`), plus a top-level `dataFreshness`.
     attr_accessor :accounts
+
+    # PMS connections only: what the app may change in the PMS. Change it with `PATCH /v1/connect/{provider}/write-policy`.
+    attr_accessor :write_policy
+
+    # Vrbo only: the same freshness envelope the Airbnb read endpoints return, per account and in aggregate. Its reason is never_synced until a mapping is confirmed and importing while upcoming bookings come in.
+    attr_accessor :data_freshness
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
@@ -46,7 +52,9 @@ module Repull
         :'external_account_id' => :'externalAccountId',
         :'created_at' => :'createdAt',
         :'host' => :'host',
-        :'accounts' => :'accounts'
+        :'accounts' => :'accounts',
+        :'write_policy' => :'writePolicy',
+        :'data_freshness' => :'dataFreshness'
       }
     end
 
@@ -70,7 +78,9 @@ module Repull
         :'external_account_id' => :'String',
         :'created_at' => :'Time',
         :'host' => :'ConnectHost',
-        :'accounts' => :'Array<ConnectStatusAccountsInner>'
+        :'accounts' => :'Array<ConnectStatusAccountsInner>',
+        :'write_policy' => :'PmsWritePolicy',
+        :'data_freshness' => :'Object'
       }
     end
 
@@ -131,6 +141,14 @@ module Repull
           self.accounts = value
         end
       end
+
+      if attributes.key?(:'write_policy')
+        self.write_policy = attributes[:'write_policy']
+      end
+
+      if attributes.key?(:'data_freshness')
+        self.data_freshness = attributes[:'data_freshness']
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -160,7 +178,9 @@ module Repull
           external_account_id == o.external_account_id &&
           created_at == o.created_at &&
           host == o.host &&
-          accounts == o.accounts
+          accounts == o.accounts &&
+          write_policy == o.write_policy &&
+          data_freshness == o.data_freshness
     end
 
     # @see the `==` method
@@ -172,7 +192,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [connected, provider, id, status, external_account_id, created_at, host, accounts].hash
+      [connected, provider, id, status, external_account_id, created_at, host, accounts, write_policy, data_freshness].hash
     end
 
     # Builds the object from hash

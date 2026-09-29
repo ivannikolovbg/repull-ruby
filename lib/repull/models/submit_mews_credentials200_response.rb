@@ -19,6 +19,8 @@ module Repull
 
     attr_accessor :connected
 
+    attr_accessor :write_policy
+
     # Id of the stored connection.
     attr_accessor :pms_connection_id
 
@@ -36,6 +38,7 @@ module Repull
       {
         :'provider' => :'provider',
         :'connected' => :'connected',
+        :'write_policy' => :'writePolicy',
         :'pms_connection_id' => :'pmsConnectionId',
         :'created' => :'created',
         :'session_id' => :'sessionId',
@@ -59,6 +62,7 @@ module Repull
       {
         :'provider' => :'String',
         :'connected' => :'Boolean',
+        :'write_policy' => :'PmsWritePolicy',
         :'pms_connection_id' => :'String',
         :'created' => :'Boolean',
         :'session_id' => :'String',
@@ -96,6 +100,10 @@ module Repull
 
       if attributes.key?(:'connected')
         self.connected = attributes[:'connected']
+      end
+
+      if attributes.key?(:'write_policy')
+        self.write_policy = attributes[:'write_policy']
       end
 
       if attributes.key?(:'pms_connection_id')
@@ -141,6 +149,7 @@ module Repull
       self.class == o.class &&
           provider == o.provider &&
           connected == o.connected &&
+          write_policy == o.write_policy &&
           pms_connection_id == o.pms_connection_id &&
           created == o.created &&
           session_id == o.session_id &&
@@ -157,7 +166,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [provider, connected, pms_connection_id, created, session_id, account_info, webhooks].hash
+      [provider, connected, write_policy, pms_connection_id, created, session_id, account_info, webhooks].hash
     end
 
     # Builds the object from hash
