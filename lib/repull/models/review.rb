@@ -16,6 +16,9 @@ require 'time'
 module Repull
   # A guest or host review unified across channels. Returned by `GET /v1/reviews` and `GET /v1/reviews/{id}`. Includes every channel's reviews once they have been imported.
   class Review < ApiModelBase
+    # The connected account this review belongs to. List endpoint.
+    attr_accessor :account
+
     # Internal Repull review id — pass back to `/v1/reviews/{id}`.
     attr_accessor :id
 
@@ -75,6 +78,7 @@ module Repull
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
+        :'account' => :'account',
         :'id' => :'id',
         :'external_id' => :'externalId',
         :'platform' => :'platform',
@@ -113,6 +117,7 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
+        :'account' => :'RecordAccount',
         :'id' => :'String',
         :'external_id' => :'String',
         :'platform' => :'String',
@@ -141,6 +146,7 @@ module Repull
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'account',
         :'platform',
         :'listing_id',
         :'provider_property_id',
@@ -176,6 +182,10 @@ module Repull
         end
         h[k.to_sym] = v
       }
+
+      if attributes.key?(:'account')
+        self.account = attributes[:'account']
+      end
 
       if attributes.key?(:'id')
         self.id = attributes[:'id']
@@ -288,6 +298,7 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
+          account == o.account &&
           id == o.id &&
           external_id == o.external_id &&
           platform == o.platform &&
@@ -321,7 +332,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, external_id, platform, listing_id, provider_property_id, reservation_id, reservation_confirmation_code, guest_id, guest_name, guest_avatar, reviewer_role, rating, categories, public_review, private_feedback, is_reviewee_recommended, response, submitted_at, updated_at, expires_at, hidden, language].hash
+      [account, id, external_id, platform, listing_id, provider_property_id, reservation_id, reservation_confirmation_code, guest_id, guest_name, guest_avatar, reviewer_role, rating, categories, public_review, private_feedback, is_reviewee_recommended, response, submitted_at, updated_at, expires_at, hidden, language].hash
     end
 
     # Builds the object from hash

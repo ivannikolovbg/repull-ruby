@@ -4,6 +4,7 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
+| **account** | [**RecordAccount**](RecordAccount.md) | The connected account this reservation belongs to. List endpoint. | [optional] |
 | **id** | **String** | Internal Repull reservation ID |  |
 | **listing_id** | **String** | Internal Repull listing ID this reservation is on. |  |
 | **guest_id** | **String** | DEPRECATED — use &#x60;primaryGuest.id&#x60;. Internal Repull guest ID. Kept populated for back-compat. | [optional] |
@@ -36,6 +37,7 @@
 require 'repull'
 
 instance = Repull::Reservation.new(
+  account: null,
   id: null,
   listing_id: null,
   guest_id: null,

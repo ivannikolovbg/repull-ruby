@@ -14,66 +14,31 @@ require 'date'
 require 'time'
 
 module Repull
-  class CreateConnectSessionRequest < ApiModelBase
-    # Where to send the user after they finish (or cancel). Status query params are appended.
-    attr_accessor :redirect_url
+  class ConnectSessionCompletedEvent < ApiModelBase
+    # The event name. This field is `event`, not `type`.
+    attr_accessor :event
 
-    # Your own correlation token, e.g. your user id (at most 500 characters). Echoed in this response, on the redirect back (`&state=`), in the popup message, and in the `connect.session.completed` webhook.
-    attr_accessor :state
+    # Stable across every delivery and replay of this logical event — dedupe on it.
+    attr_accessor :event_id
 
-    # What the connection may do. Airbnb: the OAuth scope tier. Vrbo: `messaging` (or `read_only`) imports bookings and messages and never pushes the calendar; `full_access` also pushes prices and availability. Setting it locks the choice; omit it to let the host choose on the hosted page (default `full_access`).
-    attr_accessor :access_type
+    attr_accessor :api_version
 
-    # Optional whitelist of provider IDs the picker should expose. Omit to show every channel in the registry.
-    attr_accessor :allowed_providers
+    # When this delivery was built.
+    attr_accessor :timestamp
 
-    # Optional UI language for the hosted Connect pages. Accepts any supported locale code (currently `en`, `fr`). When set it pins the language for the whole flow, overriding the workspace `default_language`. Unknown codes are ignored and the page falls back to the workspace default, then `Accept-Language`, then `en`. The end user can still override per-visit with a `?locale=` query param on the hosted page.
-    attr_accessor :locale
+    attr_accessor :account
 
-    # `migrate` starts a Repull Migrate session: the property manager connects their current PMS (or channel) and their data is copied into a new workspace of theirs, which you read with `X-Workspace-Id`. The hosted pages use migration wording, and after connecting they show the import's progress.
-    attr_accessor :purpose
-
-    attr_accessor :workspace
-
-    attr_accessor :copy
-
-    # Migrate only — what you want brought across, listed to the property manager before they connect.
-    attr_accessor :scope
-
-    class EnumAttributeValidator
-      attr_reader :datatype
-      attr_reader :allowable_values
-
-      def initialize(datatype, allowable_values)
-        @allowable_values = allowable_values.map do |value|
-          case datatype.to_s
-          when /Integer/i
-            value.to_i
-          when /Float/i
-            value.to_f
-          else
-            value
-          end
-        end
-      end
-
-      def valid?(value)
-        !value || allowable_values.include?(value)
-      end
-    end
+    attr_accessor :data
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'redirect_url' => :'redirectUrl',
-        :'state' => :'state',
-        :'access_type' => :'accessType',
-        :'allowed_providers' => :'allowedProviders',
-        :'locale' => :'locale',
-        :'purpose' => :'purpose',
-        :'workspace' => :'workspace',
-        :'copy' => :'copy',
-        :'scope' => :'scope'
+        :'event' => :'event',
+        :'event_id' => :'eventId',
+        :'api_version' => :'apiVersion',
+        :'timestamp' => :'timestamp',
+        :'account' => :'account',
+        :'data' => :'data'
       }
     end
 
@@ -90,24 +55,19 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'redirect_url' => :'String',
-        :'state' => :'String',
-        :'access_type' => :'String',
-        :'allowed_providers' => :'Array<String>',
-        :'locale' => :'String',
-        :'purpose' => :'String',
-        :'workspace' => :'CreateConnectSessionRequestWorkspace',
-        :'copy' => :'CreateConnectSessionRequestCopy',
-        :'scope' => :'Array<String>'
+        :'event' => :'String',
+        :'event_id' => :'String',
+        :'api_version' => :'String',
+        :'timestamp' => :'Time',
+        :'account' => :'WebhookEventAccount',
+        :'data' => :'ConnectSessionCompletedPayload'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
-        :'state',
-        :'allowed_providers',
-        :'locale',
+        :'account',
       ])
     end
 
@@ -115,60 +75,50 @@ module Repull
     # @param [Hash] attributes Model attributes in the form of hash
     def initialize(attributes = {})
       if (!attributes.is_a?(Hash))
-        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::CreateConnectSessionRequest` initialize method"
+        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::ConnectSessionCompletedEvent` initialize method"
       end
 
       # check to see if the attribute exists and convert string to symbol for hash key
       acceptable_attribute_map = self.class.acceptable_attribute_map
       attributes = attributes.each_with_object({}) { |(k, v), h|
         if (!acceptable_attribute_map.key?(k.to_sym))
-          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::CreateConnectSessionRequest`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
+          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::ConnectSessionCompletedEvent`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
         end
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'redirect_url')
-        self.redirect_url = attributes[:'redirect_url']
+      if attributes.key?(:'event')
+        self.event = attributes[:'event']
       else
-        self.redirect_url = nil
+        self.event = nil
       end
 
-      if attributes.key?(:'state')
-        self.state = attributes[:'state']
-      end
-
-      if attributes.key?(:'access_type')
-        self.access_type = attributes[:'access_type']
-      end
-
-      if attributes.key?(:'allowed_providers')
-        if (value = attributes[:'allowed_providers']).is_a?(Array)
-          self.allowed_providers = value
-        end
-      end
-
-      if attributes.key?(:'locale')
-        self.locale = attributes[:'locale']
-      end
-
-      if attributes.key?(:'purpose')
-        self.purpose = attributes[:'purpose']
+      if attributes.key?(:'event_id')
+        self.event_id = attributes[:'event_id']
       else
-        self.purpose = 'connect'
+        self.event_id = nil
       end
 
-      if attributes.key?(:'workspace')
-        self.workspace = attributes[:'workspace']
+      if attributes.key?(:'api_version')
+        self.api_version = attributes[:'api_version']
+      else
+        self.api_version = nil
       end
 
-      if attributes.key?(:'copy')
-        self.copy = attributes[:'copy']
+      if attributes.key?(:'timestamp')
+        self.timestamp = attributes[:'timestamp']
+      else
+        self.timestamp = nil
       end
 
-      if attributes.key?(:'scope')
-        if (value = attributes[:'scope']).is_a?(Array)
-          self.scope = value
-        end
+      if attributes.key?(:'account')
+        self.account = attributes[:'account']
+      end
+
+      if attributes.key?(:'data')
+        self.data = attributes[:'data']
+      else
+        self.data = nil
       end
     end
 
@@ -177,8 +127,24 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
-      if @redirect_url.nil?
-        invalid_properties.push('invalid value for "redirect_url", redirect_url cannot be nil.')
+      if @event.nil?
+        invalid_properties.push('invalid value for "event", event cannot be nil.')
+      end
+
+      if @event_id.nil?
+        invalid_properties.push('invalid value for "event_id", event_id cannot be nil.')
+      end
+
+      if @api_version.nil?
+        invalid_properties.push('invalid value for "api_version", api_version cannot be nil.')
+      end
+
+      if @timestamp.nil?
+        invalid_properties.push('invalid value for "timestamp", timestamp cannot be nil.')
+      end
+
+      if @data.nil?
+        invalid_properties.push('invalid value for "data", data cannot be nil.')
       end
 
       invalid_properties
@@ -188,42 +154,62 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
-      return false if @redirect_url.nil?
-      access_type_validator = EnumAttributeValidator.new('String', ["full_access", "messaging", "read_only"])
-      return false unless access_type_validator.valid?(@access_type)
-      purpose_validator = EnumAttributeValidator.new('String', ["connect", "migrate"])
-      return false unless purpose_validator.valid?(@purpose)
+      return false if @event.nil?
+      return false if @event_id.nil?
+      return false if @api_version.nil?
+      return false if @timestamp.nil?
+      return false if @data.nil?
       true
     end
 
     # Custom attribute writer method with validation
-    # @param [Object] redirect_url Value to be assigned
-    def redirect_url=(redirect_url)
-      if redirect_url.nil?
-        fail ArgumentError, 'redirect_url cannot be nil'
+    # @param [Object] event Value to be assigned
+    def event=(event)
+      if event.nil?
+        fail ArgumentError, 'event cannot be nil'
       end
 
-      @redirect_url = redirect_url
+      @event = event
     end
 
-    # Custom attribute writer method checking allowed values (enum).
-    # @param [Object] access_type Object to be assigned
-    def access_type=(access_type)
-      validator = EnumAttributeValidator.new('String', ["full_access", "messaging", "read_only"])
-      unless validator.valid?(access_type)
-        fail ArgumentError, "invalid value for \"access_type\", must be one of #{validator.allowable_values}."
+    # Custom attribute writer method with validation
+    # @param [Object] event_id Value to be assigned
+    def event_id=(event_id)
+      if event_id.nil?
+        fail ArgumentError, 'event_id cannot be nil'
       end
-      @access_type = access_type
+
+      @event_id = event_id
     end
 
-    # Custom attribute writer method checking allowed values (enum).
-    # @param [Object] purpose Object to be assigned
-    def purpose=(purpose)
-      validator = EnumAttributeValidator.new('String', ["connect", "migrate"])
-      unless validator.valid?(purpose)
-        fail ArgumentError, "invalid value for \"purpose\", must be one of #{validator.allowable_values}."
+    # Custom attribute writer method with validation
+    # @param [Object] api_version Value to be assigned
+    def api_version=(api_version)
+      if api_version.nil?
+        fail ArgumentError, 'api_version cannot be nil'
       end
-      @purpose = purpose
+
+      @api_version = api_version
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] timestamp Value to be assigned
+    def timestamp=(timestamp)
+      if timestamp.nil?
+        fail ArgumentError, 'timestamp cannot be nil'
+      end
+
+      @timestamp = timestamp
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] data Value to be assigned
+    def data=(data)
+      if data.nil?
+        fail ArgumentError, 'data cannot be nil'
+      end
+
+      @data = data
     end
 
     # Checks equality by comparing each attribute.
@@ -231,15 +217,12 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          redirect_url == o.redirect_url &&
-          state == o.state &&
-          access_type == o.access_type &&
-          allowed_providers == o.allowed_providers &&
-          locale == o.locale &&
-          purpose == o.purpose &&
-          workspace == o.workspace &&
-          copy == o.copy &&
-          scope == o.scope
+          event == o.event &&
+          event_id == o.event_id &&
+          api_version == o.api_version &&
+          timestamp == o.timestamp &&
+          account == o.account &&
+          data == o.data
     end
 
     # @see the `==` method
@@ -251,7 +234,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [redirect_url, state, access_type, allowed_providers, locale, purpose, workspace, copy, scope].hash
+      [event, event_id, api_version, timestamp, account, data].hash
     end
 
     # Builds the object from hash

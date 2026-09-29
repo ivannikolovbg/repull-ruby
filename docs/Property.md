@@ -4,6 +4,7 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
+| **accounts** | [**Array&lt;RecordAccount&gt;**](RecordAccount.md) | The connected account the property belongs to on each channel it is on. List endpoint. | [optional] |
 | **id** | **String** | Internal Repull property ID. Equal to the listing id (&#x60;listings.id&#x60;); the same integer is used as &#x60;listingId&#x60; on reservations and &#x60;propertyId&#x60; on availability. | [optional] |
 | **name** | **String** | Property name | [optional] |
 | **address** | **String** | Street address (from the listing&#39;s &#x60;street&#x60; field). | [optional] |
@@ -24,6 +25,7 @@
 require 'repull'
 
 instance = Repull::Property.new(
+  accounts: null,
   id: null,
   name: Oceanview Suite #3,
   address: null,

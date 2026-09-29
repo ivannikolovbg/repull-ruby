@@ -14,66 +14,23 @@ require 'date'
 require 'time'
 
 module Repull
-  class CreateConnectSessionRequest < ApiModelBase
-    # Where to send the user after they finish (or cancel). Status query params are appended.
-    attr_accessor :redirect_url
+  # The connected account a record belongs to — keyed exactly like the webhook `account` block and `connect.session.completed`, so one `provider:externalAccountId` key routes reads and events to the same user. `null` when it cannot be resolved (never guessed).
+  class RecordAccount < ApiModelBase
+    # airbnb, booking, booking_extranet, vrbo, or the PMS id (hostaway, cloudbeds, …).
+    attr_accessor :provider
 
-    # Your own correlation token, e.g. your user id (at most 500 characters). Echoed in this response, on the redirect back (`&state=`), in the popup message, and in the `connect.session.completed` webhook.
-    attr_accessor :state
+    # The provider's own account id — Airbnb host id, Booking.com hotel id, Extranet login, Vrbo account, or the PMS account.
+    attr_accessor :external_account_id
 
-    # What the connection may do. Airbnb: the OAuth scope tier. Vrbo: `messaging` (or `read_only`) imports bookings and messages and never pushes the calendar; `full_access` also pushes prices and availability. Setting it locks the choice; omit it to let the host choose on the hosted page (default `full_access`).
-    attr_accessor :access_type
-
-    # Optional whitelist of provider IDs the picker should expose. Omit to show every channel in the registry.
-    attr_accessor :allowed_providers
-
-    # Optional UI language for the hosted Connect pages. Accepts any supported locale code (currently `en`, `fr`). When set it pins the language for the whole flow, overriding the workspace `default_language`. Unknown codes are ignored and the page falls back to the workspace default, then `Accept-Language`, then `en`. The end user can still override per-visit with a `?locale=` query param on the hosted page.
-    attr_accessor :locale
-
-    # `migrate` starts a Repull Migrate session: the property manager connects their current PMS (or channel) and their data is copied into a new workspace of theirs, which you read with `X-Workspace-Id`. The hosted pages use migration wording, and after connecting they show the import's progress.
-    attr_accessor :purpose
-
-    attr_accessor :workspace
-
-    attr_accessor :copy
-
-    # Migrate only — what you want brought across, listed to the property manager before they connect.
-    attr_accessor :scope
-
-    class EnumAttributeValidator
-      attr_reader :datatype
-      attr_reader :allowable_values
-
-      def initialize(datatype, allowable_values)
-        @allowable_values = allowable_values.map do |value|
-          case datatype.to_s
-          when /Integer/i
-            value.to_i
-          when /Float/i
-            value.to_f
-          else
-            value
-          end
-        end
-      end
-
-      def valid?(value)
-        !value || allowable_values.include?(value)
-      end
-    end
+    # Repull connection id (`X-Account-Id`), when the account has one. A string, like every id in API responses.
+    attr_accessor :connection_id
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'redirect_url' => :'redirectUrl',
-        :'state' => :'state',
-        :'access_type' => :'accessType',
-        :'allowed_providers' => :'allowedProviders',
-        :'locale' => :'locale',
-        :'purpose' => :'purpose',
-        :'workspace' => :'workspace',
-        :'copy' => :'copy',
-        :'scope' => :'scope'
+        :'provider' => :'provider',
+        :'external_account_id' => :'externalAccountId',
+        :'connection_id' => :'connectionId'
       }
     end
 
@@ -90,24 +47,16 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'redirect_url' => :'String',
-        :'state' => :'String',
-        :'access_type' => :'String',
-        :'allowed_providers' => :'Array<String>',
-        :'locale' => :'String',
-        :'purpose' => :'String',
-        :'workspace' => :'CreateConnectSessionRequestWorkspace',
-        :'copy' => :'CreateConnectSessionRequestCopy',
-        :'scope' => :'Array<String>'
+        :'provider' => :'String',
+        :'external_account_id' => :'String',
+        :'connection_id' => :'String'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
-        :'state',
-        :'allowed_providers',
-        :'locale',
+        :'connection_id'
       ])
     end
 
@@ -115,60 +64,28 @@ module Repull
     # @param [Hash] attributes Model attributes in the form of hash
     def initialize(attributes = {})
       if (!attributes.is_a?(Hash))
-        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::CreateConnectSessionRequest` initialize method"
+        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::RecordAccount` initialize method"
       end
 
       # check to see if the attribute exists and convert string to symbol for hash key
       acceptable_attribute_map = self.class.acceptable_attribute_map
       attributes = attributes.each_with_object({}) { |(k, v), h|
         if (!acceptable_attribute_map.key?(k.to_sym))
-          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::CreateConnectSessionRequest`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
+          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::RecordAccount`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
         end
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'redirect_url')
-        self.redirect_url = attributes[:'redirect_url']
-      else
-        self.redirect_url = nil
+      if attributes.key?(:'provider')
+        self.provider = attributes[:'provider']
       end
 
-      if attributes.key?(:'state')
-        self.state = attributes[:'state']
+      if attributes.key?(:'external_account_id')
+        self.external_account_id = attributes[:'external_account_id']
       end
 
-      if attributes.key?(:'access_type')
-        self.access_type = attributes[:'access_type']
-      end
-
-      if attributes.key?(:'allowed_providers')
-        if (value = attributes[:'allowed_providers']).is_a?(Array)
-          self.allowed_providers = value
-        end
-      end
-
-      if attributes.key?(:'locale')
-        self.locale = attributes[:'locale']
-      end
-
-      if attributes.key?(:'purpose')
-        self.purpose = attributes[:'purpose']
-      else
-        self.purpose = 'connect'
-      end
-
-      if attributes.key?(:'workspace')
-        self.workspace = attributes[:'workspace']
-      end
-
-      if attributes.key?(:'copy')
-        self.copy = attributes[:'copy']
-      end
-
-      if attributes.key?(:'scope')
-        if (value = attributes[:'scope']).is_a?(Array)
-          self.scope = value
-        end
+      if attributes.key?(:'connection_id')
+        self.connection_id = attributes[:'connection_id']
       end
     end
 
@@ -177,10 +94,6 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
-      if @redirect_url.nil?
-        invalid_properties.push('invalid value for "redirect_url", redirect_url cannot be nil.')
-      end
-
       invalid_properties
     end
 
@@ -188,42 +101,7 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
-      return false if @redirect_url.nil?
-      access_type_validator = EnumAttributeValidator.new('String', ["full_access", "messaging", "read_only"])
-      return false unless access_type_validator.valid?(@access_type)
-      purpose_validator = EnumAttributeValidator.new('String', ["connect", "migrate"])
-      return false unless purpose_validator.valid?(@purpose)
       true
-    end
-
-    # Custom attribute writer method with validation
-    # @param [Object] redirect_url Value to be assigned
-    def redirect_url=(redirect_url)
-      if redirect_url.nil?
-        fail ArgumentError, 'redirect_url cannot be nil'
-      end
-
-      @redirect_url = redirect_url
-    end
-
-    # Custom attribute writer method checking allowed values (enum).
-    # @param [Object] access_type Object to be assigned
-    def access_type=(access_type)
-      validator = EnumAttributeValidator.new('String', ["full_access", "messaging", "read_only"])
-      unless validator.valid?(access_type)
-        fail ArgumentError, "invalid value for \"access_type\", must be one of #{validator.allowable_values}."
-      end
-      @access_type = access_type
-    end
-
-    # Custom attribute writer method checking allowed values (enum).
-    # @param [Object] purpose Object to be assigned
-    def purpose=(purpose)
-      validator = EnumAttributeValidator.new('String', ["connect", "migrate"])
-      unless validator.valid?(purpose)
-        fail ArgumentError, "invalid value for \"purpose\", must be one of #{validator.allowable_values}."
-      end
-      @purpose = purpose
     end
 
     # Checks equality by comparing each attribute.
@@ -231,15 +109,9 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          redirect_url == o.redirect_url &&
-          state == o.state &&
-          access_type == o.access_type &&
-          allowed_providers == o.allowed_providers &&
-          locale == o.locale &&
-          purpose == o.purpose &&
-          workspace == o.workspace &&
-          copy == o.copy &&
-          scope == o.scope
+          provider == o.provider &&
+          external_account_id == o.external_account_id &&
+          connection_id == o.connection_id
     end
 
     # @see the `==` method
@@ -251,7 +123,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [redirect_url, state, access_type, allowed_providers, locale, purpose, workspace, copy, scope].hash
+      [provider, external_account_id, connection_id].hash
     end
 
     # Builds the object from hash

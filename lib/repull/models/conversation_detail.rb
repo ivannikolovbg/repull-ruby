@@ -16,6 +16,9 @@ require 'time'
 module Repull
   # Returned by `GET /v1/conversations/{id}`. Extends the list-row `Conversation` shape with expanded `host` + `guest` blocks so SDK consumers can render thread headers without an extra round-trip.
   class ConversationDetail < ApiModelBase
+    # The connected account this conversation belongs to. List endpoint.
+    attr_accessor :account
+
     attr_accessor :id
 
     attr_accessor :platform
@@ -55,6 +58,7 @@ module Repull
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
+        :'account' => :'account',
         :'id' => :'id',
         :'platform' => :'platform',
         :'external_thread_id' => :'externalThreadId',
@@ -87,6 +91,7 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
+        :'account' => :'RecordAccount',
         :'id' => :'String',
         :'platform' => :'String',
         :'external_thread_id' => :'String',
@@ -109,6 +114,7 @@ module Repull
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'account',
         :'platform',
         :'external_thread_id',
         :'guest_id',
@@ -144,6 +150,10 @@ module Repull
         end
         h[k.to_sym] = v
       }
+
+      if attributes.key?(:'account')
+        self.account = attributes[:'account']
+      end
 
       if attributes.key?(:'id')
         self.id = attributes[:'id']
@@ -230,6 +240,7 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
+          account == o.account &&
           id == o.id &&
           platform == o.platform &&
           external_thread_id == o.external_thread_id &&
@@ -257,7 +268,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, platform, external_thread_id, guest_id, listing_id, reservation_id, subject, last_message_at, last_message_preview, unread_count, status, created_at, updated_at, host, guest, capabilities].hash
+      [account, id, platform, external_thread_id, guest_id, listing_id, reservation_id, subject, last_message_at, last_message_preview, unread_count, status, created_at, updated_at, host, guest, capabilities].hash
     end
 
     # Builds the object from hash

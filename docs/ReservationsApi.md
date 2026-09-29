@@ -401,6 +401,7 @@ end
 
 api_instance = Repull::ReservationsApi.new
 opts = {
+  account: 'airbnb:79730216', # String | Only the records of one connected account, as `provider:externalAccountId` — the pair from a webhook `account` block, `connect.session.completed`, or `GET /v1/connect/{provider}` → `accounts`. A record belongs to an account when it is on that account's listings and on its channel (a PMS account: came in through that PMS). An account with no listings returns an empty page.
   x_schema: 'my-app-schema', # String | Apply a custom or built-in schema to transform the response. Built-in: `native` (default), `calry`, `calry-v1`. Custom: any schema name created via `POST /v1/schema/custom`. Unknown / inactive schema names fall back to `native`.
   limit: 56, # Integer | Page size (max 100). Requests over the cap return 422.
   cursor: 'cursor_example', # String | Opaque cursor returned in the previous response's `pagination.nextCursor`. Omit to fetch the first page.
@@ -453,6 +454,7 @@ end
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
+| **account** | **String** | Only the records of one connected account, as &#x60;provider:externalAccountId&#x60; — the pair from a webhook &#x60;account&#x60; block, &#x60;connect.session.completed&#x60;, or &#x60;GET /v1/connect/{provider}&#x60; → &#x60;accounts&#x60;. A record belongs to an account when it is on that account&#39;s listings and on its channel (a PMS account: came in through that PMS). An account with no listings returns an empty page. | [optional] |
 | **x_schema** | **String** | Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;. | [optional] |
 | **limit** | **Integer** | Page size (max 100). Requests over the cap return 422. | [optional][default to 50] |
 | **cursor** | **String** | Opaque cursor returned in the previous response&#39;s &#x60;pagination.nextCursor&#x60;. Omit to fetch the first page. | [optional] |

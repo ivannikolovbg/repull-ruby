@@ -14,8 +14,11 @@ require 'date'
 require 'time'
 
 module Repull
-  # A vacation rental property in your Repull workspace. Backed by the core `listings` row — enriched per-PMS fields (bedrooms, property type, provider id, etc.) live in provider-specific detail tables and are NOT returned here.  Field availability differs by endpoint: - `channels` is returned by the list endpoint (`GET /v1/properties`) only. - `latitude`, `longitude`, `createdAt`, and `amenities` are returned by the detail endpoint (`GET /v1/properties/{id}`) only. `amenities` requires `?include=amenities`.  An **inactive** property (`status: inactive`) appears only in the list endpoint, and only when `?status=inactive|all` asks for it. Such a row carries identity fields only — `id`, `name`, `status`, `lifecycleStatus`, `channels`, `updatedAt` — so every other field is absent until the property is activated. Every other endpoint answers `403 listing_inactive` for it.
+  # A vacation rental property in your Repull workspace. Backed by the core `listings` row — enriched per-PMS fields (bedrooms, property type, provider id, etc.) live in provider-specific detail tables and are NOT returned here.  Field availability differs by endpoint: - `channels` is returned by the list endpoint (`GET /v1/properties`) only. - `latitude`, `longitude`, `createdAt`, and `amenities` are returned by the detail endpoint (`GET /v1/properties/{id}`) only. `amenities` requires `?include=amenities`.  An **inactive** property (`status: inactive`) appears only in the list endpoint, and only when `?status=inactive|all` asks for it. Such a row carries identity fields only — `id`, `name`, `status`, `lifecycleStatus`, `channels`, `accounts`, `updatedAt` — so every other field is absent until the property is activated. Every other endpoint answers `403 listing_inactive` for it.
   class Property < ApiModelBase
+    # The connected account the property belongs to on each channel it is on. List endpoint.
+    attr_accessor :accounts
+
     # Internal Repull property ID. Equal to the listing id (`listings.id`); the same integer is used as `listingId` on reservations and `propertyId` on availability.
     attr_accessor :id
 
@@ -57,6 +60,7 @@ module Repull
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
+        :'accounts' => :'accounts',
         :'id' => :'id',
         :'name' => :'name',
         :'address' => :'address',
@@ -86,6 +90,7 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
+        :'accounts' => :'Array<RecordAccount>',
         :'id' => :'String',
         :'name' => :'String',
         :'address' => :'String',
@@ -129,6 +134,12 @@ module Repull
         end
         h[k.to_sym] = v
       }
+
+      if attributes.key?(:'accounts')
+        if (value = attributes[:'accounts']).is_a?(Array)
+          self.accounts = value
+        end
+      end
 
       if attributes.key?(:'id')
         self.id = attributes[:'id']
@@ -207,6 +218,7 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
+          accounts == o.accounts &&
           id == o.id &&
           name == o.name &&
           address == o.address &&
@@ -231,7 +243,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, name, address, city, latitude, longitude, currency, status, lifecycle_status, created_at, updated_at, channels, amenities].hash
+      [accounts, id, name, address, city, latitude, longitude, currency, status, lifecycle_status, created_at, updated_at, channels, amenities].hash
     end
 
     # Builds the object from hash

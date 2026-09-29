@@ -151,8 +151,15 @@
     "schemas": {
       "Property": {
         "type": "object",
-        "description": "A vacation rental property in your Repull workspace. Backed by the core `listings` row \u2014 enriched per-PMS fields (bedrooms, property type, provider id, etc.) live in provider-specific detail tables and are NOT returned here.\n\nField availability differs by endpoint:\n- `channels` is returned by the list endpoint (`GET /v1/properties`) only.\n- `latitude`, `longitude`, `createdAt`, and `amenities` are returned by the detail endpoint (`GET /v1/properties/{id}`) only. `amenities` requires `?include=amenities`.\n\nAn **inactive** property (`status: inactive`) appears only in the list endpoint, and only when `?status=inactive|all` asks for it. Such a row carries identity fields only \u2014 `id`, `name`, `status`, `lifecycleStatus`, `channels`, `updatedAt` \u2014 so every other field is absent until the property is activated. Every other endpoint answers `403 listing_inactive` for it.",
+        "description": "A vacation rental property in your Repull workspace. Backed by the core `listings` row \u2014 enriched per-PMS fields (bedrooms, property type, provider id, etc.) live in provider-specific detail tables and are NOT returned here.\n\nField availability differs by endpoint:\n- `channels` is returned by the list endpoint (`GET /v1/properties`) only.\n- `latitude`, `longitude`, `createdAt`, and `amenities` are returned by the detail endpoint (`GET /v1/properties/{id}`) only. `amenities` requires `?include=amenities`.\n\nAn **inactive** property (`status: inactive`) appears only in the list endpoint, and only when `?status=inactive|all` asks for it. Such a row carries identity fields only \u2014 `id`, `name`, `status`, `lifecycleStatus`, `channels`, `accounts`, `updatedAt` \u2014 so every other field is absent until the property is activated. Every other endpoint answers `403 listing_inactive` for it.",
         "properties": {
+          "accounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordAccount"
+            },
+            "description": "The connected account the property belongs to on each channel it is on. List endpoint."
+          },
           "id": {
             "type": "string",
             "description": "Internal Repull property ID. Equal to the listing id (`listings.id`); the same integer is used as `listingId` on reservations and `propertyId` on availability."
@@ -537,6 +544,14 @@
         "type": "object",
         "description": "A booking/reservation from a connected PMS. Identical shape between list-row (`GET /v1/reservations`) and detail (`GET /v1/reservations/{id}`) \u2014 SDK consumers can use the same type for both.\n\nThe canonical (post-2026-05) shape uses nested `primaryGuest`, `occupancy`, `financials` blocks. The legacy flat fields (`guestId`, `totalPrice`, `currency`, `guestDetails`) remain populated for back-compat and are marked `deprecated` here. New consumers should read from the nested blocks; existing consumers continue to work unchanged.",
         "properties": {
+          "account": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RecordAccount"
+              }
+            ],
+            "description": "The connected account this reservation belongs to. List endpoint."
+          },
           "id": {
             "type": "string",
             "description": "Internal Repull reservation ID"
@@ -977,6 +992,14 @@
         "type": "object",
         "description": "Channel-agnostic message thread between the host workspace and a guest. Returned by `GET /v1/conversations`. The `id` is the internal Repull thread id (integer) \u2014 pass it back as the `{id}` path param on detail / messages calls.",
         "properties": {
+          "account": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RecordAccount"
+              }
+            ],
+            "description": "The connected account this conversation belongs to. List endpoint."
+          },
           "id": {
             "type": "string"
           },
@@ -1319,6 +1342,14 @@
         "type": "object",
         "description": "A guest or host review unified across channels. Returned by `GET /v1/reviews` and `GET /v1/reviews/{id}`. Includes every channel's reviews once they have been imported.",
         "properties": {
+          "account": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RecordAccount"
+              }
+            ],
+            "description": "The connected account this review belongs to. List endpoint."
+          },
           "id": {
             "type": "string",
             "description": "Internal Repull review id \u2014 pass back to `/v1/reviews/{id}`."
@@ -2491,6 +2522,7 @@
           "listing.reactivated",
           "calendar.updated",
           "account.created",
+          "connect.session.completed",
           "account.disconnected",
           "review.created",
           "review.responded",
@@ -3543,6 +3575,46 @@
           }
         }
       },
+      "ConnectSessionCompletedPayload": {
+        "type": "object",
+        "description": "Payload for `connect.session.completed`. A user finished a Connect session, on any channel or PMS. Use `state` (your token from session creation) or `sessionId` to tie the connection to your own user; the account it names is keyed the same way as every other event's `account` block.",
+        "properties": {
+          "sessionId": {
+            "type": "string",
+            "example": "cs_abc123"
+          },
+          "state": {
+            "type": "string",
+            "nullable": true,
+            "description": "The `state` you passed when creating the session.",
+            "example": "user_8421"
+          },
+          "provider": {
+            "type": "string",
+            "nullable": true,
+            "description": "Channel or PMS: airbnb, booking, booking_extranet, vrbo, plumguide, hostaway, \u2026",
+            "example": "vrbo"
+          },
+          "externalAccountId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The provider's own account id \u2014 Airbnb host id, Booking.com hotel id, Vrbo account id, or the PMS account.",
+            "example": "36"
+          },
+          "connectionId": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Repull connection id, when the account has one (the `X-Account-Id` value)."
+          },
+          "purpose": {
+            "type": "string"
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "AccountDisconnectedPayload": {
         "type": "object",
         "description": "Payload for `account.disconnected`. A PMS or channel connection was revoked, expired, or rejected by the upstream provider.",
@@ -3889,6 +3961,29 @@
                 "example": 85
               }
             }
+          }
+        }
+      },
+      "RecordAccount": {
+        "type": "object",
+        "nullable": true,
+        "description": "The connected account a record belongs to \u2014 keyed exactly like the webhook `account` block and `connect.session.completed`, so one `provider:externalAccountId` key routes reads and events to the same user. `null` when it cannot be resolved (never guessed).",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "example": "airbnb",
+            "description": "airbnb, booking, booking_extranet, vrbo, or the PMS id (hostaway, cloudbeds, \u2026)."
+          },
+          "externalAccountId": {
+            "type": "string",
+            "example": "79730216",
+            "description": "The provider's own account id \u2014 Airbnb host id, Booking.com hotel id, Extranet login, Vrbo account, or the PMS account."
+          },
+          "connectionId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Repull connection id (`X-Account-Id`), when the account has one. A string, like every id in API responses.",
+            "example": "126"
           }
         }
       },
@@ -4599,6 +4694,42 @@
           }
         }
       },
+      "ConnectSessionCompletedEvent": {
+        "type": "object",
+        "required": [
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
+          "data"
+        ],
+        "properties": {
+          "event": {
+            "type": "string",
+            "description": "The event name. This field is `event`, not `type`."
+          },
+          "eventId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
+          },
+          "apiVersion": {
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this delivery was built."
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ConnectSessionCompletedPayload"
+          }
+        }
+      },
       "AccountDisconnectedEvent": {
         "type": "object",
         "required": [
@@ -5157,6 +5288,9 @@
             "$ref": "#/components/schemas/AccountCreatedEvent"
           },
           {
+            "$ref": "#/components/schemas/ConnectSessionCompletedEvent"
+          },
+          {
             "$ref": "#/components/schemas/AccountDisconnectedEvent"
           },
           {
@@ -5215,6 +5349,7 @@
             "listing.reactivated": "#/components/schemas/ListingReactivatedEvent",
             "calendar.updated": "#/components/schemas/CalendarUpdatedEvent",
             "account.created": "#/components/schemas/AccountCreatedEvent",
+            "connect.session.completed": "#/components/schemas/ConnectSessionCompletedEvent",
             "account.disconnected": "#/components/schemas/AccountDisconnectedEvent",
             "review.created": "#/components/schemas/ReviewCreatedEvent",
             "review.responded": "#/components/schemas/ReviewRespondedEvent",
@@ -12935,6 +13070,16 @@
           "example": "2026-08-01T00:00:00Z"
         }
       },
+      "Account": {
+        "name": "account",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "example": "airbnb:79730216"
+        },
+        "description": "Only the records of one connected account, as `provider:externalAccountId` \u2014 the pair from a webhook `account` block, `connect.session.completed`, or `GET /v1/connect/{provider}` \u2192 `accounts`. A record belongs to an account when it is on that account's listings and on its channel (a PMS account: came in through that PMS). An account with no listings returns an empty page."
+      },
       "Offset": {
         "name": "offset",
         "in": "query",
@@ -13547,6 +13692,9 @@
         ],
         "parameters": [
           {
+            "$ref": "#/components/parameters/Account"
+          },
+          {
             "name": "limit",
             "in": "query",
             "schema": {
@@ -13816,6 +13964,9 @@
           "Reservations"
         ],
         "parameters": [
+          {
+            "$ref": "#/components/parameters/Account"
+          },
           {
             "$ref": "#/components/parameters/XSchemaHeader"
           },
@@ -14427,6 +14578,9 @@
           "Conversations"
         ],
         "parameters": [
+          {
+            "$ref": "#/components/parameters/Account"
+          },
           {
             "$ref": "#/components/parameters/XSchemaHeader"
           },
@@ -15066,6 +15220,9 @@
         ],
         "parameters": [
           {
+            "$ref": "#/components/parameters/Account"
+          },
+          {
             "$ref": "#/components/parameters/XSchemaHeader"
           },
           {
@@ -15329,7 +15486,7 @@
                   "state": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Opaque pass-through correlation token. Echoed back in the response."
+                    "description": "Your own correlation token, e.g. your user id (at most 500 characters). Echoed in this response, on the redirect back (`&state=`), in the popup message, and in the `connect.session.completed` webhook."
                   },
                   "accessType": {
                     "type": "string",
@@ -15552,7 +15709,7 @@
       "post": {
         "operationId": "create_connection",
         "summary": "Connect to PMS/OTA provider",
-        "description": "Establish a connection to a PMS or OTA platform. Credentials vary by provider \u2014 see docs for each provider.\n\nAirbnb-specific: pass `redirectUrl` (where to send the user after consent) and optionally `accessType`. Three tiers: `read_only` grants read-only scopes; `messaging` grants read scopes plus message read/send but NOT property management, so it can coexist with another app (e.g. an existing PMS) that already holds property management on the same Airbnb account; `full_access` \u2014 the default \u2014 grants full host scopes including the exclusive property management (only one app per Airbnb account can hold it). The response returns a hosted `url` to redirect the user to.\n\nBooking.com: pass `redirectUrl` (no `accessType`). The response returns a hosted `url` \u2014 send the user there to designate FantasticStay in their Booking.com Extranet and paste their Hotel ID. Same response shape as Airbnb (`url`, `sessionId`, `expiresAt`).\n\nPMS providers (api-key based) pass `apiKey` instead; Plumguide passes `clientId`/`clientSecret`.",
+        "description": "Establish a connection to a PMS or OTA platform. Credentials vary by provider \u2014 see docs for each provider.\n\nAirbnb-specific: pass `redirectUrl` (where to send the user after consent) and optionally `accessType`. Three tiers: `read_only` grants read-only scopes; `messaging` grants read scopes plus message read/send but NOT property management, so it can coexist with another app (e.g. an existing PMS) that already holds property management on the same Airbnb account; `full_access` \u2014 the default \u2014 grants full host scopes including the exclusive property management (only one app per Airbnb account can hold it). The response returns a hosted `url` to redirect the user to.\n\nBooking.com: pass `redirectUrl` (no `accessType`). The response returns a hosted `url` \u2014 send the user there to designate FantasticStay in their Booking.com Extranet and paste their Hotel ID. Same response shape as Airbnb (`url`, `sessionId`, `expiresAt`).\n\nPlumguide passes `clientId`/`clientSecret`. PMS providers are not connected by this call: send their credentials to `POST /v1/connect/{provider}/credentials`, or start a hosted session with `POST /v1/connect`.",
         "tags": [
           "Connect"
         ],
@@ -15583,9 +15740,9 @@
                     "default": "full_access",
                     "description": "Airbnb only \u2014 selects the OAuth scope set. 'read_only' grants read-only scopes; 'messaging' grants read scopes plus message read/send but NOT property management, so it can coexist with another app (e.g. an existing PMS) that already holds property management on the same Airbnb account; 'full_access' (default) grants full host scopes including the exclusive property management (only one app per Airbnb account can hold it). The hosted consent screen normally lets the host pick a tier; passing `accessType` explicitly fixes the tier and hides that choice, so the host can only continue with the tier you requested. Omit it to let the host choose."
                   },
-                  "apiKey": {
+                  "state": {
                     "type": "string",
-                    "description": "PMS providers \u2014 API key."
+                    "description": "Airbnb + Booking.com \u2014 your own correlation token, e.g. your user id (at most 500 characters). Echoed on the redirect back (`&state=`) and in the `connect.session.completed` webhook."
                   },
                   "clientId": {
                     "type": "string",
@@ -24181,7 +24338,7 @@
       "get": {
         "operationId": "list_vrbo_listings",
         "summary": "List VRBO listings",
-        "description": "List VRBO listings this workspace owns. VRBO is agency-model \u2014 Repull reads listings via the public iCal/HTTP feeds.\n\nInactive listings are left out; they keep syncing and reappear once activated. Use `GET /v1/listings?status=inactive` to find them.",
+        "description": "List the Vrbo units linked to this workspace's listings, from the host's connected Vrbo account (host sign-in, beta).\n\nInactive listings are left out; they keep syncing and reappear once activated. Use `GET /v1/listings?status=inactive` to find them.",
         "tags": [
           "VRBO"
         ],
@@ -24203,7 +24360,7 @@
       "get": {
         "operationId": "list_vrbo_reservations",
         "summary": "List VRBO reservations",
-        "description": "Cursor-paginated list of VRBO reservations sourced from the public booking feed. Lag is typically 5-10 minutes vs. Airbnb / Booking.com. `?offset=` is accepted as a first-class alias for `?cursor=` (mutually exclusive; offset capped at 10000).\n\nReservations on inactive listings are left out (counts and cursors included); they keep syncing and reappear once the listing is activated.",
+        "description": "Cursor-paginated list of Vrbo reservations imported from the host's connected Vrbo account (host sign-in, beta). The full normalised record \u2014 guest, price breakdown, policy \u2014 is on `GET /v1/reservations?platform=vrbo`. `?offset=` is accepted as a first-class alias for `?cursor=` (mutually exclusive; offset capped at 10000).\n\nReservations on inactive listings are left out (counts and cursors included); they keep syncing and reappear once the listing is activated.",
         "tags": [
           "VRBO"
         ],

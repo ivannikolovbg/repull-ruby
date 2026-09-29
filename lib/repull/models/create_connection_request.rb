@@ -22,8 +22,8 @@ module Repull
     # Airbnb only — selects the OAuth scope set. 'read_only' grants read-only scopes; 'messaging' grants read scopes plus message read/send but NOT property management, so it can coexist with another app (e.g. an existing PMS) that already holds property management on the same Airbnb account; 'full_access' (default) grants full host scopes including the exclusive property management (only one app per Airbnb account can hold it). The hosted consent screen normally lets the host pick a tier; passing `accessType` explicitly fixes the tier and hides that choice, so the host can only continue with the tier you requested. Omit it to let the host choose.
     attr_accessor :access_type
 
-    # PMS providers — API key.
-    attr_accessor :api_key
+    # Airbnb + Booking.com — your own correlation token, e.g. your user id (at most 500 characters). Echoed on the redirect back (`&state=`) and in the `connect.session.completed` webhook.
+    attr_accessor :state
 
     # Plumguide — client ID.
     attr_accessor :client_id
@@ -61,7 +61,7 @@ module Repull
       {
         :'redirect_url' => :'redirectUrl',
         :'access_type' => :'accessType',
-        :'api_key' => :'apiKey',
+        :'state' => :'state',
         :'client_id' => :'clientId',
         :'client_secret' => :'clientSecret',
         :'locale' => :'locale'
@@ -83,7 +83,7 @@ module Repull
       {
         :'redirect_url' => :'String',
         :'access_type' => :'String',
-        :'api_key' => :'String',
+        :'state' => :'String',
         :'client_id' => :'String',
         :'client_secret' => :'String',
         :'locale' => :'String'
@@ -123,8 +123,8 @@ module Repull
         self.access_type = 'full_access'
       end
 
-      if attributes.key?(:'api_key')
-        self.api_key = attributes[:'api_key']
+      if attributes.key?(:'state')
+        self.state = attributes[:'state']
       end
 
       if attributes.key?(:'client_id')
@@ -174,7 +174,7 @@ module Repull
       self.class == o.class &&
           redirect_url == o.redirect_url &&
           access_type == o.access_type &&
-          api_key == o.api_key &&
+          state == o.state &&
           client_id == o.client_id &&
           client_secret == o.client_secret &&
           locale == o.locale
@@ -189,7 +189,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [redirect_url, access_type, api_key, client_id, client_secret, locale].hash
+      [redirect_url, access_type, state, client_id, client_secret, locale].hash
     end
 
     # Builds the object from hash

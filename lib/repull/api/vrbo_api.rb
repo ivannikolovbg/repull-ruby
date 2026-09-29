@@ -20,7 +20,7 @@ module Repull
       @api_client = api_client
     end
     # List VRBO listings
-    # List VRBO listings this workspace owns. VRBO is agency-model — Repull reads listings via the public iCal/HTTP feeds.  Inactive listings are left out; they keep syncing and reappear once activated. Use `GET /v1/listings?status=inactive` to find them.
+    # List the Vrbo units linked to this workspace's listings, from the host's connected Vrbo account (host sign-in, beta).  Inactive listings are left out; they keep syncing and reappear once activated. Use `GET /v1/listings?status=inactive` to find them.
     # @param [Hash] opts the optional parameters
     # @return [Array<VrboListing>]
     def list_vrbo_listings(opts = {})
@@ -29,7 +29,7 @@ module Repull
     end
 
     # List VRBO listings
-    # List VRBO listings this workspace owns. VRBO is agency-model — Repull reads listings via the public iCal/HTTP feeds.  Inactive listings are left out; they keep syncing and reappear once activated. Use &#x60;GET /v1/listings?status&#x3D;inactive&#x60; to find them.
+    # List the Vrbo units linked to this workspace&#39;s listings, from the host&#39;s connected Vrbo account (host sign-in, beta).  Inactive listings are left out; they keep syncing and reappear once activated. Use &#x60;GET /v1/listings?status&#x3D;inactive&#x60; to find them.
     # @param [Hash] opts the optional parameters
     # @return [Array<(Array<VrboListing>, Integer, Hash)>] Array<VrboListing> data, response status code and response headers
     def list_vrbo_listings_with_http_info(opts = {})
@@ -77,7 +77,7 @@ module Repull
     end
 
     # List VRBO reservations
-    # Cursor-paginated list of VRBO reservations sourced from the public booking feed. Lag is typically 5-10 minutes vs. Airbnb / Booking.com. `?offset=` is accepted as a first-class alias for `?cursor=` (mutually exclusive; offset capped at 10000).  Reservations on inactive listings are left out (counts and cursors included); they keep syncing and reappear once the listing is activated.
+    # Cursor-paginated list of Vrbo reservations imported from the host's connected Vrbo account (host sign-in, beta). The full normalised record — guest, price breakdown, policy — is on `GET /v1/reservations?platform=vrbo`. `?offset=` is accepted as a first-class alias for `?cursor=` (mutually exclusive; offset capped at 10000).  Reservations on inactive listings are left out (counts and cursors included); they keep syncing and reappear once the listing is activated.
     # @param [Hash] opts the optional parameters
     # @option opts [String] :cursor Opaque cursor returned in the previous response&#39;s &#x60;pagination.nextCursor&#x60;.
     # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.nextCursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
@@ -90,7 +90,7 @@ module Repull
     end
 
     # List VRBO reservations
-    # Cursor-paginated list of VRBO reservations sourced from the public booking feed. Lag is typically 5-10 minutes vs. Airbnb / Booking.com. &#x60;?offset&#x3D;&#x60; is accepted as a first-class alias for &#x60;?cursor&#x3D;&#x60; (mutually exclusive; offset capped at 10000).  Reservations on inactive listings are left out (counts and cursors included); they keep syncing and reappear once the listing is activated.
+    # Cursor-paginated list of Vrbo reservations imported from the host&#39;s connected Vrbo account (host sign-in, beta). The full normalised record — guest, price breakdown, policy — is on &#x60;GET /v1/reservations?platform&#x3D;vrbo&#x60;. &#x60;?offset&#x3D;&#x60; is accepted as a first-class alias for &#x60;?cursor&#x3D;&#x60; (mutually exclusive; offset capped at 10000).  Reservations on inactive listings are left out (counts and cursors included); they keep syncing and reappear once the listing is activated.
     # @param [Hash] opts the optional parameters
     # @option opts [String] :cursor Opaque cursor returned in the previous response&#39;s &#x60;pagination.nextCursor&#x60;.
     # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.nextCursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)

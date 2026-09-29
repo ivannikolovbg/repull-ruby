@@ -4,6 +4,7 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
+| **account** | [**RecordAccount**](RecordAccount.md) | The connected account this review belongs to. List endpoint. | [optional] |
 | **id** | **String** | Internal Repull review id — pass back to &#x60;/v1/reviews/{id}&#x60;. | [optional] |
 | **external_id** | **String** | ID in the source channel (Airbnb review id, Booking review id, etc.). Pass as &#x60;review_id&#x60; to the provider reply endpoint. | [optional] |
 | **platform** | **String** |  | [optional] |
@@ -33,6 +34,7 @@
 require 'repull'
 
 instance = Repull::Review.new(
+  account: null,
   id: null,
   external_id: null,
   platform: null,

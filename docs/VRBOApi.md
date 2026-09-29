@@ -14,7 +14,7 @@ All URIs are relative to *https://api.repull.dev*
 
 List VRBO listings
 
-List VRBO listings this workspace owns. VRBO is agency-model — Repull reads listings via the public iCal/HTTP feeds.  Inactive listings are left out; they keep syncing and reappear once activated. Use `GET /v1/listings?status=inactive` to find them.
+List the Vrbo units linked to this workspace's listings, from the host's connected Vrbo account (host sign-in, beta).  Inactive listings are left out; they keep syncing and reappear once activated. Use `GET /v1/listings?status=inactive` to find them.
 
 ### Examples
 
@@ -80,7 +80,7 @@ This endpoint does not need any parameter.
 
 List VRBO reservations
 
-Cursor-paginated list of VRBO reservations sourced from the public booking feed. Lag is typically 5-10 minutes vs. Airbnb / Booking.com. `?offset=` is accepted as a first-class alias for `?cursor=` (mutually exclusive; offset capped at 10000).  Reservations on inactive listings are left out (counts and cursors included); they keep syncing and reappear once the listing is activated.
+Cursor-paginated list of Vrbo reservations imported from the host's connected Vrbo account (host sign-in, beta). The full normalised record — guest, price breakdown, policy — is on `GET /v1/reservations?platform=vrbo`. `?offset=` is accepted as a first-class alias for `?cursor=` (mutually exclusive; offset capped at 10000).  Reservations on inactive listings are left out (counts and cursors included); they keep syncing and reappear once the listing is activated.
 
 ### Examples
 

@@ -16,6 +16,9 @@ require 'time'
 module Repull
   # A booking/reservation from a connected PMS. Identical shape between list-row (`GET /v1/reservations`) and detail (`GET /v1/reservations/{id}`) — SDK consumers can use the same type for both.  The canonical (post-2026-05) shape uses nested `primaryGuest`, `occupancy`, `financials` blocks. The legacy flat fields (`guestId`, `totalPrice`, `currency`, `guestDetails`) remain populated for back-compat and are marked `deprecated` here. New consumers should read from the nested blocks; existing consumers continue to work unchanged.
   class Reservation < ApiModelBase
+    # The connected account this reservation belongs to. List endpoint.
+    attr_accessor :account
+
     # Internal Repull reservation ID
     attr_accessor :id
 
@@ -91,6 +94,7 @@ module Repull
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
+        :'account' => :'account',
         :'id' => :'id',
         :'listing_id' => :'listingId',
         :'guest_id' => :'guestId',
@@ -132,6 +136,7 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
+        :'account' => :'RecordAccount',
         :'id' => :'String',
         :'listing_id' => :'String',
         :'guest_id' => :'String',
@@ -163,6 +168,7 @@ module Repull
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'account',
         :'check_in_time',
         :'check_out_time',
         :'source',
@@ -188,6 +194,10 @@ module Repull
         end
         h[k.to_sym] = v
       }
+
+      if attributes.key?(:'account')
+        self.account = attributes[:'account']
+      end
 
       if attributes.key?(:'id')
         self.id = attributes[:'id']
@@ -448,6 +458,7 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
+          account == o.account &&
           id == o.id &&
           listing_id == o.listing_id &&
           guest_id == o.guest_id &&
@@ -484,7 +495,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, listing_id, guest_id, check_in, check_out, check_in_time, check_out_time, status, status_detail, pending_reason, respond_by, source, platform, confirmation_code, unit, primary_guest, occupancy, financials, total_price, currency, guest_details, created_at, updated_at, booked_at, guest_name].hash
+      [account, id, listing_id, guest_id, check_in, check_out, check_in_time, check_out_time, status, status_detail, pending_reason, respond_by, source, platform, confirmation_code, unit, primary_guest, occupancy, financials, total_price, currency, guest_details, created_at, updated_at, booked_at, guest_name].hash
     end
 
     # Builds the object from hash
