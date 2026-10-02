@@ -50,11 +50,11 @@ All URIs are relative to *https://api.repull.dev*
 | [**set_airbnb_listing_cover_photo**](AirbnbApi.md#set_airbnb_listing_cover_photo) | **PUT** /v1/channels/airbnb/listings/{id}/photos/cover | Set the Airbnb cover photo |
 | [**sync_airbnb_transactions**](AirbnbApi.md#sync_airbnb_transactions) | **POST** /v1/channels/airbnb/transactions | Refresh Airbnb transactions |
 | [**update_airbnb_booking_settings**](AirbnbApi.md#update_airbnb_booking_settings) | **PUT** /v1/channels/airbnb/listings/{id}/booking-settings | Update Airbnb booking settings |
-| [**update_airbnb_checkin_guide**](AirbnbApi.md#update_airbnb_checkin_guide) | **PUT** /v1/channels/airbnb/listings/{id}/checkin-guide | Upsert Airbnb check-in guide |
+| [**update_airbnb_checkin_guide**](AirbnbApi.md#update_airbnb_checkin_guide) | **PUT** /v1/channels/airbnb/listings/{id}/checkin-guide | Replace the steps of an Airbnb check-in guide |
 | [**update_airbnb_listing_amenities**](AirbnbApi.md#update_airbnb_listing_amenities) | **PUT** /v1/channels/airbnb/listings/{id}/amenities | Update Airbnb amenities |
 | [**update_airbnb_listing_availability**](AirbnbApi.md#update_airbnb_listing_availability) | **PUT** /v1/channels/airbnb/listings/{id}/availability | Update Airbnb availability |
 | [**update_airbnb_listing_description**](AirbnbApi.md#update_airbnb_listing_description) | **PUT** /v1/channels/airbnb/listings/{id}/descriptions | Update an Airbnb description for one locale |
-| [**update_airbnb_listing_details**](AirbnbApi.md#update_airbnb_listing_details) | **PUT** /v1/channels/airbnb/listings/{id}/details | Update property type, room type, quiet hours or check-in method |
+| [**update_airbnb_listing_details**](AirbnbApi.md#update_airbnb_listing_details) | **PUT** /v1/channels/airbnb/listings/{id}/details | Update property type, quiet hours, check-in method, house manual, directions or Wi-Fi |
 | [**update_airbnb_listing_permits**](AirbnbApi.md#update_airbnb_listing_permits) | **PUT** /v1/channels/airbnb/listings/{id}/permits | Answer Airbnb permit questions |
 | [**update_airbnb_listing_photo**](AirbnbApi.md#update_airbnb_listing_photo) | **PATCH** /v1/channels/airbnb/listings/{id}/photos | Update an Airbnb photo |
 | [**update_airbnb_listing_pricing**](AirbnbApi.md#update_airbnb_listing_pricing) | **PUT** /v1/channels/airbnb/listings/{id}/pricing | Update Airbnb pricing |
@@ -2337,7 +2337,7 @@ end
 
 List Airbnb listings
 
-List every Airbnb listing this workspace has access to via the connected Airbnb account. **Pure DB read — never calls Airbnb upstream.** The connect flow is what populates the local cache; the API serves what's already there. Customers with a disconnected host still see their last-synced data, with the top-level `dataFreshness` envelope flagging the staleness and pointing at the reconnect URL.  Pass `?include=amenities` to enrich each connection with its locally-cached amenity set. Returns `null` per connection when the cache is empty.  Pass `?include=thumbnail` to add `thumbnailUrl` to each listing — one extra column on the query that already runs, so a selection screen renders from a single request instead of one call per listing. `null` when the listing has no thumbnail stored. Combine comma-separated, e.g. `?include=amenities,thumbnail`.  **Can this listing be written to?** Every connection carries `syncCategory` — Airbnb's own per-listing API sync decision (`sync_all`, `sync_rates_and_availability`, or `none`) — and `writable`, which is `false` exactly when that category is `none`. Airbnb authorises sync one listing at a time, so a connected account can still hold listings Airbnb refuses every write to; a write to one of those returns `403 listing_not_api_connected` before anything is sent, and reconnecting the account does not change it (the host must switch the listing on in Airbnb). Check `writable` here before a portfolio-wide push instead of discovering it one 403 at a time.  Inactive listings are left out; they keep syncing and reappear once activated. Use `GET /v1/listings?status=inactive` to find them.  **Several Airbnb accounts?** A workspace can connect more than one. By default this returns every connected account's rows; pass `?account_id=<airbnb host id>` to scope to one. Every row carries `accountId` + `accountName` either way, and `dataFreshness.accounts[]` reports each account's freshness separately, so one disconnected host no longer marks the whole response stale.
+List every Airbnb listing this workspace has access to via the connected Airbnb account. **Pure DB read — never calls Airbnb upstream.** The connect flow is what populates the local cache; the API serves what's already there. Customers with a disconnected host still see their last-synced data, with the top-level `dataFreshness` envelope flagging the staleness and pointing at the reconnect URL.  Pass `?include=amenities` to enrich each connection with its locally-cached amenity set. Returns `null` per connection when the cache is empty.  Pass `?include=thumbnail` to add `thumbnailUrl` to each listing — one extra column on the query that already runs, so a selection screen renders from a single request instead of one call per listing. `null` when the listing has no thumbnail stored. Combine comma-separated, e.g. `?include=amenities,thumbnail`.  **Can this listing be written to?** Every connection carries `syncCategory` — Airbnb's own per-listing API sync decision (`sync_all`, `sync_rates_and_availability`, or `none`) — and `writable`, which is `false` exactly when that category is `none`. Airbnb authorises sync one listing at a time, so a connected account can still hold listings Airbnb refuses every write to; a write to one of those returns `403 listing_not_api_connected` before anything is sent, and reconnecting the account does not change it (the host must switch the listing on in Airbnb). Check `writable` here before a portfolio-wide push instead of discovering it one 403 at a time.  Inactive listings are left out unless `?status=inactive|all` asks for them; they then come back with identity fields only — `listingId`, `name`, `city`, `status`, `inactiveReason` (`plan_limit`, `unlisted_on_airbnb` or `deactivated`) and each connection's ids and account — so you can show the user what to activate. They keep syncing and are complete again once activated.  **Several Airbnb accounts?** A workspace can connect more than one. By default this returns every connected account's rows; pass `?account_id=<airbnb host id>` to scope to one. Every row carries `accountId` + `accountName` either way, and `dataFreshness.accounts[]` reports each account's freshness separately, so one disconnected host no longer marks the whole response stale.
 
 ### Examples
 
@@ -2352,6 +2352,7 @@ end
 
 api_instance = Repull::AirbnbApi.new
 opts = {
+  status: 'active', # String | `active` (default) leaves inactive listings out. `inactive` returns only them and `all` returns both. An inactive listing comes back with identity fields only (ids, `name`, `city`, `status`, `inactiveReason`, its account), which is enough to show what can be activated. Every row carries `status`.
   account_id: '1772489413932732258', # String | Scope the response to ONE connected Airbnb account. The value is the Airbnb host id — the same `accounts[].externalAccountId` that `GET /v1/connect/airbnb` returns and `DELETE /v1/connect/airbnb?accountId=` accepts.  A workspace can connect several Airbnb accounts. Omit this and you get every account's rows (the default, unchanged). Every row carries `accountId` + `accountName` either way, so you can group without a second call.  An id that is not connected to THIS workspace returns `404 not_found` with your own ids in `valid_values` — we do not distinguish \"no such host\" from \"someone else's host\", because confirming the latter would leak another workspace's account.  Note this is NOT the `X-Account-Id` header, which carries a connection id and cannot tell two Airbnb hosts apart.
   include: 'amenities,thumbnail' # String | Comma-separated expansions. Currently supported: `amenities` (adds `amenities` and `accessibility_amenities` arrays to each connection, sourced from the local `listings_airbnb_amenities` cache) and `thumbnail` (adds `thumbnailUrl` to each listing). Unknown values return 422 with a `valid_values` envelope.
 }
@@ -2387,6 +2388,7 @@ end
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
+| **status** | **String** | &#x60;active&#x60; (default) leaves inactive listings out. &#x60;inactive&#x60; returns only them and &#x60;all&#x60; returns both. An inactive listing comes back with identity fields only (ids, &#x60;name&#x60;, &#x60;city&#x60;, &#x60;status&#x60;, &#x60;inactiveReason&#x60;, its account), which is enough to show what can be activated. Every row carries &#x60;status&#x60;. | [optional][default to &#39;active&#39;] |
 | **account_id** | **String** | Scope the response to ONE connected Airbnb account. The value is the Airbnb host id — the same &#x60;accounts[].externalAccountId&#x60; that &#x60;GET /v1/connect/airbnb&#x60; returns and &#x60;DELETE /v1/connect/airbnb?accountId&#x3D;&#x60; accepts.  A workspace can connect several Airbnb accounts. Omit this and you get every account&#39;s rows (the default, unchanged). Every row carries &#x60;accountId&#x60; + &#x60;accountName&#x60; either way, so you can group without a second call.  An id that is not connected to THIS workspace returns &#x60;404 not_found&#x60; with your own ids in &#x60;valid_values&#x60; — we do not distinguish \&quot;no such host\&quot; from \&quot;someone else&#39;s host\&quot;, because confirming the latter would leak another workspace&#39;s account.  Note this is NOT the &#x60;X-Account-Id&#x60; header, which carries a connection id and cannot tell two Airbnb hosts apart. | [optional] |
 | **include** | **String** | Comma-separated expansions. Currently supported: &#x60;amenities&#x60; (adds &#x60;amenities&#x60; and &#x60;accessibility_amenities&#x60; arrays to each connection, sourced from the local &#x60;listings_airbnb_amenities&#x60; cache) and &#x60;thumbnail&#x60; (adds &#x60;thumbnailUrl&#x60; to each listing). Unknown values return 422 with a &#x60;valid_values&#x60; envelope. | [optional] |
 
@@ -3359,11 +3361,11 @@ end
 
 ## update_airbnb_checkin_guide
 
-> update_airbnb_checkin_guide(id, opts)
+> <UpdateAirbnbCheckinGuide200Response> update_airbnb_checkin_guide(id, update_airbnb_checkin_guide_request)
 
-Upsert Airbnb check-in guide
+Replace the steps of an Airbnb check-in guide
 
-Upsert the check-in guide for one locale on an Airbnb listing. **Write-side** — calls Airbnb upstream; the DB mirror is reconciled by the sync worker once the upstream call returns. Target the locale with `?locale=en` (defaults to `en`). Requires a connected Airbnb host, else `404 no_connection`.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+Write the check-in guide guests see before arrival: an ordered list of text steps. **Replaces** every existing step, so send the whole guide; `{\"steps\": []}` removes them all. The response is the guide re-read from Airbnb after the write.  If the listing has no guide yet, one is created in `locale` (default: the existing guide's, else `en`).  Safe on failure: the new steps are created before the old ones are removed, and if a create fails the steps this call added are removed again, so the guide is never left emptier than it was.  Text steps only. Steps with photos need Airbnb's media upload and are not supported here yet. For the other arrival details use `PUT /v1/channels/airbnb/listings/{id}/details`: `check_in_option.instruction` (arrival instructions), `house_manual`, `directions`, `wifi_network`, `wifi_password`.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -3378,13 +3380,12 @@ end
 
 api_instance = Repull::AirbnbApi.new
 id = 'id_example' # String | Repull listing id (numeric string).
-opts = {
-  locale: 'locale_example' # String | Locale to upsert. Defaults to `en`.
-}
+update_airbnb_checkin_guide_request = Repull::UpdateAirbnbCheckinGuideRequest.new({steps: [Repull::UpdateAirbnbCheckinGuideRequestStepsInner.new({notes: 'notes_example'})]}) # UpdateAirbnbCheckinGuideRequest | 
 
 begin
-  # Upsert Airbnb check-in guide
-  api_instance.update_airbnb_checkin_guide(id, opts)
+  # Replace the steps of an Airbnb check-in guide
+  result = api_instance.update_airbnb_checkin_guide(id, update_airbnb_checkin_guide_request)
+  p result
 rescue Repull::ApiError => e
   puts "Error when calling AirbnbApi->update_airbnb_checkin_guide: #{e}"
 end
@@ -3392,17 +3393,17 @@ end
 
 #### Using the update_airbnb_checkin_guide_with_http_info variant
 
-This returns an Array which contains the response data (`nil` in this case), status code and headers.
+This returns an Array which contains the response data, status code and headers.
 
-> <Array(nil, Integer, Hash)> update_airbnb_checkin_guide_with_http_info(id, opts)
+> <Array(<UpdateAirbnbCheckinGuide200Response>, Integer, Hash)> update_airbnb_checkin_guide_with_http_info(id, update_airbnb_checkin_guide_request)
 
 ```ruby
 begin
-  # Upsert Airbnb check-in guide
-  data, status_code, headers = api_instance.update_airbnb_checkin_guide_with_http_info(id, opts)
+  # Replace the steps of an Airbnb check-in guide
+  data, status_code, headers = api_instance.update_airbnb_checkin_guide_with_http_info(id, update_airbnb_checkin_guide_request)
   p status_code # => 2xx
   p headers # => { ... }
-  p data # => nil
+  p data # => <UpdateAirbnbCheckinGuide200Response>
 rescue Repull::ApiError => e
   puts "Error when calling AirbnbApi->update_airbnb_checkin_guide_with_http_info: #{e}"
 end
@@ -3413,11 +3414,11 @@ end
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **id** | **String** | Repull listing id (numeric string). |  |
-| **locale** | **String** | Locale to upsert. Defaults to &#x60;en&#x60;. | [optional][default to &#39;en&#39;] |
+| **update_airbnb_checkin_guide_request** | [**UpdateAirbnbCheckinGuideRequest**](UpdateAirbnbCheckinGuideRequest.md) |  |  |
 
 ### Return type
 
-nil (empty response body)
+[**UpdateAirbnbCheckinGuide200Response**](UpdateAirbnbCheckinGuide200Response.md)
 
 ### Authorization
 
@@ -3425,7 +3426,7 @@ nil (empty response body)
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 
@@ -3649,9 +3650,9 @@ end
 
 > <AirbnbContentWriteResponse> update_airbnb_listing_details(id, airbnb_listing_details_write_request, opts)
 
-Update property type, room type, quiet hours or check-in method
+Update property type, quiet hours, check-in method, house manual, directions or Wi-Fi
 
-Change what kind of property the Airbnb listing is, when its quiet hours are, or how the guest gets in. Partial: only the fields you send are written. At least one required; an unknown field is refused by name rather than dropped.  This is the UPDATE path for fields that previously had none. `POST /v1/listings` accepts a `propertyType` when a listing is CREATED and nothing could change it afterwards, so a listing mis-typed at import stayed mis-typed; the check-in method was mirrored and never exposed at all.  **A 200 does not by itself mean the change was applied.** `property_type_category`, `property_type_group` and `check_in_option` are among the attributes Airbnb locks on established listings: the write returns 200, and Airbnb applies nothing for the locked ones. The response reports `blockedFields` — the fields YOU sent that Airbnb dropped — and `blockedFields: []` is what a landed write looks like. `GET …/details` reports the same list as `lockedFields` so you can check first.  Canonical property type (the value Repull keeps and republishes) is set with `PUT /v1/listings/{id}/content` under `details`; this endpoint writes straight to Airbnb.  Send `Idempotency-Key` to make a retry safe.
+Change what kind of property the Airbnb listing is, when its quiet hours are, how the guest gets in (`check_in_option.instruction` is the arrival instructions), the house manual, directions to the property, or the Wi-Fi network and password. Partial: only the fields you send are written. At least one required; an unknown field is refused by name rather than dropped.  This is the UPDATE path for fields that previously had none. `POST /v1/listings` accepts a `propertyType` when a listing is CREATED and nothing could change it afterwards, so a listing mis-typed at import stayed mis-typed; the check-in method was mirrored and never exposed at all.  **A 200 does not by itself mean the change was applied.** `property_type_category`, `property_type_group`, `check_in_option`, `house_manual`, `directions`, `wifi_network` and `wifi_password` are among the attributes Airbnb locks on some listings: the write returns 200, and Airbnb applies nothing for the locked ones. The response reports `blockedFields` — the fields YOU sent that Airbnb dropped — and `blockedFields: []` is what a landed write looks like. `GET …/details` reports the same list as `lockedFields` so you can check first.  Canonical property type (the value Repull keeps and republishes) is set with `PUT /v1/listings/{id}/content` under `details`; this endpoint writes straight to Airbnb.  Send `Idempotency-Key` to make a retry safe.
 
 ### Examples
 
@@ -3672,7 +3673,7 @@ opts = {
 }
 
 begin
-  # Update property type, room type, quiet hours or check-in method
+  # Update property type, quiet hours, check-in method, house manual, directions or Wi-Fi
   result = api_instance.update_airbnb_listing_details(id, airbnb_listing_details_write_request, opts)
   p result
 rescue Repull::ApiError => e
@@ -3688,7 +3689,7 @@ This returns an Array which contains the response data, status code and headers.
 
 ```ruby
 begin
-  # Update property type, room type, quiet hours or check-in method
+  # Update property type, quiet hours, check-in method, house manual, directions or Wi-Fi
   data, status_code, headers = api_instance.update_airbnb_listing_details_with_http_info(id, airbnb_listing_details_write_request, opts)
   p status_code # => 2xx
   p headers # => { ... }
@@ -3726,7 +3727,7 @@ end
 
 Answer Airbnb permit questions
 
-Answer the regulatory permit questions for a listing — the licence or registration number a city requires to keep the listing up.  Read the questions first with `GET …/permits?source=live`. For each permit, pick one of its `flows[]` and send its `slug` as `flow_slug`; key every answer by the question's `answer_key`, and let the question's `type` decide the value field (`text_value`, `attestation_value`, `radio_value`, `date_value` or `selected_options_value`). Answers are forwarded verbatim — nothing is defaulted or inferred, because a wrong licence number can take a listing down in a regulated city.  Send `Idempotency-Key`: a timeout here leaves you unable to tell \"never arrived\" from \"arrived, response lost\", and this is a compliance filing.  Airbnb refusing the answers (an unknown `answer_key`, a malformed licence number) is `422 airbnb_rejected` carrying Airbnb's own reason. An expired or revoked Airbnb connection is `403 connection_reauth_required`.
+Answer the regulatory permit questions for a listing — the licence or registration number a city requires to keep the listing up.  Read the questions first with `GET …/permits?source=live`. For each permit, pick one of its `flows[]` and send its `slug` as `flow_slug`; key every answer by the question's `answer_key`, and let the question's `type` decide the value field — `<type>_value`: `text_value`, `attestation_value`, `radio_value`, `dropdown_value`, `email_value`, `future_date_value`, `file_upload_value`, and so on. Answers are forwarded verbatim — nothing is defaulted or inferred, because a wrong licence number can take a listing down in a regulated city.  Send `Idempotency-Key`: a timeout here leaves you unable to tell \"never arrived\" from \"arrived, response lost\", and this is a compliance filing.  Airbnb refusing the answers (an unknown `answer_key`, a malformed licence number) is `422 airbnb_rejected` carrying Airbnb's own reason. An expired or revoked Airbnb connection is `403 connection_reauth_required`.  **Changing and removing answers.** Airbnb has no call that deletes or withdraws a submitted registration, so neither does Repull, and at least one permit is required. To change an answer Airbnb marks `answer_editable`, submit the flow again with the new answers — the latest submission replaces the previous one. When a submission fails with status `failed_recoverable`, fix it and submit again; `failed` cannot be resubmitted. Hosts can also manage this at airbnb.com/verify-listing/{listing_id}.
 
 ### Examples
 
@@ -3741,7 +3742,7 @@ end
 
 api_instance = Repull::AirbnbApi.new
 id = 'id_example' # String | Repull listing id (numeric string).
-airbnb_permits_write_request = Repull::AirbnbPermitsWriteRequest.new({permits: [Repull::AirbnbPermitsWriteRequestPermitsInner.new({regulatory_body: 'regulatory_body_example', regulation_type: 'regulation_type_example', flow_slug: 'flow_slug_example', answers: { key: Repull::AirbnbPermitsWriteRequestPermitsInnerAnswersValue.new}})]}) # AirbnbPermitsWriteRequest | 
+airbnb_permits_write_request = Repull::AirbnbPermitsWriteRequest.new({permits: [Repull::AirbnbPermitsWriteRequestPermitsInner.new({regulatory_body: 'regulatory_body_example', regulation_type: 'regulation_type_example', flow_slug: 'flow_slug_example', answers: { key: { key: 3.56}}})]}) # AirbnbPermitsWriteRequest | 
 opts = {
   idempotency_key: '9f1c2f7e-4a3b-4f2e-9c8d-1b6a0e5d7c31' # String | Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged `Idempotency-Status: cached` — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → `409 idempotency_key_in_use`. - Same key with a DIFFERENT payload → `422 idempotency_key_reused`. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status >= 500, `408`, `425` and `429`, and the refusals that happen before anything is done and tell you to fix something outside the request first — `connection_reauth_required`, `listing_inactive`, and the rate/daily limits. Every other answer, including a final refusal such as `422 airbnb_rejected`, is stored and replayed.
 }

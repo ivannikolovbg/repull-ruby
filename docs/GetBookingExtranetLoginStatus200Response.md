@@ -4,7 +4,7 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **account_id** | **Integer** |  | [optional] |
+| **account_id** | **String** | The connection id (numeric string, like every &#x60;*Id&#x60; on the wire). | [optional] |
 | **status** | **String** |  | [optional] |
 | **error_message** | **String** |  | [optional] |
 | **friendly_error** | **String** |  | [optional] |

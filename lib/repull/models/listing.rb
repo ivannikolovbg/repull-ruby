@@ -14,15 +14,21 @@ require 'date'
 require 'time'
 
 module Repull
-  # A vacation rental listing in your Repull workspace.  An **inactive** listing appears only in `GET /v1/listings`, and only when `?status=` asks for it. Such a row carries identity fields only — `id`, `name`, `status`, `channels` — so `address`, `content`, `details`, `createdAt` and `updatedAt` are absent until the listing is activated. `GET /v1/listings/{id}` and every other listing endpoint answer `403 listing_inactive` for it. The one field you can add back is `thumbnailUrl`, by passing `?include=thumbnail` — enough to render an activate/deactivate picker with pictures from a single request.
+  # A vacation rental listing in your Repull workspace.  An **inactive** listing appears only in `GET /v1/listings`, and only when `?status=` asks for it. Such a row carries identity fields only — `id`, `name`, `status`, `inactiveReason`, `address.city`, `channels` — so the street, `content`, `details`, `createdAt` and `updatedAt` are absent until the listing is activated. `inactiveReason` is `plan_limit` (held back by the plan; activating needs a free slot or an upgrade), `unlisted_on_airbnb`, or `deactivated` (switched off by you). `GET /v1/listings/{id}` and every other listing endpoint answer `403 listing_inactive` for it. The one field you can add back is `thumbnailUrl`, by passing `?include=thumbnail` — enough to render an activate/deactivate picker with pictures from a single request.
   class Listing < ApiModelBase
+    attr_accessor :capabilities
+
     # `GET /v1/listings/{id}` only. The physical rooms under a hotel-model listing (a Mews or Cloudbeds room type); empty for a single home. Same items as `GET /v1/listings/{id}/units`.
     attr_accessor :units
 
     # Repull listing id
     attr_accessor :id
 
+    # The host's internal nickname for the listing.
     attr_accessor :name
+
+    # The title guests see on the channel (e.g. the Airbnb listing title). `name` is the host's internal nickname for the listing; show `publicName` in anything a guest or end user reads. Present on inactive rows too.
+    attr_accessor :public_name
 
     attr_accessor :address
 
@@ -50,9 +56,11 @@ module Repull
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
+        :'capabilities' => :'capabilities',
         :'units' => :'units',
         :'id' => :'id',
         :'name' => :'name',
+        :'public_name' => :'publicName',
         :'address' => :'address',
         :'thumbnail_url' => :'thumbnailUrl',
         :'status' => :'status',
@@ -78,9 +86,11 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
+        :'capabilities' => :'ListingCapabilities',
         :'units' => :'Array<ListingUnitsInner>',
         :'id' => :'String',
         :'name' => :'String',
+        :'public_name' => :'String',
         :'address' => :'ListingAddress',
         :'thumbnail_url' => :'String',
         :'status' => :'String',
@@ -96,6 +106,7 @@ module Repull
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'public_name',
         :'thumbnail_url',
         :'content',
         :'details',
@@ -118,6 +129,10 @@ module Repull
         h[k.to_sym] = v
       }
 
+      if attributes.key?(:'capabilities')
+        self.capabilities = attributes[:'capabilities']
+      end
+
       if attributes.key?(:'units')
         if (value = attributes[:'units']).is_a?(Array)
           self.units = value
@@ -130,6 +145,10 @@ module Repull
 
       if attributes.key?(:'name')
         self.name = attributes[:'name']
+      end
+
+      if attributes.key?(:'public_name')
+        self.public_name = attributes[:'public_name']
       end
 
       if attributes.key?(:'address')
@@ -193,9 +212,11 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
+          capabilities == o.capabilities &&
           units == o.units &&
           id == o.id &&
           name == o.name &&
+          public_name == o.public_name &&
           address == o.address &&
           thumbnail_url == o.thumbnail_url &&
           status == o.status &&
@@ -216,7 +237,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [units, id, name, address, thumbnail_url, status, channels, amenities, content, details, created_at, updated_at].hash
+      [capabilities, units, id, name, public_name, address, thumbnail_url, status, channels, amenities, content, details, created_at, updated_at].hash
     end
 
     # Builds the object from hash

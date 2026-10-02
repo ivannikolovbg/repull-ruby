@@ -18,7 +18,17 @@ module Repull
     # Repull listing id — what `/v1/channels/booking/properties/{id}` and `/v1/channels/booking/listings/{id}/pricing` take.
     attr_accessor :listing_id
 
+    # The host's internal nickname for the listing.
     attr_accessor :name
+
+    # The title guests see on the channel; show this to end users.
+    attr_accessor :public_name
+
+    # Inactive listings appear only with `?status=inactive|all`, with identity fields only.
+    attr_accessor :status
+
+    # On inactive listings only: why it is inactive.
+    attr_accessor :inactive_reason
 
     attr_accessor :city
 
@@ -60,6 +70,9 @@ module Repull
       {
         :'listing_id' => :'listingId',
         :'name' => :'name',
+        :'public_name' => :'publicName',
+        :'status' => :'status',
+        :'inactive_reason' => :'inactiveReason',
         :'city' => :'city',
         :'room_id' => :'roomId',
         :'room_booking_id' => :'roomBookingId',
@@ -83,6 +96,9 @@ module Repull
       {
         :'listing_id' => :'String',
         :'name' => :'String',
+        :'public_name' => :'String',
+        :'status' => :'String',
+        :'inactive_reason' => :'String',
         :'city' => :'String',
         :'room_id' => :'String',
         :'room_booking_id' => :'String',
@@ -95,6 +111,7 @@ module Repull
     def self.openapi_nullable
       Set.new([
         :'name',
+        :'public_name',
         :'city',
         :'room_id',
         :'room_booking_id',
@@ -124,6 +141,18 @@ module Repull
 
       if attributes.key?(:'name')
         self.name = attributes[:'name']
+      end
+
+      if attributes.key?(:'public_name')
+        self.public_name = attributes[:'public_name']
+      end
+
+      if attributes.key?(:'status')
+        self.status = attributes[:'status']
+      end
+
+      if attributes.key?(:'inactive_reason')
+        self.inactive_reason = attributes[:'inactive_reason']
       end
 
       if attributes.key?(:'city')
@@ -159,9 +188,33 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
+      status_validator = EnumAttributeValidator.new('String', ["active", "inactive"])
+      return false unless status_validator.valid?(@status)
+      inactive_reason_validator = EnumAttributeValidator.new('String', ["plan_limit", "unlisted_on_airbnb", "deactivated"])
+      return false unless inactive_reason_validator.valid?(@inactive_reason)
       mapped_via_validator = EnumAttributeValidator.new('String', ["room", "property"])
       return false unless mapped_via_validator.valid?(@mapped_via)
       true
+    end
+
+    # Custom attribute writer method checking allowed values (enum).
+    # @param [Object] status Object to be assigned
+    def status=(status)
+      validator = EnumAttributeValidator.new('String', ["active", "inactive"])
+      unless validator.valid?(status)
+        fail ArgumentError, "invalid value for \"status\", must be one of #{validator.allowable_values}."
+      end
+      @status = status
+    end
+
+    # Custom attribute writer method checking allowed values (enum).
+    # @param [Object] inactive_reason Object to be assigned
+    def inactive_reason=(inactive_reason)
+      validator = EnumAttributeValidator.new('String', ["plan_limit", "unlisted_on_airbnb", "deactivated"])
+      unless validator.valid?(inactive_reason)
+        fail ArgumentError, "invalid value for \"inactive_reason\", must be one of #{validator.allowable_values}."
+      end
+      @inactive_reason = inactive_reason
     end
 
     # Custom attribute writer method checking allowed values (enum).
@@ -181,6 +234,9 @@ module Repull
       self.class == o.class &&
           listing_id == o.listing_id &&
           name == o.name &&
+          public_name == o.public_name &&
+          status == o.status &&
+          inactive_reason == o.inactive_reason &&
           city == o.city &&
           room_id == o.room_id &&
           room_booking_id == o.room_booking_id &&
@@ -197,7 +253,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [listing_id, name, city, room_id, room_booking_id, room_name, mapped_via].hash
+      [listing_id, name, public_name, status, inactive_reason, city, room_id, room_booking_id, room_name, mapped_via].hash
     end
 
     # Builds the object from hash

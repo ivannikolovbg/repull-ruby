@@ -14,26 +14,46 @@ require 'date'
 require 'time'
 
 module Repull
-  class AirbnbPermitsWriteRequestPermitsInnerAnswersValue < ApiModelBase
-    attr_accessor :text_value
+  # Which reservation writes the API performs for this listing (or, on `GET /v1/connect/{provider}`, for any listing of that connection). Derived from the PMS connector, the connection, and its write policy — a flag is true only when all three allow it.
+  class ReservationCapabilities < ApiModelBase
+    # `pms` — booked in the connected PMS; `repull` — a direct booking made in Repull.
+    attr_accessor :managed_by
 
-    attr_accessor :attestation_value
+    attr_accessor :provider
 
-    attr_accessor :radio_value
+    # `POST /v1/reservations`.
+    attr_accessor :create
 
-    # ISO date, YYYY-MM-DD.
-    attr_accessor :date_value
+    # `PATCH /v1/reservations/{id}`.
+    attr_accessor :modify
 
-    attr_accessor :selected_options_value
+    # `POST /v1/reservations/{id}/cancel`.
+    attr_accessor :cancel
+
+    # `POST /v1/reservations/quote`.
+    attr_accessor :quote
+
+    # `totalPrice` on create is honoured; otherwise the PMS (or the rate engine) prices the stay.
+    attr_accessor :custom_price
+
+    # What the flags do not say: limits, required access, and why something is off.
+    attr_accessor :notes
+
+    # `sandbox` — run end to end on the vendor sandbox (Mews, Cloudbeds); `vendor_docs` — verified against the vendor's API documentation only. Null for direct bookings.
+    attr_accessor :verified_against
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'text_value' => :'text_value',
-        :'attestation_value' => :'attestation_value',
-        :'radio_value' => :'radio_value',
-        :'date_value' => :'date_value',
-        :'selected_options_value' => :'selected_options_value'
+        :'managed_by' => :'managedBy',
+        :'provider' => :'provider',
+        :'create' => :'create',
+        :'modify' => :'modify',
+        :'cancel' => :'cancel',
+        :'quote' => :'quote',
+        :'custom_price' => :'customPrice',
+        :'notes' => :'notes',
+        :'verified_against' => :'verifiedAgainst'
       }
     end
 
@@ -50,17 +70,23 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'text_value' => :'String',
-        :'attestation_value' => :'Boolean',
-        :'radio_value' => :'String',
-        :'date_value' => :'String',
-        :'selected_options_value' => :'Array<String>'
+        :'managed_by' => :'String',
+        :'provider' => :'String',
+        :'create' => :'Boolean',
+        :'modify' => :'Boolean',
+        :'cancel' => :'Boolean',
+        :'quote' => :'Boolean',
+        :'custom_price' => :'Boolean',
+        :'notes' => :'String',
+        :'verified_against' => :'String'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'provider',
+        :'verified_against'
       ])
     end
 
@@ -68,38 +94,52 @@ module Repull
     # @param [Hash] attributes Model attributes in the form of hash
     def initialize(attributes = {})
       if (!attributes.is_a?(Hash))
-        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::AirbnbPermitsWriteRequestPermitsInnerAnswersValue` initialize method"
+        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::ReservationCapabilities` initialize method"
       end
 
       # check to see if the attribute exists and convert string to symbol for hash key
       acceptable_attribute_map = self.class.acceptable_attribute_map
       attributes = attributes.each_with_object({}) { |(k, v), h|
         if (!acceptable_attribute_map.key?(k.to_sym))
-          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::AirbnbPermitsWriteRequestPermitsInnerAnswersValue`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
+          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::ReservationCapabilities`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
         end
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'text_value')
-        self.text_value = attributes[:'text_value']
+      if attributes.key?(:'managed_by')
+        self.managed_by = attributes[:'managed_by']
       end
 
-      if attributes.key?(:'attestation_value')
-        self.attestation_value = attributes[:'attestation_value']
+      if attributes.key?(:'provider')
+        self.provider = attributes[:'provider']
       end
 
-      if attributes.key?(:'radio_value')
-        self.radio_value = attributes[:'radio_value']
+      if attributes.key?(:'create')
+        self.create = attributes[:'create']
       end
 
-      if attributes.key?(:'date_value')
-        self.date_value = attributes[:'date_value']
+      if attributes.key?(:'modify')
+        self.modify = attributes[:'modify']
       end
 
-      if attributes.key?(:'selected_options_value')
-        if (value = attributes[:'selected_options_value']).is_a?(Array)
-          self.selected_options_value = value
-        end
+      if attributes.key?(:'cancel')
+        self.cancel = attributes[:'cancel']
+      end
+
+      if attributes.key?(:'quote')
+        self.quote = attributes[:'quote']
+      end
+
+      if attributes.key?(:'custom_price')
+        self.custom_price = attributes[:'custom_price']
+      end
+
+      if attributes.key?(:'notes')
+        self.notes = attributes[:'notes']
+      end
+
+      if attributes.key?(:'verified_against')
+        self.verified_against = attributes[:'verified_against']
       end
     end
 
@@ -123,11 +163,15 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          text_value == o.text_value &&
-          attestation_value == o.attestation_value &&
-          radio_value == o.radio_value &&
-          date_value == o.date_value &&
-          selected_options_value == o.selected_options_value
+          managed_by == o.managed_by &&
+          provider == o.provider &&
+          create == o.create &&
+          modify == o.modify &&
+          cancel == o.cancel &&
+          quote == o.quote &&
+          custom_price == o.custom_price &&
+          notes == o.notes &&
+          verified_against == o.verified_against
     end
 
     # @see the `==` method
@@ -139,7 +183,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [text_value, attestation_value, radio_value, date_value, selected_options_value].hash
+      [managed_by, provider, create, modify, cancel, quote, custom_price, notes, verified_against].hash
     end
 
     # Builds the object from hash

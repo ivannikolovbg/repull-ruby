@@ -15,7 +15,7 @@ require 'time'
 
 module Repull
   class ReservationCreateResponse < ApiModelBase
-    # Pass to `GET /v1/reservations/{id}` for the full record.
+    # Pass to `GET /v1/reservations/{id}` for the full record. A string, like every id in API responses.
     attr_accessor :id
 
     attr_accessor :confirmation_code
@@ -33,7 +33,7 @@ module Repull
 
     attr_accessor :guest_id
 
-    # The price the pricing engine derived for the stay. Reservations created through this endpoint are NOT priced from the request — see the operation description. On a Mews or Cloudbeds listing, the PMS prices it from its own rate.
+    # The total the booking was recorded at. On a PMS listing: the PMS's total (your `totalPrice` where the PMS honours one, else the PMS's own price). On any other listing: the price the rate engine derived (`0` when the listing has no rates for the range).
     attr_accessor :total_price
 
     attr_accessor :currency
@@ -73,18 +73,18 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'id' => :'Integer',
+        :'id' => :'String',
         :'confirmation_code' => :'String',
-        :'listing_id' => :'Integer',
+        :'listing_id' => :'String',
         :'platform' => :'String',
         :'status' => :'String',
         :'check_in' => :'Date',
         :'check_out' => :'Date',
-        :'guest_id' => :'Integer',
+        :'guest_id' => :'String',
         :'total_price' => :'Float',
         :'currency' => :'String',
         :'unit' => :'ReservationCreateResponseUnit',
-        :'pms' => :'ReservationCreateResponsePms'
+        :'pms' => :'ReservationPmsOutcome'
       }
     end
 

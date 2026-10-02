@@ -92,7 +92,7 @@ module Repull
         :'check_out' => :'Date',
         :'updated_at' => :'String',
         :'already_cancelled' => :'Boolean',
-        :'pms' => :'CancelReservation200ResponsePms'
+        :'pms' => :'ReservationPmsOutcome'
       }
     end
 

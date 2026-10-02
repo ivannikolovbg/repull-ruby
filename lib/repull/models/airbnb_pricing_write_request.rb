@@ -24,8 +24,11 @@ module Repull
     # Required when `type: \"model\"` — the pricing-availability model to switch the listing to.
     attr_accessor :model_type
 
-    # Required for `type: \"standard\" | \"rate-plan\" | \"fees\"` — the pricing-settings object to PUT.
+    # Required for `type: \"standard\" | \"rate-plan\"` — the pricing-settings object to PUT. With `type: \"fees\"` it is the raw alternative to `fees`: `{\"standard_fees\": [...]}` **replaces every fee** on the listing (Airbnb does not merge), so send the complete list. Prefer `fees`.
     attr_accessor :settings
+
+    # With `type: \"fees\"` — the fee changes to apply. **Merged by `fee_type`**: fees you do not mention are kept, the ones you send are set, and `amount: null` removes that fee. (Airbnb itself replaces the whole fee list on every write, so Repull reads the listing's current fees, applies your changes and writes the full set.) The response is the listing's fees as Airbnb holds them afterwards.  **Units — the same as `GET …/pricing` returns:** a `flat` fee is the amount in the listing currency × 1,000,000 (`160000000` = 160.00); a `percent` fee is a whole percent of the rent (`10` = 10%).  Example — add a 10% management fee and keep everything else: `{\"type\":\"fees\",\"fees\":[{\"fee_type\":\"PASS_THROUGH_MANAGEMENT_FEE\",\"amount\":10,\"amount_type\":\"percent\"}]}`. Remove the pet fee: `{\"type\":\"fees\",\"fees\":[{\"fee_type\":\"PASS_THROUGH_PET_FEE\",\"amount\":null}]}`.
+    attr_accessor :fees
 
     # Required for `type: \"los\"` — length-of-stay records.
     attr_accessor :records
@@ -43,6 +46,7 @@ module Repull
         :'operations' => :'operations',
         :'model_type' => :'modelType',
         :'settings' => :'settings',
+        :'fees' => :'fees',
         :'records' => :'records',
         :'currency' => :'currency',
         :'rule' => :'rule'
@@ -66,6 +70,7 @@ module Repull
         :'operations' => :'Array<AirbnbCalendarOperation>',
         :'model_type' => :'String',
         :'settings' => :'Hash<String, Object>',
+        :'fees' => :'Array<AirbnbPricingWriteRequestFeesInner>',
         :'records' => :'Array<AirbnbPricingWriteRequestRecordsInner>',
         :'currency' => :'String',
         :'rule' => :'Hash<String, Object>'
@@ -77,6 +82,7 @@ module Repull
       Set.new([
         :'model_type',
         :'settings',
+        :'fees',
         :'records',
         :'currency',
         :'rule'
@@ -121,6 +127,12 @@ module Repull
         end
       end
 
+      if attributes.key?(:'fees')
+        if (value = attributes[:'fees']).is_a?(Array)
+          self.fees = value
+        end
+      end
+
       if attributes.key?(:'records')
         if (value = attributes[:'records']).is_a?(Array)
           self.records = value
@@ -151,6 +163,10 @@ module Repull
         invalid_properties.push('invalid value for "operations", number of items must be greater than or equal to 1.')
       end
 
+      if !@fees.nil? && @fees.length < 1
+        invalid_properties.push('invalid value for "fees", number of items must be greater than or equal to 1.')
+      end
+
       if !@records.nil? && @records.length < 1
         invalid_properties.push('invalid value for "records", number of items must be greater than or equal to 1.')
       end
@@ -169,6 +185,7 @@ module Repull
       warn '[DEPRECATED] the `valid?` method is obsolete'
       return false if @type.nil?
       return false if !@operations.nil? && @operations.length < 1
+      return false if !@fees.nil? && @fees.length < 1
       return false if !@records.nil? && @records.length < 1
       return false if !@currency.nil? && @currency !~ Regexp.new(/^[A-Z]{3}$/)
       true
@@ -196,6 +213,16 @@ module Repull
       end
 
       @operations = operations
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] fees Value to be assigned
+    def fees=(fees)
+      if !fees.nil? && fees.length < 1
+        fail ArgumentError, 'invalid value for "fees", number of items must be greater than or equal to 1.'
+      end
+
+      @fees = fees
     end
 
     # Custom attribute writer method with validation
@@ -228,6 +255,7 @@ module Repull
           operations == o.operations &&
           model_type == o.model_type &&
           settings == o.settings &&
+          fees == o.fees &&
           records == o.records &&
           currency == o.currency &&
           rule == o.rule
@@ -242,7 +270,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [type, operations, model_type, settings, records, currency, rule].hash
+      [type, operations, model_type, settings, fees, records, currency, rule].hash
     end
 
     # Builds the object from hash

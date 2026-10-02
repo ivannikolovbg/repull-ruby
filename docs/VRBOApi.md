@@ -10,11 +10,11 @@ All URIs are relative to *https://api.repull.dev*
 
 ## list_vrbo_listings
 
-> <Array<VrboListing>> list_vrbo_listings
+> <Array<VrboListing>> list_vrbo_listings(opts)
 
 List VRBO listings
 
-List the Vrbo units linked to this workspace's listings, from the host's connected Vrbo account (host sign-in, beta).  Inactive listings are left out; they keep syncing and reappear once activated. Use `GET /v1/listings?status=inactive` to find them.
+List the Vrbo units linked to this workspace's listings, from the host's connected Vrbo account (host sign-in, beta).  Inactive listings are left out unless `?status=inactive|all` asks for them; they then come back with identity fields only (ids, `listingName`, `listingCity`, `status`, `inactiveReason`). They keep syncing and are complete again once activated.
 
 ### Examples
 
@@ -28,10 +28,13 @@ Repull.configure do |config|
 end
 
 api_instance = Repull::VRBOApi.new
+opts = {
+  status: 'active' # String | `active` (default) leaves inactive listings out. `inactive` returns only them and `all` returns both. An inactive listing comes back with identity fields only (ids, `name`, `city`, `status`, `inactiveReason`, its account), which is enough to show what can be activated. Every row carries `status`.
+}
 
 begin
   # List VRBO listings
-  result = api_instance.list_vrbo_listings
+  result = api_instance.list_vrbo_listings(opts)
   p result
 rescue Repull::ApiError => e
   puts "Error when calling VRBOApi->list_vrbo_listings: #{e}"
@@ -42,12 +45,12 @@ end
 
 This returns an Array which contains the response data, status code and headers.
 
-> <Array(<Array<VrboListing>>, Integer, Hash)> list_vrbo_listings_with_http_info
+> <Array(<Array<VrboListing>>, Integer, Hash)> list_vrbo_listings_with_http_info(opts)
 
 ```ruby
 begin
   # List VRBO listings
-  data, status_code, headers = api_instance.list_vrbo_listings_with_http_info
+  data, status_code, headers = api_instance.list_vrbo_listings_with_http_info(opts)
   p status_code # => 2xx
   p headers # => { ... }
   p data # => <Array<VrboListing>>
@@ -58,7 +61,9 @@ end
 
 ### Parameters
 
-This endpoint does not need any parameter.
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **status** | **String** | &#x60;active&#x60; (default) leaves inactive listings out. &#x60;inactive&#x60; returns only them and &#x60;all&#x60; returns both. An inactive listing comes back with identity fields only (ids, &#x60;name&#x60;, &#x60;city&#x60;, &#x60;status&#x60;, &#x60;inactiveReason&#x60;, its account), which is enough to show what can be activated. Every row carries &#x60;status&#x60;. | [optional][default to &#39;active&#39;] |
 
 ### Return type
 

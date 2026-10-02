@@ -14,20 +14,33 @@ require 'date'
 require 'time'
 
 module Repull
-  # Present when the cancellation was made in a PMS.
-  class CancelReservation200ResponsePms < ApiModelBase
+  # Present when the write was made in a PMS: what the PMS applied. `partial: true` means the booking exists in the PMS but the steps in `failedSections` (e.g. notes, a tentative state) did not apply — do not create it again.
+  class ReservationPmsOutcome < ApiModelBase
     attr_accessor :provider
+
+    # The PMS's own id for the booking.
+    attr_accessor :reservation_id
 
     attr_accessor :applied
 
     attr_accessor :errors
 
+    attr_accessor :partial
+
+    attr_accessor :failed_sections
+
+    attr_accessor :quote
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
         :'provider' => :'provider',
+        :'reservation_id' => :'reservationId',
         :'applied' => :'applied',
-        :'errors' => :'errors'
+        :'errors' => :'errors',
+        :'partial' => :'partial',
+        :'failed_sections' => :'failedSections',
+        :'quote' => :'quote'
       }
     end
 
@@ -45,14 +58,19 @@ module Repull
     def self.openapi_types
       {
         :'provider' => :'String',
+        :'reservation_id' => :'String',
         :'applied' => :'Array<String>',
-        :'errors' => :'Array<CancelReservation200ResponsePmsErrorsInner>'
+        :'errors' => :'Array<ReservationPmsSectionError>',
+        :'partial' => :'Boolean',
+        :'failed_sections' => :'Array<ReservationPmsSectionError>',
+        :'quote' => :'ReservationPmsOutcomeQuote'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'reservation_id',
       ])
     end
 
@@ -60,20 +78,24 @@ module Repull
     # @param [Hash] attributes Model attributes in the form of hash
     def initialize(attributes = {})
       if (!attributes.is_a?(Hash))
-        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::CancelReservation200ResponsePms` initialize method"
+        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::ReservationPmsOutcome` initialize method"
       end
 
       # check to see if the attribute exists and convert string to symbol for hash key
       acceptable_attribute_map = self.class.acceptable_attribute_map
       attributes = attributes.each_with_object({}) { |(k, v), h|
         if (!acceptable_attribute_map.key?(k.to_sym))
-          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::CancelReservation200ResponsePms`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
+          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::ReservationPmsOutcome`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
         end
         h[k.to_sym] = v
       }
 
       if attributes.key?(:'provider')
         self.provider = attributes[:'provider']
+      end
+
+      if attributes.key?(:'reservation_id')
+        self.reservation_id = attributes[:'reservation_id']
       end
 
       if attributes.key?(:'applied')
@@ -86,6 +108,20 @@ module Repull
         if (value = attributes[:'errors']).is_a?(Array)
           self.errors = value
         end
+      end
+
+      if attributes.key?(:'partial')
+        self.partial = attributes[:'partial']
+      end
+
+      if attributes.key?(:'failed_sections')
+        if (value = attributes[:'failed_sections']).is_a?(Array)
+          self.failed_sections = value
+        end
+      end
+
+      if attributes.key?(:'quote')
+        self.quote = attributes[:'quote']
       end
     end
 
@@ -110,8 +146,12 @@ module Repull
       return true if self.equal?(o)
       self.class == o.class &&
           provider == o.provider &&
+          reservation_id == o.reservation_id &&
           applied == o.applied &&
-          errors == o.errors
+          errors == o.errors &&
+          partial == o.partial &&
+          failed_sections == o.failed_sections &&
+          quote == o.quote
     end
 
     # @see the `==` method
@@ -123,7 +163,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [provider, applied, errors].hash
+      [provider, reservation_id, applied, errors, partial, failed_sections, quote].hash
     end
 
     # Builds the object from hash

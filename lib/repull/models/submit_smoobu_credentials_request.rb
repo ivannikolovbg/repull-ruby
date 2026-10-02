@@ -18,7 +18,6 @@ module Repull
     # Connect session id from `POST /v1/connect/smoobu`.
     attr_accessor :session_id
 
-    # API key from Smoobu → Settings → For developers.
     attr_accessor :credentials
 
     # Attribute mapping from ruby-style variable name to JSON key.
@@ -43,7 +42,7 @@ module Repull
     def self.openapi_types
       {
         :'session_id' => :'String',
-        :'credentials' => :'Hash<String, Object>'
+        :'credentials' => :'SubmitSmoobuCredentialsRequestCredentials'
       }
     end
 
@@ -74,9 +73,7 @@ module Repull
       end
 
       if attributes.key?(:'credentials')
-        if (value = attributes[:'credentials']).is_a?(Hash)
-          self.credentials = value
-        end
+        self.credentials = attributes[:'credentials']
       else
         self.credentials = nil
       end

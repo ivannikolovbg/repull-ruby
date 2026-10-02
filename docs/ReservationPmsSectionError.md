@@ -1,22 +1,22 @@
-# Repull::CancelReservation200ResponsePmsErrorsInner
+# Repull::ReservationPmsSectionError
 
 ## Properties
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **section** | **String** |  | [optional] |
-| **message** | **String** |  | [optional] |
 | **code** | **String** |  | [optional] |
+| **message** | **String** |  | [optional] |
 
 ## Example
 
 ```ruby
 require 'repull'
 
-instance = Repull::CancelReservation200ResponsePmsErrorsInner.new(
-  section: null,
-  message: null,
-  code: null
+instance = Repull::ReservationPmsSectionError.new(
+  section: notes,
+  code: rejected,
+  message: Smoobu: notice too long
 )
 ```
 

@@ -19,6 +19,7 @@ module Repull
 
     attr_accessor :provider
 
+    # `active` — connected and working. `pending` — still settling. `needs_permissions` — connected but the host must grant more access before it works (see `action`/`fixUrl`). An `active` connection can also carry an `action` (e.g. a Smoobu legacy API key that must be replaced with a key + secret before October 31, 2026). `error` — the last operation failed. `disconnected` — revoked or superseded.
     attr_accessor :status
 
     attr_accessor :external_account_id
@@ -28,6 +29,12 @@ module Repull
     # Host metadata for the linked account. Currently populated for Airbnb only; null for other providers.
     attr_accessor :host
 
+    # Set when the host must do something before the connection works (e.g. grant the invited Booking.com Extranet user full access). `null` when no action is pending.
+    attr_accessor :action
+
+    # Durable link that reopens the hosted Connect flow bound to this account on the fix screen — send the host here to resolve `action`. Present only when `action.required` is true; `null` otherwise.
+    attr_accessor :fix_url
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
@@ -36,7 +43,9 @@ module Repull
         :'status' => :'status',
         :'external_account_id' => :'externalAccountId',
         :'created_at' => :'createdAt',
-        :'host' => :'host'
+        :'host' => :'host',
+        :'action' => :'action',
+        :'fix_url' => :'fixUrl'
       }
     end
 
@@ -58,7 +67,9 @@ module Repull
         :'status' => :'String',
         :'external_account_id' => :'String',
         :'created_at' => :'Time',
-        :'host' => :'ConnectHost'
+        :'host' => :'ConnectHost',
+        :'action' => :'ConnectionAction',
+        :'fix_url' => :'String'
       }
     end
 
@@ -66,7 +77,9 @@ module Repull
     def self.openapi_nullable
       Set.new([
         :'external_account_id',
-        :'host'
+        :'host',
+        :'action',
+        :'fix_url'
       ])
     end
 
@@ -109,6 +122,14 @@ module Repull
       if attributes.key?(:'host')
         self.host = attributes[:'host']
       end
+
+      if attributes.key?(:'action')
+        self.action = attributes[:'action']
+      end
+
+      if attributes.key?(:'fix_url')
+        self.fix_url = attributes[:'fix_url']
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -136,7 +157,9 @@ module Repull
           status == o.status &&
           external_account_id == o.external_account_id &&
           created_at == o.created_at &&
-          host == o.host
+          host == o.host &&
+          action == o.action &&
+          fix_url == o.fix_url
     end
 
     # @see the `==` method
@@ -148,7 +171,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, provider, status, external_account_id, created_at, host].hash
+      [id, provider, status, external_account_id, created_at, host, action, fix_url].hash
     end
 
     # Builds the object from hash

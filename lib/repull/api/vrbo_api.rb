@@ -20,8 +20,9 @@ module Repull
       @api_client = api_client
     end
     # List VRBO listings
-    # List the Vrbo units linked to this workspace's listings, from the host's connected Vrbo account (host sign-in, beta).  Inactive listings are left out; they keep syncing and reappear once activated. Use `GET /v1/listings?status=inactive` to find them.
+    # List the Vrbo units linked to this workspace's listings, from the host's connected Vrbo account (host sign-in, beta).  Inactive listings are left out unless `?status=inactive|all` asks for them; they then come back with identity fields only (ids, `listingName`, `listingCity`, `status`, `inactiveReason`). They keep syncing and are complete again once activated.
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :status &#x60;active&#x60; (default) leaves inactive listings out. &#x60;inactive&#x60; returns only them and &#x60;all&#x60; returns both. An inactive listing comes back with identity fields only (ids, &#x60;name&#x60;, &#x60;city&#x60;, &#x60;status&#x60;, &#x60;inactiveReason&#x60;, its account), which is enough to show what can be activated. Every row carries &#x60;status&#x60;. (default to 'active')
     # @return [Array<VrboListing>]
     def list_vrbo_listings(opts = {})
       data, _status_code, _headers = list_vrbo_listings_with_http_info(opts)
@@ -29,18 +30,24 @@ module Repull
     end
 
     # List VRBO listings
-    # List the Vrbo units linked to this workspace&#39;s listings, from the host&#39;s connected Vrbo account (host sign-in, beta).  Inactive listings are left out; they keep syncing and reappear once activated. Use &#x60;GET /v1/listings?status&#x3D;inactive&#x60; to find them.
+    # List the Vrbo units linked to this workspace&#39;s listings, from the host&#39;s connected Vrbo account (host sign-in, beta).  Inactive listings are left out unless &#x60;?status&#x3D;inactive|all&#x60; asks for them; they then come back with identity fields only (ids, &#x60;listingName&#x60;, &#x60;listingCity&#x60;, &#x60;status&#x60;, &#x60;inactiveReason&#x60;). They keep syncing and are complete again once activated.
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :status &#x60;active&#x60; (default) leaves inactive listings out. &#x60;inactive&#x60; returns only them and &#x60;all&#x60; returns both. An inactive listing comes back with identity fields only (ids, &#x60;name&#x60;, &#x60;city&#x60;, &#x60;status&#x60;, &#x60;inactiveReason&#x60;, its account), which is enough to show what can be activated. Every row carries &#x60;status&#x60;. (default to 'active')
     # @return [Array<(Array<VrboListing>, Integer, Hash)>] Array<VrboListing> data, response status code and response headers
     def list_vrbo_listings_with_http_info(opts = {})
       if @api_client.config.debugging
         @api_client.config.logger.debug 'Calling API: VRBOApi.list_vrbo_listings ...'
+      end
+      allowable_values = ["active", "inactive", "all"]
+      if @api_client.config.client_side_validation && opts[:'status'] && !allowable_values.include?(opts[:'status'])
+        fail ArgumentError, "invalid value for \"status\", must be one of #{allowable_values}"
       end
       # resource path
       local_var_path = '/v1/channels/vrbo/listings'
 
       # query parameters
       query_params = opts[:query_params] || {}
+      query_params[:'status'] = opts[:'status'] if !opts[:'status'].nil?
 
       # header parameters
       header_params = opts[:header_params] || {}

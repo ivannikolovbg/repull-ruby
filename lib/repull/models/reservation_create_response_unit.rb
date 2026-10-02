@@ -14,7 +14,7 @@ require 'date'
 require 'time'
 
 module Repull
-  # Mews or Cloudbeds listings only: the room the PMS assigned. Absent for every other listing.
+  # PMS listings: the unit the PMS assigned (hotel-model PMSs), or null. Absent for direct bookings.
   class ReservationCreateResponseUnit < ApiModelBase
     attr_accessor :id
 

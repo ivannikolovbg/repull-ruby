@@ -4,9 +4,11 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
+| **capabilities** | [**ListingCapabilities**](ListingCapabilities.md) |  | [optional] |
 | **units** | [**Array&lt;ListingUnitsInner&gt;**](ListingUnitsInner.md) | &#x60;GET /v1/listings/{id}&#x60; only. The physical rooms under a hotel-model listing (a Mews or Cloudbeds room type); empty for a single home. Same items as &#x60;GET /v1/listings/{id}/units&#x60;. | [optional] |
 | **id** | **String** | Repull listing id | [optional] |
-| **name** | **String** |  | [optional] |
+| **name** | **String** | The host&#39;s internal nickname for the listing. | [optional] |
+| **public_name** | **String** | The title guests see on the channel (e.g. the Airbnb listing title). &#x60;name&#x60; is the host&#39;s internal nickname for the listing; show &#x60;publicName&#x60; in anything a guest or end user reads. Present on inactive rows too. | [optional] |
 | **address** | [**ListingAddress**](ListingAddress.md) |  | [optional] |
 | **thumbnail_url** | **String** | Cover photo URL. Always present on an active listing. On an **inactive** one it is present only when the caller passes &#x60;?include&#x3D;thumbnail&#x60;; &#x60;null&#x60; means the listing has no cover photo stored, absent means the expansion was not requested. | [optional] |
 | **status** | **String** |  | [optional] |
@@ -23,9 +25,11 @@
 require 'repull'
 
 instance = Repull::Listing.new(
+  capabilities: null,
   units: null,
   id: null,
   name: I - Stafford Apartment,
+  public_name: Centre Oxford bright single room D,
   address: null,
   thumbnail_url: null,
   status: null,

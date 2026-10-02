@@ -816,11 +816,11 @@ This endpoint does not need any parameter.
 
 ## list_booking_properties
 
-> <Array<BookingProperty>> list_booking_properties
+> <Array<BookingProperty>> list_booking_properties(opts)
 
 List Booking.com properties
 
-List every Booking.com property this workspace holds. Each property is returned ONCE, with the Repull listings mapped under it.  A Booking.com property is a building; its rooms are what guests book, and each room is mapped to one Repull listing — so one property routinely carries many listings. `listings[].roomBookingId` is the Booking.com room id an ARI write takes.  A property whose rooms are not mapped yet is still listed, with `mappingStatus: \"unmapped\"` and an empty `listings` array. That is a real mid-onboarding state, not an error: finish `POST /v1/connect/booking/map-rooms` and the listings appear. Such a property used to be dropped silently, which made a mapped-but-unreadable workspace indistinguishable from one with no Booking connection at all.  Inactive listings are left out of `listings`; they keep syncing and reappear once activated. Use `GET /v1/listings?status=inactive` to find them.
+List every Booking.com property this workspace holds. Each property is returned ONCE, with the Repull listings mapped under it.  A Booking.com property is a building; its rooms are what guests book, and each room is mapped to one Repull listing — so one property routinely carries many listings. `listings[].roomBookingId` is the Booking.com room id an ARI write takes.  A property whose rooms are not mapped yet is still listed, with `mappingStatus: \"unmapped\"` and an empty `listings` array. That is a real mid-onboarding state, not an error: finish `POST /v1/connect/booking/map-rooms` and the listings appear. Such a property used to be dropped silently, which made a mapped-but-unreadable workspace indistinguishable from one with no Booking connection at all.  Inactive listings are left out of `listings` unless `?status=inactive|all` asks for them; they then appear with identity fields only (`listingId`, `name`, `city`, `status`, `inactiveReason`, room). `mappingStatus` counts every mapped listing, inactive ones included, so a property whose listings are all inactive is still `mapped`.
 
 ### Examples
 
@@ -834,10 +834,13 @@ Repull.configure do |config|
 end
 
 api_instance = Repull::BookingComApi.new
+opts = {
+  status: 'active' # String | `active` (default) leaves inactive listings out. `inactive` returns only them and `all` returns both. An inactive listing comes back with identity fields only (ids, `name`, `city`, `status`, `inactiveReason`, its account), which is enough to show what can be activated. Every row carries `status`.
+}
 
 begin
   # List Booking.com properties
-  result = api_instance.list_booking_properties
+  result = api_instance.list_booking_properties(opts)
   p result
 rescue Repull::ApiError => e
   puts "Error when calling BookingComApi->list_booking_properties: #{e}"
@@ -848,12 +851,12 @@ end
 
 This returns an Array which contains the response data, status code and headers.
 
-> <Array(<Array<BookingProperty>>, Integer, Hash)> list_booking_properties_with_http_info
+> <Array(<Array<BookingProperty>>, Integer, Hash)> list_booking_properties_with_http_info(opts)
 
 ```ruby
 begin
   # List Booking.com properties
-  data, status_code, headers = api_instance.list_booking_properties_with_http_info
+  data, status_code, headers = api_instance.list_booking_properties_with_http_info(opts)
   p status_code # => 2xx
   p headers # => { ... }
   p data # => <Array<BookingProperty>>
@@ -864,7 +867,9 @@ end
 
 ### Parameters
 
-This endpoint does not need any parameter.
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **status** | **String** | &#x60;active&#x60; (default) leaves inactive listings out. &#x60;inactive&#x60; returns only them and &#x60;all&#x60; returns both. An inactive listing comes back with identity fields only (ids, &#x60;name&#x60;, &#x60;city&#x60;, &#x60;status&#x60;, &#x60;inactiveReason&#x60;, its account), which is enough to show what can be activated. Every row carries &#x60;status&#x60;. | [optional][default to &#39;active&#39;] |
 
 ### Return type
 

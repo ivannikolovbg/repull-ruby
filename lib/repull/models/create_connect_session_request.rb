@@ -21,6 +21,9 @@ module Repull
     # Your own correlation token, e.g. your user id (at most 500 characters). Echoed in this response, on the redirect back (`&state=`), in the popup message, and in the `connect.session.completed` webhook.
     attr_accessor :state
 
+    # Airbnb — how many months of past reservations the first import pulls (1–60). Omit it for the default window. Upcoming stays are always imported. A wider window takes longer to import, because every extra month is more stays to fetch.
+    attr_accessor :reservation_history_months
+
     # What the connection may do. Airbnb: the OAuth scope tier. Vrbo: `messaging` (or `read_only`) imports bookings and messages and never pushes the calendar; `full_access` also pushes prices and availability. Setting it locks the choice; omit it to let the host choose on the hosted page (default `full_access`).
     attr_accessor :access_type
 
@@ -67,6 +70,7 @@ module Repull
       {
         :'redirect_url' => :'redirectUrl',
         :'state' => :'state',
+        :'reservation_history_months' => :'reservationHistoryMonths',
         :'access_type' => :'accessType',
         :'allowed_providers' => :'allowedProviders',
         :'locale' => :'locale',
@@ -92,6 +96,7 @@ module Repull
       {
         :'redirect_url' => :'String',
         :'state' => :'String',
+        :'reservation_history_months' => :'Integer',
         :'access_type' => :'String',
         :'allowed_providers' => :'Array<String>',
         :'locale' => :'String',
@@ -135,6 +140,10 @@ module Repull
 
       if attributes.key?(:'state')
         self.state = attributes[:'state']
+      end
+
+      if attributes.key?(:'reservation_history_months')
+        self.reservation_history_months = attributes[:'reservation_history_months']
       end
 
       if attributes.key?(:'access_type')
@@ -181,6 +190,14 @@ module Repull
         invalid_properties.push('invalid value for "redirect_url", redirect_url cannot be nil.')
       end
 
+      if !@reservation_history_months.nil? && @reservation_history_months > 60
+        invalid_properties.push('invalid value for "reservation_history_months", must be smaller than or equal to 60.')
+      end
+
+      if !@reservation_history_months.nil? && @reservation_history_months < 1
+        invalid_properties.push('invalid value for "reservation_history_months", must be greater than or equal to 1.')
+      end
+
       invalid_properties
     end
 
@@ -189,6 +206,8 @@ module Repull
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
       return false if @redirect_url.nil?
+      return false if !@reservation_history_months.nil? && @reservation_history_months > 60
+      return false if !@reservation_history_months.nil? && @reservation_history_months < 1
       access_type_validator = EnumAttributeValidator.new('String', ["full_access", "messaging", "read_only"])
       return false unless access_type_validator.valid?(@access_type)
       purpose_validator = EnumAttributeValidator.new('String', ["connect", "migrate"])
@@ -204,6 +223,24 @@ module Repull
       end
 
       @redirect_url = redirect_url
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] reservation_history_months Value to be assigned
+    def reservation_history_months=(reservation_history_months)
+      if reservation_history_months.nil?
+        fail ArgumentError, 'reservation_history_months cannot be nil'
+      end
+
+      if reservation_history_months > 60
+        fail ArgumentError, 'invalid value for "reservation_history_months", must be smaller than or equal to 60.'
+      end
+
+      if reservation_history_months < 1
+        fail ArgumentError, 'invalid value for "reservation_history_months", must be greater than or equal to 1.'
+      end
+
+      @reservation_history_months = reservation_history_months
     end
 
     # Custom attribute writer method checking allowed values (enum).
@@ -233,6 +270,7 @@ module Repull
       self.class == o.class &&
           redirect_url == o.redirect_url &&
           state == o.state &&
+          reservation_history_months == o.reservation_history_months &&
           access_type == o.access_type &&
           allowed_providers == o.allowed_providers &&
           locale == o.locale &&
@@ -251,7 +289,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [redirect_url, state, access_type, allowed_providers, locale, purpose, workspace, copy, scope].hash
+      [redirect_url, state, reservation_history_months, access_type, allowed_providers, locale, purpose, workspace, copy, scope].hash
     end
 
     # Builds the object from hash

@@ -151,7 +151,7 @@
     "schemas": {
       "Property": {
         "type": "object",
-        "description": "A vacation rental property in your Repull workspace. Backed by the core `listings` row \u2014 enriched per-PMS fields (bedrooms, property type, provider id, etc.) live in provider-specific detail tables and are NOT returned here.\n\nField availability differs by endpoint:\n- `channels` is returned by the list endpoint (`GET /v1/properties`) only.\n- `latitude`, `longitude`, `createdAt`, and `amenities` are returned by the detail endpoint (`GET /v1/properties/{id}`) only. `amenities` requires `?include=amenities`.\n\nAn **inactive** property (`status: inactive`) appears only in the list endpoint, and only when `?status=inactive|all` asks for it. Such a row carries identity fields only \u2014 `id`, `name`, `status`, `lifecycleStatus`, `channels`, `accounts`, `updatedAt` \u2014 so every other field is absent until the property is activated. Every other endpoint answers `403 listing_inactive` for it.",
+        "description": "A vacation rental property in your Repull workspace. Backed by the core `listings` row \u2014 enriched per-PMS fields (bedrooms, property type, provider id, etc.) live in provider-specific detail tables and are NOT returned here.\n\nField availability differs by endpoint:\n- `channels` is returned by the list endpoint (`GET /v1/properties`) only.\n- `latitude`, `longitude`, `createdAt`, and `amenities` are returned by the detail endpoint (`GET /v1/properties/{id}`) only. `amenities` requires `?include=amenities`.\n\nAn **inactive** property (`status: inactive`) appears only in the list endpoint, and only when `?status=inactive|all` asks for it. Such a row carries identity fields only \u2014 `id`, `name`, `city`, `status`, `inactiveReason`, `lifecycleStatus`, `channels`, `accounts`, `updatedAt` \u2014 so every other field is absent until the property is activated. `inactiveReason` is `plan_limit` (held back by the plan; activating needs a free slot or an upgrade), `unlisted_on_airbnb`, or `deactivated` (switched off by you). Every other endpoint answers `403 listing_inactive` for it.",
         "properties": {
           "accounts": {
             "type": "array",
@@ -166,8 +166,14 @@
           },
           "name": {
             "type": "string",
-            "description": "Property name",
+            "description": "Property name \u2014 the host's internal nickname.",
             "example": "Oceanview Suite #3"
+          },
+          "publicName": {
+            "type": "string",
+            "nullable": true,
+            "description": "The title guests see on the channel (e.g. the Airbnb listing title). `name` is the host's internal nickname for the listing; show `publicName` in anything a guest or end user reads. Present on inactive rows too.",
+            "example": "Centre Oxford bright single room D"
           },
           "address": {
             "type": "string",
@@ -1470,7 +1476,8 @@
           },
           "status": {
             "type": "string",
-            "example": "active"
+            "example": "active",
+            "description": "`active` \u2014 connected and working. `pending` \u2014 still settling. `needs_permissions` \u2014 connected but the host must grant more access before it works (see `action`/`fixUrl`). An `active` connection can also carry an `action` (e.g. a Smoobu legacy API key that must be replaced with a key + secret before October 31, 2026). `error` \u2014 the last operation failed. `disconnected` \u2014 revoked or superseded."
           },
           "externalAccountId": {
             "type": "string",
@@ -1488,6 +1495,45 @@
               }
             ],
             "description": "Host metadata for the linked account. Currently populated for Airbnb only; null for other providers."
+          },
+          "action": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConnectionAction"
+              }
+            ],
+            "description": "Set when the host must do something before the connection works (e.g. grant the invited Booking.com Extranet user full access). `null` when no action is pending."
+          },
+          "fixUrl": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "Durable link that reopens the hosted Connect flow bound to this account on the fix screen \u2014 send the host here to resolve `action`. Present only when `action.required` is true; `null` otherwise."
+          }
+        }
+      },
+      "ConnectionAction": {
+        "type": "object",
+        "description": "A host action a connection needs before it can work.",
+        "required": [
+          "required"
+        ],
+        "properties": {
+          "required": {
+            "type": "boolean",
+            "description": "Whether a host action is pending."
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "example": "needs_permissions",
+            "description": "Machine-readable reason, stable for programmatic handling."
+          },
+          "message": {
+            "type": "string",
+            "nullable": true,
+            "description": "Host-facing one-liner describing what to do."
           }
         }
       },
@@ -2123,9 +2169,33 @@
             ],
             "description": "PMS connections only: what the app may change in the PMS. Change it with `PATCH /v1/connect/{provider}/write-policy`."
           },
+          "capabilities": {
+            "type": "object",
+            "description": "PMS providers only. `reservations`: which reservation writes the API performs on this connection's listings \u2014 the connector's support combined with `writePolicy`. When `connected` is false, what the connector supports once connected.",
+            "properties": {
+              "reservations": {
+                "$ref": "#/components/schemas/ReservationCapabilities"
+              }
+            }
+          },
           "dataFreshness": {
             "type": "object",
             "description": "Vrbo only: the same freshness envelope the Airbnb read endpoints return, per account and in aggregate. Its reason is never_synced until a mapping is confirmed and importing while upcoming bookings come in."
+          },
+          "action": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConnectionAction"
+              }
+            ],
+            "description": "Smoobu only: set to `{ required: true, reason: \"reauth_required\", message }` when the connection still uses a legacy single API key, which Smoobu stops accepting on October 31, 2026. `null` once it is on an API key + secret."
+          },
+          "fixUrl": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "Smoobu only: durable link to the hosted Smoobu form where the host pastes a new API key + secret. Submitting it updates this same connection (`id` unchanged). Present only when `action.required` is true."
           }
         }
       },
@@ -5377,8 +5447,14 @@
           },
           "name": {
             "type": "string",
-            "description": "Listing title",
+            "description": "The host's internal nickname for the listing.",
             "example": "Oceanview Villa"
+          },
+          "publicName": {
+            "type": "string",
+            "nullable": true,
+            "description": "The title guests see on the channel (e.g. the Airbnb listing title). `name` is the host's internal nickname for the listing; show `publicName` in anything a guest or end user reads. Present on inactive rows too.",
+            "example": "Centre Oxford bright single room D"
           },
           "city": {
             "type": "string",
@@ -5581,7 +5657,30 @@
                 },
                 "name": {
                   "type": "string",
-                  "nullable": true
+                  "nullable": true,
+                  "description": "The host's internal nickname for the listing."
+                },
+                "publicName": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "The title guests see on the channel; show this to end users."
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "active",
+                    "inactive"
+                  ],
+                  "description": "Inactive listings appear only with `?status=inactive|all`, with identity fields only."
+                },
+                "inactiveReason": {
+                  "type": "string",
+                  "enum": [
+                    "plan_limit",
+                    "unlisted_on_airbnb",
+                    "deactivated"
+                  ],
+                  "description": "On inactive listings only: why it is inactive."
                 },
                 "city": {
                   "type": "string",
@@ -6553,6 +6652,28 @@
                 "example": [
                   "4118"
                 ]
+              },
+              "listings": {
+                "type": "array",
+                "description": "The same inactive listings with their names, so you can show the user which ones to activate. Present on `code: \"listing_inactive\"` (HTTP 403). `name` is null only when the request did not resolve it.",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "name"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "example": "4118"
+                    },
+                    "name": {
+                      "type": "string",
+                      "nullable": true,
+                      "example": "R-Sable 1302"
+                    }
+                  }
+                }
               },
               "listing_id": {
                 "type": "string",
@@ -8623,8 +8744,17 @@
       },
       "Listing": {
         "type": "object",
-        "description": "A vacation rental listing in your Repull workspace.\n\nAn **inactive** listing appears only in `GET /v1/listings`, and only when `?status=` asks for it. Such a row carries identity fields only \u2014 `id`, `name`, `status`, `channels` \u2014 so `address`, `content`, `details`, `createdAt` and `updatedAt` are absent until the listing is activated. `GET /v1/listings/{id}` and every other listing endpoint answer `403 listing_inactive` for it. The one field you can add back is `thumbnailUrl`, by passing `?include=thumbnail` \u2014 enough to render an activate/deactivate picker with pictures from a single request.",
+        "description": "A vacation rental listing in your Repull workspace.\n\nAn **inactive** listing appears only in `GET /v1/listings`, and only when `?status=` asks for it. Such a row carries identity fields only \u2014 `id`, `name`, `status`, `inactiveReason`, `address.city`, `channels` \u2014 so the street, `content`, `details`, `createdAt` and `updatedAt` are absent until the listing is activated. `inactiveReason` is `plan_limit` (held back by the plan; activating needs a free slot or an upgrade), `unlisted_on_airbnb`, or `deactivated` (switched off by you). `GET /v1/listings/{id}` and every other listing endpoint answer `403 listing_inactive` for it. The one field you can add back is `thumbnailUrl`, by passing `?include=thumbnail` \u2014 enough to render an activate/deactivate picker with pictures from a single request.",
         "properties": {
+          "capabilities": {
+            "type": "object",
+            "description": "`GET /v1/listings/{id}` only. What the API can do with this listing.",
+            "properties": {
+              "reservations": {
+                "$ref": "#/components/schemas/ReservationCapabilities"
+              }
+            }
+          },
           "units": {
             "type": "array",
             "description": "`GET /v1/listings/{id}` only. The physical rooms under a hotel-model listing (a Mews or Cloudbeds room type); empty for a single home. Same items as `GET /v1/listings/{id}/units`.",
@@ -8664,7 +8794,14 @@
           },
           "name": {
             "type": "string",
+            "description": "The host's internal nickname for the listing.",
             "example": "I - Stafford Apartment"
+          },
+          "publicName": {
+            "type": "string",
+            "nullable": true,
+            "description": "The title guests see on the channel (e.g. the Airbnb listing title). `name` is the host's internal nickname for the listing; show `publicName` in anything a guest or end user reads. Present on inactive rows too.",
+            "example": "Centre Oxford bright single room D"
           },
           "address": {
             "type": "object",
@@ -10318,7 +10455,64 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Required for `type: \"standard\" | \"rate-plan\" | \"fees\"` \u2014 the pricing-settings object to PUT."
+            "description": "Required for `type: \"standard\" | \"rate-plan\"` \u2014 the pricing-settings object to PUT. With `type: \"fees\"` it is the raw alternative to `fees`: `{\"standard_fees\": [...]}` **replaces every fee** on the listing (Airbnb does not merge), so send the complete list. Prefer `fees`."
+          },
+          "fees": {
+            "type": "array",
+            "minItems": 1,
+            "nullable": true,
+            "description": "With `type: \"fees\"` \u2014 the fee changes to apply. **Merged by `fee_type`**: fees you do not mention are kept, the ones you send are set, and `amount: null` removes that fee. (Airbnb itself replaces the whole fee list on every write, so Repull reads the listing's current fees, applies your changes and writes the full set.) The response is the listing's fees as Airbnb holds them afterwards.\n\n**Units \u2014 the same as `GET \u2026/pricing` returns:** a `flat` fee is the amount in the listing currency \u00d7 1,000,000 (`160000000` = 160.00); a `percent` fee is a whole percent of the rent (`10` = 10%).\n\nExample \u2014 add a 10% management fee and keep everything else: `{\"type\":\"fees\",\"fees\":[{\"fee_type\":\"PASS_THROUGH_MANAGEMENT_FEE\",\"amount\":10,\"amount_type\":\"percent\"}]}`. Remove the pet fee: `{\"type\":\"fees\",\"fees\":[{\"fee_type\":\"PASS_THROUGH_PET_FEE\",\"amount\":null}]}`.",
+            "items": {
+              "type": "object",
+              "required": [
+                "fee_type",
+                "amount"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "fee_type": {
+                  "type": "string",
+                  "description": "Airbnb fee type: `PASS_THROUGH_CLEANING_FEE`, `PASS_THROUGH_SHORT_TERM_CLEANING_FEE`, `PASS_THROUGH_PET_FEE`, `PASS_THROUGH_SECURITY_DEPOSIT`, `PASS_THROUGH_MANAGEMENT_FEE`, `PASS_THROUGH_RESORT_FEE`, `PASS_THROUGH_COMMUNITY_FEE`, `PASS_THROUGH_LINEN_FEE`.",
+                  "example": "PASS_THROUGH_MANAGEMENT_FEE"
+                },
+                "amount": {
+                  "type": "number",
+                  "nullable": true,
+                  "minimum": 0,
+                  "description": "`null` removes the fee. Flat: currency \u00d7 1,000,000. Percent: whole percent.",
+                  "example": 10
+                },
+                "amount_type": {
+                  "type": "string",
+                  "enum": [
+                    "flat",
+                    "percent"
+                  ],
+                  "description": "Defaults to the existing fee's, else `flat`. Percent is accepted for management and resort fees."
+                },
+                "charge_type": {
+                  "type": "string",
+                  "enum": [
+                    "PER_GROUP",
+                    "PER_PERSON",
+                    "PER_PET"
+                  ],
+                  "description": "Who it is charged per. Defaults to the existing fee's, else `PER_GROUP`."
+                },
+                "charge_period": {
+                  "type": "string",
+                  "enum": [
+                    "PER_BOOKING",
+                    "PER_NIGHT"
+                  ],
+                  "description": "Once per booking or per night. Defaults to the existing fee's, else `PER_BOOKING`."
+                },
+                "offline": {
+                  "type": "boolean",
+                  "description": "Collected offline by the host rather than through Airbnb. Default `false`."
+                }
+              }
+            }
           },
           "records": {
             "type": "array",
@@ -11043,6 +11237,8 @@
           "checkOut",
           "guest"
         ],
+        "additionalProperties": false,
+        "description": "Which fields a listing takes depends on whether it is managed in a PMS \u2014 see the operation description and `GET /v1/listings/{id}` \u2192 `capabilities.reservations`. A field the listing cannot take is refused by name (`422 unsupported_field`), never dropped.",
         "properties": {
           "listingId": {
             "type": "integer",
@@ -11066,37 +11262,73 @@
           "platform": {
             "type": "string",
             "default": "direct",
-            "description": "OTA platforms are deliberately absent \u2014 those reservations are owned by the channel and arrive through sync."
+            "description": "OTA platforms are deliberately absent \u2014 those reservations are owned by the channel and arrive through sync. `owner` is refused on a PMS listing (block owner stays in the PMS)."
           },
           "status": {
             "type": "string",
-            "default": "accept",
-            "description": "Lifecycle status to open the reservation in. Defaults to confirmed."
+            "default": "confirmed",
+            "description": "`confirmed` (default) or `tentative` (an optional hold, where the PMS has one). On a listing not managed in a PMS the value is passed to the reservation pipeline as before."
+          },
+          "adults": {
+            "type": "integer",
+            "minimum": 1,
+            "example": 2
+          },
+          "children": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 1
+          },
+          "guestCount": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Total guests. On a PMS listing without `adults`, used as the adult count.",
+            "example": 3
+          },
+          "totalPrice": {
+            "type": "number",
+            "minimum": 0,
+            "description": "PMS listings only: the total for the whole stay, in the listing's currency. Honoured where `capabilities.reservations.customPrice` is true; omit it and the PMS prices the stay (from its quote where it has one). Refused on a listing not managed in a PMS, whose rate engine prices the stay.",
+            "example": 880
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 5000,
+            "description": "PMS listings only: booking notes stored in the PMS.",
+            "example": "Late arrival, around 22:00."
+          },
+          "unitId": {
+            "type": "string",
+            "description": "PMS listings only: book this unit (`GET /v1/listings/{id}` \u2192 `units[].id`). Refused by PMSs that cannot target a unit.",
+            "example": "3f1c9a20"
+          },
+          "sendConfirmationEmail": {
+            "type": "boolean",
+            "description": "PMS listings only: ask the PMS to email the guest its own confirmation, where the PMS supports it.",
+            "example": false
           },
           "checkInTime": {
             "type": "string",
             "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+            "description": "Listings not managed in a PMS only.",
             "example": "16:00"
           },
           "checkOutTime": {
             "type": "string",
             "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+            "description": "Listings not managed in a PMS only.",
             "example": "10:00"
           },
           "guestId": {
             "type": "integer",
-            "description": "Attach an existing guest instead of matching/creating one. Must belong to this workspace.",
+            "description": "Listings not managed in a PMS only: attach an existing guest instead of matching/creating one. Must belong to this workspace.",
             "example": 91234
-          },
-          "guestCount": {
-            "type": "integer",
-            "minimum": 1,
-            "example": 2
           },
           "currency": {
             "type": "string",
             "minLength": 3,
             "maxLength": 3,
+            "description": "Listings not managed in a PMS only (a PMS books in the property's currency).",
             "example": "USD"
           }
         }
@@ -11105,17 +11337,17 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "integer",
-            "description": "Pass to `GET /v1/reservations/{id}` for the full record.",
-            "example": 215708
+            "type": "string",
+            "description": "Pass to `GET /v1/reservations/{id}` for the full record. A string, like every id in API responses.",
+            "example": "215708"
           },
           "confirmationCode": {
             "type": "string",
             "example": "DIR-8H2K4N"
           },
           "listingId": {
-            "type": "integer",
-            "example": 4118
+            "type": "string",
+            "example": "4118"
           },
           "platform": {
             "type": "string",
@@ -11135,13 +11367,14 @@
             "format": "date"
           },
           "guestId": {
-            "type": "integer",
-            "nullable": true
+            "type": "string",
+            "nullable": true,
+            "example": "91234"
           },
           "totalPrice": {
             "type": "number",
             "nullable": true,
-            "description": "The price the pricing engine derived for the stay. Reservations created through this endpoint are NOT priced from the request \u2014 see the operation description. On a Mews or Cloudbeds listing, the PMS prices it from its own rate."
+            "description": "The total the booking was recorded at. On a PMS listing: the PMS's total (your `totalPrice` where the PMS honours one, else the PMS's own price). On any other listing: the price the rate engine derived (`0` when the listing has no rates for the range)."
           },
           "currency": {
             "type": "string",
@@ -11150,7 +11383,7 @@
           "unit": {
             "type": "object",
             "nullable": true,
-            "description": "Mews or Cloudbeds listings only: the room the PMS assigned. Absent for every other listing.",
+            "description": "PMS listings: the unit the PMS assigned (hotel-model PMSs), or null. Absent for direct bookings.",
             "properties": {
               "id": {
                 "type": "string"
@@ -11162,41 +11395,7 @@
             }
           },
           "pms": {
-            "type": "object",
-            "description": "Mews or Cloudbeds listings only: the booking was made in the PMS first, and this is what it applied.",
-            "properties": {
-              "provider": {
-                "type": "string",
-                "example": "mews"
-              },
-              "reservationId": {
-                "type": "string",
-                "description": "The PMS's own id for the booking."
-              },
-              "applied": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "errors": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "section": {
-                      "type": "string"
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "code": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/components/schemas/ReservationPmsOutcome"
           }
         }
       },
@@ -11241,14 +11440,15 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "integer"
+            "type": "string",
+            "description": "A string, like every id in API responses."
           },
           "confirmationCode": {
             "type": "string",
             "nullable": true
           },
           "listingId": {
-            "type": "integer",
+            "type": "string",
             "nullable": true
           },
           "checkIn": {
@@ -11288,6 +11488,240 @@
             "example": [
               "checkOut"
             ]
+          },
+          "pms": {
+            "$ref": "#/components/schemas/ReservationPmsOutcome"
+          }
+        }
+      },
+      "ReservationPmsOutcome": {
+        "type": "object",
+        "description": "Present when the write was made in a PMS: what the PMS applied. `partial: true` means the booking exists in the PMS but the steps in `failedSections` (e.g. notes, a tentative state) did not apply \u2014 do not create it again.",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "example": "hostaway"
+          },
+          "reservationId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The PMS's own id for the booking.",
+            "example": "4471923"
+          },
+          "applied": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "reservation"
+            ]
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReservationPmsSectionError"
+            }
+          },
+          "partial": {
+            "type": "boolean",
+            "example": false
+          },
+          "failedSections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReservationPmsSectionError"
+            }
+          },
+          "quote": {
+            "type": "object",
+            "description": "Create only: the PMS quote the booking was priced from, when no `totalPrice` was sent.",
+            "properties": {
+              "available": {
+                "type": "boolean"
+              },
+              "total": {
+                "type": "number",
+                "nullable": true
+              },
+              "currency": {
+                "type": "string",
+                "nullable": true
+              }
+            }
+          }
+        }
+      },
+      "ReservationPmsSectionError": {
+        "type": "object",
+        "properties": {
+          "section": {
+            "type": "string",
+            "example": "notes"
+          },
+          "code": {
+            "type": "string",
+            "example": "rejected"
+          },
+          "message": {
+            "type": "string",
+            "example": "Smoobu: notice too long"
+          }
+        }
+      },
+      "ReservationQuoteRequest": {
+        "type": "object",
+        "required": [
+          "listingId",
+          "checkIn",
+          "checkOut"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "listingId": {
+            "type": "integer",
+            "example": 4118
+          },
+          "checkIn": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-10-01"
+          },
+          "checkOut": {
+            "type": "string",
+            "format": "date",
+            "description": "Must be after `checkIn`.",
+            "example": "2026-10-05"
+          },
+          "adults": {
+            "type": "integer",
+            "minimum": 1,
+            "example": 2
+          },
+          "children": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 1
+          },
+          "guestCount": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Total guests, when you do not split adults and children.",
+            "example": 3
+          },
+          "unitId": {
+            "type": "string",
+            "description": "Quote one unit (`GET /v1/listings/{id}` \u2192 `units[].id`).",
+            "example": "3f1c9a20"
+          }
+        }
+      },
+      "ReservationQuoteResponse": {
+        "type": "object",
+        "properties": {
+          "listingId": {
+            "type": "string",
+            "example": "4118"
+          },
+          "provider": {
+            "type": "string",
+            "description": "The PMS that priced it.",
+            "example": "hostaway"
+          },
+          "checkIn": {
+            "type": "string",
+            "format": "date"
+          },
+          "checkOut": {
+            "type": "string",
+            "format": "date"
+          },
+          "available": {
+            "type": "boolean",
+            "description": "Whether the PMS would take the booking as asked.",
+            "example": true
+          },
+          "total": {
+            "type": "number",
+            "nullable": true,
+            "description": "Total for the stay, in `currency`. Null when the PMS gave no price (e.g. not available).",
+            "example": 880
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true,
+            "example": "USD"
+          },
+          "breakdown": {
+            "type": "object",
+            "nullable": true,
+            "description": "The parts the PMS itemized; absent parts were not itemized.",
+            "properties": {
+              "accommodation": {
+                "type": "number"
+              },
+              "cleaningFee": {
+                "type": "number"
+              },
+              "taxes": {
+                "type": "number"
+              },
+              "fees": {
+                "type": "number"
+              }
+            }
+          },
+          "restrictions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The PMS's reasons, verbatim, when `available` is false.",
+            "example": []
+          }
+        }
+      },
+      "ReservationCapabilities": {
+        "type": "object",
+        "description": "Which reservation writes the API performs for this listing (or, on `GET /v1/connect/{provider}`, for any listing of that connection). Derived from the PMS connector, the connection, and its write policy \u2014 a flag is true only when all three allow it.",
+        "properties": {
+          "managedBy": {
+            "type": "string",
+            "description": "`pms` \u2014 booked in the connected PMS; `repull` \u2014 a direct booking made in Repull."
+          },
+          "provider": {
+            "type": "string",
+            "nullable": true,
+            "example": "hostaway"
+          },
+          "create": {
+            "type": "boolean",
+            "description": "`POST /v1/reservations`."
+          },
+          "modify": {
+            "type": "boolean",
+            "description": "`PATCH /v1/reservations/{id}`."
+          },
+          "cancel": {
+            "type": "boolean",
+            "description": "`POST /v1/reservations/{id}/cancel`."
+          },
+          "quote": {
+            "type": "boolean",
+            "description": "`POST /v1/reservations/quote`."
+          },
+          "customPrice": {
+            "type": "boolean",
+            "description": "`totalPrice` on create is honoured; otherwise the PMS (or the rate engine) prices the stay."
+          },
+          "notes": {
+            "type": "string",
+            "description": "What the flags do not say: limits, required access, and why something is off."
+          },
+          "verifiedAgainst": {
+            "type": "string",
+            "nullable": true,
+            "description": "`sandbox` \u2014 run end to end on the vendor sandbox (Mews, Cloudbeds); `vendor_docs` \u2014 verified against the vendor's API documentation only. Null for direct bookings."
           }
         }
       },
@@ -12747,31 +13181,13 @@
                 "answers": {
                   "type": "object",
                   "minProperties": 1,
-                  "description": "Keyed by each question's `answer_key`. Each value carries exactly one field, chosen by the question's `type`: TEXT \u2192 `text_value`, ATTESTATION \u2192 `attestation_value`, RADIO \u2192 `radio_value`, DATE \u2192 `date_value`, SELECT \u2192 `selected_options_value`.",
+                  "description": "Keyed by each question's `answer_key`. Each value carries exactly one `<type>_value` field named after the question's `type` (lower-case): `text_value`, `attestation_value` (boolean), `radio_value`, `dropdown_value`, `email_value`, `future_date_value` (YYYY-MM-DD) and `file_upload_value` (object with the base64 file) are the ones Airbnb returns in production; other question types follow the same pattern. Airbnb validates the value against its question. Example: `{\"email\": {\"email_value\": \"host@example.com\"}, \"expiration_date\": {\"future_date_value\": \"2029-02-04\"}, \"attestation\": {\"attestation_value\": true}}`.",
                   "additionalProperties": {
                     "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                      "text_value": {
-                        "type": "string"
-                      },
-                      "attestation_value": {
-                        "type": "boolean"
-                      },
-                      "radio_value": {
-                        "type": "string"
-                      },
-                      "date_value": {
-                        "type": "string",
-                        "description": "ISO date, YYYY-MM-DD."
-                      },
-                      "selected_options_value": {
-                        "type": "array",
-                        "items": {
-                          "type": "string"
-                        }
-                      }
-                    }
+                    "minProperties": 1,
+                    "maxProperties": 1,
+                    "description": "Exactly one `<type>_value` field.",
+                    "additionalProperties": true
                   }
                 }
               }
@@ -12855,7 +13271,7 @@
       },
       "AirbnbListingDetailsWriteRequest": {
         "type": "object",
-        "description": "Update what kind of property this is, when the quiet hours are, or how the guest gets in. At least one field required. These are among the attributes Airbnb locks on established listings \u2014 see `blockedFields` on the response.",
+        "description": "Update what kind of property this is, when the quiet hours are, how the guest gets in, the house manual, directions or Wi-Fi details. At least one field required. These are among the attributes Airbnb locks on established listings \u2014 see `blockedFields` on the response.",
         "additionalProperties": false,
         "properties": {
           "property_type_group": {
@@ -12899,7 +13315,7 @@
               "category"
             ],
             "additionalProperties": false,
-            "description": "How the guest lets themselves in \u2014 Airbnb's `check_in_option`.",
+            "description": "How the guest lets themselves in \u2014 Airbnb's `check_in_option`. `instruction` is the arrival instructions the guest sees.",
             "properties": {
               "category": {
                 "type": "string",
@@ -12918,6 +13334,30 @@
                 "maxLength": 2000
               }
             }
+          },
+          "house_manual": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 10000,
+            "description": "The house manual guests see after booking."
+          },
+          "directions": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 5000,
+            "description": "Directions to the property, shown to booked guests."
+          },
+          "wifi_network": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255,
+            "description": "Wi-Fi network name."
+          },
+          "wifi_password": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255,
+            "description": "Wi-Fi password."
           }
         }
       },
@@ -13197,6 +13637,12 @@
                     "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                     "listing_ids": [
                       "4118"
+                    ],
+                    "listings": [
+                      {
+                        "id": "4118",
+                        "name": "R-Sable 1302"
+                      }
                     ]
                   }
                 }
@@ -13736,7 +14182,7 @@
               ],
               "default": "active"
             },
-            "description": "Filter by status. Default returns active only; pass `inactive` to invert or `all` to include both. Inactive properties carry identity fields only \u2014 `id`, `name`, `status`, `lifecycleStatus`, `channels` and `updatedAt` \u2014 never `address`, `city` or `currency`."
+            "description": "Filter by status. Default returns active only; pass `inactive` to invert or `all` to include both. Inactive properties carry identity fields only \u2014 `id`, `name`, `city`, `status`, `inactiveReason` (`plan_limit`, `unlisted_on_airbnb` or `deactivated`), `lifecycleStatus`, `channels` and `updatedAt` \u2014 never `address` or `currency`."
           },
           {
             "name": "lifecycle_status",
@@ -14157,13 +14603,23 @@
       "post": {
         "operationId": "create_reservation",
         "summary": "Create a reservation",
-        "description": "Creates a reservation and everything that hangs off one: the guest, the conversation thread, the dashboard item, the calendar block, and the `reservation.created` fan-out that issues the door code and starts the messaging automations.\n\n**Platform is restricted to `direct`, `website` and `owner`.** Reservations on Airbnb, Booking.com and Vrbo are owned by the channel and arrive through sync \u2014 creating one here would mint a local booking the channel has never heard of, which then fights the next sync. Create those on the channel.\n\n**Dates are validated** (`YYYY-MM-DD`, and `checkOut` must be after `checkIn`), and an unrecognised field is rejected by name rather than silently ignored.\n\n**This endpoint does not set the price.** There is no `totalPrice` field: the reservation pipeline derives the price breakdown from the property's own rates and overwrites anything supplied, so accepting a total would be taking a value and discarding it. A reservation created here is priced by that engine (`0` when the property has no rates for the range). `currency` IS honoured. Quote a stay with `GET /v1/quotes` before booking if you need the figure up front.\n\n**Availability is NOT checked.** This creates the reservation you asked for even if the dates overlap an existing booking. Call `GET /v1/availability/{propertyId}` first if that matters.\n\nSend `Idempotency-Key` \u2014 a network timeout here is exactly the case it exists for: without it, a retry books the guest twice.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "description": "Creates a reservation \u2014 in the listing's PMS when it has one, otherwise as a direct booking in Repull.\n\n### Where the booking is made\n\n- **A listing managed in a connected PMS** (Mews, Cloudbeds, Hostaway, Guesty, Beds24, BookingSync, Lodgify, Smoobu, Hospitable, iGMS, OwnerRez): the booking is created **in the PMS first**, then recorded in Repull from the PMS's own record, so the next sync lands on the same confirmation code and nothing is duplicated. A booking is **never** created only in Repull for such a listing \u2014 the PMS would keep selling the dates. What the PMS cannot do is refused (`422 pms_write_unsupported`), never faked. The PMS checks availability: taken dates answer `409 pms_unavailable`.\n- **Any other listing**: a direct booking made in Repull, with everything that hangs off one \u2014 the guest, the conversation, the calendar block and the `reservation.created` fan-out that issues the door code and starts the messaging automations. Priced by the listing's own rates; **availability is NOT checked** (call `GET /v1/availability/{propertyId}` first if that matters).\n\n`GET /v1/listings/{id}` \u2192 `capabilities.reservations` says which applies to a listing and exactly what it supports (`create`, `modify`, `cancel`, `quote`, `customPrice`, plus `notes`).\n\n### Fields by listing kind\n\n| Field | PMS listing | Direct-booking listing |\n|---|---|---|\n| `listingId`, `checkIn`, `checkOut`, `guest`, `guestCount`, `adults`, `children` | \u2713 | \u2713 |\n| `status` | `confirmed` (default) or `tentative` | \u2713 |\n| `totalPrice` | \u2713 where `capabilities.reservations.customPrice`; otherwise the PMS prices the stay | `422 unsupported_field` (priced from the listing's rates) |\n| `notes`, `unitId`, `sendConfirmationEmail` | \u2713 | `422 unsupported_field` |\n| `checkInTime`, `checkOutTime`, `currency`, `guestId` | `422 unsupported_field` (the PMS's own settings apply) | \u2713 |\n| `platform` | `direct` or `website` (`owner` \u2192 `422 pms_write_unsupported`; block owner stays in the PMS) | `direct`, `website` or `owner` |\n\nA field a listing cannot take is refused by name, never silently dropped. `platform` never accepts `airbnb` / `booking` / `vrbo`: those reservations are owned by the channel and arrive through sync.\n\n### Per-PMS limits\n\n| PMS | create | change | cancel | quote | `totalPrice` | Limits |\n|---|---|---|---|---|---|---|\n| Mews | \u2713 | \u2713 | \u2713 | \u2013 | \u2713 | \u2014 |\n| Cloudbeds | \u2713 | \u2713 | \u2713 | \u2013 | \u2013 | Books at the rate plan's price; group bookings supported. |\n| Hostaway | \u2713 | \u2713 | \u2713 | \u2713 | \u2713 | Direct-channel bookings only; a specific unit is refused; a date change keeps the booked total. |\n| Guesty | \u2713 | \u2713 | \u2713 | \u2713 | \u2713 | Cancels direct and Vrbo bookings; other channel bookings are cancelled on the channel. |\n| Beds24 | \u2713 | \u2713 | \u2713 | \u2713 | \u2713 | Needs the `write:bookings` scope; a multi-room property needs `unitId`. |\n| BookingSync | \u2713 | \u2713 | \u2713 | \u2713 | \u2713 | Needs `bookings_write`; fees and taxes are not itemized; no guest email. |\n| Lodgify | \u2713 | \u2713 | \u2713 (declines) | \u2713 | \u2713 | Cancel declines the booking; single-room bookings. |\n| Smoobu | \u2713 | \u2713 (no dates) | \u2713 | \u2713 | \u2713 | Dates cannot be changed through Smoobu's API \u2014 cancel and rebook, or change them in Smoobu. |\n| Hospitable | \u2713 | \u2713 | \u2713 | \u2713 (Direct plan) | \u2713 | Manual reservations only; needs `reservation:write`; adds no fees or taxes. |\n| iGMS | \u2713 | \u2713 | \u2713 | \u2013 | \u2713 (required) | iGMS direct bookings only; a price is required; no tentative holds. |\n| OwnerRez | \u2713 | \u2713 | \u2013 | \u2713 | \u2013 | No cancel through OwnerRez's API; priced by the property's own rates; needs the `full` scope. |\n\nEvery PMS except Cloudbeds refuses group bookings, and every vacation-rental PMS refuses to change or cancel a booking that came from a channel (Airbnb, Booking.com, Vrbo\u2026) \u2014 that is done on the channel.\n\n**Verification.** Mews and Cloudbeds were run end to end on their vendors' sandboxes. Every other PMS is **verified against the vendor's API documentation only** \u2014 no live account has been written to yet. `capabilities.reservations.verifiedAgainst` says which.\n\n### Idempotency\n\n**Send `Idempotency-Key`.** A network timeout here is exactly the case it exists for. The key is also sent to the PMS as the booking's reference, so even a retry that reaches the PMS again finds the booking instead of making a second one (`409 pms_duplicate` with `existing`, or the existing booking returned). A completed answer is replayed with `Idempotency-Status: cached` and the PMS is not called again. `502 pms_error` (the PMS could not be reached) is NOT stored \u2014 retry with the same key. `502 reservation_created_in_pms_only` IS stored, unlike every other 5xx: the booking exists in the PMS and arrives with the next sync, so a retry replays that answer rather than booking twice.\n\n### Partial success\n\nWhen the PMS created the booking but a follow-up step did not apply (for example the notes, or a tentative state), the response is still `201`, with `pms.partial: true` and the steps in `pms.failedSections`. The booking exists \u2014 do not create it again.\n\n`X-Account-Id` restricts the listing to one connected account. Returns `403 listing_inactive` when the listing is inactive.",
         "tags": [
           "Reservations"
         ],
         "parameters": [
           {
             "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "name": "X-Account-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "126"
+            },
+            "description": "Restrict the request to one connected account (a Repull connection id, `GET /v1/connect` \u2192 `id`). A listing or reservation outside that account answers `404 not_found`. Omit it to act workspace-wide."
           }
         ],
         "requestBody": {
@@ -14172,17 +14628,159 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/ReservationCreateRequest"
+              },
+              "examples": {
+                "pms": {
+                  "summary": "A listing managed in a PMS, at a set price",
+                  "value": {
+                    "listingId": 4118,
+                    "checkIn": "2026-10-01",
+                    "checkOut": "2026-10-05",
+                    "guest": {
+                      "firstName": "Ada",
+                      "lastName": "Lovelace",
+                      "email": "ada@example.com",
+                      "phone": "+14035551234"
+                    },
+                    "adults": 2,
+                    "children": 1,
+                    "totalPrice": 880,
+                    "notes": "Late arrival, around 22:00.",
+                    "status": "confirmed",
+                    "sendConfirmationEmail": false
+                  }
+                },
+                "direct": {
+                  "summary": "A direct booking on a listing no PMS manages",
+                  "value": {
+                    "listingId": 4119,
+                    "checkIn": "2026-10-01",
+                    "checkOut": "2026-10-05",
+                    "guest": {
+                      "firstName": "Ada",
+                      "email": "ada@example.com"
+                    },
+                    "guestCount": 2,
+                    "checkInTime": "16:00",
+                    "currency": "USD"
+                  }
+                }
               }
             }
           }
         },
         "responses": {
           "201": {
-            "description": "Reservation created",
+            "description": "Reservation created. `pms` is present when it was booked in a PMS; `pms.partial: true` means the booking exists but `pms.failedSections` did not apply.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ReservationCreateResponse"
+                },
+                "examples": {
+                  "pms": {
+                    "summary": "Booked in Hostaway",
+                    "value": {
+                      "id": "215708",
+                      "confirmationCode": "HA-4471923",
+                      "listingId": "4118",
+                      "platform": "direct",
+                      "status": "confirmed",
+                      "checkIn": "2026-10-01",
+                      "checkOut": "2026-10-05",
+                      "guestId": "91234",
+                      "totalPrice": 880,
+                      "currency": "USD",
+                      "unit": null,
+                      "pms": {
+                        "provider": "hostaway",
+                        "reservationId": "4471923",
+                        "applied": [
+                          "reservation"
+                        ],
+                        "errors": [],
+                        "partial": false,
+                        "failedSections": []
+                      }
+                    }
+                  },
+                  "partial": {
+                    "summary": "Booked in Smoobu; the notes did not apply",
+                    "value": {
+                      "id": "215709",
+                      "confirmationCode": "SM-1290031",
+                      "listingId": "4120",
+                      "platform": "direct",
+                      "status": "confirmed",
+                      "checkIn": "2026-10-01",
+                      "checkOut": "2026-10-05",
+                      "guestId": "91235",
+                      "totalPrice": 640,
+                      "currency": "EUR",
+                      "unit": null,
+                      "pms": {
+                        "provider": "smoobu",
+                        "reservationId": "1290031",
+                        "applied": [
+                          "reservation"
+                        ],
+                        "errors": [
+                          {
+                            "section": "notes",
+                            "code": "rejected",
+                            "message": "Smoobu: notice too long"
+                          }
+                        ],
+                        "partial": true,
+                        "failedSections": [
+                          {
+                            "section": "notes",
+                            "code": "rejected",
+                            "message": "Smoobu: notice too long"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "direct": {
+                    "summary": "A direct booking",
+                    "value": {
+                      "id": "215710",
+                      "confirmationCode": "DIR-8H2K4N",
+                      "listingId": "4119",
+                      "platform": "direct",
+                      "status": "confirmed",
+                      "checkIn": "2026-10-01",
+                      "checkOut": "2026-10-05",
+                      "guestId": "91236",
+                      "totalPrice": 0,
+                      "currency": "USD"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The body is not JSON.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "invalidJson": {
+                    "summary": "The body is not JSON",
+                    "value": {
+                      "error": {
+                        "code": "invalid_json",
+                        "message": "Request body is not valid JSON: Unexpected token",
+                        "fix": "Send a JSON object with `Content-Type: application/json`.",
+                        "docs_url": "https://repull.dev/docs/errors/invalid_json",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -14191,23 +14789,295 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/ListingInactive"
-          },
-          "404": {
-            "description": "The property, or the supplied `guestId`, does not exist in this workspace.",
+            "description": "The listing is inactive (`listing_inactive`), or the PMS connection lacks write access to bookings (`connection_reauth_required` \u2014 reconnect, then retry with the same key).",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "reauthRequired": {
+                    "summary": "The grant lacks write access to bookings",
+                    "value": {
+                      "error": {
+                        "code": "connection_reauth_required",
+                        "message": "Beds24 needs to be reconnected before Repull can create reservations there: Beds24: token lacks scope write:bookings",
+                        "fix": "Reconnect Beds24 with an invite code that grants `write:bookings` (plus `bookings-personal` and `bookings-financial`), then retry.",
+                        "docs_url": "https://repull.dev/docs/errors/connection_reauth_required",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "provider": "beds24",
+                        "reconnect": {
+                          "method": "POST",
+                          "path": "/v1/connect/beds24"
+                        }
+                      }
+                    }
+                  },
+                  "listingInactive": {
+                    "summary": "The listing is inactive",
+                    "value": {
+                      "error": {
+                        "code": "listing_inactive",
+                        "message": "Listing 4118 is inactive.",
+                        "fix": "Activate it with `PATCH /v1/listings/{id}` `{\"active\": true}`, then retry.",
+                        "docs_url": "https://repull.dev/docs/errors/listing_inactive",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The listing (or `guestId`) is not in this workspace, or not in the `X-Account-Id` account.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "notFound": {
+                    "summary": "Not in this workspace (or not in the X-Account-Id account)",
+                    "value": {
+                      "error": {
+                        "code": "not_found",
+                        "message": "Listing 4118 not found in this workspace.",
+                        "fix": "Verify the listing exists in this workspace (`GET /v1/listings`) and, with `X-Account-Id`, that it belongs to that account.",
+                        "docs_url": "https://repull.dev/docs/errors/not_found",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The PMS will not take it as asked: writes off for the API (`pms_writes_off`), no connection (`no_connection`), dates taken (`pms_unavailable`), or already booked with this key (`pms_duplicate`, with `existing`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "pmsWritesOff": {
+                    "summary": "The connection is set not to change bookings through the API",
+                    "value": {
+                      "error": {
+                        "code": "pms_writes_off",
+                        "message": "Bookings for this property are managed in its PMS, and this connection is set not to change them through the API. Nothing was sent to the PMS.",
+                        "fix": "Turn on `reservations.api` with `PATCH /v1/connect/{provider}/write-policy`, or make the change in the PMS.",
+                        "docs_url": "https://repull.dev/docs/connect/write-policy",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  },
+                  "noConnection": {
+                    "summary": "The listing is managed in a PMS this workspace is no longer connected to",
+                    "value": {
+                      "error": {
+                        "code": "no_connection",
+                        "message": "Listing 4118 is managed in Hostaway, but there is no Hostaway connection.",
+                        "fix": "The listing is managed in Hostaway, but this workspace has no connection to it. Reconnect with `POST /v1/connect/hostaway`, then retry. Nothing was sent to the PMS.",
+                        "docs_url": "https://repull.dev/docs/errors/no_connection",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "provider": "hostaway",
+                        "reconnect": {
+                          "method": "POST",
+                          "path": "/v1/connect/hostaway"
+                        }
+                      }
+                    }
+                  },
+                  "pmsUnavailable": {
+                    "summary": "The dates are taken in the PMS",
+                    "value": {
+                      "error": {
+                        "code": "pms_unavailable",
+                        "message": "Guesty cannot take it: Guesty: listing is not available for the requested dates",
+                        "fix": "Guesty says the dates (or the unit) are not available. Pick other dates, or check them first with `POST /v1/reservations/quote`. Nothing was booked.",
+                        "docs_url": "https://repull.dev/docs/errors/pms_unavailable",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "provider": "guesty",
+                        "pms": {
+                          "applied": [],
+                          "errors": [
+                            {
+                              "section": "reservation",
+                              "code": "unavailable",
+                              "message": "Guesty: listing is not available for the requested dates"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "pmsDuplicate": {
+                    "summary": "The PMS already holds a booking with this Idempotency-Key",
+                    "value": {
+                      "error": {
+                        "code": "pms_duplicate",
+                        "message": "Guesty already holds this booking: Guesty: a reservation with this originId already exists",
+                        "fix": "This request was already made with the same idempotency key; look the booking up instead of creating it again.",
+                        "docs_url": "https://repull.dev/docs/errors/pms_duplicate",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "provider": "guesty",
+                        "existing": {
+                          "externalId": "64f1c2a9e1b2",
+                          "confirmationCode": "GY-a1B2c3D4"
+                        }
+                      }
+                    }
+                  }
                 }
               }
             }
           },
           "422": {
-            "$ref": "#/components/responses/UnprocessableEntity"
+            "description": "Invalid field (`invalid_params`), a field this listing cannot take (`unsupported_field`), something the PMS's API cannot do (`pms_write_unsupported`), the PMS refused the content (`pms_rejected`), or the pipeline declined (`reservation_not_created`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "invalidParams": {
+                    "summary": "A field failed validation",
+                    "value": {
+                      "error": {
+                        "code": "invalid_params",
+                        "message": "`checkOut` is invalid: `checkOut` (2026-10-01) must be after `checkIn` (2026-10-05) \u2014 a stay spans at least one night.",
+                        "fix": "Send the departure date as `YYYY-MM-DD`, after `checkIn`, e.g. `\"checkOut\": \"2026-10-05\"`.",
+                        "docs_url": "https://repull.dev/docs/errors/invalid_params",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "field": "checkOut",
+                        "value_received": "2026-10-01"
+                      }
+                    }
+                  },
+                  "unsupportedFieldPms": {
+                    "summary": "A direct-booking-only field on a PMS listing",
+                    "value": {
+                      "error": {
+                        "code": "unsupported_field",
+                        "message": "`checkInTime` cannot be set on a booking made in Hostaway: arrival and departure times come from the property's settings in the PMS.",
+                        "fix": "`GET /v1/listings/{id}` \u2192 `capabilities.reservations` shows what the listing supports. `totalPrice`, `notes`, `unitId` and `sendConfirmationEmail` are honoured only on listings managed in a PMS; `checkInTime`, `checkOutTime`, `currency` and `guestId` only on listings that are not.",
+                        "docs_url": "https://repull.dev/docs/errors/unsupported_field",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "provider": "hostaway",
+                        "fields": [
+                          "checkInTime"
+                        ]
+                      }
+                    }
+                  },
+                  "unsupportedFieldDirect": {
+                    "summary": "A PMS-only field on a direct-booking listing",
+                    "value": {
+                      "error": {
+                        "code": "unsupported_field",
+                        "message": "`totalPrice` is only honoured for listings managed in a PMS. This listing is not.",
+                        "fix": "`GET /v1/listings/{id}` \u2192 `capabilities.reservations` shows what the listing supports. `totalPrice`, `notes`, `unitId` and `sendConfirmationEmail` are honoured only on listings managed in a PMS; `checkInTime`, `checkOutTime`, `currency` and `guestId` only on listings that are not.",
+                        "docs_url": "https://repull.dev/docs/errors/unsupported_field",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "fields": [
+                          "totalPrice"
+                        ]
+                      }
+                    }
+                  },
+                  "pmsWriteUnsupported": {
+                    "summary": "Owner stays on a PMS listing",
+                    "value": {
+                      "error": {
+                        "code": "pms_write_unsupported",
+                        "message": "Bookings for this listing are managed in Hostaway. Block owner stays in Hostaway; the block reaches Repull with the next sync.",
+                        "fix": "Hostaway's API cannot create this booking. Do it in Hostaway; the change reaches Repull with the next sync.",
+                        "docs_url": "https://repull.dev/docs/errors/pms_write_unsupported",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "provider": "hostaway"
+                      }
+                    }
+                  },
+                  "pmsRejected": {
+                    "summary": "The PMS refused the content",
+                    "value": {
+                      "error": {
+                        "code": "pms_rejected",
+                        "message": "Hostaway refused to create the reservation: Hostaway: guestEmail is invalid",
+                        "fix": "Hostaway refused it; its reason is in `message`. Nothing was changed. Correct the request and retry with a NEW `Idempotency-Key`.",
+                        "docs_url": "https://repull.dev/docs/errors/pms_rejected",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "provider": "hostaway",
+                        "pms": {
+                          "applied": [],
+                          "errors": [
+                            {
+                              "section": "reservation",
+                              "code": "rejected",
+                              "message": "Hostaway: guestEmail is invalid"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           },
           "500": {
             "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "description": "The PMS could not be reached (`pms_error` \u2014 nothing confirmed; retry with the same key), or the booking was created in the PMS but not yet recorded in Repull (`reservation_created_in_pms_only` \u2014 do NOT retry; replayed for the same key).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "pmsError": {
+                    "summary": "The PMS could not be reached \u2014 retry with the same key",
+                    "value": {
+                      "error": {
+                        "code": "pms_error",
+                        "message": "Smoobu could not be reached to create the reservation: timeout of 30000ms exceeded",
+                        "fix": "Nothing was changed. Retry with the same idempotency key.",
+                        "docs_url": "https://repull.dev/docs/errors/pms_error",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "provider": "smoobu"
+                      }
+                    }
+                  },
+                  "createdInPmsOnly": {
+                    "summary": "Created in the PMS, not yet recorded in Repull \u2014 do NOT retry",
+                    "value": {
+                      "error": {
+                        "code": "reservation_created_in_pms_only",
+                        "message": "Created in Lodgify (LG-88231) but its record could not be read here. It will arrive with the next sync.",
+                        "fix": "Do NOT retry. The booking exists in Lodgify (see `existing`) but could not be recorded in Repull yet; it arrives with the next sync and `reservation.created` fires then. Retrying with the same `Idempotency-Key` replays this answer.",
+                        "docs_url": "https://repull.dev/docs/errors/reservation_created_in_pms_only",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "provider": "lodgify",
+                        "existing": {
+                          "externalId": "88231",
+                          "confirmationCode": "LG-88231"
+                        },
+                        "pms": {
+                          "applied": [
+                            "reservation"
+                          ],
+                          "errors": []
+                        },
+                        "retryable": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -14265,7 +15135,7 @@
       "patch": {
         "operationId": "update_reservation",
         "summary": "Update a reservation",
-        "description": "Changes the dates, the occupancy, or the unit. Drives the same command path the dashboard does, so the side effects come with it: the change audit is appended, bound task due dates re-sync, the old calendar dates unblock and the new ones block, the conversation's cached listing is invalidated, and `reservation.updated` fires \u2014 which is what revokes and re-issues the door code.\n\nSupply at least one field; an empty body returns 422 rather than a 200 that changed nothing.\n\n**Moving and re-dating in one call is one operation.** Send `listingId` together with `checkIn`/`checkOut` and it is applied as a single move, so the access code is re-issued once rather than twice.\n\n### Fields this endpoint deliberately does NOT accept\n\nEach is rejected by name with the reason, never accepted and ignored:\n\n| Field | Why |\n|---|---|\n| `guest` / `guestDetails` | Guest name, email and phone live on the guest record. The underlying command has no branch for them, so accepting them would return a success that changed nothing. |\n| `pricing` / `totalPrice` / `currency` | Repricing writes the price breakdown, the pricing row and a pricing-history entry. It belongs to its own endpoint. |\n| `status` | Not a field. Cancelling, confirming and checking out are separate operations with materially different side effects \u2014 cancellation issues a credit refund and revokes access codes. |\n| `platform` | Immutable: it records where the booking actually originated. |\n| `notes` | `internal_notes` is an append-only audit trail the system writes on every change. |\n\n**Availability is NOT checked.** A date change that overlaps another booking will be written. Call `GET /v1/availability/{propertyId}` first if that matters.\n\nReturns `403 listing_inactive` when the reservation is on an inactive listing, or when a `listingId` move targets one; nothing is changed.",
+        "description": "Changes the dates, the occupancy, or the unit.\n\n**A stay managed in a connected PMS is changed in the PMS first**, then Repull's copy is refreshed from the PMS's record \u2014 changing only Repull's copy would be reverted by the next sync. On such a stay, `checkIn`, `checkOut` and `guestCount` are changed; moving it to another listing and changing its check-in/check-out times are done in the PMS (`422 pms_write_unsupported`), as is anything the PMS's API cannot change (for example dates on Smoobu). A channel booking that came in through the PMS (Airbnb, Booking.com, \u2026) is changed on the channel (`409 reservation_owned_by_channel`). The PMS checks availability: taken dates answer `409 pms_unavailable`. The PMS's outcome comes back as `pms`. `GET /v1/listings/{id}` \u2192 `capabilities.reservations.modify` says whether a listing's PMS supports changes.\n\n**Any other stay** drives the same command path the dashboard does, so the side effects come with it: the change audit is appended, bound task due dates re-sync, the old calendar dates unblock and the new ones block, the conversation's cached listing is invalidated, and `reservation.updated` fires \u2014 which is what revokes and re-issues the door code.\n\nSupply at least one field; an empty body returns 422 rather than a 200 that changed nothing.\n\n**Moving and re-dating in one call is one operation.** Send `listingId` together with `checkIn`/`checkOut` and it is applied as a single move, so the access code is re-issued once rather than twice.\n\n### Fields this endpoint deliberately does NOT accept\n\nEach is rejected by name with the reason, never accepted and ignored:\n\n| Field | Why |\n|---|---|\n| `guest` / `guestDetails` | Guest name, email and phone live on the guest record. The underlying command has no branch for them, so accepting them would return a success that changed nothing. |\n| `pricing` / `totalPrice` / `currency` | Repricing writes the price breakdown, the pricing row and a pricing-history entry. It belongs to its own endpoint. |\n| `status` | Not a field. Cancelling, confirming and checking out are separate operations with materially different side effects \u2014 cancellation issues a credit refund and revokes access codes. |\n| `platform` | Immutable: it records where the booking actually originated. |\n| `notes` | `internal_notes` is an append-only audit trail the system writes on every change. |\n\n**Availability is NOT checked for stays outside a PMS.** A date change that overlaps another booking will be written. Call `GET /v1/availability/{propertyId}` first if that matters.\n\n`X-Account-Id` restricts the reservation (and a listing it is moved to) to one connected account. Returns `403 listing_inactive` when the reservation is on an inactive listing, or when a `listingId` move targets one; nothing is changed.",
         "tags": [
           "Reservations"
         ],
@@ -14281,6 +15151,16 @@
           },
           {
             "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "name": "X-Account-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "126"
+            },
+            "description": "Restrict the request to one connected account (a Repull connection id, `GET /v1/connect` \u2192 `id`). A listing or reservation outside that account answers `404 not_found`. Omit it to act workspace-wide."
           }
         ],
         "requestBody": {
@@ -14308,7 +15188,33 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/ListingInactive"
+            "description": "The reservation (or the listing it is moved to) is inactive (`listing_inactive`), or the PMS connection lacks write access to bookings (`connection_reauth_required`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "reauthRequired": {
+                    "summary": "The grant lacks write access to bookings",
+                    "value": {
+                      "error": {
+                        "code": "connection_reauth_required",
+                        "message": "Beds24 needs to be reconnected before Repull can create reservations there: Beds24: token lacks scope write:bookings",
+                        "fix": "Reconnect Beds24 with an invite code that grants `write:bookings` (plus `bookings-personal` and `bookings-financial`), then retry.",
+                        "docs_url": "https://repull.dev/docs/errors/connection_reauth_required",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "provider": "beds24",
+                        "reconnect": {
+                          "method": "POST",
+                          "path": "/v1/connect/beds24"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           },
           "404": {
             "description": "The reservation, or the destination property when moving, does not exist in this workspace.",
@@ -14320,11 +15226,186 @@
               }
             }
           },
+          "409": {
+            "description": "The PMS will not change it: writes off for the API (`pms_writes_off`), no connection (`no_connection`), dates taken (`pms_unavailable`), a channel booking (`reservation_owned_by_channel`), or part of a group booking (`pms_group_booking`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "pmsWritesOff": {
+                    "summary": "The connection is set not to change bookings through the API",
+                    "value": {
+                      "error": {
+                        "code": "pms_writes_off",
+                        "message": "Bookings for this property are managed in its PMS, and this connection is set not to change them through the API. Nothing was sent to the PMS.",
+                        "fix": "Turn on `reservations.api` with `PATCH /v1/connect/{provider}/write-policy`, or make the change in the PMS.",
+                        "docs_url": "https://repull.dev/docs/connect/write-policy",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  },
+                  "noConnection": {
+                    "summary": "The listing is managed in a PMS this workspace is no longer connected to",
+                    "value": {
+                      "error": {
+                        "code": "no_connection",
+                        "message": "Listing 4118 is managed in Hostaway, but there is no Hostaway connection.",
+                        "fix": "The listing is managed in Hostaway, but this workspace has no connection to it. Reconnect with `POST /v1/connect/hostaway`, then retry. Nothing was sent to the PMS.",
+                        "docs_url": "https://repull.dev/docs/errors/no_connection",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "provider": "hostaway",
+                        "reconnect": {
+                          "method": "POST",
+                          "path": "/v1/connect/hostaway"
+                        }
+                      }
+                    }
+                  },
+                  "pmsUnavailable": {
+                    "summary": "The dates are taken in the PMS",
+                    "value": {
+                      "error": {
+                        "code": "pms_unavailable",
+                        "message": "Guesty cannot take it: Guesty: listing is not available for the requested dates",
+                        "fix": "Guesty says the dates (or the unit) are not available. Pick other dates, or check them first with `POST /v1/reservations/quote`. Nothing was booked.",
+                        "docs_url": "https://repull.dev/docs/errors/pms_unavailable",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "provider": "guesty",
+                        "pms": {
+                          "applied": [],
+                          "errors": [
+                            {
+                              "section": "reservation",
+                              "code": "unavailable",
+                              "message": "Guesty: listing is not available for the requested dates"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "ownedByChannel": {
+                    "summary": "A channel booking (incl. one relayed through a PMS)",
+                    "value": {
+                      "error": {
+                        "code": "reservation_owned_by_channel",
+                        "message": "This reservation came from airbnb through Hostaway. Change it on airbnb; the change reaches this workspace with the next sync.",
+                        "fix": "This booking belongs to a channel (Airbnb, Booking.com, Vrbo, \u2026). Change it on the channel; the change reaches Repull with the next sync and the matching webhook fires.",
+                        "docs_url": "https://repull.dev/docs/errors/reservation_owned_by_channel",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "provider": "hostaway",
+                        "owner": "airbnb"
+                      }
+                    }
+                  },
+                  "groupBooking": {
+                    "summary": "Part of a group booking in the PMS",
+                    "value": {
+                      "error": {
+                        "code": "pms_group_booking",
+                        "message": "This stay is one room of a Cloudbeds group booking; change it in Cloudbeds.",
+                        "fix": "This stay is part of a group booking in Cloudbeds. Change or cancel group bookings in Cloudbeds; the change reaches Repull with the next sync.",
+                        "docs_url": "https://repull.dev/docs/errors/pms_group_booking",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "provider": "cloudbeds"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "422": {
-            "$ref": "#/components/responses/UnprocessableEntity"
+            "description": "Invalid or refused field (`invalid_params`, `unsupported_field`), something the PMS's API cannot change (`pms_write_unsupported`), the PMS refused the change (`pms_rejected`), or the command declined (`reservation_not_modified`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "invalidParams": {
+                    "summary": "A field failed validation",
+                    "value": {
+                      "error": {
+                        "code": "invalid_params",
+                        "message": "`checkOut` is invalid: `checkOut` (2026-10-01) must be after `checkIn` (2026-10-05) \u2014 a stay spans at least one night.",
+                        "fix": "Send the departure date as `YYYY-MM-DD`, after `checkIn`, e.g. `\"checkOut\": \"2026-10-05\"`.",
+                        "docs_url": "https://repull.dev/docs/errors/invalid_params",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "field": "checkOut",
+                        "value_received": "2026-10-01"
+                      }
+                    }
+                  },
+                  "pmsWriteUnsupported": {
+                    "summary": "Dates on Smoobu",
+                    "value": {
+                      "error": {
+                        "code": "pms_write_unsupported",
+                        "message": "Smoobu cannot change the dates of a booking through its API. Cancel and rebook, or change them in Smoobu.",
+                        "fix": "Smoobu's API cannot change this booking. Do it in Smoobu; the change reaches Repull with the next sync.",
+                        "docs_url": "https://repull.dev/docs/errors/pms_write_unsupported",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "provider": "smoobu"
+                      }
+                    }
+                  },
+                  "pmsRejected": {
+                    "summary": "The PMS refused the content",
+                    "value": {
+                      "error": {
+                        "code": "pms_rejected",
+                        "message": "Hostaway refused to create the reservation: Hostaway: guestEmail is invalid",
+                        "fix": "Hostaway refused it; its reason is in `message`. Nothing was changed. Correct the request and retry with a NEW `Idempotency-Key`.",
+                        "docs_url": "https://repull.dev/docs/errors/pms_rejected",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "provider": "hostaway",
+                        "pms": {
+                          "applied": [],
+                          "errors": [
+                            {
+                              "section": "reservation",
+                              "code": "rejected",
+                              "message": "Hostaway: guestEmail is invalid"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           },
           "500": {
             "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "description": "The PMS could not be reached (`pms_error`) \u2014 nothing was changed; retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "pmsError": {
+                    "summary": "The PMS could not be reached \u2014 retry with the same key",
+                    "value": {
+                      "error": {
+                        "code": "pms_error",
+                        "message": "Smoobu could not be reached to create the reservation: timeout of 30000ms exceeded",
+                        "fix": "Nothing was changed. Retry with the same idempotency key.",
+                        "docs_url": "https://repull.dev/docs/errors/pms_error",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "provider": "smoobu"
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -15444,7 +16525,7 @@
       "get": {
         "operationId": "list_connections",
         "summary": "List PMS/OTA connections",
-        "description": "Returns all active connections to PMS and OTA platforms.",
+        "description": "Returns every PMS and OTA connection in the workspace, each with its `status`.\n\n**Spot connections that need attention.** A connection whose `status` is not `active` may need the host to do something before it works \u2014 most commonly a Booking.com Extranet connection where the invited user was granted only partial access (`status: \"needs_permissions\"`). A Smoobu connection still on a legacy single API key carries `action.reason: \"reauth_required\"` while its `status` is `active`: Smoobu stops accepting those keys on October 31, 2026, and `fixUrl` opens the form for a new API key + secret (the connection id stays the same). These connections carry two extra fields:\n\n- `action` \u2014 `{ required: true, reason, message }`. `reason` is a stable machine code (e.g. `needs_permissions`); `message` is a host-facing one-liner describing what to do.\n- `fixUrl` \u2014 a durable link that reopens the hosted Connect flow **bound to that account, on the fix screen** (e.g. \"grant full access\" + a Re-check button). It is safe to store and show in your own dashboard.\n\n**Self-serve repair:** when `action.required` is true, surface a \"Fix\" button that opens `fixUrl` in a new tab (or embed it). The host resolves the issue (e.g. grants the user full access in Booking.com) and clicks Re-check; the import finishes on its own and the connection flips back to `active` \u2014 no re-invite, no support ticket. Poll this endpoint (or read it after the host returns) to confirm `action` has cleared.",
         "tags": [
           "Connect"
         ],
@@ -15487,6 +16568,13 @@
                     "type": "string",
                     "nullable": true,
                     "description": "Your own correlation token, e.g. your user id (at most 500 characters). Echoed in this response, on the redirect back (`&state=`), in the popup message, and in the `connect.session.completed` webhook."
+                  },
+                  "reservationHistoryMonths": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 60,
+                    "example": 24,
+                    "description": "Airbnb \u2014 how many months of past reservations the first import pulls (1\u201360). Omit it for the default window. Upcoming stays are always imported. A wider window takes longer to import, because every extra month is more stays to fetch."
                   },
                   "accessType": {
                     "type": "string",
@@ -15739,6 +16827,13 @@
                     ],
                     "default": "full_access",
                     "description": "Airbnb only \u2014 selects the OAuth scope set. 'read_only' grants read-only scopes; 'messaging' grants read scopes plus message read/send but NOT property management, so it can coexist with another app (e.g. an existing PMS) that already holds property management on the same Airbnb account; 'full_access' (default) grants full host scopes including the exclusive property management (only one app per Airbnb account can hold it). The hosted consent screen normally lets the host pick a tier; passing `accessType` explicitly fixes the tier and hides that choice, so the host can only continue with the tier you requested. Omit it to let the host choose."
+                  },
+                  "reservationHistoryMonths": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 60,
+                    "example": 24,
+                    "description": "Airbnb \u2014 how many months of past reservations the first import pulls (1\u201360). Omit it for the default window. Upcoming stays are always imported. A wider window takes longer to import, because every extra month is more stays to fetch."
                   },
                   "state": {
                     "type": "string",
@@ -16399,7 +17494,7 @@
       "post": {
         "operationId": "submitSmoobuCredentials",
         "summary": "Submit Smoobu credentials for a Connect session",
-        "description": "Completes a credentials-pattern connection for Smoobu. API key from Smoobu \u2192 Settings \u2192 For developers.\n\nThe credentials are validated against Smoobu before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.\n\nNo API key required when called with a `sessionId` \u2014 the session is the capability token.",
+        "description": "Completes a credentials-pattern connection for Smoobu with an HMAC API key + API secret, created in Smoobu \u2192 Settings \u2192 Advanced \u2192 API Keys (Create API Key, then Generate Secret \u2014 the secret is shown only once). Smoobu retires single legacy API keys on October 31, 2026, so `apiSecret` is required; a request with only `apiKey` returns `invalid_params`.\n\nReconnecting replaces the stored credentials on the workspace's existing Smoobu connection \u2014 the `pmsConnectionId` stays the same.\n\nThe credentials are validated against Smoobu before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.\n\nNo API key required when called with a `sessionId` \u2014 the session is the capability token.",
         "tags": [
           "Connect"
         ],
@@ -16417,7 +17512,21 @@
                   "credentials": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "API key from Smoobu \u2192 Settings \u2192 For developers."
+                    "description": "HMAC API key + secret from Smoobu \u2192 Settings \u2192 Advanced \u2192 API Keys.",
+                    "properties": {
+                      "apiKey": {
+                        "type": "string",
+                        "description": "Smoobu API key."
+                      },
+                      "apiSecret": {
+                        "type": "string",
+                        "description": "Smoobu API secret (shown once when generated)."
+                      }
+                    },
+                    "required": [
+                      "apiKey",
+                      "apiSecret"
+                    ]
                   }
                 },
                 "required": [
@@ -17755,11 +18864,26 @@
       "get": {
         "operationId": "list_airbnb_listings",
         "summary": "List Airbnb listings",
-        "description": "List every Airbnb listing this workspace has access to via the connected Airbnb account. **Pure DB read \u2014 never calls Airbnb upstream.** The connect flow is what populates the local cache; the API serves what's already there. Customers with a disconnected host still see their last-synced data, with the top-level `dataFreshness` envelope flagging the staleness and pointing at the reconnect URL.\n\nPass `?include=amenities` to enrich each connection with its locally-cached amenity set. Returns `null` per connection when the cache is empty.\n\nPass `?include=thumbnail` to add `thumbnailUrl` to each listing \u2014 one extra column on the query that already runs, so a selection screen renders from a single request instead of one call per listing. `null` when the listing has no thumbnail stored. Combine comma-separated, e.g. `?include=amenities,thumbnail`.\n\n**Can this listing be written to?** Every connection carries `syncCategory` \u2014 Airbnb's own per-listing API sync decision (`sync_all`, `sync_rates_and_availability`, or `none`) \u2014 and `writable`, which is `false` exactly when that category is `none`. Airbnb authorises sync one listing at a time, so a connected account can still hold listings Airbnb refuses every write to; a write to one of those returns `403 listing_not_api_connected` before anything is sent, and reconnecting the account does not change it (the host must switch the listing on in Airbnb). Check `writable` here before a portfolio-wide push instead of discovering it one 403 at a time.\n\nInactive listings are left out; they keep syncing and reappear once activated. Use `GET /v1/listings?status=inactive` to find them.\n\n**Several Airbnb accounts?** A workspace can connect more than one. By default this returns every connected account's rows; pass `?account_id=<airbnb host id>` to scope to one. Every row carries `accountId` + `accountName` either way, and `dataFreshness.accounts[]` reports each account's freshness separately, so one disconnected host no longer marks the whole response stale.",
+        "description": "List every Airbnb listing this workspace has access to via the connected Airbnb account. **Pure DB read \u2014 never calls Airbnb upstream.** The connect flow is what populates the local cache; the API serves what's already there. Customers with a disconnected host still see their last-synced data, with the top-level `dataFreshness` envelope flagging the staleness and pointing at the reconnect URL.\n\nPass `?include=amenities` to enrich each connection with its locally-cached amenity set. Returns `null` per connection when the cache is empty.\n\nPass `?include=thumbnail` to add `thumbnailUrl` to each listing \u2014 one extra column on the query that already runs, so a selection screen renders from a single request instead of one call per listing. `null` when the listing has no thumbnail stored. Combine comma-separated, e.g. `?include=amenities,thumbnail`.\n\n**Can this listing be written to?** Every connection carries `syncCategory` \u2014 Airbnb's own per-listing API sync decision (`sync_all`, `sync_rates_and_availability`, or `none`) \u2014 and `writable`, which is `false` exactly when that category is `none`. Airbnb authorises sync one listing at a time, so a connected account can still hold listings Airbnb refuses every write to; a write to one of those returns `403 listing_not_api_connected` before anything is sent, and reconnecting the account does not change it (the host must switch the listing on in Airbnb). Check `writable` here before a portfolio-wide push instead of discovering it one 403 at a time.\n\nInactive listings are left out unless `?status=inactive|all` asks for them; they then come back with identity fields only \u2014 `listingId`, `name`, `city`, `status`, `inactiveReason` (`plan_limit`, `unlisted_on_airbnb` or `deactivated`) and each connection's ids and account \u2014 so you can show the user what to activate. They keep syncing and are complete again once activated.\n\n**Several Airbnb accounts?** A workspace can connect more than one. By default this returns every connected account's rows; pass `?account_id=<airbnb host id>` to scope to one. Every row carries `accountId` + `accountName` either way, and `dataFreshness.accounts[]` reports each account's freshness separately, so one disconnected host no longer marks the whole response stale.",
         "tags": [
           "Airbnb"
         ],
         "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "active",
+                "inactive",
+                "all"
+              ],
+              "default": "active"
+            },
+            "description": "`active` (default) leaves inactive listings out. `inactive` returns only them and `all` returns both. An inactive listing comes back with identity fields only (ids, `name`, `city`, `status`, `inactiveReason`, its account), which is enough to show what can be activated. Every row carries `status`."
+          },
           {
             "$ref": "#/components/parameters/AirbnbAccountId"
           },
@@ -20434,8 +21558,8 @@
       },
       "put": {
         "operationId": "update_airbnb_checkin_guide",
-        "summary": "Upsert Airbnb check-in guide",
-        "description": "Upsert the check-in guide for one locale on an Airbnb listing. **Write-side** \u2014 calls Airbnb upstream; the DB mirror is reconciled by the sync worker once the upstream call returns. Target the locale with `?locale=en` (defaults to `en`). Requires a connected Airbnb host, else `404 no_connection`.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "summary": "Replace the steps of an Airbnb check-in guide",
+        "description": "Write the check-in guide guests see before arrival: an ordered list of text steps. **Replaces** every existing step, so send the whole guide; `{\"steps\": []}` removes them all. The response is the guide re-read from Airbnb after the write.\n\nIf the listing has no guide yet, one is created in `locale` (default: the existing guide's, else `en`).\n\nSafe on failure: the new steps are created before the old ones are removed, and if a create fails the steps this call added are removed again, so the guide is never left emptier than it was.\n\nText steps only. Steps with photos need Airbnb's media upload and are not supported here yet. For the other arrival details use `PUT /v1/channels/airbnb/listings/{id}/details`: `check_in_option.instruction` (arrival instructions), `house_manual`, `directions`, `wifi_network`, `wifi_password`.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
         "tags": [
           "Airbnb"
         ],
@@ -20448,21 +21572,104 @@
               "type": "string"
             },
             "description": "Repull listing id (numeric string)."
-          },
-          {
-            "name": "locale",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "en"
-            },
-            "description": "Locale to upsert. Defaults to `en`."
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "steps"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "locale": {
+                    "type": "string",
+                    "example": "en",
+                    "description": "Language of the guide when one has to be created. Ignored when the listing already has a guide."
+                  },
+                  "steps": {
+                    "type": "array",
+                    "maxItems": 30,
+                    "description": "The guide's steps, in the order guests see them.",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "notes"
+                      ],
+                      "additionalProperties": false,
+                      "properties": {
+                        "notes": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 5000
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "steps": [
+                  {
+                    "notes": "The lockbox is to the right of the front door. Your code arrives by message on the day of arrival."
+                  },
+                  {
+                    "notes": "Parking: use spot 12 in the garage under the building."
+                  }
+                ]
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
-            "description": "Check-in guide upserted"
+            "description": "The guide as Airbnb holds it after the write",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "listingId": {
+                          "type": "integer"
+                        },
+                        "locale": {
+                          "type": "string"
+                        },
+                        "published": {
+                          "type": "boolean",
+                          "nullable": true
+                        },
+                        "steps": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "integer"
+                              },
+                              "notes": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "mediaUrl": {
+                                "type": "string",
+                                "nullable": true
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
@@ -22257,7 +23464,7 @@
               ],
               "default": "active"
             },
-            "description": "Filter by listing status. Defaults to `active`. Pass `inactive` to list the listings you can activate, `archived` for archived ones, or `all` for every status. Inactive listings are returned with identity fields only \u2014 `id`, `name`, `status` and `channels` \u2014 and never with `address`, `content` or `details`; activate one to see the rest. The only field you can add to an inactive row is `thumbnailUrl`, via `?include=thumbnail`."
+            "description": "Filter by listing status. Defaults to `active`. Pass `inactive` to list the listings you can activate, `archived` for archived ones, or `all` for every status. Inactive listings are returned with identity fields only \u2014 `id`, `name`, `status`, `inactiveReason` (`plan_limit`, `unlisted_on_airbnb` or `deactivated`), `address.city` and `channels` \u2014 and never with the street, `content` or `details`; activate one to see the rest. The only field you can add to an inactive row is `thumbnailUrl`, via `?include=thumbnail`."
           },
           {
             "name": "channel",
@@ -22936,9 +24143,26 @@
       "get": {
         "operationId": "list_booking_properties",
         "summary": "List Booking.com properties",
-        "description": "List every Booking.com property this workspace holds. Each property is returned ONCE, with the Repull listings mapped under it.\n\nA Booking.com property is a building; its rooms are what guests book, and each room is mapped to one Repull listing \u2014 so one property routinely carries many listings. `listings[].roomBookingId` is the Booking.com room id an ARI write takes.\n\nA property whose rooms are not mapped yet is still listed, with `mappingStatus: \"unmapped\"` and an empty `listings` array. That is a real mid-onboarding state, not an error: finish `POST /v1/connect/booking/map-rooms` and the listings appear. Such a property used to be dropped silently, which made a mapped-but-unreadable workspace indistinguishable from one with no Booking connection at all.\n\nInactive listings are left out of `listings`; they keep syncing and reappear once activated. Use `GET /v1/listings?status=inactive` to find them.",
+        "description": "List every Booking.com property this workspace holds. Each property is returned ONCE, with the Repull listings mapped under it.\n\nA Booking.com property is a building; its rooms are what guests book, and each room is mapped to one Repull listing \u2014 so one property routinely carries many listings. `listings[].roomBookingId` is the Booking.com room id an ARI write takes.\n\nA property whose rooms are not mapped yet is still listed, with `mappingStatus: \"unmapped\"` and an empty `listings` array. That is a real mid-onboarding state, not an error: finish `POST /v1/connect/booking/map-rooms` and the listings appear. Such a property used to be dropped silently, which made a mapped-but-unreadable workspace indistinguishable from one with no Booking connection at all.\n\nInactive listings are left out of `listings` unless `?status=inactive|all` asks for them; they then appear with identity fields only (`listingId`, `name`, `city`, `status`, `inactiveReason`, room). `mappingStatus` counts every mapped listing, inactive ones included, so a property whose listings are all inactive is still `mapped`.",
         "tags": [
           "Booking.com"
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "active",
+                "inactive",
+                "all"
+              ],
+              "default": "active"
+            },
+            "description": "`active` (default) leaves inactive listings out. `inactive` returns only them and `all` returns both. An inactive listing comes back with identity fields only (ids, `name`, `city`, `status`, `inactiveReason`, its account), which is enough to show what can be activated. Every row carries `status`."
+          }
         ],
         "responses": {
           "200": {
@@ -24338,9 +25562,26 @@
       "get": {
         "operationId": "list_vrbo_listings",
         "summary": "List VRBO listings",
-        "description": "List the Vrbo units linked to this workspace's listings, from the host's connected Vrbo account (host sign-in, beta).\n\nInactive listings are left out; they keep syncing and reappear once activated. Use `GET /v1/listings?status=inactive` to find them.",
+        "description": "List the Vrbo units linked to this workspace's listings, from the host's connected Vrbo account (host sign-in, beta).\n\nInactive listings are left out unless `?status=inactive|all` asks for them; they then come back with identity fields only (ids, `listingName`, `listingCity`, `status`, `inactiveReason`). They keep syncing and are complete again once activated.",
         "tags": [
           "VRBO"
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "active",
+                "inactive",
+                "all"
+              ],
+              "default": "active"
+            },
+            "description": "`active` (default) leaves inactive listings out. `inactive` returns only them and `all` returns both. An inactive listing comes back with identity fields only (ids, `name`, `city`, `status`, `inactiveReason`, its account), which is enough to show what can be activated. Every row carries `status`."
+          }
         ],
         "responses": {
           "200": {
@@ -27582,8 +28823,8 @@
       },
       "put": {
         "operationId": "updateAirbnbListingDetails",
-        "summary": "Update property type, room type, quiet hours or check-in method",
-        "description": "Change what kind of property the Airbnb listing is, when its quiet hours are, or how the guest gets in. Partial: only the fields you send are written. At least one required; an unknown field is refused by name rather than dropped.\n\nThis is the UPDATE path for fields that previously had none. `POST /v1/listings` accepts a `propertyType` when a listing is CREATED and nothing could change it afterwards, so a listing mis-typed at import stayed mis-typed; the check-in method was mirrored and never exposed at all.\n\n**A 200 does not by itself mean the change was applied.** `property_type_category`, `property_type_group` and `check_in_option` are among the attributes Airbnb locks on established listings: the write returns 200, and Airbnb applies nothing for the locked ones. The response reports `blockedFields` \u2014 the fields YOU sent that Airbnb dropped \u2014 and `blockedFields: []` is what a landed write looks like. `GET \u2026/details` reports the same list as `lockedFields` so you can check first.\n\nCanonical property type (the value Repull keeps and republishes) is set with `PUT /v1/listings/{id}/content` under `details`; this endpoint writes straight to Airbnb.\n\nSend `Idempotency-Key` to make a retry safe.",
+        "summary": "Update property type, quiet hours, check-in method, house manual, directions or Wi-Fi",
+        "description": "Change what kind of property the Airbnb listing is, when its quiet hours are, how the guest gets in (`check_in_option.instruction` is the arrival instructions), the house manual, directions to the property, or the Wi-Fi network and password. Partial: only the fields you send are written. At least one required; an unknown field is refused by name rather than dropped.\n\nThis is the UPDATE path for fields that previously had none. `POST /v1/listings` accepts a `propertyType` when a listing is CREATED and nothing could change it afterwards, so a listing mis-typed at import stayed mis-typed; the check-in method was mirrored and never exposed at all.\n\n**A 200 does not by itself mean the change was applied.** `property_type_category`, `property_type_group`, `check_in_option`, `house_manual`, `directions`, `wifi_network` and `wifi_password` are among the attributes Airbnb locks on some listings: the write returns 200, and Airbnb applies nothing for the locked ones. The response reports `blockedFields` \u2014 the fields YOU sent that Airbnb dropped \u2014 and `blockedFields: []` is what a landed write looks like. `GET \u2026/details` reports the same list as `lockedFields` so you can check first.\n\nCanonical property type (the value Repull keeps and republishes) is set with `PUT /v1/listings/{id}/content` under `details`; this endpoint writes straight to Airbnb.\n\nSend `Idempotency-Key` to make a retry safe.",
         "tags": [
           "Airbnb"
         ],
@@ -27725,7 +28966,7 @@
       "put": {
         "operationId": "updateAirbnbListingPermits",
         "summary": "Answer Airbnb permit questions",
-        "description": "Answer the regulatory permit questions for a listing \u2014 the licence or registration number a city requires to keep the listing up.\n\nRead the questions first with `GET \u2026/permits?source=live`. For each permit, pick one of its `flows[]` and send its `slug` as `flow_slug`; key every answer by the question's `answer_key`, and let the question's `type` decide the value field (`text_value`, `attestation_value`, `radio_value`, `date_value` or `selected_options_value`). Answers are forwarded verbatim \u2014 nothing is defaulted or inferred, because a wrong licence number can take a listing down in a regulated city.\n\nSend `Idempotency-Key`: a timeout here leaves you unable to tell \"never arrived\" from \"arrived, response lost\", and this is a compliance filing.\n\nAirbnb refusing the answers (an unknown `answer_key`, a malformed licence number) is `422 airbnb_rejected` carrying Airbnb's own reason. An expired or revoked Airbnb connection is `403 connection_reauth_required`.",
+        "description": "Answer the regulatory permit questions for a listing \u2014 the licence or registration number a city requires to keep the listing up.\n\nRead the questions first with `GET \u2026/permits?source=live`. For each permit, pick one of its `flows[]` and send its `slug` as `flow_slug`; key every answer by the question's `answer_key`, and let the question's `type` decide the value field \u2014 `<type>_value`: `text_value`, `attestation_value`, `radio_value`, `dropdown_value`, `email_value`, `future_date_value`, `file_upload_value`, and so on. Answers are forwarded verbatim \u2014 nothing is defaulted or inferred, because a wrong licence number can take a listing down in a regulated city.\n\nSend `Idempotency-Key`: a timeout here leaves you unable to tell \"never arrived\" from \"arrived, response lost\", and this is a compliance filing.\n\nAirbnb refusing the answers (an unknown `answer_key`, a malformed licence number) is `422 airbnb_rejected` carrying Airbnb's own reason. An expired or revoked Airbnb connection is `403 connection_reauth_required`.\n\n**Changing and removing answers.** Airbnb has no call that deletes or withdraws a submitted registration, so neither does Repull, and at least one permit is required. To change an answer Airbnb marks `answer_editable`, submit the flow again with the new answers \u2014 the latest submission replaces the previous one. When a submission fails with status `failed_recoverable`, fix it and submit again; `failed` cannot be resubmitted. Hosts can also manage this at airbnb.com/verify-listing/{listing_id}.",
         "tags": [
           "Airbnb"
         ],
@@ -32173,7 +33414,8 @@
                   "type": "object",
                   "properties": {
                     "listingId": {
-                      "type": "integer"
+                      "type": "string",
+                      "description": "Repull listing id (numeric string, like every `*Id` on the wire)."
                     },
                     "total": {
                       "type": "integer"
@@ -32236,7 +33478,7 @@
       "post": {
         "operationId": "cancel_reservation",
         "summary": "Cancel a reservation",
-        "description": "Cancels a reservation where it lives.\n\n- **Mews or Cloudbeds** (hotel-model PMS): cancelled in the PMS, then read back, so Repull and the PMS agree. No cancellation fee is charged.\n- **Direct, website or owner bookings**: cancelled in Repull \u2014 the nights are released and `reservation.cancelled` fires.\n- **A channel booking** (Airbnb, Booking.com, VRBO) or a booking owned by another PMS: `409 reservation_owned_by_channel`. Cancel it there; the cancellation reaches Repull with the next sync.\n\nCancelling an already-cancelled reservation is not an error: the response carries `alreadyCancelled: true`.\n\nReturns `403 listing_inactive` when the listing is inactive.",
+        "description": "Cancels a reservation where it lives.\n\n- **A booking managed in a connected PMS** (Mews, Cloudbeds, Hostaway, Guesty, Beds24, BookingSync, Lodgify, Smoobu, Hospitable, iGMS): cancelled in the PMS, then read back, so Repull and the PMS agree. No cancellation fee is charged. Lodgify *declines* the booking rather than deleting it. **OwnerRez's API cannot cancel** \u2014 `422 pms_write_unsupported`; cancel it in OwnerRez. `GET /v1/listings/{id}` \u2192 `capabilities.reservations.cancel` says which applies.\n- **Direct, website or owner bookings**: cancelled in Repull \u2014 the nights are released and `reservation.cancelled` fires.\n- **A channel booking** (Airbnb, Booking.com, VRBO), including one that came in through a PMS: `409 reservation_owned_by_channel`. Cancel it on the channel; the cancellation reaches Repull with the next sync.\n\nCancelling an already-cancelled reservation is not an error: the response carries `alreadyCancelled: true`.\n\nPMS integrations other than Mews and Cloudbeds are verified against the vendor's API documentation only.\n\n`X-Account-Id` restricts the reservation to one connected account. Returns `403 listing_inactive` when the listing is inactive.",
         "tags": [
           "Reservations"
         ],
@@ -32249,6 +33491,19 @@
               "type": "integer"
             },
             "description": "Reservation id."
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "name": "X-Account-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "126"
+            },
+            "description": "Restrict the request to one connected account (a Repull connection id, `GET /v1/connect` \u2192 `id`). A listing or reservation outside that account answers `404 not_found`. Omit it to act workspace-wide."
           }
         ],
         "requestBody": {
@@ -32311,36 +33566,30 @@
                       "description": "Present and true when the reservation was already cancelled."
                     },
                     "pms": {
-                      "type": "object",
-                      "description": "Present when the cancellation was made in a PMS.",
-                      "properties": {
-                        "provider": {
-                          "type": "string",
-                          "example": "mews"
-                        },
-                        "applied": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
-                        },
-                        "errors": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "section": {
-                                "type": "string"
-                              },
-                              "message": {
-                                "type": "string"
-                              },
-                              "code": {
-                                "type": "string"
-                              }
-                            }
-                          }
-                        }
+                      "$ref": "#/components/schemas/ReservationPmsOutcome"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The body is not JSON.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "invalidJson": {
+                    "summary": "The body is not JSON",
+                    "value": {
+                      "error": {
+                        "code": "invalid_json",
+                        "message": "Request body is not valid JSON: Unexpected token",
+                        "fix": "Send a JSON object with `Content-Type: application/json`.",
+                        "docs_url": "https://repull.dev/docs/errors/invalid_json",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
                       }
                     }
                   }
@@ -32351,14 +33600,199 @@
           "401": {
             "$ref": "#/components/responses/Unauthorized"
           },
+          "403": {
+            "description": "The listing is inactive (`listing_inactive`), or the PMS connection lacks write access to bookings (`connection_reauth_required`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "reauthRequired": {
+                    "summary": "The grant lacks write access to bookings",
+                    "value": {
+                      "error": {
+                        "code": "connection_reauth_required",
+                        "message": "Beds24 needs to be reconnected before Repull can create reservations there: Beds24: token lacks scope write:bookings",
+                        "fix": "Reconnect Beds24 with an invite code that grants `write:bookings` (plus `bookings-personal` and `bookings-financial`), then retry.",
+                        "docs_url": "https://repull.dev/docs/errors/connection_reauth_required",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "provider": "beds24",
+                        "reconnect": {
+                          "method": "POST",
+                          "path": "/v1/connect/beds24"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "404": {
-            "$ref": "#/components/responses/NotFound"
+            "description": "The reservation is not in this workspace (or not in the `X-Account-Id` account), or the PMS no longer has it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "notFound": {
+                    "summary": "Not in this workspace (or not in the X-Account-Id account)",
+                    "value": {
+                      "error": {
+                        "code": "not_found",
+                        "message": "Reservation 215708 not found in this workspace.",
+                        "fix": "Verify the reservation exists in this workspace (`GET /v1/reservations`) and, with `X-Account-Id`, that its listing belongs to that account.",
+                        "docs_url": "https://repull.dev/docs/errors/not_found",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
           },
           "409": {
-            "description": "The reservation belongs to a channel or another PMS (`reservation_owned_by_channel`), or the PMS connection is gone (`no_connection`)."
+            "description": "Cancel it elsewhere: a channel booking (`reservation_owned_by_channel`), part of a PMS group booking (`pms_group_booking`), writes off for the API (`pms_writes_off`), or no PMS connection (`no_connection`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "ownedByChannel": {
+                    "summary": "A channel booking (incl. one relayed through a PMS)",
+                    "value": {
+                      "error": {
+                        "code": "reservation_owned_by_channel",
+                        "message": "This reservation came from airbnb through Hostaway. Change it on airbnb; the change reaches this workspace with the next sync.",
+                        "fix": "This booking belongs to a channel (Airbnb, Booking.com, Vrbo, \u2026). Change it on the channel; the change reaches Repull with the next sync and the matching webhook fires.",
+                        "docs_url": "https://repull.dev/docs/errors/reservation_owned_by_channel",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "provider": "hostaway",
+                        "owner": "airbnb"
+                      }
+                    }
+                  },
+                  "groupBooking": {
+                    "summary": "Part of a group booking in the PMS",
+                    "value": {
+                      "error": {
+                        "code": "pms_group_booking",
+                        "message": "This stay is one room of a Cloudbeds group booking; change it in Cloudbeds.",
+                        "fix": "This stay is part of a group booking in Cloudbeds. Change or cancel group bookings in Cloudbeds; the change reaches Repull with the next sync.",
+                        "docs_url": "https://repull.dev/docs/errors/pms_group_booking",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "provider": "cloudbeds"
+                      }
+                    }
+                  },
+                  "pmsWritesOff": {
+                    "summary": "The connection is set not to change bookings through the API",
+                    "value": {
+                      "error": {
+                        "code": "pms_writes_off",
+                        "message": "Bookings for this property are managed in its PMS, and this connection is set not to change them through the API. Nothing was sent to the PMS.",
+                        "fix": "Turn on `reservations.api` with `PATCH /v1/connect/{provider}/write-policy`, or make the change in the PMS.",
+                        "docs_url": "https://repull.dev/docs/connect/write-policy",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  },
+                  "noConnection": {
+                    "summary": "The listing is managed in a PMS this workspace is no longer connected to",
+                    "value": {
+                      "error": {
+                        "code": "no_connection",
+                        "message": "Listing 4118 is managed in Hostaway, but there is no Hostaway connection.",
+                        "fix": "The listing is managed in Hostaway, but this workspace has no connection to it. Reconnect with `POST /v1/connect/hostaway`, then retry. Nothing was sent to the PMS.",
+                        "docs_url": "https://repull.dev/docs/errors/no_connection",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "provider": "hostaway",
+                        "reconnect": {
+                          "method": "POST",
+                          "path": "/v1/connect/hostaway"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           },
           "422": {
-            "$ref": "#/components/responses/UnprocessableEntity"
+            "description": "The PMS's API cannot cancel it (`pms_write_unsupported` \u2014 OwnerRez), the PMS refused (`pms_rejected`), or the body is invalid (`invalid_params`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "pmsWriteUnsupported": {
+                    "summary": "The PMS API cannot do this (here: OwnerRez has no cancel)",
+                    "value": {
+                      "error": {
+                        "code": "pms_write_unsupported",
+                        "message": "OwnerRez cannot cancel a booking through its API. Cancel it in OwnerRez.",
+                        "fix": "Cancel it in OwnerRez; the cancellation reaches Repull with the next sync.",
+                        "docs_url": "https://repull.dev/docs/errors/pms_write_unsupported",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "provider": "ownerrez"
+                      }
+                    }
+                  },
+                  "pmsRejected": {
+                    "summary": "The PMS refused the content",
+                    "value": {
+                      "error": {
+                        "code": "pms_rejected",
+                        "message": "Hostaway refused to create the reservation: Hostaway: guestEmail is invalid",
+                        "fix": "Hostaway refused it; its reason is in `message`. Nothing was changed. Correct the request and retry with a NEW `Idempotency-Key`.",
+                        "docs_url": "https://repull.dev/docs/errors/pms_rejected",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "provider": "hostaway",
+                        "pms": {
+                          "applied": [],
+                          "errors": [
+                            {
+                              "section": "reservation",
+                              "code": "rejected",
+                              "message": "Hostaway: guestEmail is invalid"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The PMS could not be reached (`pms_error`) \u2014 nothing was cancelled; retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "pmsError": {
+                    "summary": "The PMS could not be reached \u2014 retry with the same key",
+                    "value": {
+                      "error": {
+                        "code": "pms_error",
+                        "message": "Smoobu could not be reached to create the reservation: timeout of 30000ms exceeded",
+                        "fix": "Nothing was changed. Retry with the same idempotency key.",
+                        "docs_url": "https://repull.dev/docs/errors/pms_error",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "provider": "smoobu"
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -33424,7 +34858,8 @@
                   "type": "object",
                   "properties": {
                     "accountId": {
-                      "type": "integer"
+                      "type": "string",
+                      "description": "The connection id (numeric string, like every `*Id` on the wire)."
                     },
                     "status": {
                       "type": "string"
@@ -34210,6 +35645,295 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/reservations/quote": {
+      "post": {
+        "operationId": "quote_reservation",
+        "summary": "Quote a reservation in the PMS",
+        "description": "Prices a stay and checks its availability **in the PMS that manages the listing**, without booking anything. It is the same check `POST /v1/reservations` makes before booking when no `totalPrice` is sent, so `available: true` with a `total` is what that create would be priced at (dates can still be taken in between).\n\n`available: false` is an answer, not an error: the PMS's reasons are in `restrictions` (minimum stay, closed to arrival, taken dates\u2026).\n\n- A listing **not managed in a PMS** answers `422 pms_not_linked`. Book it directly with `POST /v1/reservations`, or price it with `GET /v1/quotes`.\n- A PMS **without a quote API** (Mews, Cloudbeds, iGMS) answers `422 pms_write_unsupported`. You can still create the booking; on iGMS a `totalPrice` is required.\n\n`GET /v1/listings/{id}` \u2192 `capabilities.reservations.quote` says whether a listing can be quoted.\n\n### Per-PMS limits\n\n| PMS | create | change | cancel | quote | `totalPrice` | Limits |\n|---|---|---|---|---|---|---|\n| Mews | \u2713 | \u2713 | \u2713 | \u2013 | \u2713 | \u2014 |\n| Cloudbeds | \u2713 | \u2713 | \u2713 | \u2013 | \u2013 | Books at the rate plan's price; group bookings supported. |\n| Hostaway | \u2713 | \u2713 | \u2713 | \u2713 | \u2713 | Direct-channel bookings only; a specific unit is refused; a date change keeps the booked total. |\n| Guesty | \u2713 | \u2713 | \u2713 | \u2713 | \u2713 | Cancels direct and Vrbo bookings; other channel bookings are cancelled on the channel. |\n| Beds24 | \u2713 | \u2713 | \u2713 | \u2713 | \u2713 | Needs the `write:bookings` scope; a multi-room property needs `unitId`. |\n| BookingSync | \u2713 | \u2713 | \u2713 | \u2713 | \u2713 | Needs `bookings_write`; fees and taxes are not itemized; no guest email. |\n| Lodgify | \u2713 | \u2713 | \u2713 (declines) | \u2713 | \u2713 | Cancel declines the booking; single-room bookings. |\n| Smoobu | \u2713 | \u2713 (no dates) | \u2713 | \u2713 | \u2713 | Dates cannot be changed through Smoobu's API \u2014 cancel and rebook, or change them in Smoobu. |\n| Hospitable | \u2713 | \u2713 | \u2713 | \u2713 (Direct plan) | \u2713 | Manual reservations only; needs `reservation:write`; adds no fees or taxes. |\n| iGMS | \u2713 | \u2713 | \u2713 | \u2013 | \u2713 (required) | iGMS direct bookings only; a price is required; no tentative holds. |\n| OwnerRez | \u2713 | \u2713 | \u2013 | \u2713 | \u2013 | No cancel through OwnerRez's API; priced by the property's own rates; needs the `full` scope. |\n\nEvery PMS except Cloudbeds refuses group bookings, and every vacation-rental PMS refuses to change or cancel a booking that came from a channel (Airbnb, Booking.com, Vrbo\u2026) \u2014 that is done on the channel.\n\n**Verification.** Mews and Cloudbeds were run end to end on their vendors' sandboxes. Every other PMS is **verified against the vendor's API documentation only** \u2014 no live account has been written to yet. `capabilities.reservations.verifiedAgainst` says which.\n\n`X-Account-Id` restricts the listing to one connected account. Returns `403 listing_inactive` when the listing is inactive.",
+        "tags": [
+          "Reservations"
+        ],
+        "parameters": [
+          {
+            "name": "X-Account-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "126"
+            },
+            "description": "Restrict the request to one connected account (a Repull connection id, `GET /v1/connect` \u2192 `id`). A listing or reservation outside that account answers `404 not_found`. Omit it to act workspace-wide."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReservationQuoteRequest"
+              },
+              "examples": {
+                "quote": {
+                  "summary": "Two adults and a child",
+                  "value": {
+                    "listingId": 4118,
+                    "checkIn": "2026-10-01",
+                    "checkOut": "2026-10-05",
+                    "adults": 2,
+                    "children": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The PMS's price and availability for the stay.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReservationQuoteResponse"
+                },
+                "examples": {
+                  "available": {
+                    "summary": "Bookable",
+                    "value": {
+                      "listingId": "4118",
+                      "provider": "hostaway",
+                      "checkIn": "2026-10-01",
+                      "checkOut": "2026-10-05",
+                      "available": true,
+                      "total": 880,
+                      "currency": "USD",
+                      "breakdown": {
+                        "accommodation": 720,
+                        "cleaningFee": 100,
+                        "taxes": 60
+                      },
+                      "restrictions": []
+                    }
+                  },
+                  "unavailable": {
+                    "summary": "Not bookable as asked",
+                    "value": {
+                      "listingId": "4118",
+                      "provider": "guesty",
+                      "checkIn": "2026-10-01",
+                      "checkOut": "2026-10-02",
+                      "available": false,
+                      "total": null,
+                      "currency": null,
+                      "breakdown": null,
+                      "restrictions": [
+                        "Guesty: minimum stay is 3 nights"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The body is not JSON.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "invalidJson": {
+                    "summary": "The body is not JSON",
+                    "value": {
+                      "error": {
+                        "code": "invalid_json",
+                        "message": "Request body is not valid JSON: Unexpected token",
+                        "fix": "Send a JSON object with `Content-Type: application/json`.",
+                        "docs_url": "https://repull.dev/docs/errors/invalid_json",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The listing is inactive (`listing_inactive`), or the PMS connection must be reconnected (`connection_reauth_required`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "reauthRequired": {
+                    "summary": "The grant lacks write access to bookings",
+                    "value": {
+                      "error": {
+                        "code": "connection_reauth_required",
+                        "message": "Beds24 needs to be reconnected before Repull can create reservations there: Beds24: token lacks scope write:bookings",
+                        "fix": "Reconnect Beds24 with an invite code that grants `write:bookings` (plus `bookings-personal` and `bookings-financial`), then retry.",
+                        "docs_url": "https://repull.dev/docs/errors/connection_reauth_required",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "provider": "beds24",
+                        "reconnect": {
+                          "method": "POST",
+                          "path": "/v1/connect/beds24"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The listing is not in this workspace, or not in the `X-Account-Id` account.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "notFound": {
+                    "summary": "Not in this workspace (or not in the X-Account-Id account)",
+                    "value": {
+                      "error": {
+                        "code": "not_found",
+                        "message": "Listing 4118 not found in this workspace.",
+                        "fix": "Verify the listing exists in this workspace (`GET /v1/listings`) and, with `X-Account-Id`, that it belongs to that account.",
+                        "docs_url": "https://repull.dev/docs/errors/not_found",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "No PMS connection (`no_connection`), or writes are off for the API (`pms_writes_off`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "noConnection": {
+                    "summary": "The listing is managed in a PMS this workspace is no longer connected to",
+                    "value": {
+                      "error": {
+                        "code": "no_connection",
+                        "message": "Listing 4118 is managed in Hostaway, but there is no Hostaway connection.",
+                        "fix": "The listing is managed in Hostaway, but this workspace has no connection to it. Reconnect with `POST /v1/connect/hostaway`, then retry. Nothing was sent to the PMS.",
+                        "docs_url": "https://repull.dev/docs/errors/no_connection",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "provider": "hostaway",
+                        "reconnect": {
+                          "method": "POST",
+                          "path": "/v1/connect/hostaway"
+                        }
+                      }
+                    }
+                  },
+                  "pmsWritesOff": {
+                    "summary": "The connection is set not to change bookings through the API",
+                    "value": {
+                      "error": {
+                        "code": "pms_writes_off",
+                        "message": "Bookings for this property are managed in its PMS, and this connection is set not to change them through the API. Nothing was sent to the PMS.",
+                        "fix": "Turn on `reservations.api` with `PATCH /v1/connect/{provider}/write-policy`, or make the change in the PMS.",
+                        "docs_url": "https://repull.dev/docs/connect/write-policy",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Not managed in a PMS (`pms_not_linked`), a PMS without a quote API (`pms_write_unsupported`), or an invalid field (`invalid_params`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "pmsNotLinked": {
+                    "summary": "The listing is not managed in a PMS",
+                    "value": {
+                      "error": {
+                        "code": "pms_not_linked",
+                        "message": "Listing 4118 is not managed in a PMS, so there is no PMS quote for it.",
+                        "fix": "Create the reservation directly; Repull prices it from the listing's own rates.",
+                        "docs_url": "https://repull.dev/docs/errors/pms_not_linked",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  },
+                  "quoteUnsupported": {
+                    "summary": "The PMS has no quote API (Mews, Cloudbeds, iGMS)",
+                    "value": {
+                      "error": {
+                        "code": "pms_write_unsupported",
+                        "message": "iGMS cannot quote reservations through its API. Create the booking with a `totalPrice`.",
+                        "fix": "iGMS's API cannot quote this booking. Create it with a `totalPrice` instead.",
+                        "docs_url": "https://repull.dev/docs/errors/pms_write_unsupported",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "provider": "igms"
+                      }
+                    }
+                  },
+                  "invalidParams": {
+                    "summary": "A field failed validation",
+                    "value": {
+                      "error": {
+                        "code": "invalid_params",
+                        "message": "`checkOut` is invalid: `checkOut` (2026-10-01) must be after `checkIn` (2026-10-05) \u2014 a stay spans at least one night.",
+                        "fix": "Send the departure date as `YYYY-MM-DD`, after `checkIn`, e.g. `\"checkOut\": \"2026-10-05\"`.",
+                        "docs_url": "https://repull.dev/docs/errors/invalid_params",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "field": "checkOut",
+                        "value_received": "2026-10-01"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The PMS could not be reached (`pms_error`) \u2014 retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "pmsError": {
+                    "summary": "The PMS could not be reached \u2014 retry with the same key",
+                    "value": {
+                      "error": {
+                        "code": "pms_error",
+                        "message": "Smoobu could not be reached to create the reservation: timeout of 30000ms exceeded",
+                        "fix": "Nothing was changed. Retry with the same idempotency key.",
+                        "docs_url": "https://repull.dev/docs/errors/pms_error",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "provider": "smoobu"
+                      }
+                    }
+                  }
                 }
               }
             }

@@ -14,19 +14,13 @@ require 'date'
 require 'time'
 
 module Repull
-  class CancelReservation200ResponsePmsErrorsInner < ApiModelBase
-    attr_accessor :section
-
-    attr_accessor :message
-
-    attr_accessor :code
+  class UpdateAirbnbCheckinGuideRequestStepsInner < ApiModelBase
+    attr_accessor :notes
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'section' => :'section',
-        :'message' => :'message',
-        :'code' => :'code'
+        :'notes' => :'notes'
       }
     end
 
@@ -43,9 +37,7 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'section' => :'String',
-        :'message' => :'String',
-        :'code' => :'String'
+        :'notes' => :'String'
       }
     end
 
@@ -59,28 +51,22 @@ module Repull
     # @param [Hash] attributes Model attributes in the form of hash
     def initialize(attributes = {})
       if (!attributes.is_a?(Hash))
-        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::CancelReservation200ResponsePmsErrorsInner` initialize method"
+        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::UpdateAirbnbCheckinGuideRequestStepsInner` initialize method"
       end
 
       # check to see if the attribute exists and convert string to symbol for hash key
       acceptable_attribute_map = self.class.acceptable_attribute_map
       attributes = attributes.each_with_object({}) { |(k, v), h|
         if (!acceptable_attribute_map.key?(k.to_sym))
-          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::CancelReservation200ResponsePmsErrorsInner`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
+          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::UpdateAirbnbCheckinGuideRequestStepsInner`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
         end
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'section')
-        self.section = attributes[:'section']
-      end
-
-      if attributes.key?(:'message')
-        self.message = attributes[:'message']
-      end
-
-      if attributes.key?(:'code')
-        self.code = attributes[:'code']
+      if attributes.key?(:'notes')
+        self.notes = attributes[:'notes']
+      else
+        self.notes = nil
       end
     end
 
@@ -89,6 +75,18 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
+      if @notes.nil?
+        invalid_properties.push('invalid value for "notes", notes cannot be nil.')
+      end
+
+      if @notes.to_s.length > 5000
+        invalid_properties.push('invalid value for "notes", the character length must be smaller than or equal to 5000.')
+      end
+
+      if @notes.to_s.length < 1
+        invalid_properties.push('invalid value for "notes", the character length must be greater than or equal to 1.')
+      end
+
       invalid_properties
     end
 
@@ -96,7 +94,28 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
+      return false if @notes.nil?
+      return false if @notes.to_s.length > 5000
+      return false if @notes.to_s.length < 1
       true
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] notes Value to be assigned
+    def notes=(notes)
+      if notes.nil?
+        fail ArgumentError, 'notes cannot be nil'
+      end
+
+      if notes.to_s.length > 5000
+        fail ArgumentError, 'invalid value for "notes", the character length must be smaller than or equal to 5000.'
+      end
+
+      if notes.to_s.length < 1
+        fail ArgumentError, 'invalid value for "notes", the character length must be greater than or equal to 1.'
+      end
+
+      @notes = notes
     end
 
     # Checks equality by comparing each attribute.
@@ -104,9 +123,7 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          section == o.section &&
-          message == o.message &&
-          code == o.code
+          notes == o.notes
     end
 
     # @see the `==` method
@@ -118,7 +135,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [section, message, code].hash
+      [notes].hash
     end
 
     # Builds the object from hash

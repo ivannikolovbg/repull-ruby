@@ -14,24 +14,41 @@ require 'date'
 require 'time'
 
 module Repull
-  # Mews or Cloudbeds listings only: the booking was made in the PMS first, and this is what it applied.
-  class ReservationCreateResponsePms < ApiModelBase
+  class ReservationQuoteResponse < ApiModelBase
+    attr_accessor :listing_id
+
+    # The PMS that priced it.
     attr_accessor :provider
 
-    # The PMS's own id for the booking.
-    attr_accessor :reservation_id
+    attr_accessor :check_in
 
-    attr_accessor :applied
+    attr_accessor :check_out
 
-    attr_accessor :errors
+    # Whether the PMS would take the booking as asked.
+    attr_accessor :available
+
+    # Total for the stay, in `currency`. Null when the PMS gave no price (e.g. not available).
+    attr_accessor :total
+
+    attr_accessor :currency
+
+    attr_accessor :breakdown
+
+    # The PMS's reasons, verbatim, when `available` is false.
+    attr_accessor :restrictions
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
+        :'listing_id' => :'listingId',
         :'provider' => :'provider',
-        :'reservation_id' => :'reservationId',
-        :'applied' => :'applied',
-        :'errors' => :'errors'
+        :'check_in' => :'checkIn',
+        :'check_out' => :'checkOut',
+        :'available' => :'available',
+        :'total' => :'total',
+        :'currency' => :'currency',
+        :'breakdown' => :'breakdown',
+        :'restrictions' => :'restrictions'
       }
     end
 
@@ -48,16 +65,24 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
+        :'listing_id' => :'String',
         :'provider' => :'String',
-        :'reservation_id' => :'String',
-        :'applied' => :'Array<String>',
-        :'errors' => :'Array<CancelReservation200ResponsePmsErrorsInner>'
+        :'check_in' => :'Date',
+        :'check_out' => :'Date',
+        :'available' => :'Boolean',
+        :'total' => :'Float',
+        :'currency' => :'String',
+        :'breakdown' => :'ReservationQuoteResponseBreakdown',
+        :'restrictions' => :'Array<String>'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'total',
+        :'currency',
+        :'breakdown',
       ])
     end
 
@@ -65,35 +90,53 @@ module Repull
     # @param [Hash] attributes Model attributes in the form of hash
     def initialize(attributes = {})
       if (!attributes.is_a?(Hash))
-        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::ReservationCreateResponsePms` initialize method"
+        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::ReservationQuoteResponse` initialize method"
       end
 
       # check to see if the attribute exists and convert string to symbol for hash key
       acceptable_attribute_map = self.class.acceptable_attribute_map
       attributes = attributes.each_with_object({}) { |(k, v), h|
         if (!acceptable_attribute_map.key?(k.to_sym))
-          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::ReservationCreateResponsePms`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
+          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::ReservationQuoteResponse`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
         end
         h[k.to_sym] = v
       }
+
+      if attributes.key?(:'listing_id')
+        self.listing_id = attributes[:'listing_id']
+      end
 
       if attributes.key?(:'provider')
         self.provider = attributes[:'provider']
       end
 
-      if attributes.key?(:'reservation_id')
-        self.reservation_id = attributes[:'reservation_id']
+      if attributes.key?(:'check_in')
+        self.check_in = attributes[:'check_in']
       end
 
-      if attributes.key?(:'applied')
-        if (value = attributes[:'applied']).is_a?(Array)
-          self.applied = value
-        end
+      if attributes.key?(:'check_out')
+        self.check_out = attributes[:'check_out']
       end
 
-      if attributes.key?(:'errors')
-        if (value = attributes[:'errors']).is_a?(Array)
-          self.errors = value
+      if attributes.key?(:'available')
+        self.available = attributes[:'available']
+      end
+
+      if attributes.key?(:'total')
+        self.total = attributes[:'total']
+      end
+
+      if attributes.key?(:'currency')
+        self.currency = attributes[:'currency']
+      end
+
+      if attributes.key?(:'breakdown')
+        self.breakdown = attributes[:'breakdown']
+      end
+
+      if attributes.key?(:'restrictions')
+        if (value = attributes[:'restrictions']).is_a?(Array)
+          self.restrictions = value
         end
       end
     end
@@ -118,10 +161,15 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
+          listing_id == o.listing_id &&
           provider == o.provider &&
-          reservation_id == o.reservation_id &&
-          applied == o.applied &&
-          errors == o.errors
+          check_in == o.check_in &&
+          check_out == o.check_out &&
+          available == o.available &&
+          total == o.total &&
+          currency == o.currency &&
+          breakdown == o.breakdown &&
+          restrictions == o.restrictions
     end
 
     # @see the `==` method
@@ -133,7 +181,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [provider, reservation_id, applied, errors].hash
+      [listing_id, provider, check_in, check_out, available, total, currency, breakdown, restrictions].hash
     end
 
     # Builds the object from hash

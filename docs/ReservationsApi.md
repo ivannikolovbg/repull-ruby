@@ -10,6 +10,7 @@ All URIs are relative to *https://api.repull.dev*
 | [**decline_reservation_request**](ReservationsApi.md#decline_reservation_request) | **POST** /v1/reservations/{id}/decline | Decline a booking request |
 | [**get_reservation**](ReservationsApi.md#get_reservation) | **GET** /v1/reservations/{id} | Get reservation details |
 | [**list_reservations**](ReservationsApi.md#list_reservations) | **GET** /v1/reservations | List reservations |
+| [**quote_reservation**](ReservationsApi.md#quote_reservation) | **POST** /v1/reservations/quote | Quote a reservation in the PMS |
 | [**update_reservation**](ReservationsApi.md#update_reservation) | **PATCH** /v1/reservations/{id} | Update a reservation |
 
 
@@ -92,7 +93,7 @@ end
 
 Cancel a reservation
 
-Cancels a reservation where it lives.  - **Mews or Cloudbeds** (hotel-model PMS): cancelled in the PMS, then read back, so Repull and the PMS agree. No cancellation fee is charged. - **Direct, website or owner bookings**: cancelled in Repull — the nights are released and `reservation.cancelled` fires. - **A channel booking** (Airbnb, Booking.com, VRBO) or a booking owned by another PMS: `409 reservation_owned_by_channel`. Cancel it there; the cancellation reaches Repull with the next sync.  Cancelling an already-cancelled reservation is not an error: the response carries `alreadyCancelled: true`.  Returns `403 listing_inactive` when the listing is inactive.
+Cancels a reservation where it lives.  - **A booking managed in a connected PMS** (Mews, Cloudbeds, Hostaway, Guesty, Beds24, BookingSync, Lodgify, Smoobu, Hospitable, iGMS): cancelled in the PMS, then read back, so Repull and the PMS agree. No cancellation fee is charged. Lodgify *declines* the booking rather than deleting it. **OwnerRez's API cannot cancel** — `422 pms_write_unsupported`; cancel it in OwnerRez. `GET /v1/listings/{id}` → `capabilities.reservations.cancel` says which applies. - **Direct, website or owner bookings**: cancelled in Repull — the nights are released and `reservation.cancelled` fires. - **A channel booking** (Airbnb, Booking.com, VRBO), including one that came in through a PMS: `409 reservation_owned_by_channel`. Cancel it on the channel; the cancellation reaches Repull with the next sync.  Cancelling an already-cancelled reservation is not an error: the response carries `alreadyCancelled: true`.  PMS integrations other than Mews and Cloudbeds are verified against the vendor's API documentation only.  `X-Account-Id` restricts the reservation to one connected account. Returns `403 listing_inactive` when the listing is inactive.
 
 ### Examples
 
@@ -108,6 +109,8 @@ end
 api_instance = Repull::ReservationsApi.new
 id = 56 # Integer | Reservation id.
 opts = {
+  idempotency_key: '9f1c2f7e-4a3b-4f2e-9c8d-1b6a0e5d7c31', # String | Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged `Idempotency-Status: cached` — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → `409 idempotency_key_in_use`. - Same key with a DIFFERENT payload → `422 idempotency_key_reused`. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status >= 500, `408`, `425` and `429`, and the refusals that happen before anything is done and tell you to fix something outside the request first — `connection_reauth_required`, `listing_inactive`, and the rate/daily limits. Every other answer, including a final refusal such as `422 airbnb_rejected`, is stored and replayed.
+  x_account_id: '126', # String | Restrict the request to one connected account (a Repull connection id, `GET /v1/connect` → `id`). A listing or reservation outside that account answers `404 not_found`. Omit it to act workspace-wide.
   cancel_reservation_request: Repull::CancelReservationRequest.new # CancelReservationRequest | 
 }
 
@@ -143,6 +146,8 @@ end
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **id** | **Integer** | Reservation id. |  |
+| **idempotency_key** | **String** | Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status &gt;&#x3D; 500, &#x60;408&#x60;, &#x60;425&#x60; and &#x60;429&#x60;, and the refusals that happen before anything is done and tell you to fix something outside the request first — &#x60;connection_reauth_required&#x60;, &#x60;listing_inactive&#x60;, and the rate/daily limits. Every other answer, including a final refusal such as &#x60;422 airbnb_rejected&#x60;, is stored and replayed. | [optional] |
+| **x_account_id** | **String** | Restrict the request to one connected account (a Repull connection id, &#x60;GET /v1/connect&#x60; → &#x60;id&#x60;). A listing or reservation outside that account answers &#x60;404 not_found&#x60;. Omit it to act workspace-wide. | [optional] |
 | **cancel_reservation_request** | [**CancelReservationRequest**](CancelReservationRequest.md) |  | [optional] |
 
 ### Return type
@@ -165,7 +170,7 @@ end
 
 Create a reservation
 
-Creates a reservation and everything that hangs off one: the guest, the conversation thread, the dashboard item, the calendar block, and the `reservation.created` fan-out that issues the door code and starts the messaging automations.  **Platform is restricted to `direct`, `website` and `owner`.** Reservations on Airbnb, Booking.com and Vrbo are owned by the channel and arrive through sync — creating one here would mint a local booking the channel has never heard of, which then fights the next sync. Create those on the channel.  **Dates are validated** (`YYYY-MM-DD`, and `checkOut` must be after `checkIn`), and an unrecognised field is rejected by name rather than silently ignored.  **This endpoint does not set the price.** There is no `totalPrice` field: the reservation pipeline derives the price breakdown from the property's own rates and overwrites anything supplied, so accepting a total would be taking a value and discarding it. A reservation created here is priced by that engine (`0` when the property has no rates for the range). `currency` IS honoured. Quote a stay with `GET /v1/quotes` before booking if you need the figure up front.  **Availability is NOT checked.** This creates the reservation you asked for even if the dates overlap an existing booking. Call `GET /v1/availability/{propertyId}` first if that matters.  Send `Idempotency-Key` — a network timeout here is exactly the case it exists for: without it, a retry books the guest twice.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+Creates a reservation — in the listing's PMS when it has one, otherwise as a direct booking in Repull.  ### Where the booking is made  - **A listing managed in a connected PMS** (Mews, Cloudbeds, Hostaway, Guesty, Beds24, BookingSync, Lodgify, Smoobu, Hospitable, iGMS, OwnerRez): the booking is created **in the PMS first**, then recorded in Repull from the PMS's own record, so the next sync lands on the same confirmation code and nothing is duplicated. A booking is **never** created only in Repull for such a listing — the PMS would keep selling the dates. What the PMS cannot do is refused (`422 pms_write_unsupported`), never faked. The PMS checks availability: taken dates answer `409 pms_unavailable`. - **Any other listing**: a direct booking made in Repull, with everything that hangs off one — the guest, the conversation, the calendar block and the `reservation.created` fan-out that issues the door code and starts the messaging automations. Priced by the listing's own rates; **availability is NOT checked** (call `GET /v1/availability/{propertyId}` first if that matters).  `GET /v1/listings/{id}` → `capabilities.reservations` says which applies to a listing and exactly what it supports (`create`, `modify`, `cancel`, `quote`, `customPrice`, plus `notes`).  ### Fields by listing kind  | Field | PMS listing | Direct-booking listing | |---|---|---| | `listingId`, `checkIn`, `checkOut`, `guest`, `guestCount`, `adults`, `children` | ✓ | ✓ | | `status` | `confirmed` (default) or `tentative` | ✓ | | `totalPrice` | ✓ where `capabilities.reservations.customPrice`; otherwise the PMS prices the stay | `422 unsupported_field` (priced from the listing's rates) | | `notes`, `unitId`, `sendConfirmationEmail` | ✓ | `422 unsupported_field` | | `checkInTime`, `checkOutTime`, `currency`, `guestId` | `422 unsupported_field` (the PMS's own settings apply) | ✓ | | `platform` | `direct` or `website` (`owner` → `422 pms_write_unsupported`; block owner stays in the PMS) | `direct`, `website` or `owner` |  A field a listing cannot take is refused by name, never silently dropped. `platform` never accepts `airbnb` / `booking` / `vrbo`: those reservations are owned by the channel and arrive through sync.  ### Per-PMS limits  | PMS | create | change | cancel | quote | `totalPrice` | Limits | |---|---|---|---|---|---|---| | Mews | ✓ | ✓ | ✓ | – | ✓ | — | | Cloudbeds | ✓ | ✓ | ✓ | – | – | Books at the rate plan's price; group bookings supported. | | Hostaway | ✓ | ✓ | ✓ | ✓ | ✓ | Direct-channel bookings only; a specific unit is refused; a date change keeps the booked total. | | Guesty | ✓ | ✓ | ✓ | ✓ | ✓ | Cancels direct and Vrbo bookings; other channel bookings are cancelled on the channel. | | Beds24 | ✓ | ✓ | ✓ | ✓ | ✓ | Needs the `write:bookings` scope; a multi-room property needs `unitId`. | | BookingSync | ✓ | ✓ | ✓ | ✓ | ✓ | Needs `bookings_write`; fees and taxes are not itemized; no guest email. | | Lodgify | ✓ | ✓ | ✓ (declines) | ✓ | ✓ | Cancel declines the booking; single-room bookings. | | Smoobu | ✓ | ✓ (no dates) | ✓ | ✓ | ✓ | Dates cannot be changed through Smoobu's API — cancel and rebook, or change them in Smoobu. | | Hospitable | ✓ | ✓ | ✓ | ✓ (Direct plan) | ✓ | Manual reservations only; needs `reservation:write`; adds no fees or taxes. | | iGMS | ✓ | ✓ | ✓ | – | ✓ (required) | iGMS direct bookings only; a price is required; no tentative holds. | | OwnerRez | ✓ | ✓ | – | ✓ | – | No cancel through OwnerRez's API; priced by the property's own rates; needs the `full` scope. |  Every PMS except Cloudbeds refuses group bookings, and every vacation-rental PMS refuses to change or cancel a booking that came from a channel (Airbnb, Booking.com, Vrbo…) — that is done on the channel.  **Verification.** Mews and Cloudbeds were run end to end on their vendors' sandboxes. Every other PMS is **verified against the vendor's API documentation only** — no live account has been written to yet. `capabilities.reservations.verifiedAgainst` says which.  ### Idempotency  **Send `Idempotency-Key`.** A network timeout here is exactly the case it exists for. The key is also sent to the PMS as the booking's reference, so even a retry that reaches the PMS again finds the booking instead of making a second one (`409 pms_duplicate` with `existing`, or the existing booking returned). A completed answer is replayed with `Idempotency-Status: cached` and the PMS is not called again. `502 pms_error` (the PMS could not be reached) is NOT stored — retry with the same key. `502 reservation_created_in_pms_only` IS stored, unlike every other 5xx: the booking exists in the PMS and arrives with the next sync, so a retry replays that answer rather than booking twice.  ### Partial success  When the PMS created the booking but a follow-up step did not apply (for example the notes, or a tentative state), the response is still `201`, with `pms.partial: true` and the steps in `pms.failedSections`. The booking exists — do not create it again.  `X-Account-Id` restricts the listing to one connected account. Returns `403 listing_inactive` when the listing is inactive.
 
 ### Examples
 
@@ -181,7 +186,8 @@ end
 api_instance = Repull::ReservationsApi.new
 reservation_create_request = Repull::ReservationCreateRequest.new({listing_id: 4118, check_in: Date.parse('Thu Oct 01 00:00:00 UTC 2026'), check_out: Date.parse('Mon Oct 05 00:00:00 UTC 2026'), guest: Repull::ReservationGuestInput.new({first_name: 'Ada'})}) # ReservationCreateRequest | 
 opts = {
-  idempotency_key: '9f1c2f7e-4a3b-4f2e-9c8d-1b6a0e5d7c31' # String | Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged `Idempotency-Status: cached` — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → `409 idempotency_key_in_use`. - Same key with a DIFFERENT payload → `422 idempotency_key_reused`. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status >= 500, `408`, `425` and `429`, and the refusals that happen before anything is done and tell you to fix something outside the request first — `connection_reauth_required`, `listing_inactive`, and the rate/daily limits. Every other answer, including a final refusal such as `422 airbnb_rejected`, is stored and replayed.
+  idempotency_key: '9f1c2f7e-4a3b-4f2e-9c8d-1b6a0e5d7c31', # String | Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged `Idempotency-Status: cached` — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → `409 idempotency_key_in_use`. - Same key with a DIFFERENT payload → `422 idempotency_key_reused`. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status >= 500, `408`, `425` and `429`, and the refusals that happen before anything is done and tell you to fix something outside the request first — `connection_reauth_required`, `listing_inactive`, and the rate/daily limits. Every other answer, including a final refusal such as `422 airbnb_rejected`, is stored and replayed.
+  x_account_id: '126' # String | Restrict the request to one connected account (a Repull connection id, `GET /v1/connect` → `id`). A listing or reservation outside that account answers `404 not_found`. Omit it to act workspace-wide.
 }
 
 begin
@@ -217,6 +223,7 @@ end
 | ---- | ---- | ----------- | ----- |
 | **reservation_create_request** | [**ReservationCreateRequest**](ReservationCreateRequest.md) |  |  |
 | **idempotency_key** | **String** | Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status &gt;&#x3D; 500, &#x60;408&#x60;, &#x60;425&#x60; and &#x60;429&#x60;, and the refusals that happen before anything is done and tell you to fix something outside the request first — &#x60;connection_reauth_required&#x60;, &#x60;listing_inactive&#x60;, and the rate/daily limits. Every other answer, including a final refusal such as &#x60;422 airbnb_rejected&#x60;, is stored and replayed. | [optional] |
+| **x_account_id** | **String** | Restrict the request to one connected account (a Repull connection id, &#x60;GET /v1/connect&#x60; → &#x60;id&#x60;). A listing or reservation outside that account answers &#x60;404 not_found&#x60;. Omit it to act workspace-wide. | [optional] |
 
 ### Return type
 
@@ -489,13 +496,86 @@ end
 - **Accept**: application/json
 
 
+## quote_reservation
+
+> <ReservationQuoteResponse> quote_reservation(reservation_quote_request, opts)
+
+Quote a reservation in the PMS
+
+Prices a stay and checks its availability **in the PMS that manages the listing**, without booking anything. It is the same check `POST /v1/reservations` makes before booking when no `totalPrice` is sent, so `available: true` with a `total` is what that create would be priced at (dates can still be taken in between).  `available: false` is an answer, not an error: the PMS's reasons are in `restrictions` (minimum stay, closed to arrival, taken dates…).  - A listing **not managed in a PMS** answers `422 pms_not_linked`. Book it directly with `POST /v1/reservations`, or price it with `GET /v1/quotes`. - A PMS **without a quote API** (Mews, Cloudbeds, iGMS) answers `422 pms_write_unsupported`. You can still create the booking; on iGMS a `totalPrice` is required.  `GET /v1/listings/{id}` → `capabilities.reservations.quote` says whether a listing can be quoted.  ### Per-PMS limits  | PMS | create | change | cancel | quote | `totalPrice` | Limits | |---|---|---|---|---|---|---| | Mews | ✓ | ✓ | ✓ | – | ✓ | — | | Cloudbeds | ✓ | ✓ | ✓ | – | – | Books at the rate plan's price; group bookings supported. | | Hostaway | ✓ | ✓ | ✓ | ✓ | ✓ | Direct-channel bookings only; a specific unit is refused; a date change keeps the booked total. | | Guesty | ✓ | ✓ | ✓ | ✓ | ✓ | Cancels direct and Vrbo bookings; other channel bookings are cancelled on the channel. | | Beds24 | ✓ | ✓ | ✓ | ✓ | ✓ | Needs the `write:bookings` scope; a multi-room property needs `unitId`. | | BookingSync | ✓ | ✓ | ✓ | ✓ | ✓ | Needs `bookings_write`; fees and taxes are not itemized; no guest email. | | Lodgify | ✓ | ✓ | ✓ (declines) | ✓ | ✓ | Cancel declines the booking; single-room bookings. | | Smoobu | ✓ | ✓ (no dates) | ✓ | ✓ | ✓ | Dates cannot be changed through Smoobu's API — cancel and rebook, or change them in Smoobu. | | Hospitable | ✓ | ✓ | ✓ | ✓ (Direct plan) | ✓ | Manual reservations only; needs `reservation:write`; adds no fees or taxes. | | iGMS | ✓ | ✓ | ✓ | – | ✓ (required) | iGMS direct bookings only; a price is required; no tentative holds. | | OwnerRez | ✓ | ✓ | – | ✓ | – | No cancel through OwnerRez's API; priced by the property's own rates; needs the `full` scope. |  Every PMS except Cloudbeds refuses group bookings, and every vacation-rental PMS refuses to change or cancel a booking that came from a channel (Airbnb, Booking.com, Vrbo…) — that is done on the channel.  **Verification.** Mews and Cloudbeds were run end to end on their vendors' sandboxes. Every other PMS is **verified against the vendor's API documentation only** — no live account has been written to yet. `capabilities.reservations.verifiedAgainst` says which.  `X-Account-Id` restricts the listing to one connected account. Returns `403 listing_inactive` when the listing is inactive.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ReservationsApi.new
+reservation_quote_request = Repull::ReservationQuoteRequest.new({listing_id: 4118, check_in: Date.parse('Thu Oct 01 00:00:00 UTC 2026'), check_out: Date.parse('Mon Oct 05 00:00:00 UTC 2026')}) # ReservationQuoteRequest | 
+opts = {
+  x_account_id: '126' # String | Restrict the request to one connected account (a Repull connection id, `GET /v1/connect` → `id`). A listing or reservation outside that account answers `404 not_found`. Omit it to act workspace-wide.
+}
+
+begin
+  # Quote a reservation in the PMS
+  result = api_instance.quote_reservation(reservation_quote_request, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ReservationsApi->quote_reservation: #{e}"
+end
+```
+
+#### Using the quote_reservation_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<ReservationQuoteResponse>, Integer, Hash)> quote_reservation_with_http_info(reservation_quote_request, opts)
+
+```ruby
+begin
+  # Quote a reservation in the PMS
+  data, status_code, headers = api_instance.quote_reservation_with_http_info(reservation_quote_request, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <ReservationQuoteResponse>
+rescue Repull::ApiError => e
+  puts "Error when calling ReservationsApi->quote_reservation_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **reservation_quote_request** | [**ReservationQuoteRequest**](ReservationQuoteRequest.md) |  |  |
+| **x_account_id** | **String** | Restrict the request to one connected account (a Repull connection id, &#x60;GET /v1/connect&#x60; → &#x60;id&#x60;). A listing or reservation outside that account answers &#x60;404 not_found&#x60;. Omit it to act workspace-wide. | [optional] |
+
+### Return type
+
+[**ReservationQuoteResponse**](ReservationQuoteResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
 ## update_reservation
 
 > <ReservationUpdateResponse> update_reservation(id, reservation_update_request, opts)
 
 Update a reservation
 
-Changes the dates, the occupancy, or the unit. Drives the same command path the dashboard does, so the side effects come with it: the change audit is appended, bound task due dates re-sync, the old calendar dates unblock and the new ones block, the conversation's cached listing is invalidated, and `reservation.updated` fires — which is what revokes and re-issues the door code.  Supply at least one field; an empty body returns 422 rather than a 200 that changed nothing.  **Moving and re-dating in one call is one operation.** Send `listingId` together with `checkIn`/`checkOut` and it is applied as a single move, so the access code is re-issued once rather than twice.  ### Fields this endpoint deliberately does NOT accept  Each is rejected by name with the reason, never accepted and ignored:  | Field | Why | |---|---| | `guest` / `guestDetails` | Guest name, email and phone live on the guest record. The underlying command has no branch for them, so accepting them would return a success that changed nothing. | | `pricing` / `totalPrice` / `currency` | Repricing writes the price breakdown, the pricing row and a pricing-history entry. It belongs to its own endpoint. | | `status` | Not a field. Cancelling, confirming and checking out are separate operations with materially different side effects — cancellation issues a credit refund and revokes access codes. | | `platform` | Immutable: it records where the booking actually originated. | | `notes` | `internal_notes` is an append-only audit trail the system writes on every change. |  **Availability is NOT checked.** A date change that overlaps another booking will be written. Call `GET /v1/availability/{propertyId}` first if that matters.  Returns `403 listing_inactive` when the reservation is on an inactive listing, or when a `listingId` move targets one; nothing is changed.
+Changes the dates, the occupancy, or the unit.  **A stay managed in a connected PMS is changed in the PMS first**, then Repull's copy is refreshed from the PMS's record — changing only Repull's copy would be reverted by the next sync. On such a stay, `checkIn`, `checkOut` and `guestCount` are changed; moving it to another listing and changing its check-in/check-out times are done in the PMS (`422 pms_write_unsupported`), as is anything the PMS's API cannot change (for example dates on Smoobu). A channel booking that came in through the PMS (Airbnb, Booking.com, …) is changed on the channel (`409 reservation_owned_by_channel`). The PMS checks availability: taken dates answer `409 pms_unavailable`. The PMS's outcome comes back as `pms`. `GET /v1/listings/{id}` → `capabilities.reservations.modify` says whether a listing's PMS supports changes.  **Any other stay** drives the same command path the dashboard does, so the side effects come with it: the change audit is appended, bound task due dates re-sync, the old calendar dates unblock and the new ones block, the conversation's cached listing is invalidated, and `reservation.updated` fires — which is what revokes and re-issues the door code.  Supply at least one field; an empty body returns 422 rather than a 200 that changed nothing.  **Moving and re-dating in one call is one operation.** Send `listingId` together with `checkIn`/`checkOut` and it is applied as a single move, so the access code is re-issued once rather than twice.  ### Fields this endpoint deliberately does NOT accept  Each is rejected by name with the reason, never accepted and ignored:  | Field | Why | |---|---| | `guest` / `guestDetails` | Guest name, email and phone live on the guest record. The underlying command has no branch for them, so accepting them would return a success that changed nothing. | | `pricing` / `totalPrice` / `currency` | Repricing writes the price breakdown, the pricing row and a pricing-history entry. It belongs to its own endpoint. | | `status` | Not a field. Cancelling, confirming and checking out are separate operations with materially different side effects — cancellation issues a credit refund and revokes access codes. | | `platform` | Immutable: it records where the booking actually originated. | | `notes` | `internal_notes` is an append-only audit trail the system writes on every change. |  **Availability is NOT checked for stays outside a PMS.** A date change that overlaps another booking will be written. Call `GET /v1/availability/{propertyId}` first if that matters.  `X-Account-Id` restricts the reservation (and a listing it is moved to) to one connected account. Returns `403 listing_inactive` when the reservation is on an inactive listing, or when a `listingId` move targets one; nothing is changed.
 
 ### Examples
 
@@ -512,7 +592,8 @@ api_instance = Repull::ReservationsApi.new
 id = 56 # Integer | Internal Repull reservation ID.
 reservation_update_request = Repull::ReservationUpdateRequest.new # ReservationUpdateRequest | 
 opts = {
-  idempotency_key: '9f1c2f7e-4a3b-4f2e-9c8d-1b6a0e5d7c31' # String | Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged `Idempotency-Status: cached` — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → `409 idempotency_key_in_use`. - Same key with a DIFFERENT payload → `422 idempotency_key_reused`. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status >= 500, `408`, `425` and `429`, and the refusals that happen before anything is done and tell you to fix something outside the request first — `connection_reauth_required`, `listing_inactive`, and the rate/daily limits. Every other answer, including a final refusal such as `422 airbnb_rejected`, is stored and replayed.
+  idempotency_key: '9f1c2f7e-4a3b-4f2e-9c8d-1b6a0e5d7c31', # String | Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged `Idempotency-Status: cached` — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → `409 idempotency_key_in_use`. - Same key with a DIFFERENT payload → `422 idempotency_key_reused`. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status >= 500, `408`, `425` and `429`, and the refusals that happen before anything is done and tell you to fix something outside the request first — `connection_reauth_required`, `listing_inactive`, and the rate/daily limits. Every other answer, including a final refusal such as `422 airbnb_rejected`, is stored and replayed.
+  x_account_id: '126' # String | Restrict the request to one connected account (a Repull connection id, `GET /v1/connect` → `id`). A listing or reservation outside that account answers `404 not_found`. Omit it to act workspace-wide.
 }
 
 begin
@@ -549,6 +630,7 @@ end
 | **id** | **Integer** | Internal Repull reservation ID. |  |
 | **reservation_update_request** | [**ReservationUpdateRequest**](ReservationUpdateRequest.md) |  |  |
 | **idempotency_key** | **String** | Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status &gt;&#x3D; 500, &#x60;408&#x60;, &#x60;425&#x60; and &#x60;429&#x60;, and the refusals that happen before anything is done and tell you to fix something outside the request first — &#x60;connection_reauth_required&#x60;, &#x60;listing_inactive&#x60;, and the rate/daily limits. Every other answer, including a final refusal such as &#x60;422 airbnb_rejected&#x60;, is stored and replayed. | [optional] |
+| **x_account_id** | **String** | Restrict the request to one connected account (a Repull connection id, &#x60;GET /v1/connect&#x60; → &#x60;id&#x60;). A listing or reservation outside that account answers &#x60;404 not_found&#x60;. Omit it to act workspace-wide. | [optional] |
 
 ### Return type
 

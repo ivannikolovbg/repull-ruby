@@ -12,7 +12,7 @@
 | **check_out** | **Date** |  | [optional] |
 | **updated_at** | **String** |  | [optional] |
 | **already_cancelled** | **Boolean** | Present and true when the reservation was already cancelled. | [optional] |
-| **pms** | [**CancelReservation200ResponsePms**](CancelReservation200ResponsePms.md) |  | [optional] |
+| **pms** | [**ReservationPmsOutcome**](ReservationPmsOutcome.md) |  | [optional] |
 
 ## Example
 

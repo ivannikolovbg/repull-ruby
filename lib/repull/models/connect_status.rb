@@ -39,8 +39,16 @@ module Repull
     # PMS connections only: what the app may change in the PMS. Change it with `PATCH /v1/connect/{provider}/write-policy`.
     attr_accessor :write_policy
 
+    attr_accessor :capabilities
+
     # Vrbo only: the same freshness envelope the Airbnb read endpoints return, per account and in aggregate. Its reason is never_synced until a mapping is confirmed and importing while upcoming bookings come in.
     attr_accessor :data_freshness
+
+    # Smoobu only: set to `{ required: true, reason: \"reauth_required\", message }` when the connection still uses a legacy single API key, which Smoobu stops accepting on October 31, 2026. `null` once it is on an API key + secret.
+    attr_accessor :action
+
+    # Smoobu only: durable link to the hosted Smoobu form where the host pastes a new API key + secret. Submitting it updates this same connection (`id` unchanged). Present only when `action.required` is true.
+    attr_accessor :fix_url
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
@@ -54,7 +62,10 @@ module Repull
         :'host' => :'host',
         :'accounts' => :'accounts',
         :'write_policy' => :'writePolicy',
-        :'data_freshness' => :'dataFreshness'
+        :'capabilities' => :'capabilities',
+        :'data_freshness' => :'dataFreshness',
+        :'action' => :'action',
+        :'fix_url' => :'fixUrl'
       }
     end
 
@@ -80,7 +91,10 @@ module Repull
         :'host' => :'ConnectHost',
         :'accounts' => :'Array<ConnectStatusAccountsInner>',
         :'write_policy' => :'PmsWritePolicy',
-        :'data_freshness' => :'Object'
+        :'capabilities' => :'ConnectStatusCapabilities',
+        :'data_freshness' => :'Object',
+        :'action' => :'ConnectionAction',
+        :'fix_url' => :'String'
       }
     end
 
@@ -89,6 +103,8 @@ module Repull
       Set.new([
         :'external_account_id',
         :'host',
+        :'action',
+        :'fix_url'
       ])
     end
 
@@ -146,8 +162,20 @@ module Repull
         self.write_policy = attributes[:'write_policy']
       end
 
+      if attributes.key?(:'capabilities')
+        self.capabilities = attributes[:'capabilities']
+      end
+
       if attributes.key?(:'data_freshness')
         self.data_freshness = attributes[:'data_freshness']
+      end
+
+      if attributes.key?(:'action')
+        self.action = attributes[:'action']
+      end
+
+      if attributes.key?(:'fix_url')
+        self.fix_url = attributes[:'fix_url']
       end
     end
 
@@ -180,7 +208,10 @@ module Repull
           host == o.host &&
           accounts == o.accounts &&
           write_policy == o.write_policy &&
-          data_freshness == o.data_freshness
+          capabilities == o.capabilities &&
+          data_freshness == o.data_freshness &&
+          action == o.action &&
+          fix_url == o.fix_url
     end
 
     # @see the `==` method
@@ -192,7 +223,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [connected, provider, id, status, external_account_id, created_at, host, accounts, write_policy, data_freshness].hash
+      [connected, provider, id, status, external_account_id, created_at, host, accounts, write_policy, capabilities, data_freshness, action, fix_url].hash
     end
 
     # Builds the object from hash

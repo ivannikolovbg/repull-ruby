@@ -14,7 +14,7 @@ require 'date'
 require 'time'
 
 module Repull
-  # How the guest lets themselves in — Airbnb's `check_in_option`.
+  # How the guest lets themselves in — Airbnb's `check_in_option`. `instruction` is the arrival instructions the guest sees.
   class AirbnbListingDetailsWriteRequestCheckInOption < ApiModelBase
     attr_accessor :category
 

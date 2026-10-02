@@ -843,7 +843,7 @@ No authorization required
 
 List PMS/OTA connections
 
-Returns all active connections to PMS and OTA platforms.
+Returns every PMS and OTA connection in the workspace, each with its `status`.  **Spot connections that need attention.** A connection whose `status` is not `active` may need the host to do something before it works — most commonly a Booking.com Extranet connection where the invited user was granted only partial access (`status: \"needs_permissions\"`). A Smoobu connection still on a legacy single API key carries `action.reason: \"reauth_required\"` while its `status` is `active`: Smoobu stops accepting those keys on October 31, 2026, and `fixUrl` opens the form for a new API key + secret (the connection id stays the same). These connections carry two extra fields:  - `action` — `{ required: true, reason, message }`. `reason` is a stable machine code (e.g. `needs_permissions`); `message` is a host-facing one-liner describing what to do. - `fixUrl` — a durable link that reopens the hosted Connect flow **bound to that account, on the fix screen** (e.g. \"grant full access\" + a Re-check button). It is safe to store and show in your own dashboard.  **Self-serve repair:** when `action.required` is true, surface a \"Fix\" button that opens `fixUrl` in a new tab (or embed it). The host resolves the issue (e.g. grants the user full access in Booking.com) and clicks Re-check; the import finishes on its own and the connection flips back to `active` — no re-invite, no support ticket. Poll this endpoint (or read it after the host returns) to confirm `action` has cleared.
 
 ### Examples
 
@@ -1863,7 +1863,7 @@ end
 
 Submit Smoobu credentials for a Connect session
 
-Completes a credentials-pattern connection for Smoobu. API key from Smoobu → Settings → For developers.  The credentials are validated against Smoobu before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.  No API key required when called with a `sessionId` — the session is the capability token.
+Completes a credentials-pattern connection for Smoobu with an HMAC API key + API secret, created in Smoobu → Settings → Advanced → API Keys (Create API Key, then Generate Secret — the secret is shown only once). Smoobu retires single legacy API keys on October 31, 2026, so `apiSecret` is required; a request with only `apiKey` returns `invalid_params`.  Reconnecting replaces the stored credentials on the workspace's existing Smoobu connection — the `pmsConnectionId` stays the same.  The credentials are validated against Smoobu before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.  No API key required when called with a `sessionId` — the session is the capability token.
 
 ### Examples
 
@@ -1877,7 +1877,7 @@ Repull.configure do |config|
 end
 
 api_instance = Repull::ConnectApi.new
-submit_smoobu_credentials_request = Repull::SubmitSmoobuCredentialsRequest.new({credentials: { key: 3.56}}) # SubmitSmoobuCredentialsRequest | 
+submit_smoobu_credentials_request = Repull::SubmitSmoobuCredentialsRequest.new({credentials: Repull::SubmitSmoobuCredentialsRequestCredentials.new({api_key: 'api_key_example', api_secret: 'api_secret_example'})}) # SubmitSmoobuCredentialsRequest | 
 
 begin
   # Submit Smoobu credentials for a Connect session

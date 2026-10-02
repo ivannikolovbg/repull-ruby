@@ -14,6 +14,7 @@ require 'date'
 require 'time'
 
 module Repull
+  # Which fields a listing takes depends on whether it is managed in a PMS — see the operation description and `GET /v1/listings/{id}` → `capabilities.reservations`. A field the listing cannot take is refused by name (`422 unsupported_field`), never dropped.
   class ReservationCreateRequest < ApiModelBase
     # Internal Repull property id — see `GET /v1/properties`.
     attr_accessor :listing_id
@@ -25,21 +26,41 @@ module Repull
 
     attr_accessor :guest
 
-    # OTA platforms are deliberately absent — those reservations are owned by the channel and arrive through sync.
+    # OTA platforms are deliberately absent — those reservations are owned by the channel and arrive through sync. `owner` is refused on a PMS listing (block owner stays in the PMS).
     attr_accessor :platform
 
-    # Lifecycle status to open the reservation in. Defaults to confirmed.
+    # `confirmed` (default) or `tentative` (an optional hold, where the PMS has one). On a listing not managed in a PMS the value is passed to the reservation pipeline as before.
     attr_accessor :status
 
-    attr_accessor :check_in_time
+    attr_accessor :adults
 
-    attr_accessor :check_out_time
+    attr_accessor :children
 
-    # Attach an existing guest instead of matching/creating one. Must belong to this workspace.
-    attr_accessor :guest_id
-
+    # Total guests. On a PMS listing without `adults`, used as the adult count.
     attr_accessor :guest_count
 
+    # PMS listings only: the total for the whole stay, in the listing's currency. Honoured where `capabilities.reservations.customPrice` is true; omit it and the PMS prices the stay (from its quote where it has one). Refused on a listing not managed in a PMS, whose rate engine prices the stay.
+    attr_accessor :total_price
+
+    # PMS listings only: booking notes stored in the PMS.
+    attr_accessor :notes
+
+    # PMS listings only: book this unit (`GET /v1/listings/{id}` → `units[].id`). Refused by PMSs that cannot target a unit.
+    attr_accessor :unit_id
+
+    # PMS listings only: ask the PMS to email the guest its own confirmation, where the PMS supports it.
+    attr_accessor :send_confirmation_email
+
+    # Listings not managed in a PMS only.
+    attr_accessor :check_in_time
+
+    # Listings not managed in a PMS only.
+    attr_accessor :check_out_time
+
+    # Listings not managed in a PMS only: attach an existing guest instead of matching/creating one. Must belong to this workspace.
+    attr_accessor :guest_id
+
+    # Listings not managed in a PMS only (a PMS books in the property's currency).
     attr_accessor :currency
 
     # Attribute mapping from ruby-style variable name to JSON key.
@@ -51,10 +72,16 @@ module Repull
         :'guest' => :'guest',
         :'platform' => :'platform',
         :'status' => :'status',
+        :'adults' => :'adults',
+        :'children' => :'children',
+        :'guest_count' => :'guestCount',
+        :'total_price' => :'totalPrice',
+        :'notes' => :'notes',
+        :'unit_id' => :'unitId',
+        :'send_confirmation_email' => :'sendConfirmationEmail',
         :'check_in_time' => :'checkInTime',
         :'check_out_time' => :'checkOutTime',
         :'guest_id' => :'guestId',
-        :'guest_count' => :'guestCount',
         :'currency' => :'currency'
       }
     end
@@ -78,10 +105,16 @@ module Repull
         :'guest' => :'ReservationGuestInput',
         :'platform' => :'String',
         :'status' => :'String',
+        :'adults' => :'Integer',
+        :'children' => :'Integer',
+        :'guest_count' => :'Integer',
+        :'total_price' => :'Float',
+        :'notes' => :'String',
+        :'unit_id' => :'String',
+        :'send_confirmation_email' => :'Boolean',
         :'check_in_time' => :'String',
         :'check_out_time' => :'String',
         :'guest_id' => :'Integer',
-        :'guest_count' => :'Integer',
         :'currency' => :'String'
       }
     end
@@ -141,7 +174,35 @@ module Repull
       if attributes.key?(:'status')
         self.status = attributes[:'status']
       else
-        self.status = 'accept'
+        self.status = 'confirmed'
+      end
+
+      if attributes.key?(:'adults')
+        self.adults = attributes[:'adults']
+      end
+
+      if attributes.key?(:'children')
+        self.children = attributes[:'children']
+      end
+
+      if attributes.key?(:'guest_count')
+        self.guest_count = attributes[:'guest_count']
+      end
+
+      if attributes.key?(:'total_price')
+        self.total_price = attributes[:'total_price']
+      end
+
+      if attributes.key?(:'notes')
+        self.notes = attributes[:'notes']
+      end
+
+      if attributes.key?(:'unit_id')
+        self.unit_id = attributes[:'unit_id']
+      end
+
+      if attributes.key?(:'send_confirmation_email')
+        self.send_confirmation_email = attributes[:'send_confirmation_email']
       end
 
       if attributes.key?(:'check_in_time')
@@ -154,10 +215,6 @@ module Repull
 
       if attributes.key?(:'guest_id')
         self.guest_id = attributes[:'guest_id']
-      end
-
-      if attributes.key?(:'guest_count')
-        self.guest_count = attributes[:'guest_count']
       end
 
       if attributes.key?(:'currency')
@@ -186,6 +243,26 @@ module Repull
         invalid_properties.push('invalid value for "guest", guest cannot be nil.')
       end
 
+      if !@adults.nil? && @adults < 1
+        invalid_properties.push('invalid value for "adults", must be greater than or equal to 1.')
+      end
+
+      if !@children.nil? && @children < 0
+        invalid_properties.push('invalid value for "children", must be greater than or equal to 0.')
+      end
+
+      if !@guest_count.nil? && @guest_count < 1
+        invalid_properties.push('invalid value for "guest_count", must be greater than or equal to 1.')
+      end
+
+      if !@total_price.nil? && @total_price < 0
+        invalid_properties.push('invalid value for "total_price", must be greater than or equal to 0.')
+      end
+
+      if !@notes.nil? && @notes.to_s.length > 5000
+        invalid_properties.push('invalid value for "notes", the character length must be smaller than or equal to 5000.')
+      end
+
       pattern = Regexp.new(/^([01]\d|2[0-3]):[0-5]\d$/)
       if !@check_in_time.nil? && @check_in_time !~ pattern
         invalid_properties.push("invalid value for \"check_in_time\", must conform to the pattern #{pattern}.")
@@ -194,10 +271,6 @@ module Repull
       pattern = Regexp.new(/^([01]\d|2[0-3]):[0-5]\d$/)
       if !@check_out_time.nil? && @check_out_time !~ pattern
         invalid_properties.push("invalid value for \"check_out_time\", must conform to the pattern #{pattern}.")
-      end
-
-      if !@guest_count.nil? && @guest_count < 1
-        invalid_properties.push('invalid value for "guest_count", must be greater than or equal to 1.')
       end
 
       if !@currency.nil? && @currency.to_s.length > 3
@@ -219,9 +292,13 @@ module Repull
       return false if @check_in.nil?
       return false if @check_out.nil?
       return false if @guest.nil?
+      return false if !@adults.nil? && @adults < 1
+      return false if !@children.nil? && @children < 0
+      return false if !@guest_count.nil? && @guest_count < 1
+      return false if !@total_price.nil? && @total_price < 0
+      return false if !@notes.nil? && @notes.to_s.length > 5000
       return false if !@check_in_time.nil? && @check_in_time !~ Regexp.new(/^([01]\d|2[0-3]):[0-5]\d$/)
       return false if !@check_out_time.nil? && @check_out_time !~ Regexp.new(/^([01]\d|2[0-3]):[0-5]\d$/)
-      return false if !@guest_count.nil? && @guest_count < 1
       return false if !@currency.nil? && @currency.to_s.length > 3
       return false if !@currency.nil? && @currency.to_s.length < 3
       true
@@ -268,6 +345,76 @@ module Repull
     end
 
     # Custom attribute writer method with validation
+    # @param [Object] adults Value to be assigned
+    def adults=(adults)
+      if adults.nil?
+        fail ArgumentError, 'adults cannot be nil'
+      end
+
+      if adults < 1
+        fail ArgumentError, 'invalid value for "adults", must be greater than or equal to 1.'
+      end
+
+      @adults = adults
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] children Value to be assigned
+    def children=(children)
+      if children.nil?
+        fail ArgumentError, 'children cannot be nil'
+      end
+
+      if children < 0
+        fail ArgumentError, 'invalid value for "children", must be greater than or equal to 0.'
+      end
+
+      @children = children
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] guest_count Value to be assigned
+    def guest_count=(guest_count)
+      if guest_count.nil?
+        fail ArgumentError, 'guest_count cannot be nil'
+      end
+
+      if guest_count < 1
+        fail ArgumentError, 'invalid value for "guest_count", must be greater than or equal to 1.'
+      end
+
+      @guest_count = guest_count
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] total_price Value to be assigned
+    def total_price=(total_price)
+      if total_price.nil?
+        fail ArgumentError, 'total_price cannot be nil'
+      end
+
+      if total_price < 0
+        fail ArgumentError, 'invalid value for "total_price", must be greater than or equal to 0.'
+      end
+
+      @total_price = total_price
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] notes Value to be assigned
+    def notes=(notes)
+      if notes.nil?
+        fail ArgumentError, 'notes cannot be nil'
+      end
+
+      if notes.to_s.length > 5000
+        fail ArgumentError, 'invalid value for "notes", the character length must be smaller than or equal to 5000.'
+      end
+
+      @notes = notes
+    end
+
+    # Custom attribute writer method with validation
     # @param [Object] check_in_time Value to be assigned
     def check_in_time=(check_in_time)
       if check_in_time.nil?
@@ -295,20 +442,6 @@ module Repull
       end
 
       @check_out_time = check_out_time
-    end
-
-    # Custom attribute writer method with validation
-    # @param [Object] guest_count Value to be assigned
-    def guest_count=(guest_count)
-      if guest_count.nil?
-        fail ArgumentError, 'guest_count cannot be nil'
-      end
-
-      if guest_count < 1
-        fail ArgumentError, 'invalid value for "guest_count", must be greater than or equal to 1.'
-      end
-
-      @guest_count = guest_count
     end
 
     # Custom attribute writer method with validation
@@ -340,10 +473,16 @@ module Repull
           guest == o.guest &&
           platform == o.platform &&
           status == o.status &&
+          adults == o.adults &&
+          children == o.children &&
+          guest_count == o.guest_count &&
+          total_price == o.total_price &&
+          notes == o.notes &&
+          unit_id == o.unit_id &&
+          send_confirmation_email == o.send_confirmation_email &&
           check_in_time == o.check_in_time &&
           check_out_time == o.check_out_time &&
           guest_id == o.guest_id &&
-          guest_count == o.guest_count &&
           currency == o.currency
     end
 
@@ -356,7 +495,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [listing_id, check_in, check_out, guest, platform, status, check_in_time, check_out_time, guest_id, guest_count, currency].hash
+      [listing_id, check_in, check_out, guest, platform, status, adults, children, guest_count, total_price, notes, unit_id, send_confirmation_email, check_in_time, check_out_time, guest_id, currency].hash
     end
 
     # Builds the object from hash

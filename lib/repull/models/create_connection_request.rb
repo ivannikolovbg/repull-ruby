@@ -22,6 +22,9 @@ module Repull
     # Airbnb only — selects the OAuth scope set. 'read_only' grants read-only scopes; 'messaging' grants read scopes plus message read/send but NOT property management, so it can coexist with another app (e.g. an existing PMS) that already holds property management on the same Airbnb account; 'full_access' (default) grants full host scopes including the exclusive property management (only one app per Airbnb account can hold it). The hosted consent screen normally lets the host pick a tier; passing `accessType` explicitly fixes the tier and hides that choice, so the host can only continue with the tier you requested. Omit it to let the host choose.
     attr_accessor :access_type
 
+    # Airbnb — how many months of past reservations the first import pulls (1–60). Omit it for the default window. Upcoming stays are always imported. A wider window takes longer to import, because every extra month is more stays to fetch.
+    attr_accessor :reservation_history_months
+
     # Airbnb + Booking.com — your own correlation token, e.g. your user id (at most 500 characters). Echoed on the redirect back (`&state=`) and in the `connect.session.completed` webhook.
     attr_accessor :state
 
@@ -61,6 +64,7 @@ module Repull
       {
         :'redirect_url' => :'redirectUrl',
         :'access_type' => :'accessType',
+        :'reservation_history_months' => :'reservationHistoryMonths',
         :'state' => :'state',
         :'client_id' => :'clientId',
         :'client_secret' => :'clientSecret',
@@ -83,6 +87,7 @@ module Repull
       {
         :'redirect_url' => :'String',
         :'access_type' => :'String',
+        :'reservation_history_months' => :'Integer',
         :'state' => :'String',
         :'client_id' => :'String',
         :'client_secret' => :'String',
@@ -123,6 +128,10 @@ module Repull
         self.access_type = 'full_access'
       end
 
+      if attributes.key?(:'reservation_history_months')
+        self.reservation_history_months = attributes[:'reservation_history_months']
+      end
+
       if attributes.key?(:'state')
         self.state = attributes[:'state']
       end
@@ -145,6 +154,14 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
+      if !@reservation_history_months.nil? && @reservation_history_months > 60
+        invalid_properties.push('invalid value for "reservation_history_months", must be smaller than or equal to 60.')
+      end
+
+      if !@reservation_history_months.nil? && @reservation_history_months < 1
+        invalid_properties.push('invalid value for "reservation_history_months", must be greater than or equal to 1.')
+      end
+
       invalid_properties
     end
 
@@ -154,6 +171,8 @@ module Repull
       warn '[DEPRECATED] the `valid?` method is obsolete'
       access_type_validator = EnumAttributeValidator.new('String', ["read_only", "full_access", "messaging"])
       return false unless access_type_validator.valid?(@access_type)
+      return false if !@reservation_history_months.nil? && @reservation_history_months > 60
+      return false if !@reservation_history_months.nil? && @reservation_history_months < 1
       true
     end
 
@@ -167,6 +186,24 @@ module Repull
       @access_type = access_type
     end
 
+    # Custom attribute writer method with validation
+    # @param [Object] reservation_history_months Value to be assigned
+    def reservation_history_months=(reservation_history_months)
+      if reservation_history_months.nil?
+        fail ArgumentError, 'reservation_history_months cannot be nil'
+      end
+
+      if reservation_history_months > 60
+        fail ArgumentError, 'invalid value for "reservation_history_months", must be smaller than or equal to 60.'
+      end
+
+      if reservation_history_months < 1
+        fail ArgumentError, 'invalid value for "reservation_history_months", must be greater than or equal to 1.'
+      end
+
+      @reservation_history_months = reservation_history_months
+    end
+
     # Checks equality by comparing each attribute.
     # @param [Object] Object to be compared
     def ==(o)
@@ -174,6 +211,7 @@ module Repull
       self.class == o.class &&
           redirect_url == o.redirect_url &&
           access_type == o.access_type &&
+          reservation_history_months == o.reservation_history_months &&
           state == o.state &&
           client_id == o.client_id &&
           client_secret == o.client_secret &&
@@ -189,7 +227,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [redirect_url, access_type, state, client_id, client_secret, locale].hash
+      [redirect_url, access_type, reservation_history_months, state, client_id, client_secret, locale].hash
     end
 
     # Builds the object from hash

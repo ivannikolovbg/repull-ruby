@@ -14,7 +14,7 @@ require 'date'
 require 'time'
 
 module Repull
-  # Update what kind of property this is, when the quiet hours are, or how the guest gets in. At least one field required. These are among the attributes Airbnb locks on established listings — see `blockedFields` on the response.
+  # Update what kind of property this is, when the quiet hours are, how the guest gets in, the house manual, directions or Wi-Fi details. At least one field required. These are among the attributes Airbnb locks on established listings — see `blockedFields` on the response.
   class AirbnbListingDetailsWriteRequest < ApiModelBase
     # The coarse building family.
     attr_accessor :property_type_group
@@ -30,6 +30,18 @@ module Repull
 
     attr_accessor :check_in_option
 
+    # The house manual guests see after booking.
+    attr_accessor :house_manual
+
+    # Directions to the property, shown to booked guests.
+    attr_accessor :directions
+
+    # Wi-Fi network name.
+    attr_accessor :wifi_network
+
+    # Wi-Fi password.
+    attr_accessor :wifi_password
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
@@ -37,7 +49,11 @@ module Repull
         :'property_type_category' => :'property_type_category',
         :'room_type_category' => :'room_type_category',
         :'quiet_hours' => :'quiet_hours',
-        :'check_in_option' => :'check_in_option'
+        :'check_in_option' => :'check_in_option',
+        :'house_manual' => :'house_manual',
+        :'directions' => :'directions',
+        :'wifi_network' => :'wifi_network',
+        :'wifi_password' => :'wifi_password'
       }
     end
 
@@ -58,13 +74,21 @@ module Repull
         :'property_type_category' => :'String',
         :'room_type_category' => :'String',
         :'quiet_hours' => :'Array<AirbnbListingDetailsWriteRequestQuietHoursInner>',
-        :'check_in_option' => :'AirbnbListingDetailsWriteRequestCheckInOption'
+        :'check_in_option' => :'AirbnbListingDetailsWriteRequestCheckInOption',
+        :'house_manual' => :'String',
+        :'directions' => :'String',
+        :'wifi_network' => :'String',
+        :'wifi_password' => :'String'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'house_manual',
+        :'directions',
+        :'wifi_network',
+        :'wifi_password'
       ])
     end
 
@@ -105,6 +129,22 @@ module Repull
       if attributes.key?(:'check_in_option')
         self.check_in_option = attributes[:'check_in_option']
       end
+
+      if attributes.key?(:'house_manual')
+        self.house_manual = attributes[:'house_manual']
+      end
+
+      if attributes.key?(:'directions')
+        self.directions = attributes[:'directions']
+      end
+
+      if attributes.key?(:'wifi_network')
+        self.wifi_network = attributes[:'wifi_network']
+      end
+
+      if attributes.key?(:'wifi_password')
+        self.wifi_password = attributes[:'wifi_password']
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -116,6 +156,22 @@ module Repull
         invalid_properties.push('invalid value for "quiet_hours", number of items must be greater than or equal to 1.')
       end
 
+      if !@house_manual.nil? && @house_manual.to_s.length > 10000
+        invalid_properties.push('invalid value for "house_manual", the character length must be smaller than or equal to 10000.')
+      end
+
+      if !@directions.nil? && @directions.to_s.length > 5000
+        invalid_properties.push('invalid value for "directions", the character length must be smaller than or equal to 5000.')
+      end
+
+      if !@wifi_network.nil? && @wifi_network.to_s.length > 255
+        invalid_properties.push('invalid value for "wifi_network", the character length must be smaller than or equal to 255.')
+      end
+
+      if !@wifi_password.nil? && @wifi_password.to_s.length > 255
+        invalid_properties.push('invalid value for "wifi_password", the character length must be smaller than or equal to 255.')
+      end
+
       invalid_properties
     end
 
@@ -124,6 +180,10 @@ module Repull
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
       return false if !@quiet_hours.nil? && @quiet_hours.length < 1
+      return false if !@house_manual.nil? && @house_manual.to_s.length > 10000
+      return false if !@directions.nil? && @directions.to_s.length > 5000
+      return false if !@wifi_network.nil? && @wifi_network.to_s.length > 255
+      return false if !@wifi_password.nil? && @wifi_password.to_s.length > 255
       true
     end
 
@@ -141,6 +201,46 @@ module Repull
       @quiet_hours = quiet_hours
     end
 
+    # Custom attribute writer method with validation
+    # @param [Object] house_manual Value to be assigned
+    def house_manual=(house_manual)
+      if !house_manual.nil? && house_manual.to_s.length > 10000
+        fail ArgumentError, 'invalid value for "house_manual", the character length must be smaller than or equal to 10000.'
+      end
+
+      @house_manual = house_manual
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] directions Value to be assigned
+    def directions=(directions)
+      if !directions.nil? && directions.to_s.length > 5000
+        fail ArgumentError, 'invalid value for "directions", the character length must be smaller than or equal to 5000.'
+      end
+
+      @directions = directions
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] wifi_network Value to be assigned
+    def wifi_network=(wifi_network)
+      if !wifi_network.nil? && wifi_network.to_s.length > 255
+        fail ArgumentError, 'invalid value for "wifi_network", the character length must be smaller than or equal to 255.'
+      end
+
+      @wifi_network = wifi_network
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] wifi_password Value to be assigned
+    def wifi_password=(wifi_password)
+      if !wifi_password.nil? && wifi_password.to_s.length > 255
+        fail ArgumentError, 'invalid value for "wifi_password", the character length must be smaller than or equal to 255.'
+      end
+
+      @wifi_password = wifi_password
+    end
+
     # Checks equality by comparing each attribute.
     # @param [Object] Object to be compared
     def ==(o)
@@ -150,7 +250,11 @@ module Repull
           property_type_category == o.property_type_category &&
           room_type_category == o.room_type_category &&
           quiet_hours == o.quiet_hours &&
-          check_in_option == o.check_in_option
+          check_in_option == o.check_in_option &&
+          house_manual == o.house_manual &&
+          directions == o.directions &&
+          wifi_network == o.wifi_network &&
+          wifi_password == o.wifi_password
     end
 
     # @see the `==` method
@@ -162,7 +266,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [property_type_group, property_type_category, room_type_category, quiet_hours, check_in_option].hash
+      [property_type_group, property_type_category, room_type_category, quiet_hours, check_in_option, house_manual, directions, wifi_network, wifi_password].hash
     end
 
     # Builds the object from hash

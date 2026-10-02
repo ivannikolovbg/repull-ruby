@@ -54,6 +54,9 @@ module Repull
     # Every inactive listing the request involved. Present on `code: \"listing_inactive\"` (HTTP 403) — activate these ids and retry.
     attr_accessor :listing_ids
 
+    # The same inactive listings with their names, so you can show the user which ones to activate. Present on `code: \"listing_inactive\"` (HTTP 403). `name` is null only when the request did not resolve it.
+    attr_accessor :listings
+
     # The single Repull listing the error is about. Present on `code: \"listing_not_api_connected\"` (HTTP 403).
     attr_accessor :listing_id
 
@@ -84,6 +87,7 @@ module Repull
         :'did_you_mean' => :'did_you_mean',
         :'previous_code' => :'previous_code',
         :'listing_ids' => :'listing_ids',
+        :'listings' => :'listings',
         :'listing_id' => :'listing_id',
         :'airbnb_listing_id' => :'airbnb_listing_id',
         :'sync_category' => :'sync_category',
@@ -118,6 +122,7 @@ module Repull
         :'did_you_mean' => :'String',
         :'previous_code' => :'String',
         :'listing_ids' => :'Array<String>',
+        :'listings' => :'Array<ErrorErrorListingsInner>',
         :'listing_id' => :'String',
         :'airbnb_listing_id' => :'String',
         :'sync_category' => :'String',
@@ -214,6 +219,12 @@ module Repull
       if attributes.key?(:'listing_ids')
         if (value = attributes[:'listing_ids']).is_a?(Array)
           self.listing_ids = value
+        end
+      end
+
+      if attributes.key?(:'listings')
+        if (value = attributes[:'listings']).is_a?(Array)
+          self.listings = value
         end
       end
 
@@ -346,6 +357,7 @@ module Repull
           did_you_mean == o.did_you_mean &&
           previous_code == o.previous_code &&
           listing_ids == o.listing_ids &&
+          listings == o.listings &&
           listing_id == o.listing_id &&
           airbnb_listing_id == o.airbnb_listing_id &&
           sync_category == o.sync_category &&
@@ -362,7 +374,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [code, message, fix, docs_url, request_id, field, value_received, valid_values, valid_params, endpoint, did_you_mean, previous_code, listing_ids, listing_id, airbnb_listing_id, sync_category, retry_after, support].hash
+      [code, message, fix, docs_url, request_id, field, value_received, valid_values, valid_params, endpoint, did_you_mean, previous_code, listing_ids, listings, listing_id, airbnb_listing_id, sync_category, retry_after, support].hash
     end
 
     # Builds the object from hash

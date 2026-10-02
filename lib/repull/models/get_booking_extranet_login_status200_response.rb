@@ -15,6 +15,7 @@ require 'time'
 
 module Repull
   class GetBookingExtranetLoginStatus200Response < ApiModelBase
+    # The connection id (numeric string, like every `*Id` on the wire).
     attr_accessor :account_id
 
     attr_accessor :status
@@ -52,7 +53,7 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'account_id' => :'Integer',
+        :'account_id' => :'String',
         :'status' => :'String',
         :'error_message' => :'String',
         :'friendly_error' => :'String',

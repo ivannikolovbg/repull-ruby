@@ -27,7 +27,7 @@ module Repull
     # The `slug` of the flow you are answering, e.g. `existing_registration` or `exemption_claim`.
     attr_accessor :flow_slug
 
-    # Keyed by each question's `answer_key`. Each value carries exactly one field, chosen by the question's `type`: TEXT → `text_value`, ATTESTATION → `attestation_value`, RADIO → `radio_value`, DATE → `date_value`, SELECT → `selected_options_value`.
+    # Keyed by each question's `answer_key`. Each value carries exactly one `<type>_value` field named after the question's `type` (lower-case): `text_value`, `attestation_value` (boolean), `radio_value`, `dropdown_value`, `email_value`, `future_date_value` (YYYY-MM-DD) and `file_upload_value` (object with the base64 file) are the ones Airbnb returns in production; other question types follow the same pattern. Airbnb validates the value against its question. Example: `{\"email\": {\"email_value\": \"host@example.com\"}, \"expiration_date\": {\"future_date_value\": \"2029-02-04\"}, \"attestation\": {\"attestation_value\": true}}`.
     attr_accessor :answers
 
     # Attribute mapping from ruby-style variable name to JSON key.
@@ -58,7 +58,7 @@ module Repull
         :'regulation_type' => :'String',
         :'regulation_context' => :'String',
         :'flow_slug' => :'String',
-        :'answers' => :'Hash<String, AirbnbPermitsWriteRequestPermitsInnerAnswersValue>'
+        :'answers' => :'Hash<String, Hash<String, Object>>'
       }
     end
 

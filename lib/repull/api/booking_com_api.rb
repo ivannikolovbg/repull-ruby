@@ -784,8 +784,9 @@ module Repull
     end
 
     # List Booking.com properties
-    # List every Booking.com property this workspace holds. Each property is returned ONCE, with the Repull listings mapped under it.  A Booking.com property is a building; its rooms are what guests book, and each room is mapped to one Repull listing — so one property routinely carries many listings. `listings[].roomBookingId` is the Booking.com room id an ARI write takes.  A property whose rooms are not mapped yet is still listed, with `mappingStatus: \"unmapped\"` and an empty `listings` array. That is a real mid-onboarding state, not an error: finish `POST /v1/connect/booking/map-rooms` and the listings appear. Such a property used to be dropped silently, which made a mapped-but-unreadable workspace indistinguishable from one with no Booking connection at all.  Inactive listings are left out of `listings`; they keep syncing and reappear once activated. Use `GET /v1/listings?status=inactive` to find them.
+    # List every Booking.com property this workspace holds. Each property is returned ONCE, with the Repull listings mapped under it.  A Booking.com property is a building; its rooms are what guests book, and each room is mapped to one Repull listing — so one property routinely carries many listings. `listings[].roomBookingId` is the Booking.com room id an ARI write takes.  A property whose rooms are not mapped yet is still listed, with `mappingStatus: \"unmapped\"` and an empty `listings` array. That is a real mid-onboarding state, not an error: finish `POST /v1/connect/booking/map-rooms` and the listings appear. Such a property used to be dropped silently, which made a mapped-but-unreadable workspace indistinguishable from one with no Booking connection at all.  Inactive listings are left out of `listings` unless `?status=inactive|all` asks for them; they then appear with identity fields only (`listingId`, `name`, `city`, `status`, `inactiveReason`, room). `mappingStatus` counts every mapped listing, inactive ones included, so a property whose listings are all inactive is still `mapped`.
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :status &#x60;active&#x60; (default) leaves inactive listings out. &#x60;inactive&#x60; returns only them and &#x60;all&#x60; returns both. An inactive listing comes back with identity fields only (ids, &#x60;name&#x60;, &#x60;city&#x60;, &#x60;status&#x60;, &#x60;inactiveReason&#x60;, its account), which is enough to show what can be activated. Every row carries &#x60;status&#x60;. (default to 'active')
     # @return [Array<BookingProperty>]
     def list_booking_properties(opts = {})
       data, _status_code, _headers = list_booking_properties_with_http_info(opts)
@@ -793,18 +794,24 @@ module Repull
     end
 
     # List Booking.com properties
-    # List every Booking.com property this workspace holds. Each property is returned ONCE, with the Repull listings mapped under it.  A Booking.com property is a building; its rooms are what guests book, and each room is mapped to one Repull listing — so one property routinely carries many listings. &#x60;listings[].roomBookingId&#x60; is the Booking.com room id an ARI write takes.  A property whose rooms are not mapped yet is still listed, with &#x60;mappingStatus: \&quot;unmapped\&quot;&#x60; and an empty &#x60;listings&#x60; array. That is a real mid-onboarding state, not an error: finish &#x60;POST /v1/connect/booking/map-rooms&#x60; and the listings appear. Such a property used to be dropped silently, which made a mapped-but-unreadable workspace indistinguishable from one with no Booking connection at all.  Inactive listings are left out of &#x60;listings&#x60;; they keep syncing and reappear once activated. Use &#x60;GET /v1/listings?status&#x3D;inactive&#x60; to find them.
+    # List every Booking.com property this workspace holds. Each property is returned ONCE, with the Repull listings mapped under it.  A Booking.com property is a building; its rooms are what guests book, and each room is mapped to one Repull listing — so one property routinely carries many listings. &#x60;listings[].roomBookingId&#x60; is the Booking.com room id an ARI write takes.  A property whose rooms are not mapped yet is still listed, with &#x60;mappingStatus: \&quot;unmapped\&quot;&#x60; and an empty &#x60;listings&#x60; array. That is a real mid-onboarding state, not an error: finish &#x60;POST /v1/connect/booking/map-rooms&#x60; and the listings appear. Such a property used to be dropped silently, which made a mapped-but-unreadable workspace indistinguishable from one with no Booking connection at all.  Inactive listings are left out of &#x60;listings&#x60; unless &#x60;?status&#x3D;inactive|all&#x60; asks for them; they then appear with identity fields only (&#x60;listingId&#x60;, &#x60;name&#x60;, &#x60;city&#x60;, &#x60;status&#x60;, &#x60;inactiveReason&#x60;, room). &#x60;mappingStatus&#x60; counts every mapped listing, inactive ones included, so a property whose listings are all inactive is still &#x60;mapped&#x60;.
     # @param [Hash] opts the optional parameters
+    # @option opts [String] :status &#x60;active&#x60; (default) leaves inactive listings out. &#x60;inactive&#x60; returns only them and &#x60;all&#x60; returns both. An inactive listing comes back with identity fields only (ids, &#x60;name&#x60;, &#x60;city&#x60;, &#x60;status&#x60;, &#x60;inactiveReason&#x60;, its account), which is enough to show what can be activated. Every row carries &#x60;status&#x60;. (default to 'active')
     # @return [Array<(Array<BookingProperty>, Integer, Hash)>] Array<BookingProperty> data, response status code and response headers
     def list_booking_properties_with_http_info(opts = {})
       if @api_client.config.debugging
         @api_client.config.logger.debug 'Calling API: BookingComApi.list_booking_properties ...'
+      end
+      allowable_values = ["active", "inactive", "all"]
+      if @api_client.config.client_side_validation && opts[:'status'] && !allowable_values.include?(opts[:'status'])
+        fail ArgumentError, "invalid value for \"status\", must be one of #{allowable_values}"
       end
       # resource path
       local_var_path = '/v1/channels/booking/properties'
 
       # query parameters
       query_params = opts[:query_params] || {}
+      query_params[:'status'] = opts[:'status'] if !opts[:'status'].nil?
 
       # header parameters
       header_params = opts[:header_params] || {}

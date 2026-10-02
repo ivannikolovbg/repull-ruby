@@ -6,7 +6,8 @@
 | ---- | ---- | ----------- | ----- |
 | **accounts** | [**Array&lt;RecordAccount&gt;**](RecordAccount.md) | The connected account the property belongs to on each channel it is on. List endpoint. | [optional] |
 | **id** | **String** | Internal Repull property ID. Equal to the listing id (&#x60;listings.id&#x60;); the same integer is used as &#x60;listingId&#x60; on reservations and &#x60;propertyId&#x60; on availability. | [optional] |
-| **name** | **String** | Property name | [optional] |
+| **name** | **String** | Property name — the host&#39;s internal nickname. | [optional] |
+| **public_name** | **String** | The title guests see on the channel (e.g. the Airbnb listing title). &#x60;name&#x60; is the host&#39;s internal nickname for the listing; show &#x60;publicName&#x60; in anything a guest or end user reads. Present on inactive rows too. | [optional] |
 | **address** | **String** | Street address (from the listing&#39;s &#x60;street&#x60; field). | [optional] |
 | **city** | **String** |  | [optional] |
 | **latitude** | **String** | Detail endpoint only. Decimal degrees, as a string. | [optional] |
@@ -28,6 +29,7 @@ instance = Repull::Property.new(
   accounts: null,
   id: null,
   name: Oceanview Suite #3,
+  public_name: Centre Oxford bright single room D,
   address: null,
   city: Miami Beach,
   latitude: 25.7617,

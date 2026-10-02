@@ -14,7 +14,7 @@ require 'date'
 require 'time'
 
 module Repull
-  # A vacation rental property in your Repull workspace. Backed by the core `listings` row — enriched per-PMS fields (bedrooms, property type, provider id, etc.) live in provider-specific detail tables and are NOT returned here.  Field availability differs by endpoint: - `channels` is returned by the list endpoint (`GET /v1/properties`) only. - `latitude`, `longitude`, `createdAt`, and `amenities` are returned by the detail endpoint (`GET /v1/properties/{id}`) only. `amenities` requires `?include=amenities`.  An **inactive** property (`status: inactive`) appears only in the list endpoint, and only when `?status=inactive|all` asks for it. Such a row carries identity fields only — `id`, `name`, `status`, `lifecycleStatus`, `channels`, `accounts`, `updatedAt` — so every other field is absent until the property is activated. Every other endpoint answers `403 listing_inactive` for it.
+  # A vacation rental property in your Repull workspace. Backed by the core `listings` row — enriched per-PMS fields (bedrooms, property type, provider id, etc.) live in provider-specific detail tables and are NOT returned here.  Field availability differs by endpoint: - `channels` is returned by the list endpoint (`GET /v1/properties`) only. - `latitude`, `longitude`, `createdAt`, and `amenities` are returned by the detail endpoint (`GET /v1/properties/{id}`) only. `amenities` requires `?include=amenities`.  An **inactive** property (`status: inactive`) appears only in the list endpoint, and only when `?status=inactive|all` asks for it. Such a row carries identity fields only — `id`, `name`, `city`, `status`, `inactiveReason`, `lifecycleStatus`, `channels`, `accounts`, `updatedAt` — so every other field is absent until the property is activated. `inactiveReason` is `plan_limit` (held back by the plan; activating needs a free slot or an upgrade), `unlisted_on_airbnb`, or `deactivated` (switched off by you). Every other endpoint answers `403 listing_inactive` for it.
   class Property < ApiModelBase
     # The connected account the property belongs to on each channel it is on. List endpoint.
     attr_accessor :accounts
@@ -22,8 +22,11 @@ module Repull
     # Internal Repull property ID. Equal to the listing id (`listings.id`); the same integer is used as `listingId` on reservations and `propertyId` on availability.
     attr_accessor :id
 
-    # Property name
+    # Property name — the host's internal nickname.
     attr_accessor :name
+
+    # The title guests see on the channel (e.g. the Airbnb listing title). `name` is the host's internal nickname for the listing; show `publicName` in anything a guest or end user reads. Present on inactive rows too.
+    attr_accessor :public_name
 
     # Street address (from the listing's `street` field).
     attr_accessor :address
@@ -63,6 +66,7 @@ module Repull
         :'accounts' => :'accounts',
         :'id' => :'id',
         :'name' => :'name',
+        :'public_name' => :'publicName',
         :'address' => :'address',
         :'city' => :'city',
         :'latitude' => :'latitude',
@@ -93,6 +97,7 @@ module Repull
         :'accounts' => :'Array<RecordAccount>',
         :'id' => :'String',
         :'name' => :'String',
+        :'public_name' => :'String',
         :'address' => :'String',
         :'city' => :'String',
         :'latitude' => :'String',
@@ -110,6 +115,7 @@ module Repull
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'public_name',
         :'address',
         :'city',
         :'latitude',
@@ -147,6 +153,10 @@ module Repull
 
       if attributes.key?(:'name')
         self.name = attributes[:'name']
+      end
+
+      if attributes.key?(:'public_name')
+        self.public_name = attributes[:'public_name']
       end
 
       if attributes.key?(:'address')
@@ -221,6 +231,7 @@ module Repull
           accounts == o.accounts &&
           id == o.id &&
           name == o.name &&
+          public_name == o.public_name &&
           address == o.address &&
           city == o.city &&
           latitude == o.latitude &&
@@ -243,7 +254,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [accounts, id, name, address, city, latitude, longitude, currency, status, lifecycle_status, created_at, updated_at, channels, amenities].hash
+      [accounts, id, name, public_name, address, city, latitude, longitude, currency, status, lifecycle_status, created_at, updated_at, channels, amenities].hash
     end
 
     # Builds the object from hash

@@ -19,8 +19,11 @@ module Repull
     # Repull listing id
     attr_accessor :listing_id
 
-    # Listing title
+    # The host's internal nickname for the listing.
     attr_accessor :name
+
+    # The title guests see on the channel (e.g. the Airbnb listing title). `name` is the host's internal nickname for the listing; show `publicName` in anything a guest or end user reads. Present on inactive rows too.
+    attr_accessor :public_name
 
     attr_accessor :city
 
@@ -34,6 +37,7 @@ module Repull
       {
         :'listing_id' => :'listingId',
         :'name' => :'name',
+        :'public_name' => :'publicName',
         :'city' => :'city',
         :'thumbnail_url' => :'thumbnailUrl',
         :'connections' => :'connections'
@@ -55,6 +59,7 @@ module Repull
       {
         :'listing_id' => :'String',
         :'name' => :'String',
+        :'public_name' => :'String',
         :'city' => :'String',
         :'thumbnail_url' => :'String',
         :'connections' => :'Array<AirbnbConnection>'
@@ -64,6 +69,7 @@ module Repull
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'public_name',
         :'city',
         :'thumbnail_url',
       ])
@@ -91,6 +97,10 @@ module Repull
 
       if attributes.key?(:'name')
         self.name = attributes[:'name']
+      end
+
+      if attributes.key?(:'public_name')
+        self.public_name = attributes[:'public_name']
       end
 
       if attributes.key?(:'city')
@@ -130,6 +140,7 @@ module Repull
       self.class == o.class &&
           listing_id == o.listing_id &&
           name == o.name &&
+          public_name == o.public_name &&
           city == o.city &&
           thumbnail_url == o.thumbnail_url &&
           connections == o.connections
@@ -144,7 +155,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [listing_id, name, city, thumbnail_url, connections].hash
+      [listing_id, name, public_name, city, thumbnail_url, connections].hash
     end
 
     # Builds the object from hash

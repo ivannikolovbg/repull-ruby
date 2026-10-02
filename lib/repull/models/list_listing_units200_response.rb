@@ -15,6 +15,7 @@ require 'time'
 
 module Repull
   class ListListingUnits200Response < ApiModelBase
+    # Repull listing id (numeric string, like every `*Id` on the wire).
     attr_accessor :listing_id
 
     attr_accessor :total
@@ -43,7 +44,7 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'listing_id' => :'Integer',
+        :'listing_id' => :'String',
         :'total' => :'Integer',
         :'data' => :'Array<ListListingUnits200ResponseDataInner>'
       }

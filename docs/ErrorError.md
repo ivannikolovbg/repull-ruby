@@ -17,6 +17,7 @@
 | **did_you_mean** | **String** | Suggestion for typos and near-matches. Present when the server can guess the intent. | [optional] |
 | **previous_code** | **String** | The &#x60;code&#x60; THIS response used to carry, for callers whose branch still matches the old string. A migration aid with a deprecation window — **&#x60;code&#x60; is canonical, always match on that.**  Present only where an endpoint&#39;s classification actually changed, never as a permanent synonym, and it disappears from a response as soon as the canonical code and the old one agree.  The live case: the reviews, messaging, check-in-guide, alteration-answer and Airbnb-pull endpoints used to report EVERY Airbnb failure as &#x60;500 airbnb_error&#x60;, including refusals Airbnb will repeat forever. They now classify the same way every other Airbnb write does — an Airbnb 4xx is &#x60;422 airbnb_rejected&#x60; (fix the request), 5xx and timeouts stay &#x60;502 airbnb_error&#x60; (retry with backoff), and a dead grant is &#x60;403 connection_reauth_required&#x60;. Those responses carry &#x60;previous_code: \&quot;airbnb_error\&quot;&#x60;. **Removed in v2** — migrate your branches to &#x60;code&#x60; before then. | [optional] |
 | **listing_ids** | **Array&lt;String&gt;** | Every inactive listing the request involved. Present on &#x60;code: \&quot;listing_inactive\&quot;&#x60; (HTTP 403) — activate these ids and retry. | [optional] |
+| **listings** | [**Array&lt;ErrorErrorListingsInner&gt;**](ErrorErrorListingsInner.md) | The same inactive listings with their names, so you can show the user which ones to activate. Present on &#x60;code: \&quot;listing_inactive\&quot;&#x60; (HTTP 403). &#x60;name&#x60; is null only when the request did not resolve it. | [optional] |
 | **listing_id** | **String** | The single Repull listing the error is about. Present on &#x60;code: \&quot;listing_not_api_connected\&quot;&#x60; (HTTP 403). | [optional] |
 | **airbnb_listing_id** | **String** | Airbnb&#39;s own id for that listing, so the host can find it in Airbnb. Present on &#x60;code: \&quot;listing_not_api_connected\&quot;&#x60; (HTTP 403). | [optional] |
 | **sync_category** | **String** | The listing&#39;s current Airbnb API sync category — why the write was refused. Present on &#x60;code: \&quot;listing_not_api_connected\&quot;&#x60; (HTTP 403). | [optional] |
@@ -42,6 +43,7 @@ instance = Repull::ErrorError.new(
   did_you_mean: check_in_after,
   previous_code: airbnb_error,
   listing_ids: [&quot;4118&quot;],
+  listings: null,
   listing_id: 23901,
   airbnb_listing_id: 22616426,
   sync_category: none,

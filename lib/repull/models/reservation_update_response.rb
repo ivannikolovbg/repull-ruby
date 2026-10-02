@@ -15,6 +15,7 @@ require 'time'
 
 module Repull
   class ReservationUpdateResponse < ApiModelBase
+    # A string, like every id in API responses.
     attr_accessor :id
 
     attr_accessor :confirmation_code
@@ -37,6 +38,8 @@ module Repull
     # The fields this request actually changed.
     attr_accessor :changed
 
+    attr_accessor :pms
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
@@ -49,7 +52,8 @@ module Repull
         :'check_out_time' => :'checkOutTime',
         :'status' => :'status',
         :'updated_at' => :'updatedAt',
-        :'changed' => :'changed'
+        :'changed' => :'changed',
+        :'pms' => :'pms'
       }
     end
 
@@ -66,16 +70,17 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'id' => :'Integer',
+        :'id' => :'String',
         :'confirmation_code' => :'String',
-        :'listing_id' => :'Integer',
+        :'listing_id' => :'String',
         :'check_in' => :'Date',
         :'check_out' => :'Date',
         :'check_in_time' => :'String',
         :'check_out_time' => :'String',
         :'status' => :'String',
         :'updated_at' => :'Time',
-        :'changed' => :'Array<String>'
+        :'changed' => :'Array<String>',
+        :'pms' => :'ReservationPmsOutcome'
       }
     end
 
@@ -150,6 +155,10 @@ module Repull
           self.changed = value
         end
       end
+
+      if attributes.key?(:'pms')
+        self.pms = attributes[:'pms']
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -181,7 +190,8 @@ module Repull
           check_out_time == o.check_out_time &&
           status == o.status &&
           updated_at == o.updated_at &&
-          changed == o.changed
+          changed == o.changed &&
+          pms == o.pms
     end
 
     # @see the `==` method
@@ -193,7 +203,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, confirmation_code, listing_id, check_in, check_out, check_in_time, check_out_time, status, updated_at, changed].hash
+      [id, confirmation_code, listing_id, check_in, check_out, check_in_time, check_out_time, status, updated_at, changed, pms].hash
     end
 
     # Builds the object from hash
