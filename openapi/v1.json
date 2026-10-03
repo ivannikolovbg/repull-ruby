@@ -1368,6 +1368,12 @@
             "type": "string",
             "nullable": true
           },
+          "pms": {
+            "type": "string",
+            "nullable": true,
+            "example": "guesty",
+            "description": "The PMS this review was read from (`guesty`, `hostaway`, \u2026) when it came through one \u2014 `platform` is still the channel the guest wrote it on. A reply (`POST /v1/reviews/{id}/reply`) goes through this PMS; `GET /v1/connect/{provider}` \u2192 `capabilities.pms.reviews.reply` says whether it can. `null` for a review from a directly connected channel."
+          },
           "listingId": {
             "type": "string",
             "nullable": true,
@@ -2171,10 +2177,13 @@
           },
           "capabilities": {
             "type": "object",
-            "description": "PMS providers only. `reservations`: which reservation writes the API performs on this connection's listings \u2014 the connector's support combined with `writePolicy`. When `connected` is false, what the connector supports once connected.",
+            "description": "PMS providers only. `reservations`: which reservation writes the API performs on this connection's listings \u2014 the connector's support combined with `writePolicy`. `pms`: everything else the API does through this PMS (review replies, request answers, listing content, guests, message channel/attachments, calendar). When `connected` is false, what the connector supports once connected.",
             "properties": {
               "reservations": {
                 "$ref": "#/components/schemas/ReservationCapabilities"
+              },
+              "pms": {
+                "$ref": "#/components/schemas/PmsCapabilities"
               }
             }
           },
@@ -8061,7 +8070,51 @@
             "items": {
               "type": "string"
             },
-            "description": "Provided-but-not-applied fields \u2014 e.g. \"photos\" when a non-empty photos array carried no valid http(s) URL."
+            "description": "Provided-but-not-applied fields \u2014 e.g. \"photos\" when a non-empty photos array carried no valid http(s) URL. On a listing a PMS manages, also the content sections the PMS refused (`title`, `descriptions`, `times`, `capacity`, `amenities`, `houseRules`, `address`, `photos`), which are then not written here either."
+          },
+          "pms": {
+            "type": "object",
+            "nullable": true,
+            "description": "Present when the listing is managed in a PMS: the PMS-owned fields were written there first, and this is its per-section outcome.",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "example": "guesty"
+              },
+              "applied": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Sections the PMS applied."
+              },
+              "errors": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "section": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "rejected",
+                        "unavailable",
+                        "unsupported",
+                        "not_found",
+                        "reauth_required",
+                        "duplicate"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "description": "Sections the PMS refused, with its reason."
+              }
+            }
           }
         }
       },
@@ -8748,10 +8801,13 @@
         "properties": {
           "capabilities": {
             "type": "object",
-            "description": "`GET /v1/listings/{id}` only. What the API can do with this listing.",
+            "description": "`GET /v1/listings/{id}` only. What the API can do with this listing. `pms` is present when a connected PMS manages it.",
             "properties": {
               "reservations": {
                 "$ref": "#/components/schemas/ReservationCapabilities"
+              },
+              "pms": {
+                "$ref": "#/components/schemas/PmsCapabilities"
               }
             }
           },
@@ -11725,6 +11781,150 @@
           }
         }
       },
+      "PmsCapabilities": {
+        "type": "object",
+        "description": "What the API does through a connected PMS beyond reservation writes, read from the same connector table the router uses \u2014 a `false` flag is a `422 pms_write_unsupported` naming the PMS.",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "example": "guesty"
+          },
+          "connected": {
+            "type": "boolean",
+            "description": "`false`: what the connector supports once connected (on a listing: a dead link \u2014 every write answers `409 no_connection`)."
+          },
+          "reservations": {
+            "type": "object",
+            "properties": {
+              "respond": {
+                "type": "boolean",
+                "description": "`POST /v1/reservations/{id}/accept|decline` on requests this PMS relays."
+              },
+              "preapprove": {
+                "type": "boolean",
+                "description": "`POST /v1/conversations/{id}/pre-approval` on inquiries this PMS relays."
+              }
+            }
+          },
+          "reviews": {
+            "type": "object",
+            "properties": {
+              "read": {
+                "type": "boolean",
+                "description": "Its reviews appear in `GET /v1/reviews` (with `pms` set)."
+              },
+              "reply": {
+                "type": "boolean",
+                "description": "`POST /v1/reviews/{id}/reply`."
+              }
+            }
+          },
+          "listings": {
+            "type": "object",
+            "description": "Sections `PUT /v1/listings/{id}/content` writes to the PMS.",
+            "properties": {
+              "title": {
+                "type": "boolean"
+              },
+              "descriptions": {
+                "type": "boolean"
+              },
+              "times": {
+                "type": "boolean"
+              },
+              "capacity": {
+                "type": "boolean"
+              },
+              "amenities": {
+                "type": "boolean"
+              },
+              "houseRules": {
+                "type": "boolean"
+              },
+              "address": {
+                "type": "boolean"
+              },
+              "photosAdd": {
+                "type": "boolean"
+              },
+              "photosDelete": {
+                "type": "boolean"
+              },
+              "photosReorder": {
+                "type": "boolean"
+              },
+              "photoCaptions": {
+                "type": "boolean"
+              }
+            }
+          },
+          "guests": {
+            "type": "object",
+            "properties": {
+              "create": {
+                "type": "boolean",
+                "description": "`POST /v1/guests` with `provider`."
+              },
+              "update": {
+                "type": "boolean",
+                "description": "`PATCH /v1/guests/{id}` on a guest linked to this PMS."
+              }
+            }
+          },
+          "conversations": {
+            "type": "object",
+            "properties": {
+              "send": {
+                "type": "boolean"
+              },
+              "attachments": {
+                "type": "boolean",
+                "description": "`attachments` on `POST /v1/conversations/{id}/messages`."
+              },
+              "channelSelect": {
+                "type": "boolean",
+                "description": "`channel` on `POST /v1/conversations/{id}/messages`."
+              }
+            }
+          },
+          "calendar": {
+            "type": "object",
+            "properties": {
+              "write": {
+                "type": "boolean",
+                "description": "`PUT /v1/availability/{propertyId}` reaches the PMS."
+              }
+            }
+          },
+          "payments": {
+            "type": "object",
+            "properties": {
+              "read": {
+                "type": "boolean",
+                "description": "Payments recorded in the PMS are imported onto the reservation."
+              }
+            }
+          },
+          "tasks": {
+            "type": "object",
+            "properties": {
+              "read": {
+                "type": "boolean"
+              },
+              "write": {
+                "type": "boolean"
+              }
+            }
+          },
+          "notes": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "The connector's own notes per family (limits, required access)."
+          }
+        }
+      },
       "GuestCreateRequest": {
         "type": "object",
         "required": [
@@ -11763,6 +11963,100 @@
           "isBusinessTraveler": {
             "type": "boolean",
             "default": false
+          },
+          "provider": {
+            "type": "string",
+            "example": "guesty",
+            "description": "A connected PMS to create the guest in as well. The guest is created there FIRST; a PMS that cannot create guest profiles returns `422 pms_write_unsupported` and nothing is created. The PMS's guest id comes back as `pms.externalId`, and later `PATCH /v1/guests/{id}` changes reach it."
+          }
+        }
+      },
+      "GuestUpdateRequest": {
+        "type": "object",
+        "minProperties": 1,
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Added as the guest's newest email; earlier ones are kept."
+          },
+          "phone": {
+            "type": "string",
+            "description": "E.164 preferred. Added as the guest's newest phone; earlier ones are kept."
+          },
+          "language": {
+            "type": "string",
+            "description": "BCP-47 tag."
+          }
+        }
+      },
+      "GuestUpdateResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true
+          },
+          "language": {
+            "type": "string",
+            "nullable": true
+          },
+          "contacts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "email",
+                    "phone"
+                  ]
+                },
+                "value": {
+                  "type": "string"
+                },
+                "isPrimary": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "pms": {
+            "type": "array",
+            "description": "Each PMS the change was written to first (the guest's linked PMSs), with the sections it applied.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "provider": {
+                  "type": "string"
+                },
+                "applied": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -11821,6 +12115,20 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "pms": {
+            "type": "object",
+            "nullable": true,
+            "description": "Set when `provider` was sent: the PMS the guest was also created in, and its id there.",
+            "properties": {
+              "provider": {
+                "type": "string"
+              },
+              "externalId": {
+                "type": "string",
+                "nullable": true
+              }
+            }
           }
         }
       },
@@ -11865,7 +12173,8 @@
           },
           "channel": {
             "type": "string",
-            "description": "Force a channel. Omit to send on whichever channel the conversation already uses, which is the right default."
+            "example": "email",
+            "description": "Force a channel. Omit to send on whichever channel the conversation already uses, which is the right default. One of `airbnb`, `booking`, `vrbo`, `sms`, `email`, `website` \u2014 except on a conversation a connected PMS relays (Guesty, Hostaway, \u2026), where the message is sent through the PMS and `channel` is passed to it: the PMS's own channel/module name (Guesty `airbnb2`, `bookingCom`, `email`, `sms`, \u2026) or one of Repull's names, which the PMS maps. A PMS that cannot choose a channel returns `422 pms_write_unsupported`; `GET /v1/connect/{provider}` \u2192 `capabilities.pms.conversations.channelSelect` says so beforehand."
           },
           "attachments": {
             "type": "array",
@@ -11874,7 +12183,7 @@
             "items": {
               "$ref": "#/components/schemas/SendMessageAttachment"
             },
-            "description": "Files to send. See the per-channel table above."
+            "description": "Files to send. See the per-channel table above. On a conversation a connected PMS relays, files go through the PMS \u2014 `422 pms_write_unsupported` when its API cannot send them (`capabilities.pms.conversations.attachments` on `GET /v1/connect/{provider}`)."
           }
         }
       },
@@ -15524,7 +15833,7 @@
       "post": {
         "operationId": "createGuest",
         "summary": "Create a guest",
-        "description": "Creates a guest in the workspace, with contact normalisation applied (phone digits, email lowercased) and each contact stored as its own record.\n\n**This is find-or-create, and the response tells you which happened.** A guest already on file matching on email \u2014 then phone \u2014 AND name is returned instead of a duplicate being created. Read the `created` flag rather than inferring from the status: `201` with `created: true` means a new record was written, `200` with `created: false` means an existing guest matched. Quietly handing back an existing record as though it were new is exactly the ambiguity this flag removes.\n\nField names are camelCase, and an unrecognised field is rejected by name rather than silently dropped.\n\nSend `Idempotency-Key` to make a retry safe.",
+        "description": "Creates a guest in the workspace, with contact normalisation applied (phone digits, email lowercased) and each contact stored as its own record.\n\n**This is find-or-create, and the response tells you which happened.** A guest already on file matching on email \u2014 then phone \u2014 AND name is returned instead of a duplicate being created. Read the `created` flag rather than inferring from the status: `201` with `created: true` means a new record was written, `200` with `created: false` means an existing guest matched. Quietly handing back an existing record as though it were new is exactly the ambiguity this flag removes.\n\nField names are camelCase, and an unrecognised field is rejected by name rather than silently dropped.\n\n**Creating the guest in a connected PMS too:** send `provider` (e.g. `guesty`). The guest is created in the PMS first and its id there comes back as `pms.externalId`; a PMS whose API cannot create guest profiles returns `422 pms_write_unsupported` naming it (Hostaway today) and nothing is created. `GET /v1/connect/{provider}` \u2192 `capabilities.pms.guests.create` says so beforehand.\n\nSend `Idempotency-Key` to make a retry safe.",
         "tags": [
           "Guests"
         ],
@@ -15646,6 +15955,61 @@
           },
           "500": {
             "$ref": "#/components/responses/InternalError"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateGuest",
+        "summary": "Update a guest",
+        "description": "Change a guest's name, email, phone or language. Email and phone are added as the guest's newest contact; earlier ones are kept.\n\n**Guests linked to a connected PMS** (created with `provider`, or imported from one) are changed in that PMS first. A PMS whose API cannot change guest profiles returns `422 pms_write_unsupported` naming it (Hostaway today) and nothing is written; `GET /v1/connect/{provider}` \u2192 `capabilities.pms.guests.update` says so beforehand. A revoked PMS connection is `403 connection_reauth_required`.\n\nSend `Idempotency-Key` to make a retry safe.",
+        "tags": [
+          "Guests"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuestUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Guest updated (and in its PMS, when linked to one).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuestUpdateResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
           }
         }
       }
@@ -17956,7 +18320,7 @@
       "post": {
         "operationId": "replyToReview",
         "summary": "Reply to a review on any channel",
-        "description": "Resolves the review, reads its channel and dispatches the reply. Channel-neutral: you do not need to know where the review came from.\n\nReplies work on Airbnb, Booking.com and VRBO. Each channel accepts one reply per review (VRBO: a second is `409 already_replied`; a review VRBO no longer takes a response to is `409 reply_not_allowed`). On VRBO the response is signed with a name \u2014 the connected account's host name, or `name` if you send it. A review from a channel without a reply API returns `422 unsupported_channel` naming the channels that do work.\n\nTo review a guest (Airbnb only), use `POST /v1/reviews/{id}/guest-review`.\n\n**Inactive listings:** a review of an inactive listing returns `403 listing_inactive` and no reply reaches the channel. Activate the listing first.",
+        "description": "Resolves the review, reads its channel and dispatches the reply. Channel-neutral: you do not need to know where the review came from.\n\nReplies work on Airbnb, Booking.com and VRBO. Each channel accepts one reply per review (VRBO: a second is `409 already_replied`; a review VRBO no longer takes a response to is `409 reply_not_allowed`). On VRBO the response is signed with a name \u2014 the connected account's host name, or `name` if you send it. A review from a channel without a reply API returns `422 unsupported_channel` naming the channels that do work.\n\n**Reviews read from a PMS** (`pms` set on the review \u2014 Guesty, Hostaway, \u2026) are answered through that PMS. A PMS whose API has no reply returns `422 pms_write_unsupported` naming it (Hostaway today); `GET /v1/connect/{provider}` \u2192 `capabilities.pms.reviews.reply` says so beforehand. A revoked PMS connection is `403 connection_reauth_required`.\n\nTo review a guest (Airbnb only), use `POST /v1/reviews/{id}/guest-review`.\n\n**Inactive listings:** a review of an inactive listing returns `403 listing_inactive` and no reply reaches the channel. Activate the listing first.",
         "tags": [
           "Reviews"
         ],
@@ -18008,6 +18372,11 @@
                     },
                     "platform": {
                       "type": "string"
+                    },
+                    "pms": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "The PMS the reply went through, when the review came from one."
                     },
                     "response": {
                       "type": "string"
@@ -23697,7 +24066,7 @@
       "put": {
         "operationId": "updateListingContent",
         "summary": "Update canonical listing content",
-        "description": "Write your PMS's canonical listing content \u2014 title, description, amenities, address, occupancy, and policies \u2014 into a Repull listing, making it the source of truth. This is the flagship \"the PMS owns listing content, Repull distributes it\" enabler.\n\n**Partial update:** every field is optional. Only the fields you send are written; absent fields are left untouched. `amenities` is a FULL replacement of the amenity set (omit to leave untouched, send `[]` to clear).\n\n**Multilingual:** send `locale` to say which language this copy is in (`it`, `pt-BR`, \u2026). Canonical content is stored per locale, so each language keeps its own row instead of overwriting the English one. Omit it for English.\n\n**Local write only \u2014 NOT a channel publish.** This mutates Repull's own copy of the content. It does NOT push to Airbnb / Booking.com; it marks the channels dirty so a later publish knows what changed. Distribution stays a separate explicit step.\n\n**Photos are deferred:** a provided `photos` array is echoed back in the `deferred` field and NOT persisted (media ingestion is a follow-up).\n\nCross-tenant access (a listing that belongs to a different workspace) returns 404 \u2014 never 403. This endpoint is served even when the account is over the plan-listings cap, since editing content on a listing you already own never grows the portfolio.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "description": "Write your PMS's canonical listing content \u2014 title, description, amenities, address, occupancy, and policies \u2014 into a Repull listing, making it the source of truth. This is the flagship \"the PMS owns listing content, Repull distributes it\" enabler.\n\n**Listings managed in a connected PMS** (Guesty, Hostaway, \u2026): the PMS owns their content, so title, descriptions, check-in/out times, capacity, amenities, house rules, address and added photos are written to the PMS first; Repull keeps only what it accepted (refused sections are in `deferred`, its per-section outcome in `pms`). A section that PMS cannot write returns `422 pms_write_unsupported` naming it when nothing was applied (or is listed in `deferred` when other sections were); `GET /v1/listings/{id}` \u2192 `capabilities.pms.listings` says which sections it takes. A PMS whose connector writes no listing content at all (Mews, Cloudbeds, Lodgify, \u2026) keeps today's behaviour: the content is written to Repull only. Send photos with `photosMode: \"append\"` \u2014 replacing a PMS listing's photo set needs the PMS's own photo ids. A revoked PMS connection is `403 connection_reauth_required`.\n\n**Partial update:** every field is optional. Only the fields you send are written; absent fields are left untouched. `amenities` is a FULL replacement of the amenity set (omit to leave untouched, send `[]` to clear).\n\n**Multilingual:** send `locale` to say which language this copy is in (`it`, `pt-BR`, \u2026). Canonical content is stored per locale, so each language keeps its own row instead of overwriting the English one. Omit it for English.\n\n**Local write only \u2014 NOT a channel publish.** This mutates Repull's own copy of the content. It does NOT push to Airbnb / Booking.com; it marks the channels dirty so a later publish knows what changed. Distribution stays a separate explicit step.\n\n**Photos are deferred:** a provided `photos` array is echoed back in the `deferred` field and NOT persisted (media ingestion is a follow-up).\n\nCross-tenant access (a listing that belongs to a different workspace) returns 404 \u2014 never 403. This endpoint is served even when the account is over the plan-listings cap, since editing content on a listing you already own never grows the portfolio.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
         "tags": [
           "Listings"
         ],
@@ -29194,7 +29563,7 @@
       "post": {
         "operationId": "preapprove_conversation",
         "summary": "Pre-approve an inquiry (Airbnb, VRBO)",
-        "description": "Pre-approve the inquiry on this conversation: the guest who asked about dates may now book them at the listed price, without waiting on you. To change the dates, guests or price, send a special offer instead (`POST /v1/conversations/{id}/special-offers`).\n\nFind inquiries that need an answer with `GET /v1/inquiries` (default `status=open`); each carries the `conversationId` to use here.\n\nOne endpoint for every channel with pre-approvals: **Airbnb** (listings connected directly) and **VRBO**. A Booking.com or direct-booking conversation, or an Airbnb one relayed through a PMS (Hostaway, Guesty), returns `422 channel_not_supported` and nothing is sent \u2014 `GET /v1/conversations/{id}` \u2192 `capabilities.canPreApprove` says where it works.\n\n`blockInstantBooking` is Airbnb only (VRBO has no such switch: `422 invalid_params`). `message` is sent to the guest with a VRBO pre-approval (a friendly default otherwise).\n\nThe inquiry is marked `pre_approved` everywhere, the same as pre-approving on the channel. Withdraw it with `DELETE /v1/conversations/{id}/pre-approval` (VRBO).\n\nA channel\u2019s refusal is never reported as a success: an inquiry that already moved on is `409 inquiry_no_longer_open`, an expired one `409 inquiry_expired`, a conversation that already has a booking `409 conversation_already_booked`.\n\nSend `Idempotency-Key`: a repeat with the same key replays the first response instead of acting twice (a `409 idempotency_key_in_use` while the first is still running). A 5xx, a `429 airbnb_rate_limited` or a `403 connection_reauth_required` is not stored \u2014 nothing was done \u2014 so retrying with the same key reaches Airbnb again.",
+        "description": "Pre-approve the inquiry on this conversation: the guest who asked about dates may now book them at the listed price, without waiting on you. To change the dates, guests or price, send a special offer instead (`POST /v1/conversations/{id}/special-offers`).\n\nFind inquiries that need an answer with `GET /v1/inquiries` (default `status=open`); each carries the `conversationId` to use here.\n\nOne endpoint for every channel with pre-approvals: **Airbnb** (listings connected directly) and **VRBO**. A Booking.com or direct-booking conversation returns `422 channel_not_supported` and nothing is sent \u2014 `GET /v1/conversations/{id}` \u2192 `capabilities.canPreApprove` says where it works.\n\n**An inquiry relayed by a PMS** (Guesty, Hostaway, \u2026) is pre-approved in that PMS. A PMS whose API cannot returns `422 pms_write_unsupported` naming it (Hostaway today); `GET /v1/connect/{provider}` \u2192 `capabilities.pms.reservations.preapprove` says so beforehand. The response then carries `pms`.\n\n`blockInstantBooking` is Airbnb only (VRBO has no such switch: `422 invalid_params`). `message` is sent to the guest with a VRBO pre-approval (a friendly default otherwise).\n\nThe inquiry is marked `pre_approved` everywhere, the same as pre-approving on the channel. Withdraw it with `DELETE /v1/conversations/{id}/pre-approval` (VRBO).\n\nA channel\u2019s refusal is never reported as a success: an inquiry that already moved on is `409 inquiry_no_longer_open`, an expired one `409 inquiry_expired`, a conversation that already has a booking `409 conversation_already_booked`.\n\nSend `Idempotency-Key`: a repeat with the same key replays the first response instead of acting twice (a `409 idempotency_key_in_use` while the first is still running). A 5xx, a `429 airbnb_rate_limited` or a `403 connection_reauth_required` is not stored \u2014 nothing was done \u2014 so retrying with the same key reaches Airbnb again.",
         "tags": [
           "Conversations"
         ],
@@ -29450,7 +29819,7 @@
                       "error": {
                         "code": "channel_not_supported",
                         "message": "Reservation 233530 came from Booking.com. Booking requests can only be accepted or declined on Airbnb \u2014 other channels confirm instantly or have no request step.",
-                        "fix": "Pre-approvals and special offers work on Airbnb (connected directly, not through a PMS such as Hostaway or Guesty) and VRBO; accepting/declining booking requests on Airbnb. `GET /v1/conversations/{id}` \u2192 `capabilities` says what works on a conversation. Booking.com and direct bookings confirm without a request step.",
+                        "fix": "Pre-approvals and special offers work on Airbnb (connected directly) and VRBO; accepting/declining booking requests on Airbnb. Requests and inquiries relayed by a PMS are answered in that PMS (`pms_write_unsupported` when its API cannot). `GET /v1/conversations/{id}` \u2192 `capabilities` says what works on a conversation. Booking.com and direct bookings confirm without a request step.",
                         "docs_url": "https://repull.dev/docs/channels/airbnb/inquiries-and-requests",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "channel": "booking"
@@ -29694,7 +30063,7 @@
                       "error": {
                         "code": "channel_not_supported",
                         "message": "Reservation 233530 came from Booking.com. Booking requests can only be accepted or declined on Airbnb \u2014 other channels confirm instantly or have no request step.",
-                        "fix": "Pre-approvals and special offers work on Airbnb (connected directly, not through a PMS such as Hostaway or Guesty) and VRBO; accepting/declining booking requests on Airbnb. `GET /v1/conversations/{id}` \u2192 `capabilities` says what works on a conversation. Booking.com and direct bookings confirm without a request step.",
+                        "fix": "Pre-approvals and special offers work on Airbnb (connected directly) and VRBO; accepting/declining booking requests on Airbnb. Requests and inquiries relayed by a PMS are answered in that PMS (`pms_write_unsupported` when its API cannot). `GET /v1/conversations/{id}` \u2192 `capabilities` says what works on a conversation. Booking.com and direct bookings confirm without a request step.",
                         "docs_url": "https://repull.dev/docs/channels/airbnb/inquiries-and-requests",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "channel": "booking"
@@ -30403,7 +30772,7 @@
                       "error": {
                         "code": "channel_not_supported",
                         "message": "Reservation 233530 came from Booking.com. Booking requests can only be accepted or declined on Airbnb \u2014 other channels confirm instantly or have no request step.",
-                        "fix": "Pre-approvals and special offers work on Airbnb (connected directly, not through a PMS such as Hostaway or Guesty) and VRBO; accepting/declining booking requests on Airbnb. `GET /v1/conversations/{id}` \u2192 `capabilities` says what works on a conversation. Booking.com and direct bookings confirm without a request step.",
+                        "fix": "Pre-approvals and special offers work on Airbnb (connected directly) and VRBO; accepting/declining booking requests on Airbnb. Requests and inquiries relayed by a PMS are answered in that PMS (`pms_write_unsupported` when its API cannot). `GET /v1/conversations/{id}` \u2192 `capabilities` says what works on a conversation. Booking.com and direct bookings confirm without a request step.",
                         "docs_url": "https://repull.dev/docs/channels/airbnb/inquiries-and-requests",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "channel": "booking"
@@ -30829,7 +31198,7 @@
                       "error": {
                         "code": "channel_not_supported",
                         "message": "Reservation 233530 came from Booking.com. Booking requests can only be accepted or declined on Airbnb \u2014 other channels confirm instantly or have no request step.",
-                        "fix": "Pre-approvals and special offers work on Airbnb (connected directly, not through a PMS such as Hostaway or Guesty) and VRBO; accepting/declining booking requests on Airbnb. `GET /v1/conversations/{id}` \u2192 `capabilities` says what works on a conversation. Booking.com and direct bookings confirm without a request step.",
+                        "fix": "Pre-approvals and special offers work on Airbnb (connected directly) and VRBO; accepting/declining booking requests on Airbnb. Requests and inquiries relayed by a PMS are answered in that PMS (`pms_write_unsupported` when its API cannot). `GET /v1/conversations/{id}` \u2192 `capabilities` says what works on a conversation. Booking.com and direct bookings confirm without a request step.",
                         "docs_url": "https://repull.dev/docs/channels/airbnb/inquiries-and-requests",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "channel": "booking"
@@ -31114,7 +31483,7 @@
                       "error": {
                         "code": "channel_not_supported",
                         "message": "Reservation 233530 came from Booking.com. Booking requests can only be accepted or declined on Airbnb \u2014 other channels confirm instantly or have no request step.",
-                        "fix": "Pre-approvals and special offers work on Airbnb (connected directly, not through a PMS such as Hostaway or Guesty) and VRBO; accepting/declining booking requests on Airbnb. `GET /v1/conversations/{id}` \u2192 `capabilities` says what works on a conversation. Booking.com and direct bookings confirm without a request step.",
+                        "fix": "Pre-approvals and special offers work on Airbnb (connected directly) and VRBO; accepting/declining booking requests on Airbnb. Requests and inquiries relayed by a PMS are answered in that PMS (`pms_write_unsupported` when its API cannot). `GET /v1/conversations/{id}` \u2192 `capabilities` says what works on a conversation. Booking.com and direct bookings confirm without a request step.",
                         "docs_url": "https://repull.dev/docs/channels/airbnb/inquiries-and-requests",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "channel": "booking"
@@ -31453,7 +31822,7 @@
       "post": {
         "operationId": "accept_reservation_request",
         "summary": "Accept a booking request",
-        "description": "Accept a pending Airbnb booking request \u2014 a reservation with status `pending`, made on a listing without Instant Book. Find them with `GET /v1/reservations?status=pending`. Airbnb expires a request the host has not answered within 24 hours.\n\nAirbnb confirms asynchronously: the reservation\u2019s status moves to confirmed, and a `reservation.updated` webhook fires, when Airbnb\u2019s notification lands (usually within seconds). The response reports what Airbnb was asked to do.\n\n**Airbnb only**, and only for listings connected to Airbnb directly: other channels have no request step (`422 channel_not_supported`). A reservation that is not pending is refused before Airbnb is contacted (`409 reservation_not_pending`); one Airbnb says already moved on is `409 request_no_longer_pending`. Neither is worth retrying.\n\nTakes no body.\n\nSend `Idempotency-Key`: a repeat with the same key replays the first response instead of acting twice (a `409 idempotency_key_in_use` while the first is still running). A 5xx, a `429 airbnb_rate_limited` or a `403 connection_reauth_required` is not stored \u2014 nothing was done \u2014 so retrying with the same key reaches Airbnb again.",
+        "description": "Accept a pending Airbnb booking request \u2014 a reservation with status `pending`, made on a listing without Instant Book. Find them with `GET /v1/reservations?status=pending`. Airbnb expires a request the host has not answered within 24 hours.\n\nAirbnb confirms asynchronously: the reservation\u2019s status moves to confirmed, and a `reservation.updated` webhook fires, when Airbnb\u2019s notification lands (usually within seconds). The response reports what Airbnb was asked to do.\n\n**Airbnb**, for listings connected to Airbnb directly; other channels have no request step (`422 channel_not_supported`). **A request relayed by a PMS** (Guesty, Hostaway, \u2026) is answered in that PMS, whatever channel it came from; a PMS whose API cannot answer requests returns `422 pms_write_unsupported` naming it (Hostaway today), and `GET /v1/connect/{provider}` \u2192 `capabilities.pms.reservations.respond` says so beforehand. The response then carries `pms`. A reservation that is not pending is refused before Airbnb is contacted (`409 reservation_not_pending`); one Airbnb says already moved on is `409 request_no_longer_pending`. Neither is worth retrying.\n\nTakes no body.\n\nSend `Idempotency-Key`: a repeat with the same key replays the first response instead of acting twice (a `409 idempotency_key_in_use` while the first is still running). A 5xx, a `429 airbnb_rate_limited` or a `403 connection_reauth_required` is not stored \u2014 nothing was done \u2014 so retrying with the same key reaches Airbnb again.",
         "tags": [
           "Reservations"
         ],
@@ -31684,7 +32053,7 @@
                       "error": {
                         "code": "channel_not_supported",
                         "message": "Reservation 233530 came from Booking.com. Booking requests can only be accepted or declined on Airbnb \u2014 other channels confirm instantly or have no request step.",
-                        "fix": "Pre-approvals and special offers work on Airbnb (connected directly, not through a PMS such as Hostaway or Guesty) and VRBO; accepting/declining booking requests on Airbnb. `GET /v1/conversations/{id}` \u2192 `capabilities` says what works on a conversation. Booking.com and direct bookings confirm without a request step.",
+                        "fix": "Pre-approvals and special offers work on Airbnb (connected directly) and VRBO; accepting/declining booking requests on Airbnb. Requests and inquiries relayed by a PMS are answered in that PMS (`pms_write_unsupported` when its API cannot). `GET /v1/conversations/{id}` \u2192 `capabilities` says what works on a conversation. Booking.com and direct bookings confirm without a request step.",
                         "docs_url": "https://repull.dev/docs/channels/airbnb/inquiries-and-requests",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "channel": "booking"
@@ -31692,16 +32061,15 @@
                     }
                   },
                   "viaPms": {
-                    "summary": "An Airbnb booking relayed through a PMS",
+                    "summary": "A booking relayed by a PMS whose API cannot answer requests",
                     "value": {
                       "error": {
-                        "code": "channel_not_supported",
-                        "message": "Reservation 233530 reaches Airbnb through guesty, not a direct Airbnb connection. Accept it in guesty.",
-                        "fix": "Pre-approvals, special offers and accepting/declining requests exist only on Airbnb, and only for listings connected to Airbnb directly (not through a PMS such as Hostaway or Guesty).",
+                        "code": "pms_write_unsupported",
+                        "message": "Hostaway's API cannot accept or decline booking requests.",
+                        "fix": "Do it in Hostaway; the change reaches Repull with the next sync. `GET /v1/connect/hostaway` \u2192 `capabilities.pms` lists what Hostaway supports.",
                         "docs_url": "https://repull.dev/docs/channels/airbnb/inquiries-and-requests",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
-                        "channel": "airbnb",
-                        "pms": "guesty"
+                        "provider": "hostaway"
                       }
                     }
                   },
@@ -32120,7 +32488,7 @@
                       "error": {
                         "code": "channel_not_supported",
                         "message": "Reservation 233530 came from Booking.com. Booking requests can only be accepted or declined on Airbnb \u2014 other channels confirm instantly or have no request step.",
-                        "fix": "Pre-approvals and special offers work on Airbnb (connected directly, not through a PMS such as Hostaway or Guesty) and VRBO; accepting/declining booking requests on Airbnb. `GET /v1/conversations/{id}` \u2192 `capabilities` says what works on a conversation. Booking.com and direct bookings confirm without a request step.",
+                        "fix": "Pre-approvals and special offers work on Airbnb (connected directly) and VRBO; accepting/declining booking requests on Airbnb. Requests and inquiries relayed by a PMS are answered in that PMS (`pms_write_unsupported` when its API cannot). `GET /v1/conversations/{id}` \u2192 `capabilities` says what works on a conversation. Booking.com and direct bookings confirm without a request step.",
                         "docs_url": "https://repull.dev/docs/channels/airbnb/inquiries-and-requests",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "channel": "booking"
@@ -34308,7 +34676,7 @@
                       "error": {
                         "code": "channel_not_supported",
                         "message": "Reservation 233530 came from Booking.com. Booking requests can only be accepted or declined on Airbnb \u2014 other channels confirm instantly or have no request step.",
-                        "fix": "Pre-approvals and special offers work on Airbnb (connected directly, not through a PMS such as Hostaway or Guesty) and VRBO; accepting/declining booking requests on Airbnb. `GET /v1/conversations/{id}` \u2192 `capabilities` says what works on a conversation. Booking.com and direct bookings confirm without a request step.",
+                        "fix": "Pre-approvals and special offers work on Airbnb (connected directly) and VRBO; accepting/declining booking requests on Airbnb. Requests and inquiries relayed by a PMS are answered in that PMS (`pms_write_unsupported` when its API cannot). `GET /v1/conversations/{id}` \u2192 `capabilities` says what works on a conversation. Booking.com and direct bookings confirm without a request step.",
                         "docs_url": "https://repull.dev/docs/channels/airbnb/inquiries-and-requests",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "channel": "booking"

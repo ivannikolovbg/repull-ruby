@@ -11,8 +11,9 @@
 | **language** | **String** |  | [optional] |
 | **currency** | **String** |  | [optional] |
 | **is_business_traveler** | **Boolean** |  | [optional] |
-| **contacts** | [**Array&lt;GuestCreateResponseContactsInner&gt;**](GuestCreateResponseContactsInner.md) | One entry per stored contact. Email and phone are separate records. | [optional] |
+| **contacts** | [**Array&lt;GuestUpdateResponseContactsInner&gt;**](GuestUpdateResponseContactsInner.md) | One entry per stored contact. Email and phone are separate records. | [optional] |
 | **created_at** | **Time** |  | [optional] |
+| **pms** | [**GuestCreateResponsePms**](GuestCreateResponsePms.md) |  | [optional] |
 
 ## Example
 
@@ -28,7 +29,8 @@ instance = Repull::GuestCreateResponse.new(
   currency: null,
   is_business_traveler: null,
   contacts: null,
-  created_at: null
+  created_at: null,
+  pms: null
 )
 ```
 

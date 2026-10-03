@@ -14,14 +14,17 @@ require 'date'
 require 'time'
 
 module Repull
-  # PMS providers only. `reservations`: which reservation writes the API performs on this connection's listings — the connector's support combined with `writePolicy`. When `connected` is false, what the connector supports once connected.
+  # PMS providers only. `reservations`: which reservation writes the API performs on this connection's listings — the connector's support combined with `writePolicy`. `pms`: everything else the API does through this PMS (review replies, request answers, listing content, guests, message channel/attachments, calendar). When `connected` is false, what the connector supports once connected.
   class ConnectStatusCapabilities < ApiModelBase
     attr_accessor :reservations
+
+    attr_accessor :pms
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'reservations' => :'reservations'
+        :'reservations' => :'reservations',
+        :'pms' => :'pms'
       }
     end
 
@@ -38,7 +41,8 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'reservations' => :'ReservationCapabilities'
+        :'reservations' => :'ReservationCapabilities',
+        :'pms' => :'PmsCapabilities'
       }
     end
 
@@ -67,6 +71,10 @@ module Repull
       if attributes.key?(:'reservations')
         self.reservations = attributes[:'reservations']
       end
+
+      if attributes.key?(:'pms')
+        self.pms = attributes[:'pms']
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -89,7 +97,8 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          reservations == o.reservations
+          reservations == o.reservations &&
+          pms == o.pms
     end
 
     # @see the `==` method
@@ -101,7 +110,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [reservations].hash
+      [reservations, pms].hash
     end
 
     # Builds the object from hash

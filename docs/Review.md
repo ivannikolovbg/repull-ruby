@@ -8,6 +8,7 @@
 | **id** | **String** | Internal Repull review id — pass back to &#x60;/v1/reviews/{id}&#x60;. | [optional] |
 | **external_id** | **String** | ID in the source channel (Airbnb review id, Booking review id, etc.). Pass as &#x60;review_id&#x60; to the provider reply endpoint. | [optional] |
 | **platform** | **String** |  | [optional] |
+| **pms** | **String** | The PMS this review was read from (&#x60;guesty&#x60;, &#x60;hostaway&#x60;, …) when it came through one — &#x60;platform&#x60; is still the channel the guest wrote it on. A reply (&#x60;POST /v1/reviews/{id}/reply&#x60;) goes through this PMS; &#x60;GET /v1/connect/{provider}&#x60; → &#x60;capabilities.pms.reviews.reply&#x60; says whether it can. &#x60;null&#x60; for a review from a directly connected channel. | [optional] |
 | **listing_id** | **String** | Internal Repull listing id the review is attached to. | [optional] |
 | **provider_property_id** | **String** | The source channel&#39;s own listing/property id for this review (Booking.com hotel/property id, Airbnb listing id, …). Pass this as &#x60;property_id&#x60; to &#x60;POST /v1/channels/booking/reviews&#x60; to post a host reply — it is the bridge from a unified review straight to the provider-specific reply call. &#x60;null&#x60; when the source listing id has not been mirrored yet. | [optional] |
 | **reservation_id** | **String** |  | [optional] |
@@ -38,6 +39,7 @@ instance = Repull::Review.new(
   id: null,
   external_id: null,
   platform: null,
+  pms: guesty,
   listing_id: null,
   provider_property_id: null,
   reservation_id: null,

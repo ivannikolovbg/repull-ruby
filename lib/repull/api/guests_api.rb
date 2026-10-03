@@ -20,7 +20,7 @@ module Repull
       @api_client = api_client
     end
     # Create a guest
-    # Creates a guest in the workspace, with contact normalisation applied (phone digits, email lowercased) and each contact stored as its own record.  **This is find-or-create, and the response tells you which happened.** A guest already on file matching on email — then phone — AND name is returned instead of a duplicate being created. Read the `created` flag rather than inferring from the status: `201` with `created: true` means a new record was written, `200` with `created: false` means an existing guest matched. Quietly handing back an existing record as though it were new is exactly the ambiguity this flag removes.  Field names are camelCase, and an unrecognised field is rejected by name rather than silently dropped.  Send `Idempotency-Key` to make a retry safe.
+    # Creates a guest in the workspace, with contact normalisation applied (phone digits, email lowercased) and each contact stored as its own record.  **This is find-or-create, and the response tells you which happened.** A guest already on file matching on email — then phone — AND name is returned instead of a duplicate being created. Read the `created` flag rather than inferring from the status: `201` with `created: true` means a new record was written, `200` with `created: false` means an existing guest matched. Quietly handing back an existing record as though it were new is exactly the ambiguity this flag removes.  Field names are camelCase, and an unrecognised field is rejected by name rather than silently dropped.  **Creating the guest in a connected PMS too:** send `provider` (e.g. `guesty`). The guest is created in the PMS first and its id there comes back as `pms.externalId`; a PMS whose API cannot create guest profiles returns `422 pms_write_unsupported` naming it (Hostaway today) and nothing is created. `GET /v1/connect/{provider}` → `capabilities.pms.guests.create` says so beforehand.  Send `Idempotency-Key` to make a retry safe.
     # @param guest_create_request [GuestCreateRequest] 
     # @param [Hash] opts the optional parameters
     # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status &gt;&#x3D; 500, &#x60;408&#x60;, &#x60;425&#x60; and &#x60;429&#x60;, and the refusals that happen before anything is done and tell you to fix something outside the request first — &#x60;connection_reauth_required&#x60;, &#x60;listing_inactive&#x60;, and the rate/daily limits. Every other answer, including a final refusal such as &#x60;422 airbnb_rejected&#x60;, is stored and replayed.
@@ -31,7 +31,7 @@ module Repull
     end
 
     # Create a guest
-    # Creates a guest in the workspace, with contact normalisation applied (phone digits, email lowercased) and each contact stored as its own record.  **This is find-or-create, and the response tells you which happened.** A guest already on file matching on email — then phone — AND name is returned instead of a duplicate being created. Read the &#x60;created&#x60; flag rather than inferring from the status: &#x60;201&#x60; with &#x60;created: true&#x60; means a new record was written, &#x60;200&#x60; with &#x60;created: false&#x60; means an existing guest matched. Quietly handing back an existing record as though it were new is exactly the ambiguity this flag removes.  Field names are camelCase, and an unrecognised field is rejected by name rather than silently dropped.  Send &#x60;Idempotency-Key&#x60; to make a retry safe.
+    # Creates a guest in the workspace, with contact normalisation applied (phone digits, email lowercased) and each contact stored as its own record.  **This is find-or-create, and the response tells you which happened.** A guest already on file matching on email — then phone — AND name is returned instead of a duplicate being created. Read the &#x60;created&#x60; flag rather than inferring from the status: &#x60;201&#x60; with &#x60;created: true&#x60; means a new record was written, &#x60;200&#x60; with &#x60;created: false&#x60; means an existing guest matched. Quietly handing back an existing record as though it were new is exactly the ambiguity this flag removes.  Field names are camelCase, and an unrecognised field is rejected by name rather than silently dropped.  **Creating the guest in a connected PMS too:** send &#x60;provider&#x60; (e.g. &#x60;guesty&#x60;). The guest is created in the PMS first and its id there comes back as &#x60;pms.externalId&#x60;; a PMS whose API cannot create guest profiles returns &#x60;422 pms_write_unsupported&#x60; naming it (Hostaway today) and nothing is created. &#x60;GET /v1/connect/{provider}&#x60; → &#x60;capabilities.pms.guests.create&#x60; says so beforehand.  Send &#x60;Idempotency-Key&#x60; to make a retry safe.
     # @param guest_create_request [GuestCreateRequest] 
     # @param [Hash] opts the optional parameters
     # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status &gt;&#x3D; 500, &#x60;408&#x60;, &#x60;425&#x60; and &#x60;429&#x60;, and the refusals that happen before anything is done and tell you to fix something outside the request first — &#x60;connection_reauth_required&#x60;, &#x60;listing_inactive&#x60;, and the rate/daily limits. Every other answer, including a final refusal such as &#x60;422 airbnb_rejected&#x60;, is stored and replayed.
@@ -250,6 +250,87 @@ module Repull
       data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: GuestsApi#list_guests\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Update a guest
+    # Change a guest's name, email, phone or language. Email and phone are added as the guest's newest contact; earlier ones are kept.  **Guests linked to a connected PMS** (created with `provider`, or imported from one) are changed in that PMS first. A PMS whose API cannot change guest profiles returns `422 pms_write_unsupported` naming it (Hostaway today) and nothing is written; `GET /v1/connect/{provider}` → `capabilities.pms.guests.update` says so beforehand. A revoked PMS connection is `403 connection_reauth_required`.  Send `Idempotency-Key` to make a retry safe.
+    # @param id [Integer] 
+    # @param guest_update_request [GuestUpdateRequest] 
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status &gt;&#x3D; 500, &#x60;408&#x60;, &#x60;425&#x60; and &#x60;429&#x60;, and the refusals that happen before anything is done and tell you to fix something outside the request first — &#x60;connection_reauth_required&#x60;, &#x60;listing_inactive&#x60;, and the rate/daily limits. Every other answer, including a final refusal such as &#x60;422 airbnb_rejected&#x60;, is stored and replayed.
+    # @return [GuestUpdateResponse]
+    def update_guest(id, guest_update_request, opts = {})
+      data, _status_code, _headers = update_guest_with_http_info(id, guest_update_request, opts)
+      data
+    end
+
+    # Update a guest
+    # Change a guest&#39;s name, email, phone or language. Email and phone are added as the guest&#39;s newest contact; earlier ones are kept.  **Guests linked to a connected PMS** (created with &#x60;provider&#x60;, or imported from one) are changed in that PMS first. A PMS whose API cannot change guest profiles returns &#x60;422 pms_write_unsupported&#x60; naming it (Hostaway today) and nothing is written; &#x60;GET /v1/connect/{provider}&#x60; → &#x60;capabilities.pms.guests.update&#x60; says so beforehand. A revoked PMS connection is &#x60;403 connection_reauth_required&#x60;.  Send &#x60;Idempotency-Key&#x60; to make a retry safe.
+    # @param id [Integer] 
+    # @param guest_update_request [GuestUpdateRequest] 
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :idempotency_key Makes a retry of this request safe. Send a unique string (a UUID generated at the point you build the request) and the response is stored for 24 hours: a repeat with the SAME key replays that stored response — tagged &#x60;Idempotency-Status: cached&#x60; — without running the operation again, so no duplicate reservation, guest or guest message is created.  - Same key while the first request is still in flight → &#x60;409 idempotency_key_in_use&#x60;. - Same key with a DIFFERENT payload → &#x60;422 idempotency_key_reused&#x60;. Generate a new key per distinct request; reuse one only when retrying that exact request. - Retryable outcomes are deliberately not stored, so a retry with the same key runs for real: any status &gt;&#x3D; 500, &#x60;408&#x60;, &#x60;425&#x60; and &#x60;429&#x60;, and the refusals that happen before anything is done and tell you to fix something outside the request first — &#x60;connection_reauth_required&#x60;, &#x60;listing_inactive&#x60;, and the rate/daily limits. Every other answer, including a final refusal such as &#x60;422 airbnb_rejected&#x60;, is stored and replayed.
+    # @return [Array<(GuestUpdateResponse, Integer, Hash)>] GuestUpdateResponse data, response status code and response headers
+    def update_guest_with_http_info(id, guest_update_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: GuestsApi.update_guest ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling GuestsApi.update_guest"
+      end
+      # verify the required parameter 'guest_update_request' is set
+      if @api_client.config.client_side_validation && guest_update_request.nil?
+        fail ArgumentError, "Missing the required parameter 'guest_update_request' when calling GuestsApi.update_guest"
+      end
+      if @api_client.config.client_side_validation && !opts[:'idempotency_key'].nil? && opts[:'idempotency_key'].to_s.length > 255
+        fail ArgumentError, 'invalid value for "opts[:"idempotency_key"]" when calling GuestsApi.update_guest, the character length must be smaller than or equal to 255.'
+      end
+
+      # resource path
+      local_var_path = '/v1/guests/{id}'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+      header_params[:'Idempotency-Key'] = opts[:'idempotency_key'] if !opts[:'idempotency_key'].nil?
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(guest_update_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'GuestUpdateResponse'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"GuestsApi.update_guest",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:PATCH, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: GuestsApi#update_guest\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end

@@ -19,10 +19,10 @@ module Repull
     # The text to send the guest. Required unless `attachments` is present.
     attr_accessor :message
 
-    # Force a channel. Omit to send on whichever channel the conversation already uses, which is the right default.
+    # Force a channel. Omit to send on whichever channel the conversation already uses, which is the right default. One of `airbnb`, `booking`, `vrbo`, `sms`, `email`, `website` — except on a conversation a connected PMS relays (Guesty, Hostaway, …), where the message is sent through the PMS and `channel` is passed to it: the PMS's own channel/module name (Guesty `airbnb2`, `bookingCom`, `email`, `sms`, …) or one of Repull's names, which the PMS maps. A PMS that cannot choose a channel returns `422 pms_write_unsupported`; `GET /v1/connect/{provider}` → `capabilities.pms.conversations.channelSelect` says so beforehand.
     attr_accessor :channel
 
-    # Files to send. See the per-channel table above.
+    # Files to send. See the per-channel table above. On a conversation a connected PMS relays, files go through the PMS — `422 pms_write_unsupported` when its API cannot send them (`capabilities.pms.conversations.attachments` on `GET /v1/connect/{provider}`).
     attr_accessor :attachments
 
     # Attribute mapping from ruby-style variable name to JSON key.

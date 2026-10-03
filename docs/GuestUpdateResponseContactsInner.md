@@ -1,4 +1,4 @@
-# Repull::GuestCreateResponseContactsInner
+# Repull::GuestUpdateResponseContactsInner
 
 ## Properties
 
@@ -13,7 +13,7 @@
 ```ruby
 require 'repull'
 
-instance = Repull::GuestCreateResponseContactsInner.new(
+instance = Repull::GuestUpdateResponseContactsInner.new(
   type: null,
   value: null,
   is_primary: null

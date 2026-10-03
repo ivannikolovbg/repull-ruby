@@ -14,37 +14,44 @@ require 'date'
 require 'time'
 
 module Repull
-  class GuestCreateRequest < ApiModelBase
-    attr_accessor :first_name
+  # Sections `PUT /v1/listings/{id}/content` writes to the PMS.
+  class PmsCapabilitiesListings < ApiModelBase
+    attr_accessor :title
 
-    attr_accessor :last_name
+    attr_accessor :descriptions
 
-    attr_accessor :email
+    attr_accessor :times
 
-    # E.164 preferred. Stored normalised.
-    attr_accessor :phone
+    attr_accessor :capacity
 
-    # BCP-47 tag.
-    attr_accessor :language
+    attr_accessor :amenities
 
-    attr_accessor :currency
+    attr_accessor :house_rules
 
-    attr_accessor :is_business_traveler
+    attr_accessor :address
 
-    # A connected PMS to create the guest in as well. The guest is created there FIRST; a PMS that cannot create guest profiles returns `422 pms_write_unsupported` and nothing is created. The PMS's guest id comes back as `pms.externalId`, and later `PATCH /v1/guests/{id}` changes reach it.
-    attr_accessor :provider
+    attr_accessor :photos_add
+
+    attr_accessor :photos_delete
+
+    attr_accessor :photos_reorder
+
+    attr_accessor :photo_captions
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'first_name' => :'firstName',
-        :'last_name' => :'lastName',
-        :'email' => :'email',
-        :'phone' => :'phone',
-        :'language' => :'language',
-        :'currency' => :'currency',
-        :'is_business_traveler' => :'isBusinessTraveler',
-        :'provider' => :'provider'
+        :'title' => :'title',
+        :'descriptions' => :'descriptions',
+        :'times' => :'times',
+        :'capacity' => :'capacity',
+        :'amenities' => :'amenities',
+        :'house_rules' => :'houseRules',
+        :'address' => :'address',
+        :'photos_add' => :'photosAdd',
+        :'photos_delete' => :'photosDelete',
+        :'photos_reorder' => :'photosReorder',
+        :'photo_captions' => :'photoCaptions'
       }
     end
 
@@ -61,14 +68,17 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'first_name' => :'String',
-        :'last_name' => :'String',
-        :'email' => :'String',
-        :'phone' => :'String',
-        :'language' => :'String',
-        :'currency' => :'String',
-        :'is_business_traveler' => :'Boolean',
-        :'provider' => :'String'
+        :'title' => :'Boolean',
+        :'descriptions' => :'Boolean',
+        :'times' => :'Boolean',
+        :'capacity' => :'Boolean',
+        :'amenities' => :'Boolean',
+        :'house_rules' => :'Boolean',
+        :'address' => :'Boolean',
+        :'photos_add' => :'Boolean',
+        :'photos_delete' => :'Boolean',
+        :'photos_reorder' => :'Boolean',
+        :'photo_captions' => :'Boolean'
       }
     end
 
@@ -82,52 +92,60 @@ module Repull
     # @param [Hash] attributes Model attributes in the form of hash
     def initialize(attributes = {})
       if (!attributes.is_a?(Hash))
-        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::GuestCreateRequest` initialize method"
+        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::PmsCapabilitiesListings` initialize method"
       end
 
       # check to see if the attribute exists and convert string to symbol for hash key
       acceptable_attribute_map = self.class.acceptable_attribute_map
       attributes = attributes.each_with_object({}) { |(k, v), h|
         if (!acceptable_attribute_map.key?(k.to_sym))
-          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::GuestCreateRequest`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
+          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::PmsCapabilitiesListings`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
         end
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'first_name')
-        self.first_name = attributes[:'first_name']
-      else
-        self.first_name = nil
+      if attributes.key?(:'title')
+        self.title = attributes[:'title']
       end
 
-      if attributes.key?(:'last_name')
-        self.last_name = attributes[:'last_name']
+      if attributes.key?(:'descriptions')
+        self.descriptions = attributes[:'descriptions']
       end
 
-      if attributes.key?(:'email')
-        self.email = attributes[:'email']
+      if attributes.key?(:'times')
+        self.times = attributes[:'times']
       end
 
-      if attributes.key?(:'phone')
-        self.phone = attributes[:'phone']
+      if attributes.key?(:'capacity')
+        self.capacity = attributes[:'capacity']
       end
 
-      if attributes.key?(:'language')
-        self.language = attributes[:'language']
+      if attributes.key?(:'amenities')
+        self.amenities = attributes[:'amenities']
       end
 
-      if attributes.key?(:'currency')
-        self.currency = attributes[:'currency']
+      if attributes.key?(:'house_rules')
+        self.house_rules = attributes[:'house_rules']
       end
 
-      if attributes.key?(:'is_business_traveler')
-        self.is_business_traveler = attributes[:'is_business_traveler']
-      else
-        self.is_business_traveler = false
+      if attributes.key?(:'address')
+        self.address = attributes[:'address']
       end
 
-      if attributes.key?(:'provider')
-        self.provider = attributes[:'provider']
+      if attributes.key?(:'photos_add')
+        self.photos_add = attributes[:'photos_add']
+      end
+
+      if attributes.key?(:'photos_delete')
+        self.photos_delete = attributes[:'photos_delete']
+      end
+
+      if attributes.key?(:'photos_reorder')
+        self.photos_reorder = attributes[:'photos_reorder']
+      end
+
+      if attributes.key?(:'photo_captions')
+        self.photo_captions = attributes[:'photo_captions']
       end
     end
 
@@ -136,18 +154,6 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
-      if @first_name.nil?
-        invalid_properties.push('invalid value for "first_name", first_name cannot be nil.')
-      end
-
-      if !@currency.nil? && @currency.to_s.length > 3
-        invalid_properties.push('invalid value for "currency", the character length must be smaller than or equal to 3.')
-      end
-
-      if !@currency.nil? && @currency.to_s.length < 3
-        invalid_properties.push('invalid value for "currency", the character length must be greater than or equal to 3.')
-      end
-
       invalid_properties
     end
 
@@ -155,38 +161,7 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
-      return false if @first_name.nil?
-      return false if !@currency.nil? && @currency.to_s.length > 3
-      return false if !@currency.nil? && @currency.to_s.length < 3
       true
-    end
-
-    # Custom attribute writer method with validation
-    # @param [Object] first_name Value to be assigned
-    def first_name=(first_name)
-      if first_name.nil?
-        fail ArgumentError, 'first_name cannot be nil'
-      end
-
-      @first_name = first_name
-    end
-
-    # Custom attribute writer method with validation
-    # @param [Object] currency Value to be assigned
-    def currency=(currency)
-      if currency.nil?
-        fail ArgumentError, 'currency cannot be nil'
-      end
-
-      if currency.to_s.length > 3
-        fail ArgumentError, 'invalid value for "currency", the character length must be smaller than or equal to 3.'
-      end
-
-      if currency.to_s.length < 3
-        fail ArgumentError, 'invalid value for "currency", the character length must be greater than or equal to 3.'
-      end
-
-      @currency = currency
     end
 
     # Checks equality by comparing each attribute.
@@ -194,14 +169,17 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          first_name == o.first_name &&
-          last_name == o.last_name &&
-          email == o.email &&
-          phone == o.phone &&
-          language == o.language &&
-          currency == o.currency &&
-          is_business_traveler == o.is_business_traveler &&
-          provider == o.provider
+          title == o.title &&
+          descriptions == o.descriptions &&
+          times == o.times &&
+          capacity == o.capacity &&
+          amenities == o.amenities &&
+          house_rules == o.house_rules &&
+          address == o.address &&
+          photos_add == o.photos_add &&
+          photos_delete == o.photos_delete &&
+          photos_reorder == o.photos_reorder &&
+          photo_captions == o.photo_captions
     end
 
     # @see the `==` method
@@ -213,7 +191,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [first_name, last_name, email, phone, language, currency, is_business_traveler, provider].hash
+      [title, descriptions, times, capacity, amenities, house_rules, address, photos_add, photos_delete, photos_reorder, photo_captions].hash
     end
 
     # Builds the object from hash

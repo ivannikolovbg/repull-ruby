@@ -14,14 +14,17 @@ require 'date'
 require 'time'
 
 module Repull
-  # `GET /v1/listings/{id}` only. What the API can do with this listing.
+  # `GET /v1/listings/{id}` only. What the API can do with this listing. `pms` is present when a connected PMS manages it.
   class ListingCapabilities < ApiModelBase
     attr_accessor :reservations
+
+    attr_accessor :pms
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'reservations' => :'reservations'
+        :'reservations' => :'reservations',
+        :'pms' => :'pms'
       }
     end
 
@@ -38,7 +41,8 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'reservations' => :'ReservationCapabilities'
+        :'reservations' => :'ReservationCapabilities',
+        :'pms' => :'PmsCapabilities'
       }
     end
 
@@ -67,6 +71,10 @@ module Repull
       if attributes.key?(:'reservations')
         self.reservations = attributes[:'reservations']
       end
+
+      if attributes.key?(:'pms')
+        self.pms = attributes[:'pms']
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -89,7 +97,8 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          reservations == o.reservations
+          reservations == o.reservations &&
+          pms == o.pms
     end
 
     # @see the `==` method
@@ -101,7 +110,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [reservations].hash
+      [reservations, pms].hash
     end
 
     # Builds the object from hash

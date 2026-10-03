@@ -21,15 +21,18 @@ module Repull
     # Content slabs that were actually written, e.g. [\"title\",\"occupancy\",\"amenities\"]. A non-English write also reports `locale:<tag>` so you can see which row was written. A rate change reports `pricing`, and `calendar` as well when nights on the calendar moved to the new rate.
     attr_accessor :changed
 
-    # Provided-but-not-applied fields — e.g. \"photos\" when a non-empty photos array carried no valid http(s) URL.
+    # Provided-but-not-applied fields — e.g. \"photos\" when a non-empty photos array carried no valid http(s) URL. On a listing a PMS manages, also the content sections the PMS refused (`title`, `descriptions`, `times`, `capacity`, `amenities`, `houseRules`, `address`, `photos`), which are then not written here either.
     attr_accessor :deferred
+
+    attr_accessor :pms
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
         :'id' => :'id',
         :'changed' => :'changed',
-        :'deferred' => :'deferred'
+        :'deferred' => :'deferred',
+        :'pms' => :'pms'
       }
     end
 
@@ -48,13 +51,15 @@ module Repull
       {
         :'id' => :'String',
         :'changed' => :'Array<String>',
-        :'deferred' => :'Array<String>'
+        :'deferred' => :'Array<String>',
+        :'pms' => :'ListingContentUpdateResponsePms'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'pms'
       ])
     end
 
@@ -89,6 +94,10 @@ module Repull
           self.deferred = value
         end
       end
+
+      if attributes.key?(:'pms')
+        self.pms = attributes[:'pms']
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -113,7 +122,8 @@ module Repull
       self.class == o.class &&
           id == o.id &&
           changed == o.changed &&
-          deferred == o.deferred
+          deferred == o.deferred &&
+          pms == o.pms
     end
 
     # @see the `==` method
@@ -125,7 +135,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, changed, deferred].hash
+      [id, changed, deferred, pms].hash
     end
 
     # Builds the object from hash

@@ -36,6 +36,8 @@ module Repull
 
     attr_accessor :created_at
 
+    attr_accessor :pms
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
@@ -47,7 +49,8 @@ module Repull
         :'currency' => :'currency',
         :'is_business_traveler' => :'isBusinessTraveler',
         :'contacts' => :'contacts',
-        :'created_at' => :'createdAt'
+        :'created_at' => :'createdAt',
+        :'pms' => :'pms'
       }
     end
 
@@ -71,8 +74,9 @@ module Repull
         :'language' => :'String',
         :'currency' => :'String',
         :'is_business_traveler' => :'Boolean',
-        :'contacts' => :'Array<GuestCreateResponseContactsInner>',
-        :'created_at' => :'Time'
+        :'contacts' => :'Array<GuestUpdateResponseContactsInner>',
+        :'created_at' => :'Time',
+        :'pms' => :'GuestCreateResponsePms'
       }
     end
 
@@ -82,6 +86,7 @@ module Repull
         :'last_name',
         :'language',
         :'currency',
+        :'pms'
       ])
     end
 
@@ -138,6 +143,10 @@ module Repull
       if attributes.key?(:'created_at')
         self.created_at = attributes[:'created_at']
       end
+
+      if attributes.key?(:'pms')
+        self.pms = attributes[:'pms']
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -168,7 +177,8 @@ module Repull
           currency == o.currency &&
           is_business_traveler == o.is_business_traveler &&
           contacts == o.contacts &&
-          created_at == o.created_at
+          created_at == o.created_at &&
+          pms == o.pms
     end
 
     # @see the `==` method
@@ -180,7 +190,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, created, first_name, last_name, language, currency, is_business_traveler, contacts, created_at].hash
+      [id, created, first_name, last_name, language, currency, is_business_traveler, contacts, created_at, pms].hash
     end
 
     # Builds the object from hash

@@ -2,6 +2,18 @@
 
 All notable changes to the `repull` gem are documented here.
 
+## [0.2.29] - 2026-10-03
+
+Regenerated against the live `https://api.repull.dev/openapi.json` — the PMS API surface for connected Guesty and Hostaway accounts:
+
+- New `Repull::GuestsApi#update_guest` (`PATCH /v1/guests/{id}`, body `GuestUpdateRequest`, returns `GuestUpdateResponse`, optional `idempotency_key:`): change a guest's `first_name`, `last_name`, `email`, `phone` or `language`. A guest linked to a connected PMS is changed there first; `pms` lists each PMS written to.
+- `GuestCreateRequest#provider`: also create the guest in a connected PMS; `GuestCreateResponse#pms` carries the PMS's guest id (`external_id`).
+- New `Repull::PmsCapabilities`, returned as `capabilities.pms` on `Listing` (`GET /v1/listings/{id}`) and `ConnectStatus` (`GET /v1/connect/{provider}`): review replies, request accept/decline and pre-approval, listing content sections, guest create/update, message channel and attachments, calendar writes, payments and tasks.
+- `Review#pms` and the review reply response's `pms`: the PMS a review was read from, and the PMS the reply went through.
+- `ListingContentUpdateResponse#pms`: per-section outcome when a PMS manages the listing.
+- `SendMessageRequest#channel` accepts a PMS's own channel names on PMS-relayed conversations.
+- The guest contact model is now generated as `GuestUpdateResponseContactsInner` (same shape, shared by create and update); `GuestCreateResponseContactsInner` is gone.
+
 ## [0.2.28] - 2026-10-03
 
 Regenerated against the live `https://api.repull.dev/openapi.json`:

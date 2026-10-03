@@ -19,6 +19,9 @@ module Repull
 
     attr_accessor :platform
 
+    # The PMS the reply went through, when the review came from one.
+    attr_accessor :pms
+
     attr_accessor :response
 
     # Attribute mapping from ruby-style variable name to JSON key.
@@ -26,6 +29,7 @@ module Repull
       {
         :'id' => :'id',
         :'platform' => :'platform',
+        :'pms' => :'pms',
         :'response' => :'response'
       }
     end
@@ -45,6 +49,7 @@ module Repull
       {
         :'id' => :'String',
         :'platform' => :'String',
+        :'pms' => :'String',
         :'response' => :'String'
       }
     end
@@ -52,6 +57,7 @@ module Repull
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'pms',
       ])
     end
 
@@ -77,6 +83,10 @@ module Repull
 
       if attributes.key?(:'platform')
         self.platform = attributes[:'platform']
+      end
+
+      if attributes.key?(:'pms')
+        self.pms = attributes[:'pms']
       end
 
       if attributes.key?(:'response')
@@ -106,6 +116,7 @@ module Repull
       self.class == o.class &&
           id == o.id &&
           platform == o.platform &&
+          pms == o.pms &&
           response == o.response
     end
 
@@ -118,7 +129,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, platform, response].hash
+      [id, platform, pms, response].hash
     end
 
     # Builds the object from hash

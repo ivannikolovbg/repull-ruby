@@ -14,41 +14,18 @@ require 'date'
 require 'time'
 
 module Repull
-  class GuestCreateResponseContactsInner < ApiModelBase
-    attr_accessor :type
+  class PmsCapabilitiesReviews < ApiModelBase
+    # Its reviews appear in `GET /v1/reviews` (with `pms` set).
+    attr_accessor :read
 
-    attr_accessor :value
-
-    attr_accessor :is_primary
-
-    class EnumAttributeValidator
-      attr_reader :datatype
-      attr_reader :allowable_values
-
-      def initialize(datatype, allowable_values)
-        @allowable_values = allowable_values.map do |value|
-          case datatype.to_s
-          when /Integer/i
-            value.to_i
-          when /Float/i
-            value.to_f
-          else
-            value
-          end
-        end
-      end
-
-      def valid?(value)
-        !value || allowable_values.include?(value)
-      end
-    end
+    # `POST /v1/reviews/{id}/reply`.
+    attr_accessor :reply
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'type' => :'type',
-        :'value' => :'value',
-        :'is_primary' => :'isPrimary'
+        :'read' => :'read',
+        :'reply' => :'reply'
       }
     end
 
@@ -65,9 +42,8 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'type' => :'String',
-        :'value' => :'String',
-        :'is_primary' => :'Boolean'
+        :'read' => :'Boolean',
+        :'reply' => :'Boolean'
       }
     end
 
@@ -81,28 +57,24 @@ module Repull
     # @param [Hash] attributes Model attributes in the form of hash
     def initialize(attributes = {})
       if (!attributes.is_a?(Hash))
-        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::GuestCreateResponseContactsInner` initialize method"
+        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::PmsCapabilitiesReviews` initialize method"
       end
 
       # check to see if the attribute exists and convert string to symbol for hash key
       acceptable_attribute_map = self.class.acceptable_attribute_map
       attributes = attributes.each_with_object({}) { |(k, v), h|
         if (!acceptable_attribute_map.key?(k.to_sym))
-          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::GuestCreateResponseContactsInner`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
+          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::PmsCapabilitiesReviews`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
         end
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'type')
-        self.type = attributes[:'type']
+      if attributes.key?(:'read')
+        self.read = attributes[:'read']
       end
 
-      if attributes.key?(:'value')
-        self.value = attributes[:'value']
-      end
-
-      if attributes.key?(:'is_primary')
-        self.is_primary = attributes[:'is_primary']
+      if attributes.key?(:'reply')
+        self.reply = attributes[:'reply']
       end
     end
 
@@ -118,19 +90,7 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
-      type_validator = EnumAttributeValidator.new('String', ["email", "phone"])
-      return false unless type_validator.valid?(@type)
       true
-    end
-
-    # Custom attribute writer method checking allowed values (enum).
-    # @param [Object] type Object to be assigned
-    def type=(type)
-      validator = EnumAttributeValidator.new('String', ["email", "phone"])
-      unless validator.valid?(type)
-        fail ArgumentError, "invalid value for \"type\", must be one of #{validator.allowable_values}."
-      end
-      @type = type
     end
 
     # Checks equality by comparing each attribute.
@@ -138,9 +98,8 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          type == o.type &&
-          value == o.value &&
-          is_primary == o.is_primary
+          read == o.read &&
+          reply == o.reply
     end
 
     # @see the `==` method
@@ -152,7 +111,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [type, value, is_primary].hash
+      [read, reply].hash
     end
 
     # Builds the object from hash

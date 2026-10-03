@@ -14,25 +14,19 @@ require 'date'
 require 'time'
 
 module Repull
-  class GuestCreateRequest < ApiModelBase
+  class GuestUpdateRequest < ApiModelBase
     attr_accessor :first_name
 
     attr_accessor :last_name
 
+    # Added as the guest's newest email; earlier ones are kept.
     attr_accessor :email
 
-    # E.164 preferred. Stored normalised.
+    # E.164 preferred. Added as the guest's newest phone; earlier ones are kept.
     attr_accessor :phone
 
     # BCP-47 tag.
     attr_accessor :language
-
-    attr_accessor :currency
-
-    attr_accessor :is_business_traveler
-
-    # A connected PMS to create the guest in as well. The guest is created there FIRST; a PMS that cannot create guest profiles returns `422 pms_write_unsupported` and nothing is created. The PMS's guest id comes back as `pms.externalId`, and later `PATCH /v1/guests/{id}` changes reach it.
-    attr_accessor :provider
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
@@ -41,10 +35,7 @@ module Repull
         :'last_name' => :'lastName',
         :'email' => :'email',
         :'phone' => :'phone',
-        :'language' => :'language',
-        :'currency' => :'currency',
-        :'is_business_traveler' => :'isBusinessTraveler',
-        :'provider' => :'provider'
+        :'language' => :'language'
       }
     end
 
@@ -65,10 +56,7 @@ module Repull
         :'last_name' => :'String',
         :'email' => :'String',
         :'phone' => :'String',
-        :'language' => :'String',
-        :'currency' => :'String',
-        :'is_business_traveler' => :'Boolean',
-        :'provider' => :'String'
+        :'language' => :'String'
       }
     end
 
@@ -82,22 +70,20 @@ module Repull
     # @param [Hash] attributes Model attributes in the form of hash
     def initialize(attributes = {})
       if (!attributes.is_a?(Hash))
-        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::GuestCreateRequest` initialize method"
+        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::GuestUpdateRequest` initialize method"
       end
 
       # check to see if the attribute exists and convert string to symbol for hash key
       acceptable_attribute_map = self.class.acceptable_attribute_map
       attributes = attributes.each_with_object({}) { |(k, v), h|
         if (!acceptable_attribute_map.key?(k.to_sym))
-          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::GuestCreateRequest`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
+          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::GuestUpdateRequest`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
         end
         h[k.to_sym] = v
       }
 
       if attributes.key?(:'first_name')
         self.first_name = attributes[:'first_name']
-      else
-        self.first_name = nil
       end
 
       if attributes.key?(:'last_name')
@@ -115,20 +101,6 @@ module Repull
       if attributes.key?(:'language')
         self.language = attributes[:'language']
       end
-
-      if attributes.key?(:'currency')
-        self.currency = attributes[:'currency']
-      end
-
-      if attributes.key?(:'is_business_traveler')
-        self.is_business_traveler = attributes[:'is_business_traveler']
-      else
-        self.is_business_traveler = false
-      end
-
-      if attributes.key?(:'provider')
-        self.provider = attributes[:'provider']
-      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -136,16 +108,8 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
-      if @first_name.nil?
-        invalid_properties.push('invalid value for "first_name", first_name cannot be nil.')
-      end
-
-      if !@currency.nil? && @currency.to_s.length > 3
-        invalid_properties.push('invalid value for "currency", the character length must be smaller than or equal to 3.')
-      end
-
-      if !@currency.nil? && @currency.to_s.length < 3
-        invalid_properties.push('invalid value for "currency", the character length must be greater than or equal to 3.')
+      if !@first_name.nil? && @first_name.to_s.length < 1
+        invalid_properties.push('invalid value for "first_name", the character length must be greater than or equal to 1.')
       end
 
       invalid_properties
@@ -155,9 +119,7 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
-      return false if @first_name.nil?
-      return false if !@currency.nil? && @currency.to_s.length > 3
-      return false if !@currency.nil? && @currency.to_s.length < 3
+      return false if !@first_name.nil? && @first_name.to_s.length < 1
       true
     end
 
@@ -168,25 +130,11 @@ module Repull
         fail ArgumentError, 'first_name cannot be nil'
       end
 
+      if first_name.to_s.length < 1
+        fail ArgumentError, 'invalid value for "first_name", the character length must be greater than or equal to 1.'
+      end
+
       @first_name = first_name
-    end
-
-    # Custom attribute writer method with validation
-    # @param [Object] currency Value to be assigned
-    def currency=(currency)
-      if currency.nil?
-        fail ArgumentError, 'currency cannot be nil'
-      end
-
-      if currency.to_s.length > 3
-        fail ArgumentError, 'invalid value for "currency", the character length must be smaller than or equal to 3.'
-      end
-
-      if currency.to_s.length < 3
-        fail ArgumentError, 'invalid value for "currency", the character length must be greater than or equal to 3.'
-      end
-
-      @currency = currency
     end
 
     # Checks equality by comparing each attribute.
@@ -198,10 +146,7 @@ module Repull
           last_name == o.last_name &&
           email == o.email &&
           phone == o.phone &&
-          language == o.language &&
-          currency == o.currency &&
-          is_business_traveler == o.is_business_traveler &&
-          provider == o.provider
+          language == o.language
     end
 
     # @see the `==` method
@@ -213,7 +158,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [first_name, last_name, email, phone, language, currency, is_business_traveler, provider].hash
+      [first_name, last_name, email, phone, language].hash
     end
 
     # Builds the object from hash

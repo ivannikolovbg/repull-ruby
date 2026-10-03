@@ -27,6 +27,9 @@ module Repull
 
     attr_accessor :platform
 
+    # The PMS this review was read from (`guesty`, `hostaway`, …) when it came through one — `platform` is still the channel the guest wrote it on. A reply (`POST /v1/reviews/{id}/reply`) goes through this PMS; `GET /v1/connect/{provider}` → `capabilities.pms.reviews.reply` says whether it can. `null` for a review from a directly connected channel.
+    attr_accessor :pms
+
     # Internal Repull listing id the review is attached to.
     attr_accessor :listing_id
 
@@ -82,6 +85,7 @@ module Repull
         :'id' => :'id',
         :'external_id' => :'externalId',
         :'platform' => :'platform',
+        :'pms' => :'pms',
         :'listing_id' => :'listingId',
         :'provider_property_id' => :'providerPropertyId',
         :'reservation_id' => :'reservationId',
@@ -121,6 +125,7 @@ module Repull
         :'id' => :'String',
         :'external_id' => :'String',
         :'platform' => :'String',
+        :'pms' => :'String',
         :'listing_id' => :'String',
         :'provider_property_id' => :'String',
         :'reservation_id' => :'String',
@@ -148,6 +153,7 @@ module Repull
       Set.new([
         :'account',
         :'platform',
+        :'pms',
         :'listing_id',
         :'provider_property_id',
         :'reservation_id',
@@ -197,6 +203,10 @@ module Repull
 
       if attributes.key?(:'platform')
         self.platform = attributes[:'platform']
+      end
+
+      if attributes.key?(:'pms')
+        self.pms = attributes[:'pms']
       end
 
       if attributes.key?(:'listing_id')
@@ -302,6 +312,7 @@ module Repull
           id == o.id &&
           external_id == o.external_id &&
           platform == o.platform &&
+          pms == o.pms &&
           listing_id == o.listing_id &&
           provider_property_id == o.provider_property_id &&
           reservation_id == o.reservation_id &&
@@ -332,7 +343,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [account, id, external_id, platform, listing_id, provider_property_id, reservation_id, reservation_confirmation_code, guest_id, guest_name, guest_avatar, reviewer_role, rating, categories, public_review, private_feedback, is_reviewee_recommended, response, submitted_at, updated_at, expires_at, hidden, language].hash
+      [account, id, external_id, platform, pms, listing_id, provider_property_id, reservation_id, reservation_confirmation_code, guest_id, guest_name, guest_avatar, reviewer_role, rating, categories, public_review, private_feedback, is_reviewee_recommended, response, submitted_at, updated_at, expires_at, hidden, language].hash
     end
 
     # Builds the object from hash
