@@ -22,8 +22,8 @@
 require 'repull'
 
 instance = Repull::ReservationWebhookObject.new(
-  id: 212605,
-  uid: HMX4CMA2X9,
+  id: 900001,
+  uid: HMEXAMPLE1,
   channel: airbnb,
   listing_id: 5668,
   customer_id: 1,

@@ -379,7 +379,7 @@ Repull.configure do |config|
 end
 
 api_instance = Repull::AirbnbApi.new
-airbnb_alteration_create_request = Repull::AirbnbAlterationCreateRequest.new({confirmation_code: 'HMX4CMA2X9'}) # AirbnbAlterationCreateRequest | 
+airbnb_alteration_create_request = Repull::AirbnbAlterationCreateRequest.new({confirmation_code: 'HMEXAMPLE1'}) # AirbnbAlterationCreateRequest | 
 
 begin
   # Create Airbnb alteration

@@ -23,7 +23,7 @@ require 'repull'
 
 instance = Repull::ReservationMessageUpdatedPayload.new(
   reservation_id: 235970,
-  thread_id: 161347,
+  thread_id: 900301,
   message_id: 1854462,
   external_message_id: 32877308873,
   channel: airbnb,

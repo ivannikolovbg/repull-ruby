@@ -27,7 +27,7 @@ instance = Repull::ListingWebhookObject.new(
   customer_id: 1,
   channel: airbnb,
   external_listing_id: 1234567890123456789,
-  name: R-Sable 1302 — Radium Hot Springs,
+  name: Lakeview Loft — Example City,
   active: true,
   status: active,
   address: null,

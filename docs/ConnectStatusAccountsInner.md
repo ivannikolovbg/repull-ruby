@@ -20,7 +20,7 @@ require 'repull'
 
 instance = Repull::ConnectStatusAccountsInner.new(
   external_account_id: 79730216,
-  name: Raiden,
+  name: Casey,
   picture_url: null,
   status: active,
   connected: true,

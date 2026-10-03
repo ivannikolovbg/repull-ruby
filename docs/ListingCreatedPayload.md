@@ -19,7 +19,7 @@ require 'repull'
 
 instance = Repull::ListingCreatedPayload.new(
   id: 6250,
-  title: R-Sable 1302 — Radium Hot Springs,
+  title: Lakeview Loft — Example City,
   address: null,
   bedrooms: 2,
   bathrooms: 2,

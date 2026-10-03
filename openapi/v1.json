@@ -2125,7 +2125,7 @@
                 "name": {
                   "type": "string",
                   "nullable": true,
-                  "example": "Raiden"
+                  "example": "Casey"
                 },
                 "pictureUrl": {
                   "type": "string",
@@ -2633,12 +2633,12 @@
           "id": {
             "type": "integer",
             "description": "Repull-internal reservation id. Pass to `GET /v1/reservations/{id}`.",
-            "example": 212605
+            "example": 900001
           },
           "uid": {
             "type": "string",
             "description": "Channel-side confirmation code (Airbnb HM-prefixed, Booking.com numeric, etc.). Stable across the lifetime of the reservation.",
-            "example": "HMX4CMA2X9"
+            "example": "HMEXAMPLE1"
           },
           "channel": {
             "type": "string",
@@ -2810,7 +2810,7 @@
           },
           "threadId": {
             "type": "string",
-            "example": "161347"
+            "example": "900301"
           },
           "messageId": {
             "type": "string",
@@ -2880,7 +2880,7 @@
           },
           "threadId": {
             "type": "string",
-            "example": "161347"
+            "example": "900301"
           },
           "messageId": {
             "type": "string",
@@ -3296,7 +3296,7 @@
           },
           "title": {
             "type": "string",
-            "example": "R-Sable 1302 \u2014 Radium Hot Springs"
+            "example": "Lakeview Loft \u2014 Example City"
           },
           "address": {
             "type": "object",
@@ -3364,7 +3364,7 @@
           "name": {
             "type": "string",
             "nullable": true,
-            "example": "R-Sable 1302 \u2014 Radium Hot Springs"
+            "example": "Lakeview Loft \u2014 Example City"
           },
           "active": {
             "type": "boolean",
@@ -5879,7 +5879,7 @@
           "confirmation_code": {
             "type": "string",
             "description": "Airbnb confirmation code of the reservation to alter. `GET /v1/channels/airbnb/reservations` lists them.",
-            "example": "HMX4CMA2X9"
+            "example": "HMEXAMPLE1"
           },
           "check_in": {
             "type": "string",
@@ -6679,7 +6679,7 @@
                     "name": {
                       "type": "string",
                       "nullable": true,
-                      "example": "R-Sable 1302"
+                      "example": "Lakeview Loft"
                     }
                   }
                 }
@@ -13950,7 +13950,7 @@
                     "listings": [
                       {
                         "id": "4118",
-                        "name": "R-Sable 1302"
+                        "name": "Lakeview Loft"
                       }
                     ]
                   }

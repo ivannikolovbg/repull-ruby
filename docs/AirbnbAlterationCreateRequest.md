@@ -18,7 +18,7 @@
 require 'repull'
 
 instance = Repull::AirbnbAlterationCreateRequest.new(
-  confirmation_code: HMX4CMA2X9,
+  confirmation_code: HMEXAMPLE1,
   check_in: Sun Aug 02 00:00:00 UTC 2026,
   check_out: Thu Aug 06 00:00:00 UTC 2026,
   number_of_guests: 3,

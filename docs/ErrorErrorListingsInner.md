@@ -14,7 +14,7 @@ require 'repull'
 
 instance = Repull::ErrorErrorListingsInner.new(
   id: 4118,
-  name: R-Sable 1302
+  name: Lakeview Loft
 )
 ```
 

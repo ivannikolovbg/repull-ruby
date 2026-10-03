@@ -2,6 +2,10 @@
 
 All notable changes to the `repull` gem are documented here.
 
+## [0.2.30] - 2026-10-03
+
+Regenerated against the live `https://api.repull.dev/openapi.json`. Spec examples no longer use real reservation, host or listing data: sample confirmation codes, host names and listing names are now fictional (`HMEXAMPLE1`, `Casey`, `Lakeview Loft`). No API changes.
+
 ## [0.2.29] - 2026-10-03
 
 Regenerated against the live `https://api.repull.dev/openapi.json` — the PMS API surface for connected Guesty and Hostaway accounts:
