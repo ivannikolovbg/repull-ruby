@@ -3,7 +3,7 @@
   "info": {
     "title": "Repull API",
     "version": "1.0.0",
-    "description": "The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.\n\n## Designed for AI agents\nEvery error response on this API includes machine-parseable fields so an LLM (Claude in MCP, Cursor, Cline, GPT, etc.) can self-recover without escalating to a human:\n- `error.code` \u2014 stable string identifier (e.g. `invalid_params`, `rate_limit_exceeded`)\n- `error.message` \u2014 human-readable cause\n- `error.fix` \u2014 exact recovery steps (e.g. \"Pass `check_in_after` as ISO 8601: `?check_in_after=2026-01-15`\")\n- `error.docs_url` \u2014 link to the canonical write-up at `https://repull.dev/docs/errors/{code}`\n- `error.request_id` \u2014 id to correlate with server-side logs\n- `error.field` / `error.value_received` / `error.valid_values` / `error.did_you_mean` \u2014 when the error is parameter-specific\n- `error.retry_after` \u2014 seconds to wait before retrying (rate-limit + transient upstream)\n\n`Access-Control-Expose-Headers` lists `x-request-id` and the `X-RateLimit-*` family so browsers can read them on cross-origin responses.\n\n## Quick Start\n1. Get an API key at https://repull.dev/dashboard\n2. Connect a PMS: `POST /v1/connect/{provider}`\n3. List properties: `GET /v1/properties`\n4. Get reservations: `GET /v1/reservations`\n\n## Authentication\nAll requests require a Bearer token:\n```\nAuthorization: Bearer sk_live_YOUR_API_KEY\n```\n\n## Request Correlation (X-Request-ID)\nEvery response carries an `X-Request-ID` header, e.g. `X-Request-ID: req_01HXY...`. Include this id in support tickets and bug reports \u2014 we can trace the full request lifecycle (auth, rate limit, handler, downstream calls, log row) from a single id.\n\nYou may set the header on the inbound request to forward your own trace id; we will echo it back instead of generating a new one. Accepted format: `^[\\\\w.-]{1,128}$`.\n\nThe id is also embedded in error envelopes as `request_id` so server-side log diffs work even when the response headers are stripped by an intermediate proxy.\n\n## Rate Limits\nThe public API enforces a per-API-key sliding-window rate limit on top of the per-tier monthly + daily-AI quotas.\n\n**Default policy:** 600 requests per 60 seconds, per API key. Sliding window \u2014 there is no fixed-minute boundary you can burst across.\n\nEvery response includes:\n\n| Header | Meaning |\n|---|---|\n| `X-RateLimit-Limit` | Requests permitted in the current window. |\n| `X-RateLimit-Remaining` | Requests left in the current window after this call. |\n| `X-RateLimit-Reset` | Unix epoch (seconds) when the next slot opens. |\n| `X-RateLimit-Policy` | Machine-readable policy descriptor, e.g. `600;w=60`. |\n| `Retry-After` | Seconds to wait before retrying. **Only present on 429 responses.** |\n\n**On 429 (rate_limit_exceeded):** the response body matches the standard error envelope with `code: \"rate_limit_exceeded\"`, plus `limit`, `window_seconds`, `retry_after`, and `request_id` fields. SDKs MUST honor `Retry-After` and use exponential backoff with jitter on subsequent retries \u2014 never a tight loop.\n\nRecommended backoff:\n```\nsleep_ms = (Retry-After * 1000) + random(0..250)\n```\n\nMonthly + daily-AI tier quotas (`free`, `starter`, `custom`) are enforced separately and also surface as 429s; they include `tier`, `scope`, and `resetsAt` fields.\n\n## Plan Limits (402 \u2014 `listings_limit_exceeded`)\nThe Repull API also enforces a per-tier cap on **active listings**:\n\n| Tier | Active listings cap |\n|---|---|\n| `free` | 3 |\n| `starter` | 50 |\n| `custom` | unlimited |\n\nWhen a customer's active-listing count is above their tier cap, the API returns **`402 Payment Required`** with `error.code = \"listings_limit_exceeded\"` on every route EXCEPT:\n\n- `/v1/health` \u2014 uptime probes are never gated.\n- `/v1/usage/*` \u2014 so dashboards can render the over-cap state.\n- Any `DELETE` \u2014 so the customer can trim listings to get back under the cap without paying.\n\nUnlike 429, 402 is NOT a \"wait and retry\" condition \u2014 `Retry-After` is not set. The only paths back to 200 are:\n  1. `DELETE` enough listings to come back under the cap, or\n  2. Upgrade at `https://repull.dev/dashboard/billing`. The server-side usage cache is 60s, so the first 200 after an upgrade may take up to a minute.\n\nThe envelope mirrors `rate_limit_exceeded` for SDK ergonomics: `tier`, `limit`, `active_listings`, `upgrade_url`, plus the standard `code` / `message` / `fix` / `docs_url` / `request_id`.",
+    "description": "The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.\n\n## Designed for AI agents\nEvery error response on this API includes machine-parseable fields so an LLM (Claude in MCP, Cursor, Cline, GPT, etc.) can self-recover without escalating to a human:\n- `error.code` \u2014 stable string identifier (e.g. `invalid_params`, `rate_limit_exceeded`)\n- `error.message` \u2014 human-readable cause\n- `error.fix` \u2014 exact recovery steps (e.g. \"Pass `check_in_after` as ISO 8601: `?check_in_after=2026-01-15`\")\n- `error.docs_url` \u2014 link to the canonical write-up at `https://repull.dev/docs/errors/{code}`\n- `error.request_id` \u2014 id to correlate with server-side logs\n- `error.field` / `error.value_received` / `error.valid_values` / `error.did_you_mean` \u2014 when the error is parameter-specific\n- `error.retry_after` \u2014 seconds to wait before retrying (rate-limit + transient upstream)\n\n`Access-Control-Expose-Headers` lists `x-request-id` and the `X-RateLimit-*` family so browsers can read them on cross-origin responses.\n\n## Quick Start\n1. Get an API key at https://repull.dev/dashboard\n2. Connect a PMS: `POST /v1/connect/{provider}`\n3. List properties: `GET /v1/properties`\n4. Get reservations: `GET /v1/reservations`\n\n## Authentication\nAll requests require a Bearer token:\n```\nAuthorization: Bearer sk_live_YOUR_API_KEY\n```\n\n## Request Correlation (X-Request-ID)\nEvery response carries an `X-Request-ID` header, e.g. `X-Request-ID: req_01HXY...`. Include this id in support tickets and bug reports \u2014 we can trace the full request lifecycle (auth, rate limit, handler, downstream calls, log row) from a single id.\n\nYou may set the header on the inbound request to forward your own trace id; we will echo it back instead of generating a new one. Accepted format: `^[\\\\w.-]{1,128}$`.\n\nThe id is also embedded in error envelopes as `request_id` so server-side log diffs work even when the response headers are stripped by an intermediate proxy.\n\n## Rate Limits\nThe public API enforces a per-API-key sliding-window rate limit on top of the per-tier monthly + daily-AI quotas.\n\n**Default policy:** 600 requests per 60 seconds, per API key. Sliding window \u2014 there is no fixed-minute boundary you can burst across.\n\nEvery response includes:\n\n| Header | Meaning |\n|---|---|\n| `X-RateLimit-Limit` | Requests permitted in the current window. |\n| `X-RateLimit-Remaining` | Requests left in the current window after this call. |\n| `X-RateLimit-Reset` | Unix epoch (seconds) when the next slot opens. |\n| `X-RateLimit-Policy` | Machine-readable policy descriptor, e.g. `600;w=60`. |\n| `Retry-After` | Seconds to wait before retrying. **Only present on 429 responses.** |\n\n**On 429 (rate_limit_exceeded):** the response body matches the standard error envelope with `code: \"rate_limit_exceeded\"`, plus `limit`, `window_seconds`, `retry_after`, and `request_id` fields. SDKs MUST honor `Retry-After` and use exponential backoff with jitter on subsequent retries \u2014 never a tight loop.\n\nRecommended backoff:\n```\nsleep_ms = (Retry-After * 1000) + random(0..250)\n```\n\nMonthly + daily-AI tier quotas (`free`, `starter`, `custom`) are enforced separately and also surface as 429s; they include `tier`, `scope`, and `resetsAt` fields.\n\n## Plan Limits (402 \u2014 `listings_limit_exceeded`)\nThe Repull API also enforces a per-tier cap on **active listings**:\n\n| Tier | Active listings cap |\n|---|---|\n| `free` | 3 |\n| `starter` | unlimited (10 included, then billed per listing) |\n| `custom` | unlimited |\n\nWhen a customer's active-listing count is above their tier cap, the API returns **`402 Payment Required`** with `error.code = \"listings_limit_exceeded\"` on every route EXCEPT:\n\n- `/v1/health` \u2014 uptime probes are never gated.\n- `/v1/usage/*` \u2014 so dashboards can render the over-cap state.\n- Any `DELETE` \u2014 so the customer can trim listings to get back under the cap without paying.\n\nUnlike 429, 402 is NOT a \"wait and retry\" condition \u2014 `Retry-After` is not set. The only paths back to 200 are:\n  1. `DELETE` enough listings to come back under the cap, or\n  2. Upgrade at `https://repull.dev/dashboard/billing`. The server-side usage cache is 60s, so the first 200 after an upgrade may take up to a minute.\n\nThe envelope mirrors `rate_limit_exceeded` for SDK ergonomics: `tier`, `limit`, `active_listings`, `upgrade_url`, plus the standard `code` / `message` / `fix` / `docs_url` / `request_id`.",
     "contact": {
       "url": "https://repull.dev"
     },
@@ -14603,7 +14603,7 @@
       "post": {
         "operationId": "create_reservation",
         "summary": "Create a reservation",
-        "description": "Creates a reservation \u2014 in the listing's PMS when it has one, otherwise as a direct booking in Repull.\n\n### Where the booking is made\n\n- **A listing managed in a connected PMS** (Mews, Cloudbeds, Hostaway, Guesty, Beds24, BookingSync, Lodgify, Smoobu, Hospitable, iGMS, OwnerRez): the booking is created **in the PMS first**, then recorded in Repull from the PMS's own record, so the next sync lands on the same confirmation code and nothing is duplicated. A booking is **never** created only in Repull for such a listing \u2014 the PMS would keep selling the dates. What the PMS cannot do is refused (`422 pms_write_unsupported`), never faked. The PMS checks availability: taken dates answer `409 pms_unavailable`.\n- **Any other listing**: a direct booking made in Repull, with everything that hangs off one \u2014 the guest, the conversation, the calendar block and the `reservation.created` fan-out that issues the door code and starts the messaging automations. Priced by the listing's own rates; **availability is NOT checked** (call `GET /v1/availability/{propertyId}` first if that matters).\n\n`GET /v1/listings/{id}` \u2192 `capabilities.reservations` says which applies to a listing and exactly what it supports (`create`, `modify`, `cancel`, `quote`, `customPrice`, plus `notes`).\n\n### Fields by listing kind\n\n| Field | PMS listing | Direct-booking listing |\n|---|---|---|\n| `listingId`, `checkIn`, `checkOut`, `guest`, `guestCount`, `adults`, `children` | \u2713 | \u2713 |\n| `status` | `confirmed` (default) or `tentative` | \u2713 |\n| `totalPrice` | \u2713 where `capabilities.reservations.customPrice`; otherwise the PMS prices the stay | `422 unsupported_field` (priced from the listing's rates) |\n| `notes`, `unitId`, `sendConfirmationEmail` | \u2713 | `422 unsupported_field` |\n| `checkInTime`, `checkOutTime`, `currency`, `guestId` | `422 unsupported_field` (the PMS's own settings apply) | \u2713 |\n| `platform` | `direct` or `website` (`owner` \u2192 `422 pms_write_unsupported`; block owner stays in the PMS) | `direct`, `website` or `owner` |\n\nA field a listing cannot take is refused by name, never silently dropped. `platform` never accepts `airbnb` / `booking` / `vrbo`: those reservations are owned by the channel and arrive through sync.\n\n### Per-PMS limits\n\n| PMS | create | change | cancel | quote | `totalPrice` | Limits |\n|---|---|---|---|---|---|---|\n| Mews | \u2713 | \u2713 | \u2713 | \u2013 | \u2713 | \u2014 |\n| Cloudbeds | \u2713 | \u2713 | \u2713 | \u2013 | \u2013 | Books at the rate plan's price; group bookings supported. |\n| Hostaway | \u2713 | \u2713 | \u2713 | \u2713 | \u2713 | Direct-channel bookings only; a specific unit is refused; a date change keeps the booked total. |\n| Guesty | \u2713 | \u2713 | \u2713 | \u2713 | \u2713 | Cancels direct and Vrbo bookings; other channel bookings are cancelled on the channel. |\n| Beds24 | \u2713 | \u2713 | \u2713 | \u2713 | \u2713 | Needs the `write:bookings` scope; a multi-room property needs `unitId`. |\n| BookingSync | \u2713 | \u2713 | \u2713 | \u2713 | \u2713 | Needs `bookings_write`; fees and taxes are not itemized; no guest email. |\n| Lodgify | \u2713 | \u2713 | \u2713 (declines) | \u2713 | \u2713 | Cancel declines the booking; single-room bookings. |\n| Smoobu | \u2713 | \u2713 (no dates) | \u2713 | \u2713 | \u2713 | Dates cannot be changed through Smoobu's API \u2014 cancel and rebook, or change them in Smoobu. |\n| Hospitable | \u2713 | \u2713 | \u2713 | \u2713 (Direct plan) | \u2713 | Manual reservations only; needs `reservation:write`; adds no fees or taxes. |\n| iGMS | \u2713 | \u2713 | \u2713 | \u2013 | \u2713 (required) | iGMS direct bookings only; a price is required; no tentative holds. |\n| OwnerRez | \u2713 | \u2713 | \u2013 | \u2713 | \u2013 | No cancel through OwnerRez's API; priced by the property's own rates; needs the `full` scope. |\n\nEvery PMS except Cloudbeds refuses group bookings, and every vacation-rental PMS refuses to change or cancel a booking that came from a channel (Airbnb, Booking.com, Vrbo\u2026) \u2014 that is done on the channel.\n\n**Verification.** Mews and Cloudbeds were run end to end on their vendors' sandboxes. Every other PMS is **verified against the vendor's API documentation only** \u2014 no live account has been written to yet. `capabilities.reservations.verifiedAgainst` says which.\n\n### Idempotency\n\n**Send `Idempotency-Key`.** A network timeout here is exactly the case it exists for. The key is also sent to the PMS as the booking's reference, so even a retry that reaches the PMS again finds the booking instead of making a second one (`409 pms_duplicate` with `existing`, or the existing booking returned). A completed answer is replayed with `Idempotency-Status: cached` and the PMS is not called again. `502 pms_error` (the PMS could not be reached) is NOT stored \u2014 retry with the same key. `502 reservation_created_in_pms_only` IS stored, unlike every other 5xx: the booking exists in the PMS and arrives with the next sync, so a retry replays that answer rather than booking twice.\n\n### Partial success\n\nWhen the PMS created the booking but a follow-up step did not apply (for example the notes, or a tentative state), the response is still `201`, with `pms.partial: true` and the steps in `pms.failedSections`. The booking exists \u2014 do not create it again.\n\n`X-Account-Id` restricts the listing to one connected account. Returns `403 listing_inactive` when the listing is inactive.",
+        "description": "Creates a reservation \u2014 in the listing's PMS when it has one, otherwise as a direct booking in Repull.\n\n### Where the booking is made\n\n- **A listing managed in a connected PMS** (Mews, Cloudbeds, Hostaway, Guesty, Beds24, BookingSync, Lodgify, Smoobu, Hospitable, iGMS, OwnerRez, Track): the booking is created **in the PMS first**, then recorded in Repull from the PMS's own record, so the next sync lands on the same confirmation code and nothing is duplicated. A booking is **never** created only in Repull for such a listing \u2014 the PMS would keep selling the dates. What the PMS cannot do is refused (`422 pms_write_unsupported`), never faked. The PMS checks availability: taken dates answer `409 pms_unavailable`.\n- **Any other listing**: a direct booking made in Repull, with everything that hangs off one \u2014 the guest, the conversation, the calendar block and the `reservation.created` fan-out that issues the door code and starts the messaging automations. Priced by the listing's own rates; **availability is NOT checked** (call `GET /v1/availability/{propertyId}` first if that matters).\n\n`GET /v1/listings/{id}` \u2192 `capabilities.reservations` says which applies to a listing and exactly what it supports (`create`, `modify`, `cancel`, `quote`, `customPrice`, plus `notes`).\n\n### Fields by listing kind\n\n| Field | PMS listing | Direct-booking listing |\n|---|---|---|\n| `listingId`, `checkIn`, `checkOut`, `guest`, `guestCount`, `adults`, `children` | \u2713 | \u2713 |\n| `status` | `confirmed` (default) or `tentative` | \u2713 |\n| `totalPrice` | \u2713 where `capabilities.reservations.customPrice`; otherwise the PMS prices the stay | `422 unsupported_field` (priced from the listing's rates) |\n| `notes`, `unitId`, `sendConfirmationEmail` | \u2713 | `422 unsupported_field` |\n| `checkInTime`, `checkOutTime`, `currency`, `guestId` | `422 unsupported_field` (the PMS's own settings apply) | \u2713 |\n| `platform` | `direct` or `website` (`owner` \u2192 `422 pms_write_unsupported`; block owner stays in the PMS) | `direct`, `website` or `owner` |\n\nA field a listing cannot take is refused by name, never silently dropped. `platform` never accepts `airbnb` / `booking` / `vrbo`: those reservations are owned by the channel and arrive through sync.\n\n### Per-PMS limits\n\n| PMS | create | change | cancel | quote | `totalPrice` | Limits |\n|---|---|---|---|---|---|---|\n| Mews | \u2713 | \u2713 | \u2713 | \u2013 | \u2713 | \u2014 |\n| Cloudbeds | \u2713 | \u2713 | \u2713 | \u2013 | \u2013 | Books at the rate plan's price; group bookings supported. |\n| Hostaway | \u2713 | \u2713 | \u2713 | \u2713 | \u2713 | Direct-channel bookings only; a specific unit is refused; a date change keeps the booked total. |\n| Guesty | \u2713 | \u2713 | \u2713 | \u2713 | \u2713 | Cancels direct and Vrbo bookings; other channel bookings are cancelled on the channel. |\n| Beds24 | \u2713 | \u2713 | \u2713 | \u2713 | \u2713 | Needs the `write:bookings` scope; a multi-room property needs `unitId`. |\n| BookingSync | \u2713 | \u2713 | \u2713 | \u2713 | \u2713 | Needs `bookings_write`; fees and taxes are not itemized; no guest email. |\n| Lodgify | \u2713 | \u2713 | \u2713 (declines) | \u2713 | \u2713 | Cancel declines the booking; single-room bookings. |\n| Smoobu | \u2713 | \u2713 (no dates) | \u2713 | \u2713 | \u2713 | Dates cannot be changed through Smoobu's API \u2014 cancel and rebook, or change them in Smoobu. |\n| Hospitable | \u2713 | \u2713 | \u2713 | \u2713 (Direct plan) | \u2713 | Manual reservations only; needs `reservation:write`; adds no fees or taxes. |\n| iGMS | \u2713 | \u2713 | \u2713 | \u2013 | \u2713 (required) | iGMS direct bookings only; a price is required; no tentative holds. |\n| OwnerRez | \u2713 | \u2713 | \u2013 | \u2713 | \u2013 | No cancel through OwnerRez's API; priced by the property's own rates; needs the `full` scope. |\n| Track | \u2713 | \u2713 | \u2713 | \u2713 | \u2713 | Track decides Hold vs Confirmed from the property's channel mode; a set price on a Channel Key needs \"Allow Custom Pricing\"; a unit change needs `moveReasonId` on the connection; a date change re-prices at Track's current rates. |\n\nEvery PMS except Cloudbeds refuses group bookings, and every vacation-rental PMS refuses to change or cancel a booking that came from a channel (Airbnb, Booking.com, Vrbo\u2026) \u2014 that is done on the channel.\n\n**Verification.** Mews and Cloudbeds were run end to end on their vendors' sandboxes. Every other PMS is **verified against the vendor's API documentation only** \u2014 no live account has been written to yet. `capabilities.reservations.verifiedAgainst` says which.\n\n### Idempotency\n\n**Send `Idempotency-Key`.** A network timeout here is exactly the case it exists for. The key is also sent to the PMS as the booking's reference, so even a retry that reaches the PMS again finds the booking instead of making a second one (`409 pms_duplicate` with `existing`, or the existing booking returned). A completed answer is replayed with `Idempotency-Status: cached` and the PMS is not called again. `502 pms_error` (the PMS could not be reached) is NOT stored \u2014 retry with the same key. `502 reservation_created_in_pms_only` IS stored, unlike every other 5xx: the booking exists in the PMS and arrives with the next sync, so a retry replays that answer rather than booking twice.\n\n### Partial success\n\nWhen the PMS created the booking but a follow-up step did not apply (for example the notes, or a tentative state), the response is still `201`, with `pms.partial: true` and the steps in `pms.failedSections`. The booking exists \u2014 do not create it again.\n\n`X-Account-Id` restricts the listing to one connected account. Returns `403 listing_inactive` when the listing is inactive.",
         "tags": [
           "Reservations"
         ],
@@ -35656,7 +35656,7 @@
       "post": {
         "operationId": "quote_reservation",
         "summary": "Quote a reservation in the PMS",
-        "description": "Prices a stay and checks its availability **in the PMS that manages the listing**, without booking anything. It is the same check `POST /v1/reservations` makes before booking when no `totalPrice` is sent, so `available: true` with a `total` is what that create would be priced at (dates can still be taken in between).\n\n`available: false` is an answer, not an error: the PMS's reasons are in `restrictions` (minimum stay, closed to arrival, taken dates\u2026).\n\n- A listing **not managed in a PMS** answers `422 pms_not_linked`. Book it directly with `POST /v1/reservations`, or price it with `GET /v1/quotes`.\n- A PMS **without a quote API** (Mews, Cloudbeds, iGMS) answers `422 pms_write_unsupported`. You can still create the booking; on iGMS a `totalPrice` is required.\n\n`GET /v1/listings/{id}` \u2192 `capabilities.reservations.quote` says whether a listing can be quoted.\n\n### Per-PMS limits\n\n| PMS | create | change | cancel | quote | `totalPrice` | Limits |\n|---|---|---|---|---|---|---|\n| Mews | \u2713 | \u2713 | \u2713 | \u2013 | \u2713 | \u2014 |\n| Cloudbeds | \u2713 | \u2713 | \u2713 | \u2013 | \u2013 | Books at the rate plan's price; group bookings supported. |\n| Hostaway | \u2713 | \u2713 | \u2713 | \u2713 | \u2713 | Direct-channel bookings only; a specific unit is refused; a date change keeps the booked total. |\n| Guesty | \u2713 | \u2713 | \u2713 | \u2713 | \u2713 | Cancels direct and Vrbo bookings; other channel bookings are cancelled on the channel. |\n| Beds24 | \u2713 | \u2713 | \u2713 | \u2713 | \u2713 | Needs the `write:bookings` scope; a multi-room property needs `unitId`. |\n| BookingSync | \u2713 | \u2713 | \u2713 | \u2713 | \u2713 | Needs `bookings_write`; fees and taxes are not itemized; no guest email. |\n| Lodgify | \u2713 | \u2713 | \u2713 (declines) | \u2713 | \u2713 | Cancel declines the booking; single-room bookings. |\n| Smoobu | \u2713 | \u2713 (no dates) | \u2713 | \u2713 | \u2713 | Dates cannot be changed through Smoobu's API \u2014 cancel and rebook, or change them in Smoobu. |\n| Hospitable | \u2713 | \u2713 | \u2713 | \u2713 (Direct plan) | \u2713 | Manual reservations only; needs `reservation:write`; adds no fees or taxes. |\n| iGMS | \u2713 | \u2713 | \u2713 | \u2013 | \u2713 (required) | iGMS direct bookings only; a price is required; no tentative holds. |\n| OwnerRez | \u2713 | \u2713 | \u2013 | \u2713 | \u2013 | No cancel through OwnerRez's API; priced by the property's own rates; needs the `full` scope. |\n\nEvery PMS except Cloudbeds refuses group bookings, and every vacation-rental PMS refuses to change or cancel a booking that came from a channel (Airbnb, Booking.com, Vrbo\u2026) \u2014 that is done on the channel.\n\n**Verification.** Mews and Cloudbeds were run end to end on their vendors' sandboxes. Every other PMS is **verified against the vendor's API documentation only** \u2014 no live account has been written to yet. `capabilities.reservations.verifiedAgainst` says which.\n\n`X-Account-Id` restricts the listing to one connected account. Returns `403 listing_inactive` when the listing is inactive.",
+        "description": "Prices a stay and checks its availability **in the PMS that manages the listing**, without booking anything. It is the same check `POST /v1/reservations` makes before booking when no `totalPrice` is sent, so `available: true` with a `total` is what that create would be priced at (dates can still be taken in between).\n\n`available: false` is an answer, not an error: the PMS's reasons are in `restrictions` (minimum stay, closed to arrival, taken dates\u2026).\n\n- A listing **not managed in a PMS** answers `422 pms_not_linked`. Book it directly with `POST /v1/reservations`, or price it with `GET /v1/quotes`.\n- A PMS **without a quote API** (Mews, Cloudbeds, iGMS) answers `422 pms_write_unsupported`. You can still create the booking; on iGMS a `totalPrice` is required.\n\n`GET /v1/listings/{id}` \u2192 `capabilities.reservations.quote` says whether a listing can be quoted.\n\n### Per-PMS limits\n\n| PMS | create | change | cancel | quote | `totalPrice` | Limits |\n|---|---|---|---|---|---|---|\n| Mews | \u2713 | \u2713 | \u2713 | \u2013 | \u2713 | \u2014 |\n| Cloudbeds | \u2713 | \u2713 | \u2713 | \u2013 | \u2013 | Books at the rate plan's price; group bookings supported. |\n| Hostaway | \u2713 | \u2713 | \u2713 | \u2713 | \u2713 | Direct-channel bookings only; a specific unit is refused; a date change keeps the booked total. |\n| Guesty | \u2713 | \u2713 | \u2713 | \u2713 | \u2713 | Cancels direct and Vrbo bookings; other channel bookings are cancelled on the channel. |\n| Beds24 | \u2713 | \u2713 | \u2713 | \u2713 | \u2713 | Needs the `write:bookings` scope; a multi-room property needs `unitId`. |\n| BookingSync | \u2713 | \u2713 | \u2713 | \u2713 | \u2713 | Needs `bookings_write`; fees and taxes are not itemized; no guest email. |\n| Lodgify | \u2713 | \u2713 | \u2713 (declines) | \u2713 | \u2713 | Cancel declines the booking; single-room bookings. |\n| Smoobu | \u2713 | \u2713 (no dates) | \u2713 | \u2713 | \u2713 | Dates cannot be changed through Smoobu's API \u2014 cancel and rebook, or change them in Smoobu. |\n| Hospitable | \u2713 | \u2713 | \u2713 | \u2713 (Direct plan) | \u2713 | Manual reservations only; needs `reservation:write`; adds no fees or taxes. |\n| iGMS | \u2713 | \u2713 | \u2713 | \u2013 | \u2713 (required) | iGMS direct bookings only; a price is required; no tentative holds. |\n| OwnerRez | \u2713 | \u2713 | \u2013 | \u2713 | \u2013 | No cancel through OwnerRez's API; priced by the property's own rates; needs the `full` scope. |\n| Track | \u2713 | \u2713 | \u2713 | \u2713 | \u2713 | Track decides Hold vs Confirmed from the property's channel mode; a set price on a Channel Key needs \"Allow Custom Pricing\"; a unit change needs `moveReasonId` on the connection; a date change re-prices at Track's current rates. |\n\nEvery PMS except Cloudbeds refuses group bookings, and every vacation-rental PMS refuses to change or cancel a booking that came from a channel (Airbnb, Booking.com, Vrbo\u2026) \u2014 that is done on the channel.\n\n**Verification.** Mews and Cloudbeds were run end to end on their vendors' sandboxes. Every other PMS is **verified against the vendor's API documentation only** \u2014 no live account has been written to yet. `capabilities.reservations.verifiedAgainst` says which.\n\n`X-Account-Id` restricts the listing to one connected account. Returns `403 listing_inactive` when the listing is inactive.",
         "tags": [
           "Reservations"
         ],
@@ -35934,6 +35934,380 @@
                       }
                     }
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/connect/booking-extranet-login/recheck": {
+      "post": {
+        "operationId": "recheckBookingExtranetLogin",
+        "summary": "Re-check Booking.com direct-login permissions",
+        "description": "Re-runs the account import for a Booking.com direct-login connection after the host has granted the invited user full access in the Booking.com extranet (the `needs_permissions` state). Permissions are probed again and, once full access is in place, the connection continues to property details and room mapping \u2014 no new invitation is sent. Poll `GET /v1/connect/booking-extranet-login/status` for the result.\n\nCalled by the hosted Connect page. No API key \u2014 the session ID is the capability token.",
+        "tags": [
+          "Connect"
+        ],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sessionId": {
+                    "type": "string",
+                    "description": "The Connect session ID (capability token)."
+                  },
+                  "accountId": {
+                    "type": "integer",
+                    "description": "The Booking.com direct-login connection id returned when the sign-in started."
+                  }
+                },
+                "required": [
+                  "sessionId",
+                  "accountId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Re-check queued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "description": "Whether the re-check was queued."
+                    },
+                    "jobId": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Id of the queued import job, when one was queued."
+                    }
+                  },
+                  "required": [
+                    "ok",
+                    "jobId"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "410": {
+            "description": "The Connect session has expired (`session_expired`). Start a new session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/connect/resume": {
+      "get": {
+        "operationId": "resumeConnect",
+        "summary": "Open a connection's fix link",
+        "description": "The target of a connection's `fixUrl`. Open it in the host's browser to send them back into Connect for an EXISTING connection \u2014 for example to grant the Booking.com extranet user full access after a `needs_permissions` state, or to reconnect a Smoobu account that still uses a legacy single API key with an API key + secret.\n\nEach open starts a fresh, short-lived Connect session bound to that connection and redirects (302) to the hosted Connect page, which shows the connection's current state. The link itself does not expire on its own schedule \u2014 store `fixUrl` and open it whenever the connection needs attention.\n\nNo API key \u2014 the signed `t` token is the capability. Supported for Booking.com extranet login and Smoobu connections.",
+        "tags": [
+          "Connect"
+        ],
+        "security": [],
+        "parameters": [
+          {
+            "name": "t",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The signed resume token, exactly as it appears in the connection's `fixUrl`."
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect to the hosted Connect page for a fresh session bound to the connection.",
+            "headers": {
+              "Location": {
+                "description": "Hosted Connect page URL for the new session.",
+                "schema": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The link cannot be used: the token is missing, malformed or its signature does not verify (`invalid_resume_token`), the connection's channel has no hosted fix flow (`unsupported_channel`), or the connection id in the token is not valid (`bad_account`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "enum": [
+                        "invalid_resume_token",
+                        "unsupported_channel",
+                        "bad_account"
+                      ]
+                    },
+                    "reason": {
+                      "type": "string",
+                      "description": "Why the token was rejected (only with `invalid_resume_token`)."
+                    },
+                    "channel": {
+                      "type": "string",
+                      "description": "The token's channel (only with `unsupported_channel`)."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "The Connect session could not be started. Open the link again.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "enum": [
+                        "internal_error"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/connect/track/credentials": {
+      "post": {
+        "operationId": "submitTrackCredentials",
+        "summary": "Submit Track credentials for a Connect session",
+        "description": "Completes a credentials-pattern connection for Track (TRACK Hospitality Software) with the property manager's Track domain and an API key + secret.\n\n**What syncs.** Units become listings; reservations (with their fee and tax breakdown) and guest message threads are imported, then polled for changes. Bookings can be created, quoted, changed and cancelled in Track \u2014 see `capabilities.reservations` on `GET /v1/connect/track`.\n\n**Which key.** A **Server Key** \u2014 created in Track under Configuration \u2192 Company Setup \u2192 API Keys \u2014 has full access and is recommended. A **Channel Key** \u2014 under Configuration \u2192 PMS Setup \u2192 Distribution Channels \u2014 only allows booking. `keyType` defaults to `server`.\n\nThe key is validated against Track before anything is stored, so an invalid key returns `invalid_credentials` rather than creating a dead connection. On success only the credential fields below are stored, and the first sync of listings and reservations is queued.\n\nTrack has no webhooks: after the first sync, reservation and message changes are picked up by polling about once a minute.\n\nReconnecting replaces the stored credentials on the workspace's existing Track connection \u2014 the `pmsConnectionId` stays the same.\n\nNo API key required when called with a `sessionId` \u2014 the session is the capability token.",
+        "tags": [
+          "Connect"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sessionId": {
+                    "type": "string",
+                    "description": "Connect session id from `POST /v1/connect/track`. Omit when calling with your API key."
+                  },
+                  "writePolicy": {
+                    "type": "object",
+                    "description": "Optional: what the app may change in Track, set before the first sync. Same shape as `PATCH /v1/connect/{provider}/write-policy`; switches you leave out keep the provider default (everything on).",
+                    "example": {
+                      "reservations": {
+                        "api": false
+                      }
+                    }
+                  },
+                  "credentials": {
+                    "type": "object",
+                    "description": "The Track domain and an API key + secret.",
+                    "properties": {
+                      "domain": {
+                        "type": "string",
+                        "description": "Your Track domain: `acme.trackhs.com`, or just the subdomain `acme`. A full URL is accepted; only the host is kept.",
+                        "example": "acme.trackhs.com"
+                      },
+                      "apiKey": {
+                        "type": "string",
+                        "description": "Track API key."
+                      },
+                      "apiSecret": {
+                        "type": "string",
+                        "description": "Track API secret, shown next to the key in Track."
+                      },
+                      "keyType": {
+                        "type": "string",
+                        "enum": [
+                          "server",
+                          "channel"
+                        ],
+                        "default": "server",
+                        "description": "`server` \u2014 a Server Key (Company Setup \u2192 API Keys), full access, recommended. `channel` \u2014 a Channel Key (PMS Setup \u2192 Distribution Channels), booking only."
+                      },
+                      "authMode": {
+                        "type": "string",
+                        "enum": [
+                          "hmac",
+                          "basic"
+                        ],
+                        "default": "hmac",
+                        "description": "How requests to Track are signed. Leave the default unless Track support told you otherwise."
+                      },
+                      "hmacRealm": {
+                        "type": "string",
+                        "description": "HMAC realm. Defaults to `Acquia`, the realm Track's HMAC signing uses."
+                      },
+                      "secretIsBase64": {
+                        "type": "boolean",
+                        "default": true,
+                        "description": "Whether `apiSecret` is base64-encoded, as Track issues it. Set false to sign with the secret's raw text."
+                      },
+                      "paymentTypeId": {
+                        "type": "integer",
+                        "description": "The Track payment type that payments recorded through this connection are posted to."
+                      },
+                      "moveReasonId": {
+                        "type": "integer",
+                        "description": "The Track move reason used when a reservation is moved to another unit. Without it, unit changes are refused."
+                      }
+                    },
+                    "required": [
+                      "domain",
+                      "apiKey",
+                      "apiSecret"
+                    ]
+                  }
+                },
+                "required": [
+                  "credentials"
+                ]
+              },
+              "example": {
+                "credentials": {
+                  "domain": "acme.trackhs.com",
+                  "apiKey": "trk_live_\u2026",
+                  "apiSecret": "\u2026"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Credentials accepted, the connection stored and its first sync queued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "provider": {
+                      "type": "string",
+                      "example": "track"
+                    },
+                    "connected": {
+                      "type": "boolean"
+                    },
+                    "pmsConnectionId": {
+                      "type": "string",
+                      "description": "Id of the stored connection."
+                    },
+                    "created": {
+                      "type": "boolean",
+                      "description": "False when an existing connection was updated."
+                    },
+                    "sessionId": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "accountInfo": {
+                      "type": "object",
+                      "properties": {
+                        "domain": {
+                          "type": "string",
+                          "description": "The Track host the connection calls.",
+                          "example": "acme.trackhs.com"
+                        },
+                        "keyType": {
+                          "type": "string",
+                          "enum": [
+                            "server",
+                            "channel"
+                          ]
+                        },
+                        "authMode": {
+                          "type": "string",
+                          "enum": [
+                            "hmac",
+                            "basic"
+                          ]
+                        },
+                        "accountName": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      }
+                    },
+                    "firstSync": {
+                      "type": "object",
+                      "description": "Whether the first import of listings and reservations was queued. When it was not, the connection still stands and polling syncs it.",
+                      "properties": {
+                        "queued": {
+                          "type": "boolean"
+                        },
+                        "error": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "writePolicy": {
+                      "$ref": "#/components/schemas/PmsWritePolicy"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "502": {
+            "description": "Track could not be reached (`network_error`). Nothing was stored.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }

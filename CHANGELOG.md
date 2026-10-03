@@ -2,6 +2,14 @@
 
 All notable changes to the `repull` gem are documented here.
 
+## [0.2.28] - 2026-10-03
+
+Regenerated against the live `https://api.repull.dev/openapi.json`:
+
+- New `Repull::ConnectApi#submit_track_credentials` (`POST /v1/connect/track/credentials`, with `SubmitTrackCredentialsRequest` / `SubmitTrackCredentialsRequestCredentials`): connect a Track (TRACK Hospitality Software) account with `domain`, `api_key`, `api_secret` and optional `key_type` (`server` / `channel`), `auth_mode` (`hmac` / `basic`), `hmac_realm`, `secret_is_base64`, `payment_type_id`, `move_reason_id`.
+- New `Repull::ConnectApi#recheck_booking_extranet_login` (`POST /v1/connect/booking-extranet-login/recheck`) and `#resume_connect` (`GET /v1/connect/resume`).
+- Track listed in the per-PMS reservation write tables.
+
 ## [0.2.27] - 2026-10-02
 
 Regenerated against the live `https://api.repull.dev/openapi.json`:

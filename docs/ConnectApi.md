@@ -18,6 +18,8 @@ All URIs are relative to *https://api.repull.dev*
 | [**list_connect_providers**](ConnectApi.md#list_connect_providers) | **GET** /v1/connect/providers | List Connect channels |
 | [**list_connections**](ConnectApi.md#list_connections) | **GET** /v1/connect | List PMS/OTA connections |
 | [**map_connect_booking_rooms**](ConnectApi.md#map_connect_booking_rooms) | **POST** /v1/connect/booking/map-rooms | Submit room→listing mappings for a Booking.com Connect session |
+| [**recheck_booking_extranet_login**](ConnectApi.md#recheck_booking_extranet_login) | **POST** /v1/connect/booking-extranet-login/recheck | Re-check Booking.com direct-login permissions |
+| [**resume_connect**](ConnectApi.md#resume_connect) | **GET** /v1/connect/resume | Open a connection&#39;s fix link |
 | [**search_connect_session_listing_options**](ConnectApi.md#search_connect_session_listing_options) | **GET** /v1/connect/sessions/{sessionId}/listing-options | Search listings for a Connect mapping picker |
 | [**select_connect_provider**](ConnectApi.md#select_connect_provider) | **POST** /v1/connect/sessions/{sessionId}/select-provider | Bind a picker session to a provider |
 | [**start_booking_extranet_login**](ConnectApi.md#start_booking_extranet_login) | **POST** /v1/connect/booking-extranet-login/session | Sign in with a Booking.com Extranet user |
@@ -32,6 +34,7 @@ All URIs are relative to *https://api.repull.dev*
 | [**submit_mews_credentials**](ConnectApi.md#submit_mews_credentials) | **POST** /v1/connect/mews/credentials | Submit Mews credentials for a Connect session |
 | [**submit_ownerrez_credentials**](ConnectApi.md#submit_ownerrez_credentials) | **POST** /v1/connect/ownerrez/credentials | Submit OwnerRez credentials for a Connect session |
 | [**submit_smoobu_credentials**](ConnectApi.md#submit_smoobu_credentials) | **POST** /v1/connect/smoobu/credentials | Submit Smoobu credentials for a Connect session |
+| [**submit_track_credentials**](ConnectApi.md#submit_track_credentials) | **POST** /v1/connect/track/credentials | Submit Track credentials for a Connect session |
 | [**submit_vrbo_credentials**](ConnectApi.md#submit_vrbo_credentials) | **POST** /v1/connect/vrbo/credentials | Submit Vrbo credentials for a Connect session |
 | [**update_connect_write_policy**](ConnectApi.md#update_connect_write_policy) | **PATCH** /v1/connect/{provider}/write-policy | Change what the app may change in a PMS |
 | [**verify_booking_hotel**](ConnectApi.md#verify_booking_hotel) | **POST** /v1/connect/booking/verify | Verify a Booking.com hotel ID for a Connect session |
@@ -964,6 +967,133 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## recheck_booking_extranet_login
+
+> <RecheckBookingExtranetLogin200Response> recheck_booking_extranet_login(recheck_booking_extranet_login_request)
+
+Re-check Booking.com direct-login permissions
+
+Re-runs the account import for a Booking.com direct-login connection after the host has granted the invited user full access in the Booking.com extranet (the `needs_permissions` state). Permissions are probed again and, once full access is in place, the connection continues to property details and room mapping — no new invitation is sent. Poll `GET /v1/connect/booking-extranet-login/status` for the result.  Called by the hosted Connect page. No API key — the session ID is the capability token.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+
+api_instance = Repull::ConnectApi.new
+recheck_booking_extranet_login_request = Repull::RecheckBookingExtranetLoginRequest.new({session_id: 'session_id_example', account_id: 37}) # RecheckBookingExtranetLoginRequest | 
+
+begin
+  # Re-check Booking.com direct-login permissions
+  result = api_instance.recheck_booking_extranet_login(recheck_booking_extranet_login_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->recheck_booking_extranet_login: #{e}"
+end
+```
+
+#### Using the recheck_booking_extranet_login_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<RecheckBookingExtranetLogin200Response>, Integer, Hash)> recheck_booking_extranet_login_with_http_info(recheck_booking_extranet_login_request)
+
+```ruby
+begin
+  # Re-check Booking.com direct-login permissions
+  data, status_code, headers = api_instance.recheck_booking_extranet_login_with_http_info(recheck_booking_extranet_login_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <RecheckBookingExtranetLogin200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->recheck_booking_extranet_login_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **recheck_booking_extranet_login_request** | [**RecheckBookingExtranetLoginRequest**](RecheckBookingExtranetLoginRequest.md) |  |  |
+
+### Return type
+
+[**RecheckBookingExtranetLogin200Response**](RecheckBookingExtranetLogin200Response.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## resume_connect
+
+> resume_connect(t)
+
+Open a connection's fix link
+
+The target of a connection's `fixUrl`. Open it in the host's browser to send them back into Connect for an EXISTING connection — for example to grant the Booking.com extranet user full access after a `needs_permissions` state, or to reconnect a Smoobu account that still uses a legacy single API key with an API key + secret.  Each open starts a fresh, short-lived Connect session bound to that connection and redirects (302) to the hosted Connect page, which shows the connection's current state. The link itself does not expire on its own schedule — store `fixUrl` and open it whenever the connection needs attention.  No API key — the signed `t` token is the capability. Supported for Booking.com extranet login and Smoobu connections.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+
+api_instance = Repull::ConnectApi.new
+t = 't_example' # String | The signed resume token, exactly as it appears in the connection's `fixUrl`.
+
+begin
+  # Open a connection's fix link
+  api_instance.resume_connect(t)
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->resume_connect: #{e}"
+end
+```
+
+#### Using the resume_connect_with_http_info variant
+
+This returns an Array which contains the response data (`nil` in this case), status code and headers.
+
+> <Array(nil, Integer, Hash)> resume_connect_with_http_info(t)
+
+```ruby
+begin
+  # Open a connection's fix link
+  data, status_code, headers = api_instance.resume_connect_with_http_info(t)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => nil
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->resume_connect_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **t** | **String** | The signed resume token, exactly as it appears in the connection&#39;s &#x60;fixUrl&#x60;. |  |
+
+### Return type
+
+nil (empty response body)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 
@@ -1915,6 +2045,75 @@ end
 ### Return type
 
 [**SubmitBeds24Credentials200Response**](SubmitBeds24Credentials200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## submit_track_credentials
+
+> <SubmitTrackCredentials200Response> submit_track_credentials(submit_track_credentials_request)
+
+Submit Track credentials for a Connect session
+
+Completes a credentials-pattern connection for Track (TRACK Hospitality Software) with the property manager's Track domain and an API key + secret.  **What syncs.** Units become listings; reservations (with their fee and tax breakdown) and guest message threads are imported, then polled for changes. Bookings can be created, quoted, changed and cancelled in Track — see `capabilities.reservations` on `GET /v1/connect/track`.  **Which key.** A **Server Key** — created in Track under Configuration → Company Setup → API Keys — has full access and is recommended. A **Channel Key** — under Configuration → PMS Setup → Distribution Channels — only allows booking. `keyType` defaults to `server`.  The key is validated against Track before anything is stored, so an invalid key returns `invalid_credentials` rather than creating a dead connection. On success only the credential fields below are stored, and the first sync of listings and reservations is queued.  Track has no webhooks: after the first sync, reservation and message changes are picked up by polling about once a minute.  Reconnecting replaces the stored credentials on the workspace's existing Track connection — the `pmsConnectionId` stays the same.  No API key required when called with a `sessionId` — the session is the capability token.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ConnectApi.new
+submit_track_credentials_request = Repull::SubmitTrackCredentialsRequest.new({credentials: Repull::SubmitTrackCredentialsRequestCredentials.new({domain: 'acme.trackhs.com', api_key: 'api_key_example', api_secret: 'api_secret_example'})}) # SubmitTrackCredentialsRequest | 
+
+begin
+  # Submit Track credentials for a Connect session
+  result = api_instance.submit_track_credentials(submit_track_credentials_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->submit_track_credentials: #{e}"
+end
+```
+
+#### Using the submit_track_credentials_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<SubmitTrackCredentials200Response>, Integer, Hash)> submit_track_credentials_with_http_info(submit_track_credentials_request)
+
+```ruby
+begin
+  # Submit Track credentials for a Connect session
+  data, status_code, headers = api_instance.submit_track_credentials_with_http_info(submit_track_credentials_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <SubmitTrackCredentials200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->submit_track_credentials_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **submit_track_credentials_request** | [**SubmitTrackCredentialsRequest**](SubmitTrackCredentialsRequest.md) |  |  |
+
+### Return type
+
+[**SubmitTrackCredentials200Response**](SubmitTrackCredentials200Response.md)
 
 ### Authorization
 

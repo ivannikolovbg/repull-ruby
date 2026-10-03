@@ -1,7 +1,7 @@
 =begin
 #Repull API
 
-#The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.  ## Designed for AI agents Every error response on this API includes machine-parseable fields so an LLM (Claude in MCP, Cursor, Cline, GPT, etc.) can self-recover without escalating to a human: - `error.code` — stable string identifier (e.g. `invalid_params`, `rate_limit_exceeded`) - `error.message` — human-readable cause - `error.fix` — exact recovery steps (e.g. \"Pass `check_in_after` as ISO 8601: `?check_in_after=2026-01-15`\") - `error.docs_url` — link to the canonical write-up at `https://repull.dev/docs/errors/{code}` - `error.request_id` — id to correlate with server-side logs - `error.field` / `error.value_received` / `error.valid_values` / `error.did_you_mean` — when the error is parameter-specific - `error.retry_after` — seconds to wait before retrying (rate-limit + transient upstream)  `Access-Control-Expose-Headers` lists `x-request-id` and the `X-RateLimit-*` family so browsers can read them on cross-origin responses.  ## Quick Start 1. Get an API key at https://repull.dev/dashboard 2. Connect a PMS: `POST /v1/connect/{provider}` 3. List properties: `GET /v1/properties` 4. Get reservations: `GET /v1/reservations`  ## Authentication All requests require a Bearer token: ``` Authorization: Bearer sk_live_YOUR_API_KEY ```  ## Request Correlation (X-Request-ID) Every response carries an `X-Request-ID` header, e.g. `X-Request-ID: req_01HXY...`. Include this id in support tickets and bug reports — we can trace the full request lifecycle (auth, rate limit, handler, downstream calls, log row) from a single id.  You may set the header on the inbound request to forward your own trace id; we will echo it back instead of generating a new one. Accepted format: `^[\\\\w.-]{1,128}$`.  The id is also embedded in error envelopes as `request_id` so server-side log diffs work even when the response headers are stripped by an intermediate proxy.  ## Rate Limits The public API enforces a per-API-key sliding-window rate limit on top of the per-tier monthly + daily-AI quotas.  **Default policy:** 600 requests per 60 seconds, per API key. Sliding window — there is no fixed-minute boundary you can burst across.  Every response includes:  | Header | Meaning | |---|---| | `X-RateLimit-Limit` | Requests permitted in the current window. | | `X-RateLimit-Remaining` | Requests left in the current window after this call. | | `X-RateLimit-Reset` | Unix epoch (seconds) when the next slot opens. | | `X-RateLimit-Policy` | Machine-readable policy descriptor, e.g. `600;w=60`. | | `Retry-After` | Seconds to wait before retrying. **Only present on 429 responses.** |  **On 429 (rate_limit_exceeded):** the response body matches the standard error envelope with `code: \"rate_limit_exceeded\"`, plus `limit`, `window_seconds`, `retry_after`, and `request_id` fields. SDKs MUST honor `Retry-After` and use exponential backoff with jitter on subsequent retries — never a tight loop.  Recommended backoff: ``` sleep_ms = (Retry-After * 1000) + random(0..250) ```  Monthly + daily-AI tier quotas (`free`, `starter`, `custom`) are enforced separately and also surface as 429s; they include `tier`, `scope`, and `resetsAt` fields.  ## Plan Limits (402 — `listings_limit_exceeded`) The Repull API also enforces a per-tier cap on **active listings**:  | Tier | Active listings cap | |---|---| | `free` | 3 | | `starter` | 50 | | `custom` | unlimited |  When a customer's active-listing count is above their tier cap, the API returns **`402 Payment Required`** with `error.code = \"listings_limit_exceeded\"` on every route EXCEPT:  - `/v1/health` — uptime probes are never gated. - `/v1/usage/*` — so dashboards can render the over-cap state. - Any `DELETE` — so the customer can trim listings to get back under the cap without paying.  Unlike 429, 402 is NOT a \"wait and retry\" condition — `Retry-After` is not set. The only paths back to 200 are:   1. `DELETE` enough listings to come back under the cap, or   2. Upgrade at `https://repull.dev/dashboard/billing`. The server-side usage cache is 60s, so the first 200 after an upgrade may take up to a minute.  The envelope mirrors `rate_limit_exceeded` for SDK ergonomics: `tier`, `limit`, `active_listings`, `upgrade_url`, plus the standard `code` / `message` / `fix` / `docs_url` / `request_id`.
+#The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.  ## Designed for AI agents Every error response on this API includes machine-parseable fields so an LLM (Claude in MCP, Cursor, Cline, GPT, etc.) can self-recover without escalating to a human: - `error.code` — stable string identifier (e.g. `invalid_params`, `rate_limit_exceeded`) - `error.message` — human-readable cause - `error.fix` — exact recovery steps (e.g. \"Pass `check_in_after` as ISO 8601: `?check_in_after=2026-01-15`\") - `error.docs_url` — link to the canonical write-up at `https://repull.dev/docs/errors/{code}` - `error.request_id` — id to correlate with server-side logs - `error.field` / `error.value_received` / `error.valid_values` / `error.did_you_mean` — when the error is parameter-specific - `error.retry_after` — seconds to wait before retrying (rate-limit + transient upstream)  `Access-Control-Expose-Headers` lists `x-request-id` and the `X-RateLimit-*` family so browsers can read them on cross-origin responses.  ## Quick Start 1. Get an API key at https://repull.dev/dashboard 2. Connect a PMS: `POST /v1/connect/{provider}` 3. List properties: `GET /v1/properties` 4. Get reservations: `GET /v1/reservations`  ## Authentication All requests require a Bearer token: ``` Authorization: Bearer sk_live_YOUR_API_KEY ```  ## Request Correlation (X-Request-ID) Every response carries an `X-Request-ID` header, e.g. `X-Request-ID: req_01HXY...`. Include this id in support tickets and bug reports — we can trace the full request lifecycle (auth, rate limit, handler, downstream calls, log row) from a single id.  You may set the header on the inbound request to forward your own trace id; we will echo it back instead of generating a new one. Accepted format: `^[\\\\w.-]{1,128}$`.  The id is also embedded in error envelopes as `request_id` so server-side log diffs work even when the response headers are stripped by an intermediate proxy.  ## Rate Limits The public API enforces a per-API-key sliding-window rate limit on top of the per-tier monthly + daily-AI quotas.  **Default policy:** 600 requests per 60 seconds, per API key. Sliding window — there is no fixed-minute boundary you can burst across.  Every response includes:  | Header | Meaning | |---|---| | `X-RateLimit-Limit` | Requests permitted in the current window. | | `X-RateLimit-Remaining` | Requests left in the current window after this call. | | `X-RateLimit-Reset` | Unix epoch (seconds) when the next slot opens. | | `X-RateLimit-Policy` | Machine-readable policy descriptor, e.g. `600;w=60`. | | `Retry-After` | Seconds to wait before retrying. **Only present on 429 responses.** |  **On 429 (rate_limit_exceeded):** the response body matches the standard error envelope with `code: \"rate_limit_exceeded\"`, plus `limit`, `window_seconds`, `retry_after`, and `request_id` fields. SDKs MUST honor `Retry-After` and use exponential backoff with jitter on subsequent retries — never a tight loop.  Recommended backoff: ``` sleep_ms = (Retry-After * 1000) + random(0..250) ```  Monthly + daily-AI tier quotas (`free`, `starter`, `custom`) are enforced separately and also surface as 429s; they include `tier`, `scope`, and `resetsAt` fields.  ## Plan Limits (402 — `listings_limit_exceeded`) The Repull API also enforces a per-tier cap on **active listings**:  | Tier | Active listings cap | |---|---| | `free` | 3 | | `starter` | unlimited (10 included, then billed per listing) | | `custom` | unlimited |  When a customer's active-listing count is above their tier cap, the API returns **`402 Payment Required`** with `error.code = \"listings_limit_exceeded\"` on every route EXCEPT:  - `/v1/health` — uptime probes are never gated. - `/v1/usage/*` — so dashboards can render the over-cap state. - Any `DELETE` — so the customer can trim listings to get back under the cap without paying.  Unlike 429, 402 is NOT a \"wait and retry\" condition — `Retry-After` is not set. The only paths back to 200 are:   1. `DELETE` enough listings to come back under the cap, or   2. Upgrade at `https://repull.dev/dashboard/billing`. The server-side usage cache is 60s, so the first 200 after an upgrade may take up to a minute.  The envelope mirrors `rate_limit_exceeded` for SDK ergonomics: `tier`, `limit`, `active_listings`, `upgrade_url`, plus the standard `code` / `message` / `fix` / `docs_url` / `request_id`.
 
 The version of the OpenAPI document: 1.0.0
 
@@ -926,6 +926,138 @@ module Repull
       data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: ConnectApi#map_connect_booking_rooms\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Re-check Booking.com direct-login permissions
+    # Re-runs the account import for a Booking.com direct-login connection after the host has granted the invited user full access in the Booking.com extranet (the `needs_permissions` state). Permissions are probed again and, once full access is in place, the connection continues to property details and room mapping — no new invitation is sent. Poll `GET /v1/connect/booking-extranet-login/status` for the result.  Called by the hosted Connect page. No API key — the session ID is the capability token.
+    # @param recheck_booking_extranet_login_request [RecheckBookingExtranetLoginRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [RecheckBookingExtranetLogin200Response]
+    def recheck_booking_extranet_login(recheck_booking_extranet_login_request, opts = {})
+      data, _status_code, _headers = recheck_booking_extranet_login_with_http_info(recheck_booking_extranet_login_request, opts)
+      data
+    end
+
+    # Re-check Booking.com direct-login permissions
+    # Re-runs the account import for a Booking.com direct-login connection after the host has granted the invited user full access in the Booking.com extranet (the &#x60;needs_permissions&#x60; state). Permissions are probed again and, once full access is in place, the connection continues to property details and room mapping — no new invitation is sent. Poll &#x60;GET /v1/connect/booking-extranet-login/status&#x60; for the result.  Called by the hosted Connect page. No API key — the session ID is the capability token.
+    # @param recheck_booking_extranet_login_request [RecheckBookingExtranetLoginRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(RecheckBookingExtranetLogin200Response, Integer, Hash)>] RecheckBookingExtranetLogin200Response data, response status code and response headers
+    def recheck_booking_extranet_login_with_http_info(recheck_booking_extranet_login_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ConnectApi.recheck_booking_extranet_login ...'
+      end
+      # verify the required parameter 'recheck_booking_extranet_login_request' is set
+      if @api_client.config.client_side_validation && recheck_booking_extranet_login_request.nil?
+        fail ArgumentError, "Missing the required parameter 'recheck_booking_extranet_login_request' when calling ConnectApi.recheck_booking_extranet_login"
+      end
+      # resource path
+      local_var_path = '/v1/connect/booking-extranet-login/recheck'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(recheck_booking_extranet_login_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'RecheckBookingExtranetLogin200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || []
+
+      new_options = opts.merge(
+        :operation => :"ConnectApi.recheck_booking_extranet_login",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ConnectApi#recheck_booking_extranet_login\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Open a connection's fix link
+    # The target of a connection's `fixUrl`. Open it in the host's browser to send them back into Connect for an EXISTING connection — for example to grant the Booking.com extranet user full access after a `needs_permissions` state, or to reconnect a Smoobu account that still uses a legacy single API key with an API key + secret.  Each open starts a fresh, short-lived Connect session bound to that connection and redirects (302) to the hosted Connect page, which shows the connection's current state. The link itself does not expire on its own schedule — store `fixUrl` and open it whenever the connection needs attention.  No API key — the signed `t` token is the capability. Supported for Booking.com extranet login and Smoobu connections.
+    # @param t [String] The signed resume token, exactly as it appears in the connection&#39;s &#x60;fixUrl&#x60;.
+    # @param [Hash] opts the optional parameters
+    # @return [nil]
+    def resume_connect(t, opts = {})
+      resume_connect_with_http_info(t, opts)
+      nil
+    end
+
+    # Open a connection&#39;s fix link
+    # The target of a connection&#39;s &#x60;fixUrl&#x60;. Open it in the host&#39;s browser to send them back into Connect for an EXISTING connection — for example to grant the Booking.com extranet user full access after a &#x60;needs_permissions&#x60; state, or to reconnect a Smoobu account that still uses a legacy single API key with an API key + secret.  Each open starts a fresh, short-lived Connect session bound to that connection and redirects (302) to the hosted Connect page, which shows the connection&#39;s current state. The link itself does not expire on its own schedule — store &#x60;fixUrl&#x60; and open it whenever the connection needs attention.  No API key — the signed &#x60;t&#x60; token is the capability. Supported for Booking.com extranet login and Smoobu connections.
+    # @param t [String] The signed resume token, exactly as it appears in the connection&#39;s &#x60;fixUrl&#x60;.
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
+    def resume_connect_with_http_info(t, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ConnectApi.resume_connect ...'
+      end
+      # verify the required parameter 't' is set
+      if @api_client.config.client_side_validation && t.nil?
+        fail ArgumentError, "Missing the required parameter 't' when calling ConnectApi.resume_connect"
+      end
+      # resource path
+      local_var_path = '/v1/connect/resume'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+      query_params[:'t'] = t
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type]
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || []
+
+      new_options = opts.merge(
+        :operation => :"ConnectApi.resume_connect",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ConnectApi#resume_connect\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end
@@ -1893,6 +2025,74 @@ module Repull
       data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: ConnectApi#submit_smoobu_credentials\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Submit Track credentials for a Connect session
+    # Completes a credentials-pattern connection for Track (TRACK Hospitality Software) with the property manager's Track domain and an API key + secret.  **What syncs.** Units become listings; reservations (with their fee and tax breakdown) and guest message threads are imported, then polled for changes. Bookings can be created, quoted, changed and cancelled in Track — see `capabilities.reservations` on `GET /v1/connect/track`.  **Which key.** A **Server Key** — created in Track under Configuration → Company Setup → API Keys — has full access and is recommended. A **Channel Key** — under Configuration → PMS Setup → Distribution Channels — only allows booking. `keyType` defaults to `server`.  The key is validated against Track before anything is stored, so an invalid key returns `invalid_credentials` rather than creating a dead connection. On success only the credential fields below are stored, and the first sync of listings and reservations is queued.  Track has no webhooks: after the first sync, reservation and message changes are picked up by polling about once a minute.  Reconnecting replaces the stored credentials on the workspace's existing Track connection — the `pmsConnectionId` stays the same.  No API key required when called with a `sessionId` — the session is the capability token.
+    # @param submit_track_credentials_request [SubmitTrackCredentialsRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [SubmitTrackCredentials200Response]
+    def submit_track_credentials(submit_track_credentials_request, opts = {})
+      data, _status_code, _headers = submit_track_credentials_with_http_info(submit_track_credentials_request, opts)
+      data
+    end
+
+    # Submit Track credentials for a Connect session
+    # Completes a credentials-pattern connection for Track (TRACK Hospitality Software) with the property manager&#39;s Track domain and an API key + secret.  **What syncs.** Units become listings; reservations (with their fee and tax breakdown) and guest message threads are imported, then polled for changes. Bookings can be created, quoted, changed and cancelled in Track — see &#x60;capabilities.reservations&#x60; on &#x60;GET /v1/connect/track&#x60;.  **Which key.** A **Server Key** — created in Track under Configuration → Company Setup → API Keys — has full access and is recommended. A **Channel Key** — under Configuration → PMS Setup → Distribution Channels — only allows booking. &#x60;keyType&#x60; defaults to &#x60;server&#x60;.  The key is validated against Track before anything is stored, so an invalid key returns &#x60;invalid_credentials&#x60; rather than creating a dead connection. On success only the credential fields below are stored, and the first sync of listings and reservations is queued.  Track has no webhooks: after the first sync, reservation and message changes are picked up by polling about once a minute.  Reconnecting replaces the stored credentials on the workspace&#39;s existing Track connection — the &#x60;pmsConnectionId&#x60; stays the same.  No API key required when called with a &#x60;sessionId&#x60; — the session is the capability token.
+    # @param submit_track_credentials_request [SubmitTrackCredentialsRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(SubmitTrackCredentials200Response, Integer, Hash)>] SubmitTrackCredentials200Response data, response status code and response headers
+    def submit_track_credentials_with_http_info(submit_track_credentials_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ConnectApi.submit_track_credentials ...'
+      end
+      # verify the required parameter 'submit_track_credentials_request' is set
+      if @api_client.config.client_side_validation && submit_track_credentials_request.nil?
+        fail ArgumentError, "Missing the required parameter 'submit_track_credentials_request' when calling ConnectApi.submit_track_credentials"
+      end
+      # resource path
+      local_var_path = '/v1/connect/track/credentials'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(submit_track_credentials_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'SubmitTrackCredentials200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"ConnectApi.submit_track_credentials",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ConnectApi#submit_track_credentials\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end
