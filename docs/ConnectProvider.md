@@ -7,8 +7,8 @@
 | **id** | **String** | Stable identifier passed back to /select-provider and used in /v1/connect/{provider} routes. |  |
 | **display_name** | **String** |  |  |
 | **category** | **String** | Channel category — OTAs are listing marketplaces; PMSes are property management systems. |  |
-| **connect_pattern** | **String** | How the host is connected. &#x60;oauth&#x60;: provider-side consent screen. &#x60;credentials&#x60;: hosted form collects API keys. &#x60;activation&#x60;: push-only handshake (Vrbo). &#x60;claim&#x60;: connectivity-provider designation in the channel&#39;s Extranet (Booking.com). |  |
-| **status** | **String** | Pickers should hide / disable &#x60;coming-soon&#x60; cards. &#x60;beta&#x60; cards are clickable but show a Beta pill. |  |
+| **connect_pattern** | **String** | How the host is connected. &#x60;oauth&#x60;: provider-side consent screen. &#x60;credentials&#x60;: hosted form collects API keys. &#x60;activation&#x60;: push-only handshake. &#x60;claim&#x60;: connectivity-provider designation in the channel&#39;s Extranet (Booking.com). &#x60;extranet&#x60;: the host signs in with their Booking.com Extranet user. |  |
+| **status** | **String** | Pickers should hide / disable &#x60;coming-soon&#x60; cards. &#x60;beta&#x60; cards are clickable but show a Beta pill. &#x60;request-only&#x60; is a PMS Repull doesn&#39;t connect yet, listed only with &#x60;includeRequestOnly&#x60;: picking it collects the host&#39;s access details for the Repull team, and the session ends as &#x60;requested&#x60; instead of connecting. |  |
 | **logo_url** | **String** | Logo URL — Clearbit stand-in until self-hosted SVGs land. |  |
 | **description** | **String** |  |  |
 | **docs_url** | **String** |  |  |

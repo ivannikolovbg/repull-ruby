@@ -27,6 +27,9 @@ module Repull
     # Listings with a calendar push waiting.
     attr_accessor :calendar_queue_backlog
 
+    # Failed pushes in the window caused by Repull's own VRBO connector (a timeout, a browser session in use), not by VRBO. They are retried and never set `status`.
+    attr_accessor :connector_errors
+
     attr_accessor :calendar_oldest_wait_minutes
 
     # Hours the push failure rate is judged over.
@@ -39,6 +42,7 @@ module Repull
         :'accounts_signed_out' => :'accounts_signed_out',
         :'inbox_sync_late' => :'inbox_sync_late',
         :'calendar_queue_backlog' => :'calendar_queue_backlog',
+        :'connector_errors' => :'connector_errors',
         :'calendar_oldest_wait_minutes' => :'calendar_oldest_wait_minutes',
         :'window_hours' => :'window_hours'
       }
@@ -61,6 +65,7 @@ module Repull
         :'accounts_signed_out' => :'Integer',
         :'inbox_sync_late' => :'Integer',
         :'calendar_queue_backlog' => :'Integer',
+        :'connector_errors' => :'Integer',
         :'calendar_oldest_wait_minutes' => :'Integer',
         :'window_hours' => :'Integer'
       }
@@ -104,6 +109,10 @@ module Repull
         self.calendar_queue_backlog = attributes[:'calendar_queue_backlog']
       end
 
+      if attributes.key?(:'connector_errors')
+        self.connector_errors = attributes[:'connector_errors']
+      end
+
       if attributes.key?(:'calendar_oldest_wait_minutes')
         self.calendar_oldest_wait_minutes = attributes[:'calendar_oldest_wait_minutes']
       end
@@ -137,6 +146,7 @@ module Repull
           accounts_signed_out == o.accounts_signed_out &&
           inbox_sync_late == o.inbox_sync_late &&
           calendar_queue_backlog == o.calendar_queue_backlog &&
+          connector_errors == o.connector_errors &&
           calendar_oldest_wait_minutes == o.calendar_oldest_wait_minutes &&
           window_hours == o.window_hours
     end
@@ -150,7 +160,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [accounts_connected, accounts_signed_out, inbox_sync_late, calendar_queue_backlog, calendar_oldest_wait_minutes, window_hours].hash
+      [accounts_connected, accounts_signed_out, inbox_sync_late, calendar_queue_backlog, connector_errors, calendar_oldest_wait_minutes, window_hours].hash
     end
 
     # Builds the object from hash

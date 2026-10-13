@@ -38,10 +38,6 @@
     {
       "url": "https://api.repull.dev",
       "description": "Production"
-    },
-    {
-      "url": "http://repull.localhost:3000/api/repull",
-      "description": "Local development"
     }
   ],
   "security": [
@@ -81,6 +77,10 @@
     {
       "name": "Connect",
       "description": "Manage PMS/OTA connections. Supports 50+ platforms."
+    },
+    {
+      "name": "Workspaces",
+      "description": "Sub-workspaces \u2014 one per customer of yours. Open one with `POST /v1/connect` and `workspace`, then read and write its data with `X-Workspace-Id`."
     },
     {
       "name": "Migrate",
@@ -1598,11 +1598,11 @@
           },
           "connectPattern": {
             "type": "string",
-            "description": "How the host is connected. `oauth`: provider-side consent screen. `credentials`: hosted form collects API keys. `activation`: push-only handshake (Vrbo). `claim`: connectivity-provider designation in the channel's Extranet (Booking.com)."
+            "description": "How the host is connected. `oauth`: provider-side consent screen. `credentials`: hosted form collects API keys. `activation`: push-only handshake. `claim`: connectivity-provider designation in the channel's Extranet (Booking.com). `extranet`: the host signs in with their Booking.com Extranet user."
           },
           "status": {
             "type": "string",
-            "description": "Pickers should hide / disable `coming-soon` cards. `beta` cards are clickable but show a Beta pill."
+            "description": "Pickers should hide / disable `coming-soon` cards. `beta` cards are clickable but show a Beta pill. `request-only` is a PMS Repull doesn't connect yet, listed only with `includeRequestOnly`: picking it collects the host's access details for the Repull team, and the session ends as `requested` instead of connecting."
           },
           "logoUrl": {
             "type": "string",
@@ -1707,6 +1707,44 @@
             "nullable": true
           }
         }
+      },
+      "Workspace": {
+        "type": "object",
+        "description": "A sub-workspace: one customer of yours, with its own connections, listings and data. Send its `workspaceId` as `X-Workspace-Id` to act on it.",
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "example": "1204"
+          },
+          "name": {
+            "type": "string",
+            "example": "Seaside Rentals"
+          },
+          "externalRef": {
+            "type": "string",
+            "nullable": true,
+            "description": "Your own id for this customer, as you sent it.",
+            "example": "acct_8812"
+          },
+          "createdVia": {
+            "type": "string",
+            "nullable": true,
+            "description": "`connect` \u2014 opened by a Connect session; `migrate` \u2014 opened by Repull Migrate."
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "workspaceId",
+          "name",
+          "active",
+          "createdAt"
+        ]
       },
       "Migration": {
         "type": "object",
@@ -2038,9 +2076,13 @@
             "type": "string",
             "description": "Present only on a Repull Migrate session."
           },
+          "includeRequestOnly": {
+            "type": "boolean",
+            "description": "Present (`true`) when the session also lists PMSes Repull doesn't connect yet."
+          },
           "workspaceId": {
             "type": "string",
-            "description": "Repull Migrate only: the workspace the property manager's data lands in. Read it with `X-Workspace-Id`, track it with `GET /v1/migrations/{workspaceId}`.",
+            "description": "Present when the session lands on a sub-workspace (`workspace` or `X-Workspace-Id` on the request): the workspace the connection lands in. Read and write it with `X-Workspace-Id`; on a migrate session, track the import with `GET /v1/migrations/{workspaceId}`.",
             "example": "1204"
           }
         },
@@ -2067,7 +2109,7 @@
           "nextUrl": {
             "type": "string",
             "format": "uri",
-            "description": "Where to send the user next \u2014 OAuth consent, credentials form, activation checklist, or claim form."
+            "description": "Where to send the user next \u2014 OAuth consent, credentials form, activation checklist, claim form, or (for a `request-only` PMS) the request form."
           }
         }
       },
@@ -2758,6 +2800,12 @@
         "type": "object",
         "description": "Payload for `reservation.message.received`. A new inbound message arrived on a reservation thread.",
         "properties": {
+          "hotelId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Booking.com only: the hotel (property) id of the conversation's listing. Absent on other channels. A Booking.com Extranet login can cover several hotels, so use this to route the message.",
+            "example": "10433861"
+          },
           "reservationId": {
             "type": "integer",
             "example": 215906
@@ -2803,6 +2851,12 @@
         "type": "object",
         "description": "Payload for `reservation.message.sent`: a host-side message was sent on a reservation thread. Same fields as `reservation.message.received`, plus `source`.",
         "properties": {
+          "hotelId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Booking.com only: the hotel (property) id of the conversation's listing. Absent on other channels. A Booking.com Extranet login can cover several hotels, so use this to route the message.",
+            "example": "10433861"
+          },
           "reservationId": {
             "type": "integer",
             "nullable": true,
@@ -2873,6 +2927,12 @@
         "type": "object",
         "description": "Payload for `reservation.message.updated`: a message was edited on the channel. `body` is the new text; `previousBody` what it replaced. Read receipts and reactions do not fire it.",
         "properties": {
+          "hotelId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Booking.com only: the hotel (property) id of the conversation's listing. Absent on other channels. A Booking.com Extranet login can cover several hotels, so use this to route the message.",
+            "example": "10433861"
+          },
           "reservationId": {
             "type": "integer",
             "nullable": true,
@@ -4063,6 +4123,11 @@
             "nullable": true,
             "description": "Repull connection id (`X-Account-Id`), when the account has one. A string, like every id in API responses.",
             "example": "126"
+          },
+          "hotelId": {
+            "type": "string",
+            "description": "Booking.com only: the hotel (property) id the record belongs to. On a `booking_extranet` account, `externalAccountId` is the login, which can cover several hotels.",
+            "example": "10433861"
           }
         }
       },
@@ -8811,6 +8876,38 @@
               }
             }
           },
+          "kind": {
+            "type": "string",
+            "description": "`room_type` when the listing sells several identical units (a hotel room type: `unitCount` > 1) or is a hotel PMS room type; `home` otherwise. See the Hotels & multi-unit guide."
+          },
+          "hotel": {
+            "type": "object",
+            "nullable": true,
+            "description": "The hotel the listing belongs to: a hotel PMS hotel (Cloudbeds, Mews) or a Booking.com property with several room types or rooms. `null` for a standalone home. `GET /v1/hotels/{id}` lists its room types.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "booking:255832",
+                "description": "A Repull hotel id, or `booking:<hotelId>` for a Booking.com property."
+              },
+              "name": {
+                "type": "string",
+                "nullable": true
+              },
+              "source": {
+                "type": "string",
+                "enum": [
+                  "pms",
+                  "booking"
+                ]
+              }
+            }
+          },
+          "unitCount": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "How many identical units (rooms) this listing sells: the hotel PMS rooms of the room type, the room count on Booking.com, or 1 for a home. Rooms left per night are `availableUnits` on `GET /v1/availability/{propertyId}`."
+          },
           "units": {
             "type": "array",
             "description": "`GET /v1/listings/{id}` only. The physical rooms under a hotel-model listing (a Mews or Cloudbeds room type); empty for a single home. Same items as `GET /v1/listings/{id}/units`.",
@@ -11255,6 +11352,11 @@
           "maxNights": {
             "type": "integer",
             "minimum": 1
+          },
+          "availableUnits": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Rooms to sell on these dates, for a listing that sells several identical rooms (`unitCount` > 1, e.g. a Booking.com room type). Up to the listing's `unitCount`. Refused with `409 managed_by_pms` on a hotel PMS room type (Cloudbeds, Mews) \u2014 its PMS owns the room count."
           }
         }
       },
@@ -14704,6 +14806,16 @@
           "404": {
             "$ref": "#/components/responses/NotFound"
           },
+          "409": {
+            "description": "`managed_by_pms` \u2014 `availableUnits` on a hotel PMS room type. Change rooms in the PMS.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntity"
           }
@@ -16018,7 +16130,7 @@
       "get": {
         "operationId": "listConversations",
         "summary": "List conversations",
-        "description": "Cursor-paginated list of message threads owned by the workspace. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request.\n\n`?offset=` is also accepted as a first-class alias for shallow paging (0..10000) \u2014 see the `offset` parameter below. Mutually exclusive with `cursor`.\n\nFilters: `platform` (`airbnb`|`booking`|`vrbo`|`website`|`email`), `status` (`open`|`archived` \u2014 `archived` is a stable no-op until the bit lands on `message_threads`).\n\n**Inactive listings:** conversations that belong to an inactive listing (by the thread's listing or its reservation's listing) are left out of the page and of `pagination.total`. Inactive listings keep syncing; activate the listing to use it here.",
+        "description": "Cursor-paginated list of message threads owned by the workspace. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request.\n\n`?offset=` is also accepted as a first-class alias for shallow paging (0..10000) \u2014 see the `offset` parameter below. Mutually exclusive with `cursor`.\n\nFilters: `platform` (`airbnb`|`booking`|`vrbo`|`website`|`email`), `status` (`open`|`archived` \u2014 `archived` is a stable no-op until the bit lands on `message_threads`).\n\n**Inactive listings:** conversations that belong to an inactive listing (by the thread's listing or its reservation's listing) are left out of the page and of `pagination.total`. Inactive listings keep syncing; activate the listing to use it here.\n\n**Order:** newest conversation first (by when the conversation started), unless you pass `updated_since`.\n\n**Incremental sync (`?updated_since=<ISO8601>`):** only conversations with activity (a new message or another change) at or after that instant, ordered oldest change first (`updatedAt ASC`). Walk every page with `cursor`, keeping `updated_since` on each request; the last row's `updatedAt` is your next watermark. A cursor from one kind of walk is refused on the other.",
         "tags": [
           "Conversations"
         ],
@@ -16065,6 +16177,16 @@
               ]
             },
             "description": "Restrict to threads on a single channel."
+          },
+          {
+            "name": "updated_since",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "ISO 8601 instant. Only conversations with activity at or after it, oldest change first. Keep it on every page of the walk; use the last row's `updatedAt` as the next value.",
+            "example": "2026-10-09T18:00:00Z"
           },
           {
             "name": "status",
@@ -16957,6 +17079,11 @@
                     "nullable": true,
                     "description": "Optional whitelist of provider IDs the picker should expose. Omit to show every channel in the registry."
                   },
+                  "includeRequestOnly": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Also list PMSes Repull doesn't connect yet (`status: request-only` in `GET /v1/connect/providers?includeRequestOnly=true`), plus an Other PMS card. Picking one opens a form that collects the host's contact and access details for the Repull team and ends with \"A team member will contact you\". No connection is made: the redirect carries `status=requested&provider=<id>`, and no `connect.session.completed` webhook fires. Naming a request-only id in `allowedProviders` offers it without this flag."
+                  },
                   "locale": {
                     "type": "string",
                     "nullable": true,
@@ -16974,7 +17101,7 @@
                   },
                   "workspace": {
                     "type": "object",
-                    "description": "Migrate only \u2014 the property manager being moved. Required unless you send `X-Workspace-Id` to reconnect an existing migration.",
+                    "description": "Opens a new sub-workspace for this customer of yours and lands the connection there; the response returns its `workspaceId`, which you then send as `X-Workspace-Id`. Works with both purposes: a plain `connect` keeps the normal onboarding pages. Required for `migrate` unless you send `X-Workspace-Id` to reconnect an existing one. Don't send it together with `X-Workspace-Id`.",
                     "properties": {
                       "name": {
                         "type": "string",
@@ -17064,6 +17191,18 @@
           "Connect"
         ],
         "security": [],
+        "parameters": [
+          {
+            "name": "includeRequestOnly",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Also return the PMSes Repull doesn't connect yet (`status: request-only`), for a picker you render yourself for a session created with `includeRequestOnly`."
+          }
+        ],
         "responses": {
           "200": {
             "description": "Channel registry",
@@ -18078,7 +18217,7 @@
       "get": {
         "operationId": "getChannelHealth",
         "summary": "Per-channel connectivity health",
-        "description": "Reports reachability and auth state for one channel (`airbnb`, `booking`, `vrbo`, `plumguide`). Use it to tell \"the channel is down\" apart from \"this workspace's connection expired\". `200` when `status` is `ok`, `503` when `degraded` or `down` (the body's `status` and `message` say which and why).\n\n**`vrbo`** reports the connector's own signals in a `vrbo` block: connected accounts, accounts VRBO signed out (their bookings, messages and calendar stop until reconnected \u2014 `down`), accounts whose inbox sync is late (`degraded`), and the calendar push queue backlog and its oldest wait (`degraded` past 3 hours). Its rate is failed calendar pushes over finished ones in the last 3 hours (`vrbo.window_hours`; `refresh_attempts_24h` / `refresh_rejections_24h` count that window for VRBO), judged only once at least 50 pushes finished and at least 5 failed \u2014 VRBO pushes run in bursts, so a day-long window would keep reporting a problem already fixed.",
+        "description": "Reports reachability and auth state for one channel (`airbnb`, `booking`, `vrbo`, `plumguide`). Use it to tell \"the channel is down\" apart from \"this workspace's connection expired\". `200` when `status` is `ok`, `503` when `degraded` or `down` (the body's `status` and `message` say which and why).\n\n**`vrbo`** reports the connector's own signals in a `vrbo` block: connected accounts, accounts VRBO signed out (their bookings, messages and calendar stop until reconnected \u2014 `down`), accounts whose inbox sync is late (`degraded`), and the calendar push queue backlog and its oldest wait (`degraded` past 3 hours). Its rate is calendar pushes VRBO refused over finished ones in the last 3 hours; failures inside Repull's own connector are reported apart as `vrbo.connector_errors` and do not count (`vrbo.window_hours`; `refresh_attempts_24h` / `refresh_rejections_24h` count that window for VRBO), judged only once at least 50 pushes finished and at least 5 failed \u2014 VRBO pushes run in bursts, so a day-long window would keep reporting a problem already fixed.",
         "tags": [
           "Health"
         ],
@@ -18134,6 +18273,10 @@
                         "calendar_queue_backlog": {
                           "type": "integer",
                           "description": "Listings with a calendar push waiting."
+                        },
+                        "connector_errors": {
+                          "type": "integer",
+                          "description": "Failed pushes in the window caused by Repull's own VRBO connector (a timeout, a browser session in use), not by VRBO. They are retried and never set `status`."
                         },
                         "calendar_oldest_wait_minutes": {
                           "type": "integer"
@@ -18219,6 +18362,16 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "description": "`managed_by_pms` \u2014 `availableUnits` on a hotel PMS room type. Change rooms in the PMS.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntity"
@@ -19548,7 +19701,7 @@
       "get": {
         "operationId": "get_airbnb_listing_availability",
         "summary": "Get Airbnb availability",
-        "description": "Read the per-day availability calendar for an Airbnb listing. Returns one row per day including price overrides, min-stay, and blocked status.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "description": "Read the per-day availability calendar for an Airbnb listing. Returns one row per day including price overrides, min-stay, and blocked status.\n\nThe calendar is served from Repull's stored copy, refreshed by the periodic sync. A successful calendar write through `PUT .../availability` or `PUT .../pricing` (`type: \"calendar\"`) updates the stored days immediately, so reading back right after a write returns the values you published. Changes made directly on Airbnb appear after the next sync (`dataFreshness.lastSyncedAt`).\n\n**Coverage:** with `start_date` + `end_date`, `data.coverage` gives `{ from, to }`, the first and last stored date for the listing (the sync keeps about 12 months ahead). A date outside that window is not stored, so a missing date there means \"not covered\", not \"nothing set\". Request it again once `coverage.to` reaches it.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
         "tags": [
           "Airbnb"
         ],
@@ -27015,10 +27168,71 @@
       }
     },
     "/v1/billing": {
+      "get": {
+        "operationId": "get_billing",
+        "summary": "Get plan and usage",
+        "description": "The workspace's plan, its request limits, usage this period, and where the owner manages the plan. Same numbers as `GET /v1/usage/tier`.",
+        "tags": [
+          "Billing"
+        ],
+        "responses": {
+          "200": {
+            "description": "Plan and usage",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "plan": {
+                      "type": "string",
+                      "example": "starter"
+                    },
+                    "limits": {
+                      "type": "object",
+                      "properties": {
+                        "monthlyRequests": {
+                          "type": "integer",
+                          "nullable": true,
+                          "description": "null = no limit"
+                        },
+                        "dailyRequests": {
+                          "type": "integer",
+                          "nullable": true,
+                          "description": "null = no limit"
+                        }
+                      }
+                    },
+                    "used": {
+                      "type": "object",
+                      "properties": {
+                        "monthlyRequests": {
+                          "type": "integer"
+                        },
+                        "dailyRequests": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "resetsAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "manageUrl": {
+                      "type": "string",
+                      "format": "uri",
+                      "example": "https://repull.dev/dashboard/settings"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "operationId": "create_billing_checkout",
-        "summary": "Create checkout session",
-        "description": "Redirect user to Stripe checkout.",
+        "summary": "Start an upgrade",
+        "description": "Returns the URL where the workspace owner upgrades to Starter. Plans above Starter are set up with the Repull team and return `422 billing_error` with the next step.",
         "tags": [
           "Billing"
         ],
@@ -27031,9 +27245,7 @@
                   "plan": {
                     "type": "string",
                     "enum": [
-                      "starter",
-                      "growth",
-                      "scale"
+                      "starter"
                     ]
                   }
                 }
@@ -27043,7 +27255,28 @@
         },
         "responses": {
           "200": {
-            "description": "Checkout URL"
+            "description": "Where to complete the upgrade",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "plan": {
+                      "type": "string",
+                      "example": "starter"
+                    },
+                    "checkoutUrl": {
+                      "type": "string",
+                      "format": "uri",
+                      "example": "https://repull.dev/dashboard/settings"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A plan that is not sold through self-serve checkout, or an unknown plan"
           }
         }
       }
@@ -27315,6 +27548,30 @@
                         "dailyAi": {
                           "type": "integer",
                           "nullable": true
+                        }
+                      }
+                    },
+                    "credits": {
+                      "type": "object",
+                      "description": "Pay-as-you-go wallet. Requests beyond your plan's monthly quota keep being served while `active`, billed at `usdPer1000Requests`. Top up at https://repull.dev/dashboard/billing.",
+                      "properties": {
+                        "balanceUsd": {
+                          "type": "number"
+                        },
+                        "active": {
+                          "type": "boolean",
+                          "description": "Positive balance and not paused \u2014 usage beyond the monthly quota is being served."
+                        },
+                        "paused": {
+                          "type": "boolean"
+                        },
+                        "usdPer1000Requests": {
+                          "type": "number",
+                          "example": 1
+                        },
+                        "requestsCovered": {
+                          "type": "integer",
+                          "description": "Requests beyond your quota the current balance pays for."
                         }
                       }
                     },
@@ -36679,6 +36936,364 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/v1/workspaces": {
+      "get": {
+        "operationId": "listWorkspaces",
+        "summary": "List workspaces",
+        "description": "Every sub-workspace your workspace has opened, newest first: one per customer of yours, created by `POST /v1/connect` with `workspace` (or by Repull Migrate). Read or write a workspace's data by sending its `workspaceId` as `X-Workspace-Id`. Its webhook events arrive on your own webhook endpoints, tagged with `workspaceId`. Page with `pagination.nextCursor`.",
+        "tags": [
+          "Workspaces"
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "`pagination.nextCursor` from the previous page."
+          },
+          {
+            "name": "externalRef",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Only the workspace you tagged with this `externalRef` (your own id for the customer)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Workspaces",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Workspace"
+                      }
+                    },
+                    "pagination": {
+                      "type": "object",
+                      "properties": {
+                        "nextCursor": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "hasMore": {
+                          "type": "boolean"
+                        },
+                        "total": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/hotels": {
+      "get": {
+        "operationId": "listHotels",
+        "summary": "List hotels",
+        "description": "Your workspace's hotels: hotels from a hotel PMS (Cloudbeds, Mews) and Booking.com properties with several room types or rooms. Each room type is a listing \u2014 `GET /v1/hotels/{id}` lists them with their room counts. A hotel itself is never booked: availability, prices and reservations live on its room types. See the Hotels & multi-unit guide.",
+        "tags": [
+          "Hotels"
+        ],
+        "responses": {
+          "200": {
+            "description": "Hotels",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "example": "30910",
+                            "description": "A Repull hotel id, or `booking:<hotelId>` for a Booking.com property."
+                          },
+                          "name": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "source": {
+                            "type": "string",
+                            "enum": [
+                              "pms",
+                              "booking"
+                            ],
+                            "description": "`pms`: a hotel PMS (Cloudbeds, Mews) owns rooms and room counts. `booking`: a Booking.com property; room counts are the room count on Booking.com."
+                          },
+                          "provider": {
+                            "type": "string",
+                            "nullable": true,
+                            "example": "cloudbeds"
+                          },
+                          "city": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "roomTypeCount": {
+                            "type": "integer"
+                          },
+                          "unitCount": {
+                            "type": "integer",
+                            "description": "Rooms across all room types."
+                          }
+                        }
+                      }
+                    },
+                    "pagination": {
+                      "type": "object",
+                      "properties": {
+                        "nextCursor": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "hasMore": {
+                          "type": "boolean"
+                        },
+                        "total": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/v1/hotels/{id}": {
+      "get": {
+        "operationId": "getHotel",
+        "summary": "Get a hotel",
+        "description": "One hotel with its room types. `id` is from `GET /v1/hotels`, or a listing's `hotel.id`.",
+        "tags": [
+          "Hotels"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "booking:255832"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Hotel",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "example": "30910",
+                      "description": "A Repull hotel id, or `booking:<hotelId>` for a Booking.com property."
+                    },
+                    "name": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "source": {
+                      "type": "string",
+                      "enum": [
+                        "pms",
+                        "booking"
+                      ],
+                      "description": "`pms`: a hotel PMS (Cloudbeds, Mews) owns rooms and room counts. `booking`: a Booking.com property; room counts are the room count on Booking.com."
+                    },
+                    "provider": {
+                      "type": "string",
+                      "nullable": true,
+                      "example": "cloudbeds"
+                    },
+                    "city": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "roomTypeCount": {
+                      "type": "integer"
+                    },
+                    "unitCount": {
+                      "type": "integer",
+                      "description": "Rooms across all room types."
+                    },
+                    "roomTypes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "listingId": {
+                            "type": "string",
+                            "description": "The room type's listing id \u2014 use it with every /v1/listings, /v1/availability and /v1/reservations endpoint."
+                          },
+                          "name": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "unitCount": {
+                            "type": "integer",
+                            "description": "Rooms of this type."
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          }
+        }
+      }
+    },
+    "/v1/connect/zeevou/callback": {
+      "get": {
+        "operationId": "zeevouConnectCallback",
+        "summary": "Zeevou OAuth callback",
+        "description": "Zeevou's OAuth redirect after the host allows or denies access on Zeevou's consent screen. It finishes the Connect session and redirects the host to the hosted Connect page. Called by the host's browser, not by integrators.",
+        "tags": [
+          "Connect"
+        ],
+        "security": [],
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Authorization code from Zeevou."
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The signed Connect state Repull sent to Zeevou."
+          },
+          {
+            "name": "error",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Set by Zeevou when the host denied access (`access_denied`)."
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect to the hosted Connect page with the outcome"
+          },
+          "400": {
+            "description": "The state is missing, forged or expired"
+          }
+        }
+      }
+    },
+    "/v1/connect/rentalready/callback": {
+      "get": {
+        "operationId": "rentalReadyConnectCallback",
+        "summary": "RentalReady OAuth callback",
+        "description": "RentalReady's OAuth redirect after the host allows or denies access on RentalReady's consent screen. It finishes the Connect session and redirects the host to the hosted Connect page. Called by the host's browser, not by integrators.",
+        "tags": [
+          "Connect"
+        ],
+        "security": [],
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Authorization code from RentalReady."
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The signed Connect state Repull sent to RentalReady."
+          },
+          {
+            "name": "error",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Set by RentalReady when the host denied access (`access_denied`)."
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect to the hosted Connect page with the outcome"
+          },
+          "400": {
+            "description": "The state is missing, forged or expired"
           }
         }
       }

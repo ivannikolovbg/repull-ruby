@@ -25,6 +25,9 @@ module Repull
 
     attr_accessor :max_nights
 
+    # Rooms to sell on these dates, for a listing that sells several identical rooms (`unitCount` > 1, e.g. a Booking.com room type). Up to the listing's `unitCount`. Refused with `409 managed_by_pms` on a hotel PMS room type (Cloudbeds, Mews) — its PMS owns the room count.
+    attr_accessor :available_units
+
     # ISO dates. Capped at 731 — Airbnb refuses calendar writes spanning more.
     attr_accessor :dates
 
@@ -35,6 +38,7 @@ module Repull
         :'price' => :'price',
         :'min_nights' => :'minNights',
         :'max_nights' => :'maxNights',
+        :'available_units' => :'availableUnits',
         :'dates' => :'dates'
       }
     end
@@ -56,6 +60,7 @@ module Repull
         :'price' => :'Float',
         :'min_nights' => :'Integer',
         :'max_nights' => :'Integer',
+        :'available_units' => :'Integer',
         :'dates' => :'Array<Date>'
       }
     end
@@ -105,6 +110,10 @@ module Repull
         self.max_nights = attributes[:'max_nights']
       end
 
+      if attributes.key?(:'available_units')
+        self.available_units = attributes[:'available_units']
+      end
+
       if attributes.key?(:'dates')
         if (value = attributes[:'dates']).is_a?(Array)
           self.dates = value
@@ -127,6 +136,10 @@ module Repull
         invalid_properties.push('invalid value for "max_nights", must be greater than or equal to 1.')
       end
 
+      if !@available_units.nil? && @available_units < 0
+        invalid_properties.push('invalid value for "available_units", must be greater than or equal to 0.')
+      end
+
       if @dates.nil?
         invalid_properties.push('invalid value for "dates", dates cannot be nil.')
       end
@@ -144,6 +157,7 @@ module Repull
       warn '[DEPRECATED] the `valid?` method is obsolete'
       return false if !@min_nights.nil? && @min_nights < 1
       return false if !@max_nights.nil? && @max_nights < 1
+      return false if !@available_units.nil? && @available_units < 0
       return false if @dates.nil?
       return false if @dates.length > 731
       true
@@ -178,6 +192,20 @@ module Repull
     end
 
     # Custom attribute writer method with validation
+    # @param [Object] available_units Value to be assigned
+    def available_units=(available_units)
+      if available_units.nil?
+        fail ArgumentError, 'available_units cannot be nil'
+      end
+
+      if available_units < 0
+        fail ArgumentError, 'invalid value for "available_units", must be greater than or equal to 0.'
+      end
+
+      @available_units = available_units
+    end
+
+    # Custom attribute writer method with validation
     # @param [Object] dates Value to be assigned
     def dates=(dates)
       if dates.nil?
@@ -200,6 +228,7 @@ module Repull
           price == o.price &&
           min_nights == o.min_nights &&
           max_nights == o.max_nights &&
+          available_units == o.available_units &&
           dates == o.dates
     end
 
@@ -212,7 +241,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [available, price, min_nights, max_nights, dates].hash
+      [available, price, min_nights, max_nights, available_units, dates].hash
     end
 
     # Builds the object from hash

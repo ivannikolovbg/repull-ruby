@@ -19,21 +19,21 @@ module Repull
     def initialize(api_client = ApiClient.default)
       @api_client = api_client
     end
-    # Create checkout session
-    # Redirect user to Stripe checkout.
+    # Start an upgrade
+    # Returns the URL where the workspace owner upgrades to Starter. Plans above Starter are set up with the Repull team and return `422 billing_error` with the next step.
     # @param [Hash] opts the optional parameters
     # @option opts [CreateBillingCheckoutRequest] :create_billing_checkout_request 
-    # @return [nil]
+    # @return [CreateBillingCheckout200Response]
     def create_billing_checkout(opts = {})
-      create_billing_checkout_with_http_info(opts)
-      nil
+      data, _status_code, _headers = create_billing_checkout_with_http_info(opts)
+      data
     end
 
-    # Create checkout session
-    # Redirect user to Stripe checkout.
+    # Start an upgrade
+    # Returns the URL where the workspace owner upgrades to Starter. Plans above Starter are set up with the Repull team and return &#x60;422 billing_error&#x60; with the next step.
     # @param [Hash] opts the optional parameters
     # @option opts [CreateBillingCheckoutRequest] :create_billing_checkout_request 
-    # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
+    # @return [Array<(CreateBillingCheckout200Response, Integer, Hash)>] CreateBillingCheckout200Response data, response status code and response headers
     def create_billing_checkout_with_http_info(opts = {})
       if @api_client.config.debugging
         @api_client.config.logger.debug 'Calling API: BillingApi.create_billing_checkout ...'
@@ -46,6 +46,8 @@ module Repull
 
       # header parameters
       header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
       # HTTP header 'Content-Type'
       content_type = @api_client.select_header_content_type(['application/json'])
       if !content_type.nil?
@@ -59,7 +61,7 @@ module Repull
       post_body = opts[:debug_body] || @api_client.object_to_http_body(opts[:'create_billing_checkout_request'])
 
       # return_type
-      return_type = opts[:debug_return_type]
+      return_type = opts[:debug_return_type] || 'CreateBillingCheckout200Response'
 
       # auth_names
       auth_names = opts[:debug_auth_names] || ['bearerAuth']
@@ -77,6 +79,63 @@ module Repull
       data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: BillingApi#create_billing_checkout\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Get plan and usage
+    # The workspace's plan, its request limits, usage this period, and where the owner manages the plan. Same numbers as `GET /v1/usage/tier`.
+    # @param [Hash] opts the optional parameters
+    # @return [GetBilling200Response]
+    def get_billing(opts = {})
+      data, _status_code, _headers = get_billing_with_http_info(opts)
+      data
+    end
+
+    # Get plan and usage
+    # The workspace&#39;s plan, its request limits, usage this period, and where the owner manages the plan. Same numbers as &#x60;GET /v1/usage/tier&#x60;.
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(GetBilling200Response, Integer, Hash)>] GetBilling200Response data, response status code and response headers
+    def get_billing_with_http_info(opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: BillingApi.get_billing ...'
+      end
+      # resource path
+      local_var_path = '/v1/billing'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'GetBilling200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"BillingApi.get_billing",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: BillingApi#get_billing\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end

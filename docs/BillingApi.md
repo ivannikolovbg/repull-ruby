@@ -4,7 +4,8 @@ All URIs are relative to *https://api.repull.dev*
 
 | Method | HTTP request | Description |
 | ------ | ------------ | ----------- |
-| [**create_billing_checkout**](BillingApi.md#create_billing_checkout) | **POST** /v1/billing | Create checkout session |
+| [**create_billing_checkout**](BillingApi.md#create_billing_checkout) | **POST** /v1/billing | Start an upgrade |
+| [**get_billing**](BillingApi.md#get_billing) | **GET** /v1/billing | Get plan and usage |
 | [**get_usage_logs**](BillingApi.md#get_usage_logs) | **GET** /v1/usage/logs | List API request logs |
 | [**get_usage_summary**](BillingApi.md#get_usage_summary) | **GET** /v1/usage/summary | Get usage summary |
 | [**get_usage_tier**](BillingApi.md#get_usage_tier) | **GET** /v1/usage/tier | Get tier and quota |
@@ -12,11 +13,11 @@ All URIs are relative to *https://api.repull.dev*
 
 ## create_billing_checkout
 
-> create_billing_checkout(opts)
+> <CreateBillingCheckout200Response> create_billing_checkout(opts)
 
-Create checkout session
+Start an upgrade
 
-Redirect user to Stripe checkout.
+Returns the URL where the workspace owner upgrades to Starter. Plans above Starter are set up with the Repull team and return `422 billing_error` with the next step.
 
 ### Examples
 
@@ -35,8 +36,9 @@ opts = {
 }
 
 begin
-  # Create checkout session
-  api_instance.create_billing_checkout(opts)
+  # Start an upgrade
+  result = api_instance.create_billing_checkout(opts)
+  p result
 rescue Repull::ApiError => e
   puts "Error when calling BillingApi->create_billing_checkout: #{e}"
 end
@@ -44,17 +46,17 @@ end
 
 #### Using the create_billing_checkout_with_http_info variant
 
-This returns an Array which contains the response data (`nil` in this case), status code and headers.
+This returns an Array which contains the response data, status code and headers.
 
-> <Array(nil, Integer, Hash)> create_billing_checkout_with_http_info(opts)
+> <Array(<CreateBillingCheckout200Response>, Integer, Hash)> create_billing_checkout_with_http_info(opts)
 
 ```ruby
 begin
-  # Create checkout session
+  # Start an upgrade
   data, status_code, headers = api_instance.create_billing_checkout_with_http_info(opts)
   p status_code # => 2xx
   p headers # => { ... }
-  p data # => nil
+  p data # => <CreateBillingCheckout200Response>
 rescue Repull::ApiError => e
   puts "Error when calling BillingApi->create_billing_checkout_with_http_info: #{e}"
 end
@@ -68,7 +70,7 @@ end
 
 ### Return type
 
-nil (empty response body)
+[**CreateBillingCheckout200Response**](CreateBillingCheckout200Response.md)
 
 ### Authorization
 
@@ -77,7 +79,73 @@ nil (empty response body)
 ### HTTP request headers
 
 - **Content-Type**: application/json
-- **Accept**: Not defined
+- **Accept**: application/json
+
+
+## get_billing
+
+> <GetBilling200Response> get_billing
+
+Get plan and usage
+
+The workspace's plan, its request limits, usage this period, and where the owner manages the plan. Same numbers as `GET /v1/usage/tier`.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::BillingApi.new
+
+begin
+  # Get plan and usage
+  result = api_instance.get_billing
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling BillingApi->get_billing: #{e}"
+end
+```
+
+#### Using the get_billing_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<GetBilling200Response>, Integer, Hash)> get_billing_with_http_info
+
+```ruby
+begin
+  # Get plan and usage
+  data, status_code, headers = api_instance.get_billing_with_http_info
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <GetBilling200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling BillingApi->get_billing_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+[**GetBilling200Response**](GetBilling200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
 
 
 ## get_usage_logs

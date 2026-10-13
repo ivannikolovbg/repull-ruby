@@ -323,7 +323,7 @@ end
 
 List conversations
 
-Cursor-paginated list of message threads owned by the workspace. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request.  `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) — see the `offset` parameter below. Mutually exclusive with `cursor`.  Filters: `platform` (`airbnb`|`booking`|`vrbo`|`website`|`email`), `status` (`open`|`archived` — `archived` is a stable no-op until the bit lands on `message_threads`).  **Inactive listings:** conversations that belong to an inactive listing (by the thread's listing or its reservation's listing) are left out of the page and of `pagination.total`. Inactive listings keep syncing; activate the listing to use it here.
+Cursor-paginated list of message threads owned by the workspace. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request.  `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) — see the `offset` parameter below. Mutually exclusive with `cursor`.  Filters: `platform` (`airbnb`|`booking`|`vrbo`|`website`|`email`), `status` (`open`|`archived` — `archived` is a stable no-op until the bit lands on `message_threads`).  **Inactive listings:** conversations that belong to an inactive listing (by the thread's listing or its reservation's listing) are left out of the page and of `pagination.total`. Inactive listings keep syncing; activate the listing to use it here.  **Order:** newest conversation first (by when the conversation started), unless you pass `updated_since`.  **Incremental sync (`?updated_since=<ISO8601>`):** only conversations with activity (a new message or another change) at or after that instant, ordered oldest change first (`updatedAt ASC`). Walk every page with `cursor`, keeping `updated_since` on each request; the last row's `updatedAt` is your next watermark. A cursor from one kind of walk is refused on the other.
 
 ### Examples
 
@@ -344,6 +344,7 @@ opts = {
   offset: 56, # Integer | First-class alias for cursor-based pagination. Mutually exclusive with `cursor` — passing both returns 422. Accepts integers in `[0, 10000]`; deeper walks must use `cursor` (constant per-page cost). The response always includes `pagination.nextCursor` so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying.
   limit: 56, # Integer | Max items per page. Hard cap is 100.
   platform: 'airbnb', # String | Restrict to threads on a single channel.
+  updated_since: Time.parse('2026-10-09T18:00:00Z'), # Time | ISO 8601 instant. Only conversations with activity at or after it, oldest change first. Keep it on every page of the walk; use the last row's `updatedAt` as the next value.
   status: 'open' # String | Filter by archive status. `archived` currently always returns an empty page — kept for forward-compat.
 }
 
@@ -384,6 +385,7 @@ end
 | **offset** | **Integer** | First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.nextCursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. | [optional][default to 0] |
 | **limit** | **Integer** | Max items per page. Hard cap is 100. | [optional][default to 20] |
 | **platform** | **String** | Restrict to threads on a single channel. | [optional] |
+| **updated_since** | **Time** | ISO 8601 instant. Only conversations with activity at or after it, oldest change first. Keep it on every page of the walk; use the last row&#39;s &#x60;updatedAt&#x60; as the next value. | [optional] |
 | **status** | **String** | Filter by archive status. &#x60;archived&#x60; currently always returns an empty page — kept for forward-compat. | [optional] |
 
 ### Return type

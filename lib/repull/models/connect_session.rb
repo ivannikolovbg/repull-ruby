@@ -28,7 +28,10 @@ module Repull
     # Present only on a Repull Migrate session.
     attr_accessor :purpose
 
-    # Repull Migrate only: the workspace the property manager's data lands in. Read it with `X-Workspace-Id`, track it with `GET /v1/migrations/{workspaceId}`.
+    # Present (`true`) when the session also lists PMSes Repull doesn't connect yet.
+    attr_accessor :include_request_only
+
+    # Present when the session lands on a sub-workspace (`workspace` or `X-Workspace-Id` on the request): the workspace the connection lands in. Read and write it with `X-Workspace-Id`; on a migrate session, track the import with `GET /v1/migrations/{workspaceId}`.
     attr_accessor :workspace_id
 
     # Attribute mapping from ruby-style variable name to JSON key.
@@ -39,6 +42,7 @@ module Repull
         :'expires_at' => :'expiresAt',
         :'state' => :'state',
         :'purpose' => :'purpose',
+        :'include_request_only' => :'includeRequestOnly',
         :'workspace_id' => :'workspaceId'
       }
     end
@@ -61,6 +65,7 @@ module Repull
         :'expires_at' => :'Time',
         :'state' => :'String',
         :'purpose' => :'String',
+        :'include_request_only' => :'Boolean',
         :'workspace_id' => :'String'
       }
     end
@@ -112,6 +117,10 @@ module Repull
 
       if attributes.key?(:'purpose')
         self.purpose = attributes[:'purpose']
+      end
+
+      if attributes.key?(:'include_request_only')
+        self.include_request_only = attributes[:'include_request_only']
       end
 
       if attributes.key?(:'workspace_id')
@@ -189,6 +198,7 @@ module Repull
           expires_at == o.expires_at &&
           state == o.state &&
           purpose == o.purpose &&
+          include_request_only == o.include_request_only &&
           workspace_id == o.workspace_id
     end
 
@@ -201,7 +211,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [session_id, url, expires_at, state, purpose, workspace_id].hash
+      [session_id, url, expires_at, state, purpose, include_request_only, workspace_id].hash
     end
 
     # Builds the object from hash

@@ -19,6 +19,7 @@ All URIs are relative to *https://api.repull.dev*
 | [**list_connections**](ConnectApi.md#list_connections) | **GET** /v1/connect | List PMS/OTA connections |
 | [**map_connect_booking_rooms**](ConnectApi.md#map_connect_booking_rooms) | **POST** /v1/connect/booking/map-rooms | Submit room→listing mappings for a Booking.com Connect session |
 | [**recheck_booking_extranet_login**](ConnectApi.md#recheck_booking_extranet_login) | **POST** /v1/connect/booking-extranet-login/recheck | Re-check Booking.com direct-login permissions |
+| [**rental_ready_connect_callback**](ConnectApi.md#rental_ready_connect_callback) | **GET** /v1/connect/rentalready/callback | RentalReady OAuth callback |
 | [**resume_connect**](ConnectApi.md#resume_connect) | **GET** /v1/connect/resume | Open a connection&#39;s fix link |
 | [**search_connect_session_listing_options**](ConnectApi.md#search_connect_session_listing_options) | **GET** /v1/connect/sessions/{sessionId}/listing-options | Search listings for a Connect mapping picker |
 | [**select_connect_provider**](ConnectApi.md#select_connect_provider) | **POST** /v1/connect/sessions/{sessionId}/select-provider | Bind a picker session to a provider |
@@ -39,6 +40,7 @@ All URIs are relative to *https://api.repull.dev*
 | [**update_connect_write_policy**](ConnectApi.md#update_connect_write_policy) | **PATCH** /v1/connect/{provider}/write-policy | Change what the app may change in a PMS |
 | [**verify_booking_hotel**](ConnectApi.md#verify_booking_hotel) | **POST** /v1/connect/booking/verify | Verify a Booking.com hotel ID for a Connect session |
 | [**vrbo_login**](ConnectApi.md#vrbo_login) | **POST** /v1/connect/vrbo-login/session | Sign in with a Vrbo host account |
+| [**zeevou_connect_callback**](ConnectApi.md#zeevou_connect_callback) | **GET** /v1/connect/zeevou/callback | Zeevou OAuth callback |
 
 
 ## booking_connect_callback
@@ -781,7 +783,7 @@ No authorization required
 
 ## list_connect_providers
 
-> <ConnectProviderListResponse> list_connect_providers
+> <ConnectProviderListResponse> list_connect_providers(opts)
 
 List Connect channels
 
@@ -794,10 +796,13 @@ require 'time'
 require 'repull'
 
 api_instance = Repull::ConnectApi.new
+opts = {
+  include_request_only: true # Boolean | Also return the PMSes Repull doesn't connect yet (`status: request-only`), for a picker you render yourself for a session created with `includeRequestOnly`.
+}
 
 begin
   # List Connect channels
-  result = api_instance.list_connect_providers
+  result = api_instance.list_connect_providers(opts)
   p result
 rescue Repull::ApiError => e
   puts "Error when calling ConnectApi->list_connect_providers: #{e}"
@@ -808,12 +813,12 @@ end
 
 This returns an Array which contains the response data, status code and headers.
 
-> <Array(<ConnectProviderListResponse>, Integer, Hash)> list_connect_providers_with_http_info
+> <Array(<ConnectProviderListResponse>, Integer, Hash)> list_connect_providers_with_http_info(opts)
 
 ```ruby
 begin
   # List Connect channels
-  data, status_code, headers = api_instance.list_connect_providers_with_http_info
+  data, status_code, headers = api_instance.list_connect_providers_with_http_info(opts)
   p status_code # => 2xx
   p headers # => { ... }
   p data # => <ConnectProviderListResponse>
@@ -824,7 +829,9 @@ end
 
 ### Parameters
 
-This endpoint does not need any parameter.
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **include_request_only** | **Boolean** | Also return the PMSes Repull doesn&#39;t connect yet (&#x60;status: request-only&#x60;), for a picker you render yourself for a session created with &#x60;includeRequestOnly&#x60;. | [optional][default to false] |
 
 ### Return type
 
@@ -1032,6 +1039,75 @@ No authorization required
 
 - **Content-Type**: application/json
 - **Accept**: application/json
+
+
+## rental_ready_connect_callback
+
+> rental_ready_connect_callback(state, opts)
+
+RentalReady OAuth callback
+
+RentalReady's OAuth redirect after the host allows or denies access on RentalReady's consent screen. It finishes the Connect session and redirects the host to the hosted Connect page. Called by the host's browser, not by integrators.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+
+api_instance = Repull::ConnectApi.new
+state = 'state_example' # String | The signed Connect state Repull sent to RentalReady.
+opts = {
+  code: 'code_example', # String | Authorization code from RentalReady.
+  error: 'error_example' # String | Set by RentalReady when the host denied access (`access_denied`).
+}
+
+begin
+  # RentalReady OAuth callback
+  api_instance.rental_ready_connect_callback(state, opts)
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->rental_ready_connect_callback: #{e}"
+end
+```
+
+#### Using the rental_ready_connect_callback_with_http_info variant
+
+This returns an Array which contains the response data (`nil` in this case), status code and headers.
+
+> <Array(nil, Integer, Hash)> rental_ready_connect_callback_with_http_info(state, opts)
+
+```ruby
+begin
+  # RentalReady OAuth callback
+  data, status_code, headers = api_instance.rental_ready_connect_callback_with_http_info(state, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => nil
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->rental_ready_connect_callback_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **state** | **String** | The signed Connect state Repull sent to RentalReady. |  |
+| **code** | **String** | Authorization code from RentalReady. | [optional] |
+| **error** | **String** | Set by RentalReady when the host denied access (&#x60;access_denied&#x60;). | [optional] |
+
+### Return type
+
+nil (empty response body)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: Not defined
 
 
 ## resume_connect
@@ -2391,4 +2467,73 @@ No authorization required
 
 - **Content-Type**: application/json
 - **Accept**: application/json
+
+
+## zeevou_connect_callback
+
+> zeevou_connect_callback(state, opts)
+
+Zeevou OAuth callback
+
+Zeevou's OAuth redirect after the host allows or denies access on Zeevou's consent screen. It finishes the Connect session and redirects the host to the hosted Connect page. Called by the host's browser, not by integrators.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+
+api_instance = Repull::ConnectApi.new
+state = 'state_example' # String | The signed Connect state Repull sent to Zeevou.
+opts = {
+  code: 'code_example', # String | Authorization code from Zeevou.
+  error: 'error_example' # String | Set by Zeevou when the host denied access (`access_denied`).
+}
+
+begin
+  # Zeevou OAuth callback
+  api_instance.zeevou_connect_callback(state, opts)
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->zeevou_connect_callback: #{e}"
+end
+```
+
+#### Using the zeevou_connect_callback_with_http_info variant
+
+This returns an Array which contains the response data (`nil` in this case), status code and headers.
+
+> <Array(nil, Integer, Hash)> zeevou_connect_callback_with_http_info(state, opts)
+
+```ruby
+begin
+  # Zeevou OAuth callback
+  data, status_code, headers = api_instance.zeevou_connect_callback_with_http_info(state, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => nil
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->zeevou_connect_callback_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **state** | **String** | The signed Connect state Repull sent to Zeevou. |  |
+| **code** | **String** | Authorization code from Zeevou. | [optional] |
+| **error** | **String** | Set by Zeevou when the host denied access (&#x60;access_denied&#x60;). | [optional] |
+
+### Return type
+
+nil (empty response body)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: Not defined
 

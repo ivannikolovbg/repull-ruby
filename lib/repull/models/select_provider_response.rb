@@ -22,7 +22,7 @@ module Repull
 
     attr_accessor :pattern
 
-    # Where to send the user next — OAuth consent, credentials form, activation checklist, or claim form.
+    # Where to send the user next — OAuth consent, credentials form, activation checklist, claim form, or (for a `request-only` PMS) the request form.
     attr_accessor :next_url
 
     # Attribute mapping from ruby-style variable name to JSON key.

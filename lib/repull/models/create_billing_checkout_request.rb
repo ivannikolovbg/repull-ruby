@@ -102,7 +102,7 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
-      plan_validator = EnumAttributeValidator.new('String', ["starter", "growth", "scale"])
+      plan_validator = EnumAttributeValidator.new('String', ["starter"])
       return false unless plan_validator.valid?(@plan)
       true
     end
@@ -110,7 +110,7 @@ module Repull
     # Custom attribute writer method checking allowed values (enum).
     # @param [Object] plan Object to be assigned
     def plan=(plan)
-      validator = EnumAttributeValidator.new('String', ["starter", "growth", "scale"])
+      validator = EnumAttributeValidator.new('String', ["starter"])
       unless validator.valid?(plan)
         fail ArgumentError, "invalid value for \"plan\", must be one of #{validator.allowable_values}."
       end

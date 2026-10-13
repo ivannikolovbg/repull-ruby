@@ -751,6 +751,7 @@ module Repull
     # List Connect channels
     # Returns the public registry of every channel the picker supports. No customer-specific data — display metadata only. Cached for 5 minutes at the edge.
     # @param [Hash] opts the optional parameters
+    # @option opts [Boolean] :include_request_only Also return the PMSes Repull doesn&#39;t connect yet (&#x60;status: request-only&#x60;), for a picker you render yourself for a session created with &#x60;includeRequestOnly&#x60;. (default to false)
     # @return [ConnectProviderListResponse]
     def list_connect_providers(opts = {})
       data, _status_code, _headers = list_connect_providers_with_http_info(opts)
@@ -760,6 +761,7 @@ module Repull
     # List Connect channels
     # Returns the public registry of every channel the picker supports. No customer-specific data — display metadata only. Cached for 5 minutes at the edge.
     # @param [Hash] opts the optional parameters
+    # @option opts [Boolean] :include_request_only Also return the PMSes Repull doesn&#39;t connect yet (&#x60;status: request-only&#x60;), for a picker you render yourself for a session created with &#x60;includeRequestOnly&#x60;. (default to false)
     # @return [Array<(ConnectProviderListResponse, Integer, Hash)>] ConnectProviderListResponse data, response status code and response headers
     def list_connect_providers_with_http_info(opts = {})
       if @api_client.config.debugging
@@ -770,6 +772,7 @@ module Repull
 
       # query parameters
       query_params = opts[:query_params] || {}
+      query_params[:'includeRequestOnly'] = opts[:'include_request_only'] if !opts[:'include_request_only'].nil?
 
       # header parameters
       header_params = opts[:header_params] || {}
@@ -994,6 +997,74 @@ module Repull
       data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: ConnectApi#recheck_booking_extranet_login\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # RentalReady OAuth callback
+    # RentalReady's OAuth redirect after the host allows or denies access on RentalReady's consent screen. It finishes the Connect session and redirects the host to the hosted Connect page. Called by the host's browser, not by integrators.
+    # @param state [String] The signed Connect state Repull sent to RentalReady.
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :code Authorization code from RentalReady.
+    # @option opts [String] :error Set by RentalReady when the host denied access (&#x60;access_denied&#x60;).
+    # @return [nil]
+    def rental_ready_connect_callback(state, opts = {})
+      rental_ready_connect_callback_with_http_info(state, opts)
+      nil
+    end
+
+    # RentalReady OAuth callback
+    # RentalReady&#39;s OAuth redirect after the host allows or denies access on RentalReady&#39;s consent screen. It finishes the Connect session and redirects the host to the hosted Connect page. Called by the host&#39;s browser, not by integrators.
+    # @param state [String] The signed Connect state Repull sent to RentalReady.
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :code Authorization code from RentalReady.
+    # @option opts [String] :error Set by RentalReady when the host denied access (&#x60;access_denied&#x60;).
+    # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
+    def rental_ready_connect_callback_with_http_info(state, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ConnectApi.rental_ready_connect_callback ...'
+      end
+      # verify the required parameter 'state' is set
+      if @api_client.config.client_side_validation && state.nil?
+        fail ArgumentError, "Missing the required parameter 'state' when calling ConnectApi.rental_ready_connect_callback"
+      end
+      # resource path
+      local_var_path = '/v1/connect/rentalready/callback'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+      query_params[:'state'] = state
+      query_params[:'code'] = opts[:'code'] if !opts[:'code'].nil?
+      query_params[:'error'] = opts[:'error'] if !opts[:'error'].nil?
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type]
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || []
+
+      new_options = opts.merge(
+        :operation => :"ConnectApi.rental_ready_connect_callback",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ConnectApi#rental_ready_connect_callback\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end
@@ -2371,6 +2442,74 @@ module Repull
       data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: ConnectApi#vrbo_login\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Zeevou OAuth callback
+    # Zeevou's OAuth redirect after the host allows or denies access on Zeevou's consent screen. It finishes the Connect session and redirects the host to the hosted Connect page. Called by the host's browser, not by integrators.
+    # @param state [String] The signed Connect state Repull sent to Zeevou.
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :code Authorization code from Zeevou.
+    # @option opts [String] :error Set by Zeevou when the host denied access (&#x60;access_denied&#x60;).
+    # @return [nil]
+    def zeevou_connect_callback(state, opts = {})
+      zeevou_connect_callback_with_http_info(state, opts)
+      nil
+    end
+
+    # Zeevou OAuth callback
+    # Zeevou&#39;s OAuth redirect after the host allows or denies access on Zeevou&#39;s consent screen. It finishes the Connect session and redirects the host to the hosted Connect page. Called by the host&#39;s browser, not by integrators.
+    # @param state [String] The signed Connect state Repull sent to Zeevou.
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :code Authorization code from Zeevou.
+    # @option opts [String] :error Set by Zeevou when the host denied access (&#x60;access_denied&#x60;).
+    # @return [Array<(nil, Integer, Hash)>] nil, response status code and response headers
+    def zeevou_connect_callback_with_http_info(state, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ConnectApi.zeevou_connect_callback ...'
+      end
+      # verify the required parameter 'state' is set
+      if @api_client.config.client_side_validation && state.nil?
+        fail ArgumentError, "Missing the required parameter 'state' when calling ConnectApi.zeevou_connect_callback"
+      end
+      # resource path
+      local_var_path = '/v1/connect/zeevou/callback'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+      query_params[:'state'] = state
+      query_params[:'code'] = opts[:'code'] if !opts[:'code'].nil?
+      query_params[:'error'] = opts[:'error'] if !opts[:'error'].nil?
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type]
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || []
+
+      new_options = opts.merge(
+        :operation => :"ConnectApi.zeevou_connect_callback",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ConnectApi#zeevou_connect_callback\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end

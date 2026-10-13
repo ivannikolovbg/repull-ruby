@@ -30,6 +30,9 @@ module Repull
     # Optional whitelist of provider IDs the picker should expose. Omit to show every channel in the registry.
     attr_accessor :allowed_providers
 
+    # Also list PMSes Repull doesn't connect yet (`status: request-only` in `GET /v1/connect/providers?includeRequestOnly=true`), plus an Other PMS card. Picking one opens a form that collects the host's contact and access details for the Repull team and ends with \"A team member will contact you\". No connection is made: the redirect carries `status=requested&provider=<id>`, and no `connect.session.completed` webhook fires. Naming a request-only id in `allowedProviders` offers it without this flag.
+    attr_accessor :include_request_only
+
     # Optional UI language for the hosted Connect pages. Accepts any supported locale code (currently `en`, `fr`). When set it pins the language for the whole flow, overriding the workspace `default_language`. Unknown codes are ignored and the page falls back to the workspace default, then `Accept-Language`, then `en`. The end user can still override per-visit with a `?locale=` query param on the hosted page.
     attr_accessor :locale
 
@@ -73,6 +76,7 @@ module Repull
         :'reservation_history_months' => :'reservationHistoryMonths',
         :'access_type' => :'accessType',
         :'allowed_providers' => :'allowedProviders',
+        :'include_request_only' => :'includeRequestOnly',
         :'locale' => :'locale',
         :'purpose' => :'purpose',
         :'workspace' => :'workspace',
@@ -99,6 +103,7 @@ module Repull
         :'reservation_history_months' => :'Integer',
         :'access_type' => :'String',
         :'allowed_providers' => :'Array<String>',
+        :'include_request_only' => :'Boolean',
         :'locale' => :'String',
         :'purpose' => :'String',
         :'workspace' => :'CreateConnectSessionRequestWorkspace',
@@ -154,6 +159,12 @@ module Repull
         if (value = attributes[:'allowed_providers']).is_a?(Array)
           self.allowed_providers = value
         end
+      end
+
+      if attributes.key?(:'include_request_only')
+        self.include_request_only = attributes[:'include_request_only']
+      else
+        self.include_request_only = false
       end
 
       if attributes.key?(:'locale')
@@ -273,6 +284,7 @@ module Repull
           reservation_history_months == o.reservation_history_months &&
           access_type == o.access_type &&
           allowed_providers == o.allowed_providers &&
+          include_request_only == o.include_request_only &&
           locale == o.locale &&
           purpose == o.purpose &&
           workspace == o.workspace &&
@@ -289,7 +301,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [redirect_url, state, reservation_history_months, access_type, allowed_providers, locale, purpose, workspace, copy, scope].hash
+      [redirect_url, state, reservation_history_months, access_type, allowed_providers, include_request_only, locale, purpose, workspace, copy, scope].hash
     end
 
     # Builds the object from hash

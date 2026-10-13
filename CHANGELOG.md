@@ -2,6 +2,16 @@
 
 All notable changes to the `repull` gem are documented here.
 
+## [0.2.31] - 2026-10-13
+
+Regenerated against the live `https://api.repull.dev/openapi.json`:
+
+- New `GET /v1/hotels` and `GET /v1/hotels/{id}`: hotels and their room types, with room counts. Listings carry `kind`, `hotel` and `unitCount`.
+- New `GET /v1/workspaces`: the customer workspaces your account has opened (`Workspace`).
+- New `GET /v1/billing`: plan, request limits, usage this period and `manageUrl`. `POST /v1/billing` takes `plan` and returns `checkoutUrl`.
+- `POST /v1/connect` accepts `includeRequestOnly`, so the picker also lists PMSs available on request.
+- Zeevou and RentalReady Connect callbacks.
+
 ## [0.2.30] - 2026-10-03
 
 Regenerated against the live `https://api.repull.dev/openapi.json`. Spec examples no longer use real reservation, host or listing data: sample confirmation codes, host names and listing names are now fictional (`HMEXAMPLE1`, `Casey`, `Lakeview Loft`). No API changes.

@@ -25,12 +25,16 @@ module Repull
     # Repull connection id (`X-Account-Id`), when the account has one. A string, like every id in API responses.
     attr_accessor :connection_id
 
+    # Booking.com only: the hotel (property) id the record belongs to. On a `booking_extranet` account, `externalAccountId` is the login, which can cover several hotels.
+    attr_accessor :hotel_id
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
         :'provider' => :'provider',
         :'external_account_id' => :'externalAccountId',
-        :'connection_id' => :'connectionId'
+        :'connection_id' => :'connectionId',
+        :'hotel_id' => :'hotelId'
       }
     end
 
@@ -49,14 +53,15 @@ module Repull
       {
         :'provider' => :'String',
         :'external_account_id' => :'String',
-        :'connection_id' => :'String'
+        :'connection_id' => :'String',
+        :'hotel_id' => :'String'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
-        :'connection_id'
+        :'connection_id',
       ])
     end
 
@@ -87,6 +92,10 @@ module Repull
       if attributes.key?(:'connection_id')
         self.connection_id = attributes[:'connection_id']
       end
+
+      if attributes.key?(:'hotel_id')
+        self.hotel_id = attributes[:'hotel_id']
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -111,7 +120,8 @@ module Repull
       self.class == o.class &&
           provider == o.provider &&
           external_account_id == o.external_account_id &&
-          connection_id == o.connection_id
+          connection_id == o.connection_id &&
+          hotel_id == o.hotel_id
     end
 
     # @see the `==` method
@@ -123,7 +133,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [provider, external_account_id, connection_id].hash
+      [provider, external_account_id, connection_id, hotel_id].hash
     end
 
     # Builds the object from hash

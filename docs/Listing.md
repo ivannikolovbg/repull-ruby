@@ -5,6 +5,9 @@
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **capabilities** | [**ListingCapabilities**](ListingCapabilities.md) |  | [optional] |
+| **kind** | **String** | &#x60;room_type&#x60; when the listing sells several identical units (a hotel room type: &#x60;unitCount&#x60; &gt; 1) or is a hotel PMS room type; &#x60;home&#x60; otherwise. See the Hotels &amp; multi-unit guide. | [optional] |
+| **hotel** | [**ListingHotel**](ListingHotel.md) |  | [optional] |
+| **unit_count** | **Integer** | How many identical units (rooms) this listing sells: the hotel PMS rooms of the room type, the room count on Booking.com, or 1 for a home. Rooms left per night are &#x60;availableUnits&#x60; on &#x60;GET /v1/availability/{propertyId}&#x60;. | [optional] |
 | **units** | [**Array&lt;ListingUnitsInner&gt;**](ListingUnitsInner.md) | &#x60;GET /v1/listings/{id}&#x60; only. The physical rooms under a hotel-model listing (a Mews or Cloudbeds room type); empty for a single home. Same items as &#x60;GET /v1/listings/{id}/units&#x60;. | [optional] |
 | **id** | **String** | Repull listing id | [optional] |
 | **name** | **String** | The host&#39;s internal nickname for the listing. | [optional] |
@@ -26,6 +29,9 @@ require 'repull'
 
 instance = Repull::Listing.new(
   capabilities: null,
+  kind: null,
+  hotel: null,
+  unit_count: null,
   units: null,
   id: null,
   name: I - Stafford Apartment,

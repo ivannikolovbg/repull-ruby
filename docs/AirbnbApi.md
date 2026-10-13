@@ -1281,7 +1281,7 @@ end
 
 Get Airbnb availability
 
-Read the per-day availability calendar for an Airbnb listing. Returns one row per day including price overrides, min-stay, and blocked status.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+Read the per-day availability calendar for an Airbnb listing. Returns one row per day including price overrides, min-stay, and blocked status.  The calendar is served from Repull's stored copy, refreshed by the periodic sync. A successful calendar write through `PUT .../availability` or `PUT .../pricing` (`type: \"calendar\"`) updates the stored days immediately, so reading back right after a write returns the values you published. Changes made directly on Airbnb appear after the next sync (`dataFreshness.lastSyncedAt`).  **Coverage:** with `start_date` + `end_date`, `data.coverage` gives `{ from, to }`, the first and last stored date for the listing (the sync keeps about 12 months ahead). A date outside that window is not stored, so a missing date there means \"not covered\", not \"nothing set\". Request it again once `coverage.to` reaches it.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 

@@ -18,6 +18,14 @@ module Repull
   class Listing < ApiModelBase
     attr_accessor :capabilities
 
+    # `room_type` when the listing sells several identical units (a hotel room type: `unitCount` > 1) or is a hotel PMS room type; `home` otherwise. See the Hotels & multi-unit guide.
+    attr_accessor :kind
+
+    attr_accessor :hotel
+
+    # How many identical units (rooms) this listing sells: the hotel PMS rooms of the room type, the room count on Booking.com, or 1 for a home. Rooms left per night are `availableUnits` on `GET /v1/availability/{propertyId}`.
+    attr_accessor :unit_count
+
     # `GET /v1/listings/{id}` only. The physical rooms under a hotel-model listing (a Mews or Cloudbeds room type); empty for a single home. Same items as `GET /v1/listings/{id}/units`.
     attr_accessor :units
 
@@ -57,6 +65,9 @@ module Repull
     def self.attribute_map
       {
         :'capabilities' => :'capabilities',
+        :'kind' => :'kind',
+        :'hotel' => :'hotel',
+        :'unit_count' => :'unitCount',
         :'units' => :'units',
         :'id' => :'id',
         :'name' => :'name',
@@ -87,6 +98,9 @@ module Repull
     def self.openapi_types
       {
         :'capabilities' => :'ListingCapabilities',
+        :'kind' => :'String',
+        :'hotel' => :'ListingHotel',
+        :'unit_count' => :'Integer',
         :'units' => :'Array<ListingUnitsInner>',
         :'id' => :'String',
         :'name' => :'String',
@@ -106,6 +120,7 @@ module Repull
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'hotel',
         :'public_name',
         :'thumbnail_url',
         :'content',
@@ -131,6 +146,18 @@ module Repull
 
       if attributes.key?(:'capabilities')
         self.capabilities = attributes[:'capabilities']
+      end
+
+      if attributes.key?(:'kind')
+        self.kind = attributes[:'kind']
+      end
+
+      if attributes.key?(:'hotel')
+        self.hotel = attributes[:'hotel']
+      end
+
+      if attributes.key?(:'unit_count')
+        self.unit_count = attributes[:'unit_count']
       end
 
       if attributes.key?(:'units')
@@ -197,6 +224,10 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
+      if !@unit_count.nil? && @unit_count < 1
+        invalid_properties.push('invalid value for "unit_count", must be greater than or equal to 1.')
+      end
+
       invalid_properties
     end
 
@@ -204,7 +235,22 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
+      return false if !@unit_count.nil? && @unit_count < 1
       true
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] unit_count Value to be assigned
+    def unit_count=(unit_count)
+      if unit_count.nil?
+        fail ArgumentError, 'unit_count cannot be nil'
+      end
+
+      if unit_count < 1
+        fail ArgumentError, 'invalid value for "unit_count", must be greater than or equal to 1.'
+      end
+
+      @unit_count = unit_count
     end
 
     # Checks equality by comparing each attribute.
@@ -213,6 +259,9 @@ module Repull
       return true if self.equal?(o)
       self.class == o.class &&
           capabilities == o.capabilities &&
+          kind == o.kind &&
+          hotel == o.hotel &&
+          unit_count == o.unit_count &&
           units == o.units &&
           id == o.id &&
           name == o.name &&
@@ -237,7 +286,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [capabilities, units, id, name, public_name, address, thumbnail_url, status, channels, amenities, content, details, created_at, updated_at].hash
+      [capabilities, kind, hotel, unit_count, units, id, name, public_name, address, thumbnail_url, status, channels, amenities, content, details, created_at, updated_at].hash
     end
 
     # Builds the object from hash

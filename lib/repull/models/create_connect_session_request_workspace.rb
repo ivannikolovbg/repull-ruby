@@ -14,7 +14,7 @@ require 'date'
 require 'time'
 
 module Repull
-  # Migrate only — the property manager being moved. Required unless you send `X-Workspace-Id` to reconnect an existing migration.
+  # Opens a new sub-workspace for this customer of yours and lands the connection there; the response returns its `workspaceId`, which you then send as `X-Workspace-Id`. Works with both purposes: a plain `connect` keeps the normal onboarding pages. Required for `migrate` unless you send `X-Workspace-Id` to reconnect an existing one. Don't send it together with `X-Workspace-Id`.
   class CreateConnectSessionRequestWorkspace < ApiModelBase
     attr_accessor :name
 

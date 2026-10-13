@@ -16,6 +16,9 @@ require 'time'
 module Repull
   # Payload for `reservation.message.received`. A new inbound message arrived on a reservation thread.
   class ReservationMessageReceivedPayload < ApiModelBase
+    # Booking.com only: the hotel (property) id of the conversation's listing. Absent on other channels. A Booking.com Extranet login can cover several hotels, so use this to route the message.
+    attr_accessor :hotel_id
+
     attr_accessor :reservation_id
 
     attr_accessor :thread_id
@@ -33,6 +36,7 @@ module Repull
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
+        :'hotel_id' => :'hotelId',
         :'reservation_id' => :'reservationId',
         :'thread_id' => :'threadId',
         :'from' => :'from',
@@ -55,6 +59,7 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
+        :'hotel_id' => :'String',
         :'reservation_id' => :'Integer',
         :'thread_id' => :'String',
         :'from' => :'ReservationMessageReceivedPayloadFrom',
@@ -67,6 +72,7 @@ module Repull
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'hotel_id',
       ])
     end
 
@@ -85,6 +91,10 @@ module Repull
         end
         h[k.to_sym] = v
       }
+
+      if attributes.key?(:'hotel_id')
+        self.hotel_id = attributes[:'hotel_id']
+      end
 
       if attributes.key?(:'reservation_id')
         self.reservation_id = attributes[:'reservation_id']
@@ -133,6 +143,7 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
+          hotel_id == o.hotel_id &&
           reservation_id == o.reservation_id &&
           thread_id == o.thread_id &&
           from == o.from &&
@@ -150,7 +161,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [reservation_id, thread_id, from, body, sent_at, attachments].hash
+      [hotel_id, reservation_id, thread_id, from, body, sent_at, attachments].hash
     end
 
     # Builds the object from hash

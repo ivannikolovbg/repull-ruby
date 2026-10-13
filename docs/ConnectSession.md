@@ -9,7 +9,8 @@
 | **expires_at** | **Time** |  |  |
 | **state** | **String** | Echoed back from the request body for SDK consumers that pass an opaque correlation token. | [optional] |
 | **purpose** | **String** | Present only on a Repull Migrate session. | [optional] |
-| **workspace_id** | **String** | Repull Migrate only: the workspace the property manager&#39;s data lands in. Read it with &#x60;X-Workspace-Id&#x60;, track it with &#x60;GET /v1/migrations/{workspaceId}&#x60;. | [optional] |
+| **include_request_only** | **Boolean** | Present (&#x60;true&#x60;) when the session also lists PMSes Repull doesn&#39;t connect yet. | [optional] |
+| **workspace_id** | **String** | Present when the session lands on a sub-workspace (&#x60;workspace&#x60; or &#x60;X-Workspace-Id&#x60; on the request): the workspace the connection lands in. Read and write it with &#x60;X-Workspace-Id&#x60;; on a migrate session, track the import with &#x60;GET /v1/migrations/{workspaceId}&#x60;. | [optional] |
 
 ## Example
 
@@ -22,6 +23,7 @@ instance = Repull::ConnectSession.new(
   expires_at: null,
   state: null,
   purpose: null,
+  include_request_only: null,
   workspace_id: 1204
 )
 ```

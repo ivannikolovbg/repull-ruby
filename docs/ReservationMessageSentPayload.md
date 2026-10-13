@@ -4,6 +4,7 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
+| **hotel_id** | **String** | Booking.com only: the hotel (property) id of the conversation&#39;s listing. Absent on other channels. A Booking.com Extranet login can cover several hotels, so use this to route the message. | [optional] |
 | **reservation_id** | **Integer** |  | [optional] |
 | **thread_id** | **String** |  | [optional] |
 | **message_id** | **String** | Repull message id, as &#x60;GET /v1/conversations/{id}/messages&#x60; returns it. | [optional] |
@@ -24,6 +25,7 @@
 require 'repull'
 
 instance = Repull::ReservationMessageSentPayload.new(
+  hotel_id: 10433861,
   reservation_id: 235970,
   thread_id: 900301,
   message_id: 1854462,
