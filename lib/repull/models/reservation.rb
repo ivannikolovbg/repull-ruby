@@ -38,6 +38,18 @@ module Repull
     # Local check-out time for this stay, `HH:MM` on a 24-hour clock in the property's own timezone. Pair with `checkOut` to schedule the turnover clean. `null` when unknown. This is the same field `PATCH /v1/reservations/{id}` writes.
     attr_accessor :check_out_time
 
+    # What the guest wrote with the booking, as the channel sent it. Booking.com puts the estimated arrival time and special requests here. Free text, never parsed. `null` when the guest left none.
+    attr_accessor :guest_notes
+
+    # The conversation with this guest — pass it to `GET /v1/conversations/{id}` and `/v1/conversations/{id}/messages`. It is the same conversation from inquiry through pre-approval to the confirmed booking, and the same id the message webhooks carry, so a booking links straight to the messages that led to it. `null` when the channel has no conversation for this booking.
+    attr_accessor :conversation_id
+
+    # The channel's own id for that conversation (Airbnb thread id, Booking.com conversation id, …). `null` when there is none.
+    attr_accessor :external_thread_id
+
+    # The inquiry this booking came from (`GET /v1/inquiries`), when the guest asked before booking. When an inquiry turns into a booking, `inquiry.updated` fires with `status: \"booked\"` and this reservation's id. `null` for bookings with no inquiry.
+    attr_accessor :inquiry_id
+
     # Lifecycle status. The API normalises a multi-decade internal taxonomy down to these four buckets, so the value you receive is always one of the enum constants. `completed` is derived from `checkOut < today`. A `pending` booking request the channel already let lapse — Airbnb expires an unanswered request 24 hours after the guest asks, and no request can be answered once its check-in has passed — is reported as `cancelled` with `statusDetail: \"request_expired\"`, even when the channel never told us. Every `cancelled` reservation says how it ended in `statusDetail` when the channel tells us.
     attr_accessor :status
 
@@ -102,6 +114,10 @@ module Repull
         :'check_out' => :'checkOut',
         :'check_in_time' => :'checkInTime',
         :'check_out_time' => :'checkOutTime',
+        :'guest_notes' => :'guestNotes',
+        :'conversation_id' => :'conversationId',
+        :'external_thread_id' => :'externalThreadId',
+        :'inquiry_id' => :'inquiryId',
         :'status' => :'status',
         :'status_detail' => :'statusDetail',
         :'pending_reason' => :'pendingReason',
@@ -144,6 +160,10 @@ module Repull
         :'check_out' => :'Date',
         :'check_in_time' => :'String',
         :'check_out_time' => :'String',
+        :'guest_notes' => :'String',
+        :'conversation_id' => :'String',
+        :'external_thread_id' => :'String',
+        :'inquiry_id' => :'String',
         :'status' => :'String',
         :'status_detail' => :'String',
         :'pending_reason' => :'String',
@@ -171,6 +191,10 @@ module Repull
         :'account',
         :'check_in_time',
         :'check_out_time',
+        :'guest_notes',
+        :'conversation_id',
+        :'external_thread_id',
+        :'inquiry_id',
         :'source',
         :'platform',
         :'unit',
@@ -233,6 +257,22 @@ module Repull
 
       if attributes.key?(:'check_out_time')
         self.check_out_time = attributes[:'check_out_time']
+      end
+
+      if attributes.key?(:'guest_notes')
+        self.guest_notes = attributes[:'guest_notes']
+      end
+
+      if attributes.key?(:'conversation_id')
+        self.conversation_id = attributes[:'conversation_id']
+      end
+
+      if attributes.key?(:'external_thread_id')
+        self.external_thread_id = attributes[:'external_thread_id']
+      end
+
+      if attributes.key?(:'inquiry_id')
+        self.inquiry_id = attributes[:'inquiry_id']
       end
 
       if attributes.key?(:'status')
@@ -466,6 +506,10 @@ module Repull
           check_out == o.check_out &&
           check_in_time == o.check_in_time &&
           check_out_time == o.check_out_time &&
+          guest_notes == o.guest_notes &&
+          conversation_id == o.conversation_id &&
+          external_thread_id == o.external_thread_id &&
+          inquiry_id == o.inquiry_id &&
           status == o.status &&
           status_detail == o.status_detail &&
           pending_reason == o.pending_reason &&
@@ -495,7 +539,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [account, id, listing_id, guest_id, check_in, check_out, check_in_time, check_out_time, status, status_detail, pending_reason, respond_by, source, platform, confirmation_code, unit, primary_guest, occupancy, financials, total_price, currency, guest_details, created_at, updated_at, booked_at, guest_name].hash
+      [account, id, listing_id, guest_id, check_in, check_out, check_in_time, check_out_time, guest_notes, conversation_id, external_thread_id, inquiry_id, status, status_detail, pending_reason, respond_by, source, platform, confirmation_code, unit, primary_guest, occupancy, financials, total_price, currency, guest_details, created_at, updated_at, booked_at, guest_name].hash
     end
 
     # Builds the object from hash

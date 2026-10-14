@@ -59,6 +59,10 @@
       "description": "Query, create, update, and cancel reservations"
     },
     {
+      "name": "Transactions",
+      "description": "Unified transactions & payments ledger across channels \u2014 payouts, reservation charges, refunds. `booking` covers Booking.com however it was connected."
+    },
+    {
       "name": "Availability",
       "description": "Check and update property availability and pricing"
     },
@@ -592,6 +596,30 @@
             "nullable": true,
             "description": "Local check-out time for this stay, `HH:MM` on a 24-hour clock in the property's own timezone. Pair with `checkOut` to schedule the turnover clean. `null` when unknown. This is the same field `PATCH /v1/reservations/{id}` writes.",
             "example": "10:00"
+          },
+          "guestNotes": {
+            "type": "string",
+            "nullable": true,
+            "description": "What the guest wrote with the booking, as the channel sent it. Booking.com puts the estimated arrival time and special requests here. Free text, never parsed. `null` when the guest left none.",
+            "example": "Approximate time of arrival: between 15:00 and 16:00"
+          },
+          "conversationId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The conversation with this guest \u2014 pass it to `GET /v1/conversations/{id}` and `/v1/conversations/{id}/messages`. It is the same conversation from inquiry through pre-approval to the confirmed booking, and the same id the message webhooks carry, so a booking links straight to the messages that led to it. `null` when the channel has no conversation for this booking.",
+            "example": "164743"
+          },
+          "externalThreadId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The channel's own id for that conversation (Airbnb thread id, Booking.com conversation id, \u2026). `null` when there is none.",
+            "example": "2680544213"
+          },
+          "inquiryId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The inquiry this booking came from (`GET /v1/inquiries`), when the guest asked before booking. When an inquiry turns into a booking, `inquiry.updated` fires with `status: \"booked\"` and this reservation's id. `null` for bookings with no inquiry.",
+            "example": "25173"
           },
           "status": {
             "type": "string",
@@ -2731,6 +2759,30 @@
             "nullable": true,
             "description": "Local check-out time, `HH:MM` on a 24-hour clock in the property's own timezone. Pair it with `checkoutDate` to schedule the turnover. `null` when unknown.",
             "example": "10:00"
+          },
+          "guestNotes": {
+            "type": "string",
+            "nullable": true,
+            "description": "What the guest wrote with the booking \u2014 on Booking.com, the estimated arrival time and special requests. Free text. `null` when there were none.",
+            "example": "Approximate time of arrival: between 15:00 and 16:00"
+          },
+          "conversationId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The conversation with this guest \u2014 pass it to `GET /v1/conversations/{id}` and `/v1/conversations/{id}/messages`. It is the same conversation from inquiry through pre-approval to the confirmed booking, and the same id the message webhooks carry, so a booking links straight to the messages that led to it. `null` when the channel has no conversation for this booking.",
+            "example": "164743"
+          },
+          "externalThreadId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The channel's own id for that conversation (Airbnb thread id, Booking.com conversation id, \u2026). `null` when there is none.",
+            "example": "2680544213"
+          },
+          "inquiryId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The inquiry this booking came from (`GET /v1/inquiries`), when the guest asked before booking. When an inquiry turns into a booking, `inquiry.updated` fires with `status: \"booked\"` and this reservation's id. `null` for bookings with no inquiry.",
+            "example": "25173"
           }
         }
       },
@@ -7227,6 +7279,151 @@
               "type": "string"
             },
             "description": "What Airbnb's transaction history does not carry, so it is never filled in: `taxes` (those Airbnb remits itself; pass-through tax paid to the host arrives as `Pass Through Tot` lines), `guest_paid_total`, `original_transaction_id`, `currency_conversion`, `management_fee`."
+          },
+          "syncedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "Transaction": {
+        "type": "object",
+        "description": "One row of the unified transactions & payments ledger: a payout (`isPayout: true`) or a reservation charge / refund, on any channel. `platform` is normalized \u2014 `booking` is Booking.com however the account was connected (never `booking_extranet`). For a payout, `amount` is the net the host received, `grossAmount` the guest-paid gross, and `fees` the deductions (commission, payments service fee, processing fee).",
+        "required": [
+          "transactionId",
+          "platform",
+          "isPayout",
+          "fees",
+          "payout"
+        ],
+        "properties": {
+          "transactionId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Stable id of the transaction (the underlying payment id). Upsert on it.",
+            "example": "booking_payout_5463377687_bank_transfer"
+          },
+          "platform": {
+            "type": "string",
+            "nullable": true,
+            "description": "Normalized channel: `airbnb`, `booking` (Booking.com, however connected \u2014 never `booking_extranet`), or `vrbo`.",
+            "example": "booking"
+          },
+          "type": {
+            "type": "string",
+            "nullable": true,
+            "description": "Transaction type: `Payout`, `Reservation`, `Refund`, \u2026",
+            "example": "Payout"
+          },
+          "isPayout": {
+            "type": "boolean",
+            "description": "`true` when this is money that reached the host (a payout)."
+          },
+          "status": {
+            "type": "string",
+            "nullable": true,
+            "description": "Normalized settlement status (`COMPLETED` / `UPCOMING`; the raw value passes through when it maps to neither).",
+            "example": "COMPLETED"
+          },
+          "date": {
+            "type": "string",
+            "nullable": true,
+            "description": "Transaction / payout date (the channel's display form or ISO).",
+            "example": "27 Aug 2026"
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true,
+            "example": "NOK"
+          },
+          "amount": {
+            "type": "number",
+            "nullable": true,
+            "description": "Net amount; for a payout, what the host received.",
+            "example": 18597.12
+          },
+          "grossAmount": {
+            "type": "number",
+            "nullable": true,
+            "description": "Guest-paid gross (payouts).",
+            "example": 22272
+          },
+          "fees": {
+            "type": "object",
+            "required": [
+              "commission",
+              "serviceFee",
+              "processingFee"
+            ],
+            "properties": {
+              "commission": {
+                "type": "number",
+                "nullable": true,
+                "description": "Channel commission deducted.",
+                "example": 3340.8
+              },
+              "serviceFee": {
+                "type": "number",
+                "nullable": true,
+                "description": "Payments service fee deducted.",
+                "example": 334.08
+              },
+              "processingFee": {
+                "type": "number",
+                "nullable": true
+              }
+            }
+          },
+          "payout": {
+            "type": "object",
+            "required": [
+              "payoutId",
+              "payoutDate",
+              "paidOutAmount"
+            ],
+            "properties": {
+              "payoutId": {
+                "type": "string",
+                "nullable": true,
+                "description": "Reference of the payout this row belongs to.",
+                "example": "gkvDj0Jm9ZaA6IiO"
+              },
+              "payoutDate": {
+                "type": "string",
+                "nullable": true
+              },
+              "paidOutAmount": {
+                "type": "number",
+                "nullable": true,
+                "description": "On a payout row: the net paid out to the host.",
+                "example": 18597.12
+              },
+              "bankDestination": {
+                "type": "string",
+                "nullable": true,
+                "description": "Masked destination bank account the payout was sent to (Booking.com payouts, from the statement PDF). Null on channels/rows without one.",
+                "example": "NO***********404"
+              },
+              "statementUrl": {
+                "type": "string",
+                "nullable": true,
+                "description": "Link to the channel's original payout statement PDF \u2014 the authoritative settlement record (Booking.com). Null when none."
+              }
+            }
+          },
+          "confirmationCode": {
+            "type": "string",
+            "nullable": true,
+            "example": "5463377687"
+          },
+          "reservationId": {
+            "type": "integer",
+            "nullable": true
+          },
+          "listingId": {
+            "type": "integer",
+            "nullable": true
           },
           "syncedAt": {
             "type": "string",
@@ -37294,6 +37491,184 @@
           },
           "400": {
             "description": "The state is missing, forged or expired"
+          }
+        }
+      }
+    },
+    "/v1/channels/booking/transactions": {
+      "get": {
+        "operationId": "list_booking_transactions",
+        "summary": "List Booking.com transactions (settlement ledger)",
+        "description": "The Booking.com settlement ledger for this workspace: every payout (Payments by Booking.com \u2192 bank transfer) and reservation charge, with the gross the guest paid, Booking's commission and payments service fee, and the net paid out, each tied to its reservation. Official Connectivity-API and extranet-connected accounts are returned together as one Booking.com \u2014 there is no `booking_extranet` distinction and nothing extra to request. Cursor-paginated, newest first. (For all channels at once, use `/v1/transactions`.)",
+        "tags": [
+          "Booking.com"
+        ],
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "description": "Filter by transaction type, e.g. `Payout`, `Reservation`, `Refund`.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "description": "Filter by raw status.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "is_payout",
+            "in": "query",
+            "required": false,
+            "description": "When `true`, only payout rows (money that reached the host).",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Page size (default 100, max 500).",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "description": "Opaque pagination cursor from a previous `pagination.nextCursor`.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of Booking.com transactions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Transaction"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/CursorPagination"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/transactions": {
+      "get": {
+        "operationId": "list_transactions",
+        "summary": "List transactions & payments (unified ledger)",
+        "description": "Every channel's money in one ledger: payouts that reached the host, reservation charges, refunds and adjustments, across Airbnb, Booking.com and Vrbo. Each row carries a normalized `platform` \u2014 `booking` always means Booking.com however the account was connected (official API or extranet); there is no `booking_extranet`, and `?platform=booking` matches all of them. A payout row's `amount` is the net the host received; `grossAmount` is what the guest paid and `fees` the deductions (commission, payments service fee, processing fee). Cursor-paginated, newest first.",
+        "tags": [
+          "Transactions"
+        ],
+        "parameters": [
+          {
+            "name": "platform",
+            "in": "query",
+            "required": false,
+            "description": "Filter to one channel: `airbnb`, `booking` (Booking.com, however connected), or `vrbo`. Omit for all channels.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "airbnb",
+                "booking",
+                "vrbo"
+              ]
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "description": "Filter by transaction type, e.g. `Payout`, `Reservation`, `Refund`.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "description": "Filter by raw status.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "is_payout",
+            "in": "query",
+            "required": false,
+            "description": "When `true`, only payout rows (money that reached the host).",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Page size (default 100, max 500).",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "description": "Opaque pagination cursor from a previous `pagination.nextCursor`.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of transactions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Transaction"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/CursorPagination"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }

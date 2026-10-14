@@ -49,6 +49,18 @@ module Repull
     # Local check-out time, `HH:MM` on a 24-hour clock in the property's own timezone. Pair it with `checkoutDate` to schedule the turnover. `null` when unknown.
     attr_accessor :check_out_time
 
+    # What the guest wrote with the booking — on Booking.com, the estimated arrival time and special requests. Free text. `null` when there were none.
+    attr_accessor :guest_notes
+
+    # The conversation with this guest — pass it to `GET /v1/conversations/{id}` and `/v1/conversations/{id}/messages`. It is the same conversation from inquiry through pre-approval to the confirmed booking, and the same id the message webhooks carry, so a booking links straight to the messages that led to it. `null` when the channel has no conversation for this booking.
+    attr_accessor :conversation_id
+
+    # The channel's own id for that conversation (Airbnb thread id, Booking.com conversation id, …). `null` when there is none.
+    attr_accessor :external_thread_id
+
+    # The inquiry this booking came from (`GET /v1/inquiries`), when the guest asked before booking. When an inquiry turns into a booking, `inquiry.updated` fires with `status: \"booked\"` and this reservation's id. `null` for bookings with no inquiry.
+    attr_accessor :inquiry_id
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
@@ -62,7 +74,11 @@ module Repull
         :'status' => :'status',
         :'cancellation_policy' => :'cancellationPolicy',
         :'check_in_time' => :'checkInTime',
-        :'check_out_time' => :'checkOutTime'
+        :'check_out_time' => :'checkOutTime',
+        :'guest_notes' => :'guestNotes',
+        :'conversation_id' => :'conversationId',
+        :'external_thread_id' => :'externalThreadId',
+        :'inquiry_id' => :'inquiryId'
       }
     end
 
@@ -89,7 +105,11 @@ module Repull
         :'status' => :'String',
         :'cancellation_policy' => :'String',
         :'check_in_time' => :'String',
-        :'check_out_time' => :'String'
+        :'check_out_time' => :'String',
+        :'guest_notes' => :'String',
+        :'conversation_id' => :'String',
+        :'external_thread_id' => :'String',
+        :'inquiry_id' => :'String'
       }
     end
 
@@ -98,7 +118,11 @@ module Repull
       Set.new([
         :'cancellation_policy',
         :'check_in_time',
-        :'check_out_time'
+        :'check_out_time',
+        :'guest_notes',
+        :'conversation_id',
+        :'external_thread_id',
+        :'inquiry_id'
       ])
     end
 
@@ -176,6 +200,22 @@ module Repull
 
       if attributes.key?(:'check_out_time')
         self.check_out_time = attributes[:'check_out_time']
+      end
+
+      if attributes.key?(:'guest_notes')
+        self.guest_notes = attributes[:'guest_notes']
+      end
+
+      if attributes.key?(:'conversation_id')
+        self.conversation_id = attributes[:'conversation_id']
+      end
+
+      if attributes.key?(:'external_thread_id')
+        self.external_thread_id = attributes[:'external_thread_id']
+      end
+
+      if attributes.key?(:'inquiry_id')
+        self.inquiry_id = attributes[:'inquiry_id']
       end
     end
 
@@ -329,7 +369,11 @@ module Repull
           status == o.status &&
           cancellation_policy == o.cancellation_policy &&
           check_in_time == o.check_in_time &&
-          check_out_time == o.check_out_time
+          check_out_time == o.check_out_time &&
+          guest_notes == o.guest_notes &&
+          conversation_id == o.conversation_id &&
+          external_thread_id == o.external_thread_id &&
+          inquiry_id == o.inquiry_id
     end
 
     # @see the `==` method
@@ -341,7 +385,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, uid, channel, listing_id, customer_id, checkin_date, checkout_date, status, cancellation_policy, check_in_time, check_out_time].hash
+      [id, uid, channel, listing_id, customer_id, checkin_date, checkout_date, status, cancellation_policy, check_in_time, check_out_time, guest_notes, conversation_id, external_thread_id, inquiry_id].hash
     end
 
     # Builds the object from hash

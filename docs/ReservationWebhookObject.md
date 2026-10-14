@@ -15,6 +15,10 @@
 | **cancellation_policy** | **String** | Cancellation policy the booking was made under, **verbatim from the source channel** — not normalised, because the codes do not mean the same thing across channels.  - Airbnb, Vrbo, direct and owner bookings carry a named code: &#x60;flexible&#x60;, &#x60;moderate&#x60;, &#x60;firm_14&#x60;, &#x60;strict_14_with_grace_period&#x60;, &#x60;better_strict_with_grace_period&#x60;, &#x60;super_strict_30&#x60;, &#x60;super_strict_60&#x60;, &#x60;tiered_pricing_non_refundable&#x60;, &#x60;long_term_flexible&#x60;, &#x60;flexible_new&#x60;. - **Booking.com carries its numeric policy id as a string** (&#x60;\&quot;1\&quot;&#x60;, &#x60;\&quot;74\&quot;&#x60;, &#x60;\&quot;121\&quot;&#x60;). It is not self-describing — resolve it against the property&#39;s policy set on Booking.com.  &#x60;null&#x60; when the channel supplied none (iCal-imported bookings, some legacy direct rows). | [optional] |
 | **check_in_time** | **String** | Local check-in time, &#x60;HH:MM&#x60; on a 24-hour clock in the **property&#39;s own timezone** — not UTC, and not the subscriber&#39;s. Usually inherited from the listing policy, but per-reservation where the channel or an agreed early check-in overrides it. &#x60;null&#x60; when unknown. | [optional] |
 | **check_out_time** | **String** | Local check-out time, &#x60;HH:MM&#x60; on a 24-hour clock in the property&#39;s own timezone. Pair it with &#x60;checkoutDate&#x60; to schedule the turnover. &#x60;null&#x60; when unknown. | [optional] |
+| **guest_notes** | **String** | What the guest wrote with the booking — on Booking.com, the estimated arrival time and special requests. Free text. &#x60;null&#x60; when there were none. | [optional] |
+| **conversation_id** | **String** | The conversation with this guest — pass it to &#x60;GET /v1/conversations/{id}&#x60; and &#x60;/v1/conversations/{id}/messages&#x60;. It is the same conversation from inquiry through pre-approval to the confirmed booking, and the same id the message webhooks carry, so a booking links straight to the messages that led to it. &#x60;null&#x60; when the channel has no conversation for this booking. | [optional] |
+| **external_thread_id** | **String** | The channel&#39;s own id for that conversation (Airbnb thread id, Booking.com conversation id, …). &#x60;null&#x60; when there is none. | [optional] |
+| **inquiry_id** | **String** | The inquiry this booking came from (&#x60;GET /v1/inquiries&#x60;), when the guest asked before booking. When an inquiry turns into a booking, &#x60;inquiry.updated&#x60; fires with &#x60;status: \&quot;booked\&quot;&#x60; and this reservation&#39;s id. &#x60;null&#x60; for bookings with no inquiry. | [optional] |
 
 ## Example
 
@@ -32,7 +36,11 @@ instance = Repull::ReservationWebhookObject.new(
   status: confirmed,
   cancellation_policy: firm_14,
   check_in_time: 16:00,
-  check_out_time: 10:00
+  check_out_time: 10:00,
+  guest_notes: Approximate time of arrival: between 15:00 and 16:00,
+  conversation_id: 164743,
+  external_thread_id: 2680544213,
+  inquiry_id: 25173
 )
 ```
 

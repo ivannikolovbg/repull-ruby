@@ -19,6 +19,7 @@ All URIs are relative to *https://api.repull.dev*
 | [**list_booking_property_rooms**](BookingComApi.md#list_booking_property_rooms) | **GET** /v1/channels/booking/properties/{id}/rooms | List Booking.com rooms + rate-plan ids for a listing |
 | [**list_booking_reservations**](BookingComApi.md#list_booking_reservations) | **GET** /v1/channels/booking/reservations | List Booking.com reservations |
 | [**list_booking_reviews**](BookingComApi.md#list_booking_reviews) | **GET** /v1/channels/booking/reviews | List Booking.com reviews |
+| [**list_booking_transactions**](BookingComApi.md#list_booking_transactions) | **GET** /v1/channels/booking/transactions | List Booking.com transactions (settlement ledger) |
 | [**list_booking_webhooks**](BookingComApi.md#list_booking_webhooks) | **GET** /v1/channels/booking/webhooks | List Booking.com webhook subscriptions |
 | [**map_booking_room**](BookingComApi.md#map_booking_room) | **POST** /v1/channels/booking/listings/map | Map a Booking.com room to a Repull listing |
 | [**reply_booking_review**](BookingComApi.md#reply_booking_review) | **POST** /v1/channels/booking/reviews | Reply to Booking.com review |
@@ -1090,6 +1091,85 @@ end
 ### Return type
 
 nil (empty response body)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## list_booking_transactions
+
+> <ListBookingTransactions200Response> list_booking_transactions(opts)
+
+List Booking.com transactions (settlement ledger)
+
+The Booking.com settlement ledger for this workspace: every payout (Payments by Booking.com → bank transfer) and reservation charge, with the gross the guest paid, Booking's commission and payments service fee, and the net paid out, each tied to its reservation. Official Connectivity-API and extranet-connected accounts are returned together as one Booking.com — there is no `booking_extranet` distinction and nothing extra to request. Cursor-paginated, newest first. (For all channels at once, use `/v1/transactions`.)
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::BookingComApi.new
+opts = {
+  type: 'type_example', # String | Filter by transaction type, e.g. `Payout`, `Reservation`, `Refund`.
+  status: 'status_example', # String | Filter by raw status.
+  is_payout: true, # Boolean | When `true`, only payout rows (money that reached the host).
+  limit: 56, # Integer | Page size (default 100, max 500).
+  cursor: 'cursor_example' # String | Opaque pagination cursor from a previous `pagination.nextCursor`.
+}
+
+begin
+  # List Booking.com transactions (settlement ledger)
+  result = api_instance.list_booking_transactions(opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling BookingComApi->list_booking_transactions: #{e}"
+end
+```
+
+#### Using the list_booking_transactions_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<ListBookingTransactions200Response>, Integer, Hash)> list_booking_transactions_with_http_info(opts)
+
+```ruby
+begin
+  # List Booking.com transactions (settlement ledger)
+  data, status_code, headers = api_instance.list_booking_transactions_with_http_info(opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <ListBookingTransactions200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling BookingComApi->list_booking_transactions_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **type** | **String** | Filter by transaction type, e.g. &#x60;Payout&#x60;, &#x60;Reservation&#x60;, &#x60;Refund&#x60;. | [optional] |
+| **status** | **String** | Filter by raw status. | [optional] |
+| **is_payout** | **Boolean** | When &#x60;true&#x60;, only payout rows (money that reached the host). | [optional] |
+| **limit** | **Integer** | Page size (default 100, max 500). | [optional] |
+| **cursor** | **String** | Opaque pagination cursor from a previous &#x60;pagination.nextCursor&#x60;. | [optional] |
+
+### Return type
+
+[**ListBookingTransactions200Response**](ListBookingTransactions200Response.md)
 
 ### Authorization
 

@@ -1047,6 +1047,86 @@ module Repull
       return data, status_code, headers
     end
 
+    # List Booking.com transactions (settlement ledger)
+    # The Booking.com settlement ledger for this workspace: every payout (Payments by Booking.com → bank transfer) and reservation charge, with the gross the guest paid, Booking's commission and payments service fee, and the net paid out, each tied to its reservation. Official Connectivity-API and extranet-connected accounts are returned together as one Booking.com — there is no `booking_extranet` distinction and nothing extra to request. Cursor-paginated, newest first. (For all channels at once, use `/v1/transactions`.)
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :type Filter by transaction type, e.g. &#x60;Payout&#x60;, &#x60;Reservation&#x60;, &#x60;Refund&#x60;.
+    # @option opts [String] :status Filter by raw status.
+    # @option opts [Boolean] :is_payout When &#x60;true&#x60;, only payout rows (money that reached the host).
+    # @option opts [Integer] :limit Page size (default 100, max 500).
+    # @option opts [String] :cursor Opaque pagination cursor from a previous &#x60;pagination.nextCursor&#x60;.
+    # @return [ListBookingTransactions200Response]
+    def list_booking_transactions(opts = {})
+      data, _status_code, _headers = list_booking_transactions_with_http_info(opts)
+      data
+    end
+
+    # List Booking.com transactions (settlement ledger)
+    # The Booking.com settlement ledger for this workspace: every payout (Payments by Booking.com → bank transfer) and reservation charge, with the gross the guest paid, Booking&#39;s commission and payments service fee, and the net paid out, each tied to its reservation. Official Connectivity-API and extranet-connected accounts are returned together as one Booking.com — there is no &#x60;booking_extranet&#x60; distinction and nothing extra to request. Cursor-paginated, newest first. (For all channels at once, use &#x60;/v1/transactions&#x60;.)
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :type Filter by transaction type, e.g. &#x60;Payout&#x60;, &#x60;Reservation&#x60;, &#x60;Refund&#x60;.
+    # @option opts [String] :status Filter by raw status.
+    # @option opts [Boolean] :is_payout When &#x60;true&#x60;, only payout rows (money that reached the host).
+    # @option opts [Integer] :limit Page size (default 100, max 500).
+    # @option opts [String] :cursor Opaque pagination cursor from a previous &#x60;pagination.nextCursor&#x60;.
+    # @return [Array<(ListBookingTransactions200Response, Integer, Hash)>] ListBookingTransactions200Response data, response status code and response headers
+    def list_booking_transactions_with_http_info(opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: BookingComApi.list_booking_transactions ...'
+      end
+      if @api_client.config.client_side_validation && !opts[:'limit'].nil? && opts[:'limit'] > 500
+        fail ArgumentError, 'invalid value for "opts[:"limit"]" when calling BookingComApi.list_booking_transactions, must be smaller than or equal to 500.'
+      end
+
+      if @api_client.config.client_side_validation && !opts[:'limit'].nil? && opts[:'limit'] < 1
+        fail ArgumentError, 'invalid value for "opts[:"limit"]" when calling BookingComApi.list_booking_transactions, must be greater than or equal to 1.'
+      end
+
+      # resource path
+      local_var_path = '/v1/channels/booking/transactions'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+      query_params[:'type'] = opts[:'type'] if !opts[:'type'].nil?
+      query_params[:'status'] = opts[:'status'] if !opts[:'status'].nil?
+      query_params[:'is_payout'] = opts[:'is_payout'] if !opts[:'is_payout'].nil?
+      query_params[:'limit'] = opts[:'limit'] if !opts[:'limit'].nil?
+      query_params[:'cursor'] = opts[:'cursor'] if !opts[:'cursor'].nil?
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'ListBookingTransactions200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"BookingComApi.list_booking_transactions",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: BookingComApi#list_booking_transactions\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # List Booking.com webhook subscriptions
     # **Not available through the API — always returns `403 forbidden`.** Booking.com notification subscriptions belong to the Repull platform account that every workspace shares: they are per notification type, not per property, so reading or changing them would affect every workspace. Booking.com events for your own properties are delivered through Repull webhooks — subscribe with `POST /v1/webhooks`.
     # @param [Hash] opts the optional parameters
