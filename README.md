@@ -118,4 +118,4 @@ v0.1.0 — alpha. API surface may shift before v1.0. RubyGems listing pending. F
 
 ---
 
-Powered by [Repull](https://repull.dev). AI features powered by [Vanio AI](https://vanio.ai).
+Powered by [Repull](https://repull.dev).
