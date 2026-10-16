@@ -10,6 +10,7 @@
 | **description** | **String** | Longer channel-supplied description. Only present when it differs from &#x60;name&#x60;. | [optional] |
 | **quantity** | **Float** | Units billed, when the channel reports a quantity (Booking.com add-ons). | [optional] |
 | **vat** | **Float** | VAT charged on top of this line, when the channel splits it out separately. | [optional] |
+| **promotion_type** | **String** | Discount lines only: the listing promotion that produced the discount, named as in &#x60;GET /v1/listings/{id}/promotions&#x60; (Airbnb reports each applied promotion as its own line). &#x60;custom&#x60; is an Airbnb Custom promotion. | [optional] |
 
 ## Example
 
@@ -22,7 +23,8 @@ instance = Repull::ReservationMoneyLine.new(
   amount: 126,
   description: Extra guest fee for 1 additional guest(s),
   quantity: 1,
-  vat: 0
+  vat: 0,
+  promotion_type: null
 )
 ```
 

@@ -34,6 +34,9 @@ module Repull
     # VAT charged on top of this line, when the channel splits it out separately.
     attr_accessor :vat
 
+    # Discount lines only: the listing promotion that produced the discount, named as in `GET /v1/listings/{id}/promotions` (Airbnb reports each applied promotion as its own line). `custom` is an Airbnb Custom promotion.
+    attr_accessor :promotion_type
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
@@ -42,7 +45,8 @@ module Repull
         :'amount' => :'amount',
         :'description' => :'description',
         :'quantity' => :'quantity',
-        :'vat' => :'vat'
+        :'vat' => :'vat',
+        :'promotion_type' => :'promotionType'
       }
     end
 
@@ -64,7 +68,8 @@ module Repull
         :'amount' => :'Float',
         :'description' => :'String',
         :'quantity' => :'Float',
-        :'vat' => :'Float'
+        :'vat' => :'Float',
+        :'promotion_type' => :'String'
       }
     end
 
@@ -115,6 +120,10 @@ module Repull
       if attributes.key?(:'vat')
         self.vat = attributes[:'vat']
       end
+
+      if attributes.key?(:'promotion_type')
+        self.promotion_type = attributes[:'promotion_type']
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -157,7 +166,8 @@ module Repull
           amount == o.amount &&
           description == o.description &&
           quantity == o.quantity &&
-          vat == o.vat
+          vat == o.vat &&
+          promotion_type == o.promotion_type
     end
 
     # @see the `==` method
@@ -169,7 +179,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [name, type, amount, description, quantity, vat].hash
+      [name, type, amount, description, quantity, vat, promotion_type].hash
     end
 
     # Builds the object from hash

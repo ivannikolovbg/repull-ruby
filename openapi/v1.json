@@ -119,6 +119,10 @@
       "description": "AI-powered operations \u2014 guest responses, intent classification, listing generation, pricing suggestions"
     },
     {
+      "name": "Promotions",
+      "description": "Airbnb and Booking.com promotions on a listing, in one model: Airbnb\u2019s discount programmes (top-rated guests, mobile-only, new listing) and Booking.com deals, mobile and country rates and seasonal campaigns. Read the catalog first \u2014 it says, per channel, which types the listing can use and which fields each supports."
+    },
+    {
       "name": "Pricing",
       "description": "Atlas-powered pricing recommendations and per-listing strategy. Recommendations are pre-computed by the Atlas pricing model from comp data, demand signals, and event calendars; this surface lets you read them, apply or decline them, and tune the strategy that constrains the model."
     },
@@ -448,6 +452,10 @@
             "type": "number",
             "description": "VAT charged on top of this line, when the channel splits it out separately.",
             "example": 0
+          },
+          "promotionType": {
+            "type": "string",
+            "description": "Discount lines only: the listing promotion that produced the discount, named as in `GET /v1/listings/{id}/promotions` (Airbnb reports each applied promotion as its own line). `custom` is an Airbnb Custom promotion."
           }
         }
       },
@@ -3646,7 +3654,7 @@
       },
       "ListingUpdatedPayload": {
         "type": "object",
-        "description": "Payload for `listing.updated`. Something about the listing changed on the channel \u2014 content, pricing, booking settings, house rules, availability or sync settings.",
+        "description": "Payload for `listing.updated`. Something about the listing changed on the channel \u2014 content, pricing, booking settings, house rules, availability, sync settings or promotions.",
         "required": [
           "object"
         ],
@@ -3656,7 +3664,7 @@
           },
           "area": {
             "type": "string",
-            "description": "Which part moved. Airbnb sends one notification per area rather than a diff, so this is the signal for what to re-read.",
+            "description": "Which part moved. Airbnb sends one notification per area rather than a diff, so this is the signal for what to re-read. `promotions`: the listing\u2019s Airbnb or Booking.com promotions changed \u2014 re-read `GET /v1/listings/{id}/promotions`.",
             "example": "content"
           },
           "previousAttributes": {
@@ -9689,6 +9697,624 @@
           "generatedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "Promotion": {
+        "type": "object",
+        "description": "One promotion on one listing. Airbnb sets the discount for its promotions (`discount.setBy: channel`); Booking.com promotions belong to the property and list the rooms they cover in `appliesTo`.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Repull id of this promotion on this listing (use it in `/promotions/{promotionId}`)."
+          },
+          "listingId": {
+            "type": "string"
+          },
+          "channel": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/PromotionType"
+          },
+          "channelType": {
+            "type": "string",
+            "description": "The channel\u2019s own name, e.g. `HIGH_RATED_GUEST_DISCOUNT`, `basic`, `campaign_getaway`."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "The channel\u2019s promotion id. Booking.com may issue a new one when a promotion is changed; the Repull `id` stays the same."
+          },
+          "channelPropertyId": {
+            "type": "string",
+            "description": "Airbnb listing id, or the Booking.com property (hotel id) the promotion belongs to."
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "description": "`eligible`: the listing qualifies but is not enrolled (Airbnb new listing promotion). `inactive`: switched off; Booking.com keeps deactivated promotions."
+          },
+          "managedBy": {
+            "type": "string",
+            "description": "`channel`: created in the channel\u2019s own tools and read-only here (Airbnb Custom promotions)."
+          },
+          "managedKey": {
+            "type": "string",
+            "nullable": true,
+            "description": "Set when it comes from the listing\u2019s weekly or monthly discount in its pricing settings \u2014 change those instead."
+          },
+          "editable": {
+            "type": "boolean"
+          },
+          "removable": {
+            "type": "boolean"
+          },
+          "discount": {
+            "type": "object",
+            "properties": {
+              "percent": {
+                "type": "number",
+                "nullable": true
+              },
+              "setBy": {
+                "type": "string",
+                "enum": [
+                  "host",
+                  "channel"
+                ]
+              }
+            }
+          },
+          "rules": {
+            "$ref": "#/components/schemas/PromotionRules"
+          },
+          "appliesTo": {
+            "type": "object",
+            "nullable": true,
+            "description": "Booking.com only. An empty `rooms` list means every room on the property.",
+            "properties": {
+              "rooms": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "ratePlans": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "usage": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "bookings": {
+                "type": "integer"
+              },
+              "roomNights": {
+                "type": "integer"
+              },
+              "cancellations": {
+                "type": "integer"
+              },
+              "revenue": {
+                "type": "object",
+                "properties": {
+                  "amount": {
+                    "type": "number"
+                  },
+                  "currency": {
+                    "type": "string"
+                  }
+                }
+              },
+              "lastAppliedAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Airbnb Custom promotion: when it was last applied to a booking."
+              },
+              "lastAppliedAmount": {
+                "type": "object",
+                "properties": {
+                  "amount": {
+                    "type": "number"
+                  },
+                  "currency": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "syncedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PromotionType": {
+        "type": "string",
+        "enum": [
+          "new_listing",
+          "mobile",
+          "top_rated_guests",
+          "deal",
+          "last_minute",
+          "early_booker",
+          "country",
+          "campaign",
+          "custom"
+        ],
+        "description": "The same idea on both channels shares a type: `mobile` is Airbnb\u2019s mobile-only discount or Booking.com\u2019s mobile rate; `new_listing` is Airbnb\u2019s new listing promotion or Booking.com\u2019s new property deal. `top_rated_guests` is Airbnb only; the deal, last-minute, early-booker, country and campaign types are Booking.com only; `custom` (Airbnb Custom promotion) is read-only."
+      },
+      "PromotionRules": {
+        "type": "object",
+        "description": "Which rules a type supports depends on the channel \u2014 see the catalog.",
+        "properties": {
+          "campaign": {
+            "type": "string",
+            "description": "Booking.com campaigns: `black_friday`, `getaway`, `late_escape`, `early_year`."
+          },
+          "audience": {
+            "type": "string",
+            "description": "`public`, `subscribers` (members only, at least 10%), `app`, `all` (app and mobile web), or a country id from the catalog (e.g. `united_kingdom_pos`)."
+          },
+          "stayWindow": {
+            "type": "object",
+            "properties": {
+              "start": {
+                "type": "string",
+                "format": "date"
+              },
+              "end": {
+                "type": "string",
+                "format": "date"
+              },
+              "weekdays": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "mon",
+                    "tue",
+                    "wed",
+                    "thu",
+                    "fri",
+                    "sat",
+                    "sun"
+                  ]
+                }
+              },
+              "excludedDates": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "date"
+                }
+              },
+              "additionalDates": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "date"
+                }
+              }
+            }
+          },
+          "bookingWindow": {
+            "type": "object",
+            "properties": {
+              "start": {
+                "type": "string",
+                "format": "date"
+              },
+              "end": {
+                "type": "string",
+                "format": "date"
+              },
+              "startHour": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 23
+              },
+              "endHour": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 23
+              }
+            }
+          },
+          "lastMinute": {
+            "type": "object",
+            "properties": {
+              "unit": {
+                "type": "string",
+                "enum": [
+                  "day",
+                  "hour"
+                ]
+              },
+              "value": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1000
+              }
+            }
+          },
+          "earlyBookerDays": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 500
+          },
+          "minNights": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 30
+          },
+          "nonRefundable": {
+            "type": "boolean"
+          },
+          "blackoutDates": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Airbnb \u2014 not yet available."
+          },
+          "blackoutDatesQuota": {
+            "type": "object",
+            "properties": {
+              "used": {
+                "type": "integer"
+              },
+              "available": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "PromotionInput": {
+        "type": "object",
+        "required": [
+          "channel",
+          "type"
+        ],
+        "properties": {
+          "channel": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/PromotionType"
+          },
+          "name": {
+            "type": "string",
+            "description": "Booking.com only; only you see it."
+          },
+          "discountPercent": {
+            "type": "integer",
+            "description": "Booking.com only \u2014 Airbnb sets its own rates. Limits per type are in the catalog."
+          },
+          "rules": {
+            "$ref": "#/components/schemas/PromotionRules"
+          }
+        }
+      },
+      "PromotionCreateRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PromotionInput"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "hotelId": {
+                "type": "string",
+                "description": "Booking.com: required when the listing has a room on more than one property (see `properties` in the catalog)."
+              }
+            }
+          }
+        ]
+      },
+      "PromotionUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "discountPercent": {
+            "type": "integer"
+          },
+          "rules": {
+            "$ref": "#/components/schemas/PromotionRules"
+          },
+          "confirmShared": {
+            "type": "boolean",
+            "description": "Required when the promotion also covers other listings\u2019 rooms \u2014 the change applies to them too."
+          }
+        }
+      },
+      "PromotionCatalogField": {
+        "type": "object",
+        "properties": {
+          "supported": {
+            "type": "boolean"
+          },
+          "comingSoon": {
+            "type": "boolean",
+            "description": "Shown but not yet usable on this channel."
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "min": {
+            "type": "number"
+          },
+          "max": {
+            "type": "number"
+          },
+          "fixed": {
+            "type": "number",
+            "description": "Value the channel sets (e.g. Airbnb\u2019s 15% top-rated-guests discount)."
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "PromotionCatalogEntry": {
+        "type": "object",
+        "properties": {
+          "channel": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/PromotionType"
+          },
+          "channelType": {
+            "type": "string"
+          },
+          "campaign": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "description": "One or two sentences to show hosts."
+          },
+          "isNew": {
+            "type": "boolean",
+            "description": "Newly available \u2014 show a \u201cNew\u201d badge."
+          },
+          "available": {
+            "type": "boolean"
+          },
+          "unavailableReason": {
+            "type": "string"
+          },
+          "single": {
+            "type": "boolean",
+            "description": "Only one at a time (Airbnb types; Booking.com mobile and country rates per property)."
+          },
+          "fields": {
+            "type": "object",
+            "description": "Every field, supported or not, so a UI can grey out what a type does not take.",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/PromotionCatalogField"
+            }
+          }
+        }
+      },
+      "PromotionCatalog": {
+        "type": "object",
+        "properties": {
+          "listingId": {
+            "type": "string"
+          },
+          "channels": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "channel": {
+                  "type": "string",
+                  "enum": [
+                    "airbnb",
+                    "booking"
+                  ]
+                },
+                "connected": {
+                  "type": "boolean"
+                },
+                "reason": {
+                  "type": "string"
+                },
+                "properties": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Booking.com properties the listing has a room on."
+                },
+                "entries": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PromotionCatalogEntry"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "PromotionListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Promotion"
+            }
+          },
+          "syncedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the channels were last read for this listing."
+          },
+          "syncError": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "PromotionResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Promotion"
+          }
+        }
+      },
+      "PromotionDeleteResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "removed": {
+                "type": "boolean"
+              },
+              "promotionId": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "PromotionCatalogResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PromotionCatalog"
+          }
+        }
+      },
+      "PromotionRefreshResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Promotion"
+            }
+          },
+          "syncedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "PromotionBulkRequest": {
+        "type": "object",
+        "required": [
+          "listingIds",
+          "action",
+          "promotion"
+        ],
+        "properties": {
+          "listingIds": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "minItems": 1,
+            "maxItems": 100
+          },
+          "action": {
+            "type": "string"
+          },
+          "promotion": {
+            "$ref": "#/components/schemas/PromotionInput"
+          }
+        }
+      },
+      "PromotionBulkResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "listingId": {
+                  "type": "string"
+                },
+                "ok": {
+                  "type": "boolean"
+                },
+                "promotion": {
+                  "$ref": "#/components/schemas/Promotion"
+                },
+                "error": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    },
+                    "field": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "summary": {
+            "type": "object",
+            "properties": {
+              "succeeded": {
+                "type": "integer"
+              },
+              "failed": {
+                "type": "integer"
+              }
+            }
           }
         }
       },
@@ -38436,6 +39062,439 @@
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/v1/listings/promotions/bulk": {
+      "post": {
+        "operationId": "bulk_listing_promotions",
+        "summary": "Add or remove a promotion on many listings",
+        "description": "Applies one promotion to up to 100 listings \u2014 `add` it, or `remove` the listing's running promotion of that channel and type. Each listing gets its own result with the channel's reason when refused, so one refusal doesn't stop the rest. Returns `403 listing_inactive` before doing anything when any listing is inactive.",
+        "tags": [
+          "Promotions"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromotionBulkRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "A result per listing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromotionBulkResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          }
+        }
+      }
+    },
+    "/v1/listings/{id}/promotions": {
+      "get": {
+        "operationId": "list_listing_promotions",
+        "summary": "List a listing's promotions",
+        "description": "Airbnb and Booking.com promotions on the listing, in one model. Includes Airbnb promotions running or available (the new listing promotion shows as `eligible` when the listing qualifies), Airbnb Custom promotions seen on bookings (read-only \u2014 they override your prices on Airbnb), and Booking.com promotions covering the listing's room, including deactivated ones.\n\nPass `refresh=true` to re-read the channels first; otherwise the stored copy is returned (kept current by Airbnb's notifications and a sync every 30 minutes).\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "tags": [
+          "Promotions"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Listing ID"
+          },
+          {
+            "name": "refresh",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Re-read Airbnb and Booking.com before answering."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The listing's promotions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromotionListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "post": {
+        "operationId": "create_listing_promotion",
+        "summary": "Add a promotion to a listing",
+        "description": "Adds an Airbnb or Booking.com promotion. Read `GET /v1/listings/{id}/promotions/catalog` first for the types and fields the listing's channels accept.\n\n**Airbnb:** send `channel` and `type` only (`top_rated_guests`, `mobile`, `new_listing`) \u2014 Airbnb sets the discount. **Booking.com:** a listing's promotion covers that listing's room; send `discountPercent` and the rules the type takes, and `hotelId` when the listing is on several properties.\n\nA request a channel can't take is refused with `422` and a `promotion_*` code; the message names the channel and the field and says what to do, and `channel` / `field` are set. Booking.com writes return once Booking.com shows the change (it lags its own writes by a few seconds).\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "tags": [
+          "Promotions"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Listing ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromotionCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The new promotion",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromotionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "502": {
+            "description": "The channel didn't answer"
+          }
+        }
+      }
+    },
+    "/v1/listings/{id}/promotions/catalog": {
+      "get": {
+        "operationId": "get_listing_promotion_catalog",
+        "summary": "Promotion types a listing can use",
+        "description": "Per channel: whether the listing is connected, and each promotion type with a short description for hosts, whether it is new, whether it is available to this listing (and why not), and every field \u2014 supported or not \u2014 with its limits and any value the channel fixes. Booking.com's types and limits come from the property itself; seasonal campaigns appear while Booking.com runs them.\n\nAirbnb asks partners to show newly available discounts with a \u201cNew\u201d badge and to grey out fields a discount does not support rather than hide them; `isNew` and `fields` carry what that needs.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "tags": [
+          "Promotions"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Listing ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The catalog",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromotionCatalogResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/v1/listings/{id}/promotions/refresh": {
+      "post": {
+        "operationId": "refresh_listing_promotions",
+        "summary": "Re-read a listing's promotions now",
+        "description": "Reads the listing's promotions from Airbnb and Booking.com and returns them. Booking.com promotions belong to the property, so the property's other listings are refreshed too. `errors` lists any channel that could not be read.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "tags": [
+          "Promotions"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Listing ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The listing's promotions after the read",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromotionRefreshResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/v1/listings/{id}/promotions/{promotionId}": {
+      "get": {
+        "operationId": "get_listing_promotion",
+        "summary": "Get one promotion",
+        "description": "One promotion on the listing.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "tags": [
+          "Promotions"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Listing ID"
+          },
+          {
+            "name": "promotionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Promotion ID (from the list)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The promotion",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromotionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "update_listing_promotion",
+        "summary": "Change a promotion",
+        "description": "Booking.com promotions only \u2014 Airbnb's have nothing to change. `rules`, when sent, replaces the promotion's rules whole. A promotion that also covers other listings' rooms changes for them too, so it needs `confirmShared: true` (otherwise `409 promotion_shared_promotion`). Promotions that come from the listing's weekly or monthly discount are changed in its pricing settings.\n\nA request a channel can't take is refused with `422` and a `promotion_*` code; the message names the channel and the field and says what to do, and `channel` / `field` are set. Booking.com writes return once Booking.com shows the change (it lags its own writes by a few seconds).\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "tags": [
+          "Promotions"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Listing ID"
+          },
+          {
+            "name": "promotionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Promotion ID (from the list)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromotionUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The changed promotion",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromotionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "502": {
+            "description": "The channel didn't answer"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "delete_listing_promotion",
+        "summary": "Remove a promotion from a listing",
+        "description": "Airbnb: ends the listing's enrolment. Booking.com: takes the listing's room off the promotion \u2014 it keeps running for any other rooms it covers, and is deactivated when none are left. Airbnb Custom promotions can only be ended in Airbnb.\n\nA request a channel can't take is refused with `422` and a `promotion_*` code; the message names the channel and the field and says what to do, and `channel` / `field` are set. Booking.com writes return once Booking.com shows the change (it lags its own writes by a few seconds).\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "tags": [
+          "Promotions"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Listing ID"
+          },
+          {
+            "name": "promotionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Promotion ID (from the list)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Removed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromotionDeleteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "502": {
+            "description": "The channel didn't answer"
           }
         }
       }

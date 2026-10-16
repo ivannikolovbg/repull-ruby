@@ -2,6 +2,13 @@
 
 All notable changes to the `repull` gem are documented here.
 
+## [0.2.34] - 2026-10-16
+
+### Added
+- Listing promotions — Airbnb and Booking.com in one model: `Repull::PromotionsApi` (`list_listing_promotions`, `create_listing_promotion`, `get_listing_promotion`, `update_listing_promotion`, `delete_listing_promotion`, `refresh_listing_promotions`, `get_listing_promotion_catalog`, `bulk_listing_promotions`). Guide: https://repull.dev/docs/promotions
+- `listing.updated` area `promotions`.
+- `ReservationMoneyLine#promotion_type` on discount lines produced by an Airbnb promotion.
+
 ## [0.2.33] - 2026-10-16
 
 ### Added

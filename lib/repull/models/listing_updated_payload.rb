@@ -14,11 +14,11 @@ require 'date'
 require 'time'
 
 module Repull
-  # Payload for `listing.updated`. Something about the listing changed on the channel — content, pricing, booking settings, house rules, availability or sync settings.
+  # Payload for `listing.updated`. Something about the listing changed on the channel — content, pricing, booking settings, house rules, availability, sync settings or promotions.
   class ListingUpdatedPayload < ApiModelBase
     attr_accessor :object
 
-    # Which part moved. Airbnb sends one notification per area rather than a diff, so this is the signal for what to re-read.
+    # Which part moved. Airbnb sends one notification per area rather than a diff, so this is the signal for what to re-read. `promotions`: the listing’s Airbnb or Booking.com promotions changed — re-read `GET /v1/listings/{id}/promotions`.
     attr_accessor :area
 
     # Fields that changed and their prior values, when the source reports them.
