@@ -163,6 +163,83 @@ module Repull
       return data, status_code, headers
     end
 
+    # List a connection's imports
+    # The import runs of one connected account, newest first: the first sync after connecting, a room or unit mapped later, a reconnect, a re-sync. Each run says where it stands (`running`, `completed`, `failed`), its stages and what it imported.  To know when an account's first sync is done, wait for the `account.import.completed` webhook, or poll this endpoint (or `GET /v1/connect`, whose connections carry their latest `import`) until the newest run is no longer `running`.  Auth: a Repull API key, or a Connect session token (`sessionId`).
+    # @param id [String] Connection handle &#x60;{provider}:{externalAccountId}&#x60;, e.g. &#x60;booking_extranet:36&#x60;, &#x60;vrbo:12&#x60;, &#x60;airbnb:1234567&#x60;, &#x60;hostaway:27434&#x60; — the &#x60;provider&#x60; and &#x60;externalAccountId&#x60; of a connection on &#x60;GET /v1/connect&#x60;, or the account of an &#x60;account.*&#x60; webhook.
+    # @param [Hash] opts the optional parameters
+    # @option opts [Integer] :limit How many runs to return, newest first. (default to 20)
+    # @option opts [String] :session_id The Connect session ID (capability token).
+    # @return [ListConnectionImports200Response]
+    def list_connection_imports(id, opts = {})
+      data, _status_code, _headers = list_connection_imports_with_http_info(id, opts)
+      data
+    end
+
+    # List a connection&#39;s imports
+    # The import runs of one connected account, newest first: the first sync after connecting, a room or unit mapped later, a reconnect, a re-sync. Each run says where it stands (&#x60;running&#x60;, &#x60;completed&#x60;, &#x60;failed&#x60;), its stages and what it imported.  To know when an account&#39;s first sync is done, wait for the &#x60;account.import.completed&#x60; webhook, or poll this endpoint (or &#x60;GET /v1/connect&#x60;, whose connections carry their latest &#x60;import&#x60;) until the newest run is no longer &#x60;running&#x60;.  Auth: a Repull API key, or a Connect session token (&#x60;sessionId&#x60;).
+    # @param id [String] Connection handle &#x60;{provider}:{externalAccountId}&#x60;, e.g. &#x60;booking_extranet:36&#x60;, &#x60;vrbo:12&#x60;, &#x60;airbnb:1234567&#x60;, &#x60;hostaway:27434&#x60; — the &#x60;provider&#x60; and &#x60;externalAccountId&#x60; of a connection on &#x60;GET /v1/connect&#x60;, or the account of an &#x60;account.*&#x60; webhook.
+    # @param [Hash] opts the optional parameters
+    # @option opts [Integer] :limit How many runs to return, newest first. (default to 20)
+    # @option opts [String] :session_id The Connect session ID (capability token).
+    # @return [Array<(ListConnectionImports200Response, Integer, Hash)>] ListConnectionImports200Response data, response status code and response headers
+    def list_connection_imports_with_http_info(id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ConnectionsApi.list_connection_imports ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling ConnectionsApi.list_connection_imports"
+      end
+      if @api_client.config.client_side_validation && !opts[:'limit'].nil? && opts[:'limit'] > 100
+        fail ArgumentError, 'invalid value for "opts[:"limit"]" when calling ConnectionsApi.list_connection_imports, must be smaller than or equal to 100.'
+      end
+
+      if @api_client.config.client_side_validation && !opts[:'limit'].nil? && opts[:'limit'] < 1
+        fail ArgumentError, 'invalid value for "opts[:"limit"]" when calling ConnectionsApi.list_connection_imports, must be greater than or equal to 1.'
+      end
+
+      # resource path
+      local_var_path = '/v1/connections/{id}/imports'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+      query_params[:'limit'] = opts[:'limit'] if !opts[:'limit'].nil?
+      query_params[:'sessionId'] = opts[:'session_id'] if !opts[:'session_id'].nil?
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'ListConnectionImports200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"ConnectionsApi.list_connection_imports",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ConnectionsApi#list_connection_imports\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # List a connection's mappable units
     # The units of a connected account with their current listing, a safe suggestion, and the workspace's listing options. `status: ready` with no units means the account has no properties.  Auth: a Repull API key, or a Connect session token (`sessionId`) while the hosted flow is mapping.  `listing_options` carries only the listings the units already point at (mapped or suggested); `listing_options_total` says how many the workspace has. Search the rest with `GET /v1/connections/{id}/listing-options?q=`.
     # @param id [String] Connection handle &#x60;{channel}:{externalAccountId}&#x60;, e.g. &#x60;vrbo:12&#x60; or &#x60;booking_extranet:36&#x60;.

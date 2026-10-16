@@ -16,6 +16,9 @@ Repull::WebhookEvent.openapi_one_of
 # [
 #   :'AccountCreatedEvent',
 #   :'AccountDisconnectedEvent',
+#   :'AccountImportCompletedEvent',
+#   :'AccountImportFailedEvent',
+#   :'AccountImportStartedEvent',
 #   :'AiOperationCompletedEvent',
 #   :'AiOperationFailedEvent',
 #   :'CalendarUpdatedEvent',
@@ -76,6 +79,9 @@ Repull::WebhookEvent.openapi_discriminator_mapping
 # {
 #   :'account.created' => :'AccountCreatedEvent',
 #   :'account.disconnected' => :'AccountDisconnectedEvent',
+#   :'account.import.completed' => :'AccountImportCompletedEvent',
+#   :'account.import.failed' => :'AccountImportFailedEvent',
+#   :'account.import.started' => :'AccountImportStartedEvent',
 #   :'ai.operation.completed' => :'AiOperationCompletedEvent',
 #   :'ai.operation.failed' => :'AiOperationFailedEvent',
 #   :'calendar.updated' => :'CalendarUpdatedEvent',
@@ -135,6 +141,9 @@ Repull::WebhookEvent.build(data_that_doesnt_match)
 
 - `AccountCreatedEvent`
 - `AccountDisconnectedEvent`
+- `AccountImportCompletedEvent`
+- `AccountImportFailedEvent`
+- `AccountImportStartedEvent`
 - `AiOperationCompletedEvent`
 - `AiOperationFailedEvent`
 - `CalendarUpdatedEvent`

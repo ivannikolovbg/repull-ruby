@@ -12,6 +12,7 @@
 | **host** | [**ConnectHost**](ConnectHost.md) | Host metadata for the linked account. Currently populated for Airbnb only; null for other providers. | [optional] |
 | **action** | [**ConnectionAction**](ConnectionAction.md) | Set when the host must do something before the connection works (e.g. grant the invited Booking.com Extranet user full access). &#x60;null&#x60; when no action is pending. | [optional] |
 | **fix_url** | **String** | Durable link that reopens the hosted Connect flow bound to this account on the fix screen — send the host here to resolve &#x60;action&#x60;. Present only when &#x60;action.required&#x60; is true; &#x60;null&#x60; otherwise. | [optional] |
+| **import** | [**AccountImport**](AccountImport.md) | The account&#39;s latest import — &#x60;status: running&#x60; while the first sync (or a later one) is going, then &#x60;completed&#x60; or &#x60;failed&#x60;. &#x60;null&#x60; when no import has been recorded. The same run is announced by the &#x60;account.import.*&#x60; webhooks; the history is on &#x60;GET /v1/connections/{id}/imports&#x60;. | [optional] |
 
 ## Example
 
@@ -26,7 +27,8 @@ instance = Repull::Connection.new(
   created_at: null,
   host: null,
   action: null,
-  fix_url: null
+  fix_url: null,
+  import: null
 )
 ```
 

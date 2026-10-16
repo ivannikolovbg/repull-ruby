@@ -26,8 +26,11 @@ module Repull
     # Masked destination bank account the payout was sent to (Booking.com payouts, from the statement PDF). Null on channels/rows without one.
     attr_accessor :bank_destination
 
-    # Link to the channel's original payout statement PDF — the authoritative settlement record (Booking.com). Null when none.
+    # Repull-hosted download link for the original payout statement PDF (the authoritative settlement record). Add `?format=csv` for the CSV. Served by `GET /v1/transactions/{id}/statement` — no channel session needed. Null when none is stored.
     attr_accessor :statement_url
+
+    # The channel's own numeric statement id (Booking.com, e.g. \"010747030095\"). Null when none.
+    attr_accessor :statement_id
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
@@ -36,7 +39,8 @@ module Repull
         :'payout_date' => :'payoutDate',
         :'paid_out_amount' => :'paidOutAmount',
         :'bank_destination' => :'bankDestination',
-        :'statement_url' => :'statementUrl'
+        :'statement_url' => :'statementUrl',
+        :'statement_id' => :'statementId'
       }
     end
 
@@ -57,7 +61,8 @@ module Repull
         :'payout_date' => :'String',
         :'paid_out_amount' => :'Float',
         :'bank_destination' => :'String',
-        :'statement_url' => :'String'
+        :'statement_url' => :'String',
+        :'statement_id' => :'String'
       }
     end
 
@@ -68,7 +73,8 @@ module Repull
         :'payout_date',
         :'paid_out_amount',
         :'bank_destination',
-        :'statement_url'
+        :'statement_url',
+        :'statement_id'
       ])
     end
 
@@ -113,6 +119,10 @@ module Repull
       if attributes.key?(:'statement_url')
         self.statement_url = attributes[:'statement_url']
       end
+
+      if attributes.key?(:'statement_id')
+        self.statement_id = attributes[:'statement_id']
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -139,7 +149,8 @@ module Repull
           payout_date == o.payout_date &&
           paid_out_amount == o.paid_out_amount &&
           bank_destination == o.bank_destination &&
-          statement_url == o.statement_url
+          statement_url == o.statement_url &&
+          statement_id == o.statement_id
     end
 
     # @see the `==` method
@@ -151,7 +162,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [payout_id, payout_date, paid_out_amount, bank_destination, statement_url].hash
+      [payout_id, payout_date, paid_out_amount, bank_destination, statement_url, statement_id].hash
     end
 
     # Builds the object from hash

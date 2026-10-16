@@ -19,6 +19,79 @@ module Repull
     def initialize(api_client = ApiClient.default)
       @api_client = api_client
     end
+    # Download the original payout statement
+    # Downloads the channel's ORIGINAL payout statement — the authoritative settlement record a host reconciles against — for a payout transaction. `{id}` is the payout `transactionId` (e.g. `booking_payout_5463377687_bank_transfer`). Repull serves the stored bytes itself (no channel session), so unlike the channel's own link it never expires or leaks a session. PDF by default; pass `?format=csv` for the CSV remittance. Returns `404` when no statement was captured for the payout (e.g. an upcoming payout, or a channel that has none).
+    # @param id [String] The payout transaction id (&#x60;transactionId&#x60;).
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
+    # @option opts [String] :format Statement format. (default to 'pdf')
+    # @return [File]
+    def get_transaction_statement(id, opts = {})
+      data, _status_code, _headers = get_transaction_statement_with_http_info(id, opts)
+      data
+    end
+
+    # Download the original payout statement
+    # Downloads the channel&#39;s ORIGINAL payout statement — the authoritative settlement record a host reconciles against — for a payout transaction. &#x60;{id}&#x60; is the payout &#x60;transactionId&#x60; (e.g. &#x60;booking_payout_5463377687_bank_transfer&#x60;). Repull serves the stored bytes itself (no channel session), so unlike the channel&#39;s own link it never expires or leaks a session. PDF by default; pass &#x60;?format&#x3D;csv&#x60; for the CSV remittance. Returns &#x60;404&#x60; when no statement was captured for the payout (e.g. an upcoming payout, or a channel that has none).
+    # @param id [String] The payout transaction id (&#x60;transactionId&#x60;).
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
+    # @option opts [String] :format Statement format. (default to 'pdf')
+    # @return [Array<(File, Integer, Hash)>] File data, response status code and response headers
+    def get_transaction_statement_with_http_info(id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: TransactionsApi.get_transaction_statement ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling TransactionsApi.get_transaction_statement"
+      end
+      allowable_values = ["pdf", "csv"]
+      if @api_client.config.client_side_validation && opts[:'format'] && !allowable_values.include?(opts[:'format'])
+        fail ArgumentError, "invalid value for \"format\", must be one of #{allowable_values}"
+      end
+      # resource path
+      local_var_path = '/v1/transactions/{id}/statement'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+      query_params[:'format'] = opts[:'format'] if !opts[:'format'].nil?
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/pdf', 'text/csv', 'application/json']) unless header_params['Accept']
+      header_params[:'X-Schema'] = opts[:'x_schema'] if !opts[:'x_schema'].nil?
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'File'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"TransactionsApi.get_transaction_statement",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: TransactionsApi#get_transaction_statement\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # List transactions & payments (unified ledger)
     # Every channel's money in one ledger: payouts that reached the host, reservation charges, refunds and adjustments, across Airbnb, Booking.com and Vrbo. Each row carries a normalized `platform` — `booking` always means Booking.com however the account was connected (official API or extranet); there is no `booking_extranet`, and `?platform=booking` matches all of them. A payout row's `amount` is the net the host received; `grossAmount` is what the guest paid and `fees` the deductions (commission, payments service fee, processing fee). Cursor-paginated, newest first.
     # @param [Hash] opts the optional parameters

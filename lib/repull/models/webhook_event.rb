@@ -22,6 +22,9 @@ module Repull
         [
           :'AccountCreatedEvent',
           :'AccountDisconnectedEvent',
+          :'AccountImportCompletedEvent',
+          :'AccountImportFailedEvent',
+          :'AccountImportStartedEvent',
           :'AiOperationCompletedEvent',
           :'AiOperationFailedEvent',
           :'CalendarUpdatedEvent',
@@ -65,6 +68,9 @@ module Repull
         {
           :'account.created' => :'AccountCreatedEvent',
           :'account.disconnected' => :'AccountDisconnectedEvent',
+          :'account.import.completed' => :'AccountImportCompletedEvent',
+          :'account.import.failed' => :'AccountImportFailedEvent',
+          :'account.import.started' => :'AccountImportStartedEvent',
           :'ai.operation.completed' => :'AiOperationCompletedEvent',
           :'ai.operation.failed' => :'AiOperationFailedEvent',
           :'calendar.updated' => :'CalendarUpdatedEvent',

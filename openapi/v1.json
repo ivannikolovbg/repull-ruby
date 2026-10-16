@@ -63,6 +63,10 @@
       "description": "Unified transactions & payments ledger across channels \u2014 payouts, reservation charges, refunds. `booking` covers Booking.com however it was connected."
     },
     {
+      "name": "Resolutions",
+      "description": "Airbnb Resolution Center cases (AirCover / damage, extra-guest, refund and change requests) \u2014 read-only visibility on open and closed resolutions. The money a resolution moved is in the transactions ledger; join on the resolution id."
+    },
+    {
       "name": "Availability",
       "description": "Check and update property availability and pricing"
     },
@@ -1544,6 +1548,15 @@
             "format": "uri",
             "nullable": true,
             "description": "Durable link that reopens the hosted Connect flow bound to this account on the fix screen \u2014 send the host here to resolve `action`. Present only when `action.required` is true; `null` otherwise."
+          },
+          "import": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountImport"
+              }
+            ],
+            "nullable": true,
+            "description": "The account's latest import \u2014 `status: running` while the first sync (or a later one) is going, then `completed` or `failed`. `null` when no import has been recorded. The same run is announced by the `account.import.*` webhooks; the history is on `GET /v1/connections/{id}/imports`."
           }
         }
       },
@@ -2673,6 +2686,9 @@
           "account.created",
           "connect.session.completed",
           "account.disconnected",
+          "account.import.started",
+          "account.import.completed",
+          "account.import.failed",
           "review.created",
           "review.responded",
           "ai.operation.completed",
@@ -4890,6 +4906,275 @@
           }
         }
       },
+      "AccountImportStage": {
+        "type": "object",
+        "description": "One stage of an account import (e.g. `reservations`). The stage is done when `done + failed` reaches `expected`.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "reservations"
+          },
+          "expected": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Units of work in this stage (one per page, chunk, listing or thread, depending on the channel). `null` until the stage knows its size."
+          },
+          "done": {
+            "type": "integer"
+          },
+          "failed": {
+            "type": "integer"
+          }
+        }
+      },
+      "AccountImportCounts": {
+        "type": "object",
+        "description": "What the import brought in. A channel reports the keys it imports.",
+        "properties": {
+          "listings": {
+            "type": "integer"
+          },
+          "reservations": {
+            "type": "integer"
+          },
+          "conversations": {
+            "type": "integer"
+          },
+          "messages": {
+            "type": "integer"
+          },
+          "reviews": {
+            "type": "integer"
+          },
+          "payments": {
+            "type": "integer"
+          }
+        }
+      },
+      "AccountImport": {
+        "type": "object",
+        "description": "One import run of a connected account: the first sync after connecting, a room or unit mapped later, a reconnect or a re-sync.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The import id \u2014 the `importId` on `account.import.*` webhooks."
+          },
+          "status": {
+            "type": "string"
+          },
+          "trigger": {
+            "type": "string"
+          },
+          "outcome": {
+            "type": "string",
+            "nullable": true,
+            "description": "`completed` imports only: `partial` when some units failed (see `stages`)."
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "description": "`failed` imports only: why it stopped \u2014 e.g. `needs_permissions`, `duplicate_account`, `stalled`."
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastActivityAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "stages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccountImportStage"
+            }
+          },
+          "counts": {
+            "$ref": "#/components/schemas/AccountImportCounts"
+          }
+        }
+      },
+      "AccountImportStartedPayload": {
+        "type": "object",
+        "properties": {
+          "importId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "trigger": {
+            "type": "string"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "stages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The stages this import will run."
+          }
+        }
+      },
+      "AccountImportFinishedPayload": {
+        "type": "object",
+        "properties": {
+          "importId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "trigger": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "outcome": {
+            "type": "string",
+            "nullable": true
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "stages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccountImportStage"
+            }
+          },
+          "counts": {
+            "$ref": "#/components/schemas/AccountImportCounts"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "description": "`account.import.failed` only."
+          }
+        }
+      },
+      "AccountImportStartedEvent": {
+        "type": "object",
+        "required": [
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
+          "data"
+        ],
+        "properties": {
+          "event": {
+            "type": "string",
+            "description": "The event name. This field is `event`, not `type`."
+          },
+          "eventId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
+          },
+          "apiVersion": {
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this delivery was built."
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
+          },
+          "data": {
+            "$ref": "#/components/schemas/AccountImportStartedPayload"
+          }
+        },
+        "description": "An account import began."
+      },
+      "AccountImportCompletedEvent": {
+        "type": "object",
+        "required": [
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
+          "data"
+        ],
+        "properties": {
+          "event": {
+            "type": "string",
+            "description": "The event name. This field is `event`, not `type`."
+          },
+          "eventId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
+          },
+          "apiVersion": {
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this delivery was built."
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
+          },
+          "data": {
+            "$ref": "#/components/schemas/AccountImportFinishedPayload"
+          }
+        },
+        "description": "Every stage of an account import finished. Its data is readable through the API."
+      },
+      "AccountImportFailedEvent": {
+        "type": "object",
+        "required": [
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
+          "data"
+        ],
+        "properties": {
+          "event": {
+            "type": "string",
+            "description": "The event name. This field is `event`, not `type`."
+          },
+          "eventId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
+          },
+          "apiVersion": {
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this delivery was built."
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
+          },
+          "data": {
+            "$ref": "#/components/schemas/AccountImportFinishedPayload"
+          }
+        },
+        "description": "An account import stopped before finishing; `data.reason` says why."
+      },
       "ConnectSessionCompletedEvent": {
         "type": "object",
         "required": [
@@ -5490,6 +5775,15 @@
             "$ref": "#/components/schemas/AccountDisconnectedEvent"
           },
           {
+            "$ref": "#/components/schemas/AccountImportStartedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/AccountImportCompletedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/AccountImportFailedEvent"
+          },
+          {
             "$ref": "#/components/schemas/ReviewCreatedEvent"
           },
           {
@@ -5547,6 +5841,9 @@
             "account.created": "#/components/schemas/AccountCreatedEvent",
             "connect.session.completed": "#/components/schemas/ConnectSessionCompletedEvent",
             "account.disconnected": "#/components/schemas/AccountDisconnectedEvent",
+            "account.import.started": "#/components/schemas/AccountImportStartedEvent",
+            "account.import.completed": "#/components/schemas/AccountImportCompletedEvent",
+            "account.import.failed": "#/components/schemas/AccountImportFailedEvent",
             "review.created": "#/components/schemas/ReviewCreatedEvent",
             "review.responded": "#/components/schemas/ReviewRespondedEvent",
             "ai.operation.completed": "#/components/schemas/AiOperationCompletedEvent",
@@ -7408,7 +7705,13 @@
               "statementUrl": {
                 "type": "string",
                 "nullable": true,
-                "description": "Link to the channel's original payout statement PDF \u2014 the authoritative settlement record (Booking.com). Null when none."
+                "description": "Repull-hosted download link for the original payout statement PDF (the authoritative settlement record). Add `?format=csv` for the CSV. Served by `GET /v1/transactions/{id}/statement` \u2014 no channel session needed. Null when none is stored."
+              },
+              "statementId": {
+                "type": "string",
+                "nullable": true,
+                "description": "The channel's own numeric statement id (Booking.com, e.g. \"010747030095\"). Null when none.",
+                "example": "010747030095"
               }
             }
           },
@@ -7429,6 +7732,97 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          }
+        }
+      },
+      "Resolution": {
+        "type": "object",
+        "description": "An Airbnb Resolution Center case (AirCover / damage, extra-guest, refund or change request). Read-only \u2014 Airbnb exposes no create/evidence/status API. The money a resolution moved rides in the transactions ledger as `Resolution Payout` / `Resolution Adjustment` rows sharing the same reference; join on `resolutionId`.",
+        "required": [
+          "resolutionId",
+          "status"
+        ],
+        "properties": {
+          "resolutionId": {
+            "type": "string",
+            "description": "Airbnb's resolution id \u2014 the `{id}` path value and the join key to a transaction's `reference`.",
+            "example": "CLSF-06464054"
+          },
+          "confirmationCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Airbnb confirmation code of the reservation the case is on.",
+            "example": "HMZKMYCBC5"
+          },
+          "reservationId": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Repull's internal reservation id, when the reservation is in this workspace."
+          },
+          "listingName": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true,
+            "description": "OPEN or CLOSED, as Airbnb reports it.",
+            "example": "OPEN"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why the resolution was opened."
+          },
+          "caseStatus": {
+            "type": "string",
+            "nullable": true,
+            "description": "Airbnb's case-status label."
+          },
+          "statusText": {
+            "type": "string",
+            "nullable": true,
+            "description": "Human-readable status detail."
+          },
+          "suggestedActionText": {
+            "type": "string",
+            "nullable": true,
+            "description": "Airbnb's hint on whose turn it is to act next \u2014 track progress with it."
+          },
+          "customerSupportInitiated": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when Airbnb Customer Support (not the host/guest) opened the case."
+          },
+          "productType": {
+            "type": "string",
+            "nullable": true
+          },
+          "initiator": {
+            "type": "object",
+            "nullable": true,
+            "description": "Who opened the case (id + name)."
+          },
+          "responder": {
+            "type": "object",
+            "nullable": true,
+            "description": "Who responds (id + name)."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "syncedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When Repull last refreshed this case from Airbnb."
           }
         }
       },
@@ -37669,6 +38063,379 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/v1/transactions/{id}/statement": {
+      "get": {
+        "operationId": "get_transaction_statement",
+        "summary": "Download the original payout statement",
+        "description": "Downloads the channel's ORIGINAL payout statement \u2014 the authoritative settlement record a host reconciles against \u2014 for a payout transaction. `{id}` is the payout `transactionId` (e.g. `booking_payout_5463377687_bank_transfer`). Repull serves the stored bytes itself (no channel session), so unlike the channel's own link it never expires or leaks a session. PDF by default; pass `?format=csv` for the CSV remittance. Returns `404` when no statement was captured for the payout (e.g. an upcoming payout, or a channel that has none).",
+        "tags": [
+          "Transactions"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/XSchemaHeader"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The payout transaction id (`transactionId`).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "description": "Statement format.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pdf",
+                "csv"
+              ],
+              "default": "pdf"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The statement file (PDF by default, or CSV).",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/channels/airbnb/resolutions": {
+      "get": {
+        "operationId": "list_airbnb_resolutions",
+        "summary": "List Airbnb Resolution Center cases",
+        "description": "The host's Airbnb Resolution Center cases (AirCover / damage, extra-guest, refund and change requests), open and closed. Served from the database; `POST` this path to refresh from Airbnb. READ-ONLY upstream \u2014 Airbnb's Resolutions API is read-only; a claim is created, evidence added and status changed only in Airbnb's Resolution Center UI, not via API. Use this for visibility and action tracking (`suggestedActionText`). The money a resolution moved is in the transactions ledger as `Resolution Payout` / `Resolution Adjustment` rows sharing the same reference \u2014 join on `resolutionId`. Cursor-paginated, newest first.",
+        "tags": [
+          "Resolutions"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/XSchemaHeader"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "description": "Filter by lifecycle: `open` (still needs action) or `closed` (settled). Omit for all.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "open",
+                "closed"
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Page size (default 50, max 200).",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "description": "Opaque pagination cursor from a previous `pagination.nextCursor`.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resolutions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "pagination"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Resolution"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "refresh_airbnb_resolutions",
+        "summary": "Refresh Airbnb resolutions from Airbnb",
+        "description": "Pulls the latest Resolution Center cases from Airbnb (read-only) and stores them, then read with GET. Optionally scope to one `account_id` and/or `status`.",
+        "tags": [
+          "Resolutions"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/XSchemaHeader"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "account_id": {
+                    "type": "string",
+                    "description": "Limit the refresh to one Airbnb host id. Omit for all connected accounts."
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "OPEN",
+                      "CLOSED"
+                    ],
+                    "description": "Limit the refresh to one lifecycle. Omit for all."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Refresh outcome.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "synced",
+                    "count",
+                    "accounts"
+                  ],
+                  "properties": {
+                    "synced": {
+                      "type": "boolean"
+                    },
+                    "count": {
+                      "type": "integer",
+                      "description": "Resolutions upserted across all accounts."
+                    },
+                    "accounts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "account_id",
+                          "count"
+                        ],
+                        "properties": {
+                          "account_id": {
+                            "type": "string"
+                          },
+                          "count": {
+                            "type": "integer"
+                          },
+                          "error": {
+                            "type": "object",
+                            "nullable": true,
+                            "properties": {
+                              "code": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/channels/airbnb/resolutions/{id}": {
+      "get": {
+        "operationId": "get_airbnb_resolution",
+        "summary": "Get an Airbnb Resolution Center case",
+        "description": "One Airbnb Resolution Center case. `{id}` is the Airbnb resolution id (the `resolutionId` from the list, also a transaction's `reference`). Read-only (see the list endpoint). The amounts moved are in the transactions ledger \u2014 join `resolutionId` to a transaction's `reference`. 404 when it isn't in this workspace (POST the list endpoint to refresh first).",
+        "tags": [
+          "Resolutions"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/XSchemaHeader"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The Airbnb resolution id.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resolution",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resolution"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/connections/{id}/imports": {
+      "get": {
+        "operationId": "listConnectionImports",
+        "summary": "List a connection's imports",
+        "description": "The import runs of one connected account, newest first: the first sync after connecting, a room or unit mapped later, a reconnect, a re-sync. Each run says where it stands (`running`, `completed`, `failed`), its stages and what it imported.\n\nTo know when an account's first sync is done, wait for the `account.import.completed` webhook, or poll this endpoint (or `GET /v1/connect`, whose connections carry their latest `import`) until the newest run is no longer `running`.\n\nAuth: a Repull API key, or a Connect session token (`sessionId`).",
+        "tags": [
+          "Connections"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Connection handle `{provider}:{externalAccountId}`, e.g. `booking_extranet:36`, `vrbo:12`, `airbnb:1234567`, `hostaway:27434` \u2014 the `provider` and `externalAccountId` of a connection on `GET /v1/connect`, or the account of an `account.*` webhook."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "description": "How many runs to return, newest first."
+          },
+          {
+            "name": "sessionId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The Connect session ID (capability token)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Imports, newest first. Empty when the account has none recorded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AccountImport"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }

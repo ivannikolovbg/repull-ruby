@@ -6,6 +6,7 @@ All URIs are relative to *https://api.repull.dev*
 | ------ | ------------ | ----------- |
 | [**apply_connection_mappings**](ConnectionsApi.md#apply_connection_mappings) | **POST** /v1/connections/{id}/mappings | Map, unmap or create listings for units |
 | [**auto_map_connection_units**](ConnectionsApi.md#auto_map_connection_units) | **POST** /v1/connections/{id}/mappings/automap | Auto-map units by exact name |
+| [**list_connection_imports**](ConnectionsApi.md#list_connection_imports) | **GET** /v1/connections/{id}/imports | List a connection&#39;s imports |
 | [**list_connection_units**](ConnectionsApi.md#list_connection_units) | **GET** /v1/connections/{id}/units | List a connection&#39;s mappable units |
 | [**search_connection_listing_options**](ConnectionsApi.md#search_connection_listing_options) | **GET** /v1/connections/{id}/listing-options | Search listings a unit can be mapped to |
 
@@ -151,6 +152,81 @@ end
 ### HTTP request headers
 
 - **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## list_connection_imports
+
+> <ListConnectionImports200Response> list_connection_imports(id, opts)
+
+List a connection's imports
+
+The import runs of one connected account, newest first: the first sync after connecting, a room or unit mapped later, a reconnect, a re-sync. Each run says where it stands (`running`, `completed`, `failed`), its stages and what it imported.  To know when an account's first sync is done, wait for the `account.import.completed` webhook, or poll this endpoint (or `GET /v1/connect`, whose connections carry their latest `import`) until the newest run is no longer `running`.  Auth: a Repull API key, or a Connect session token (`sessionId`).
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ConnectionsApi.new
+id = 'id_example' # String | Connection handle `{provider}:{externalAccountId}`, e.g. `booking_extranet:36`, `vrbo:12`, `airbnb:1234567`, `hostaway:27434` — the `provider` and `externalAccountId` of a connection on `GET /v1/connect`, or the account of an `account.*` webhook.
+opts = {
+  limit: 56, # Integer | How many runs to return, newest first.
+  session_id: 'session_id_example' # String | The Connect session ID (capability token).
+}
+
+begin
+  # List a connection's imports
+  result = api_instance.list_connection_imports(id, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectionsApi->list_connection_imports: #{e}"
+end
+```
+
+#### Using the list_connection_imports_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<ListConnectionImports200Response>, Integer, Hash)> list_connection_imports_with_http_info(id, opts)
+
+```ruby
+begin
+  # List a connection's imports
+  data, status_code, headers = api_instance.list_connection_imports_with_http_info(id, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <ListConnectionImports200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectionsApi->list_connection_imports_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Connection handle &#x60;{provider}:{externalAccountId}&#x60;, e.g. &#x60;booking_extranet:36&#x60;, &#x60;vrbo:12&#x60;, &#x60;airbnb:1234567&#x60;, &#x60;hostaway:27434&#x60; — the &#x60;provider&#x60; and &#x60;externalAccountId&#x60; of a connection on &#x60;GET /v1/connect&#x60;, or the account of an &#x60;account.*&#x60; webhook. |  |
+| **limit** | **Integer** | How many runs to return, newest first. | [optional][default to 20] |
+| **session_id** | **String** | The Connect session ID (capability token). | [optional] |
+
+### Return type
+
+[**ListConnectionImports200Response**](ListConnectionImports200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 

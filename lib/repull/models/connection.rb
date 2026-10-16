@@ -35,6 +35,9 @@ module Repull
     # Durable link that reopens the hosted Connect flow bound to this account on the fix screen — send the host here to resolve `action`. Present only when `action.required` is true; `null` otherwise.
     attr_accessor :fix_url
 
+    # The account's latest import — `status: running` while the first sync (or a later one) is going, then `completed` or `failed`. `null` when no import has been recorded. The same run is announced by the `account.import.*` webhooks; the history is on `GET /v1/connections/{id}/imports`.
+    attr_accessor :import
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
@@ -45,7 +48,8 @@ module Repull
         :'created_at' => :'createdAt',
         :'host' => :'host',
         :'action' => :'action',
-        :'fix_url' => :'fixUrl'
+        :'fix_url' => :'fixUrl',
+        :'import' => :'import'
       }
     end
 
@@ -69,7 +73,8 @@ module Repull
         :'created_at' => :'Time',
         :'host' => :'ConnectHost',
         :'action' => :'ConnectionAction',
-        :'fix_url' => :'String'
+        :'fix_url' => :'String',
+        :'import' => :'AccountImport'
       }
     end
 
@@ -79,7 +84,8 @@ module Repull
         :'external_account_id',
         :'host',
         :'action',
-        :'fix_url'
+        :'fix_url',
+        :'import'
       ])
     end
 
@@ -130,6 +136,10 @@ module Repull
       if attributes.key?(:'fix_url')
         self.fix_url = attributes[:'fix_url']
       end
+
+      if attributes.key?(:'import')
+        self.import = attributes[:'import']
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -159,7 +169,8 @@ module Repull
           created_at == o.created_at &&
           host == o.host &&
           action == o.action &&
-          fix_url == o.fix_url
+          fix_url == o.fix_url &&
+          import == o.import
     end
 
     # @see the `==` method
@@ -171,7 +182,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, provider, status, external_account_id, created_at, host, action, fix_url].hash
+      [id, provider, status, external_account_id, created_at, host, action, fix_url, import].hash
     end
 
     # Builds the object from hash
