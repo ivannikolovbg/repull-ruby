@@ -24,6 +24,9 @@ module Repull
     # Airbnb — how many months of past reservations the first import pulls (1–60). Omit it for the default window. Upcoming stays are always imported. A wider window takes longer to import, because every extra month is more stays to fetch.
     attr_accessor :reservation_history_months
 
+    # Where the channel's units get linked to listings. `hosted` (default): after a Vrbo or Booking.com Extranet sign-in, Connect shows a mapping step and returns to `redirectUrl` when it's confirmed. `api`: Connect skips that step and finishes right after sign-in. The connection reaches you in the `connect.session.completed` webhook (and as `connectionId` in the popup message), its handle is `vrbo:{connectionId}` or `booking_extranet:{connectionId}`; you list the units with `GET /v1/connections/{id}/units` and link them with `POST /v1/connections/{id}/mappings`. Nothing is imported until you post the mappings. Other providers ignore it.
+    attr_accessor :mapping
+
     # What the connection may do. Airbnb: the OAuth scope tier. Vrbo: `messaging` (or `read_only`) imports bookings and messages and never pushes the calendar; `full_access` also pushes prices and availability. Setting it locks the choice; omit it to let the host choose on the hosted page (default `full_access`).
     attr_accessor :access_type
 
@@ -74,6 +77,7 @@ module Repull
         :'redirect_url' => :'redirectUrl',
         :'state' => :'state',
         :'reservation_history_months' => :'reservationHistoryMonths',
+        :'mapping' => :'mapping',
         :'access_type' => :'accessType',
         :'allowed_providers' => :'allowedProviders',
         :'include_request_only' => :'includeRequestOnly',
@@ -101,6 +105,7 @@ module Repull
         :'redirect_url' => :'String',
         :'state' => :'String',
         :'reservation_history_months' => :'Integer',
+        :'mapping' => :'String',
         :'access_type' => :'String',
         :'allowed_providers' => :'Array<String>',
         :'include_request_only' => :'Boolean',
@@ -149,6 +154,12 @@ module Repull
 
       if attributes.key?(:'reservation_history_months')
         self.reservation_history_months = attributes[:'reservation_history_months']
+      end
+
+      if attributes.key?(:'mapping')
+        self.mapping = attributes[:'mapping']
+      else
+        self.mapping = 'hosted'
       end
 
       if attributes.key?(:'access_type')
@@ -219,6 +230,8 @@ module Repull
       return false if @redirect_url.nil?
       return false if !@reservation_history_months.nil? && @reservation_history_months > 60
       return false if !@reservation_history_months.nil? && @reservation_history_months < 1
+      mapping_validator = EnumAttributeValidator.new('String', ["hosted", "api"])
+      return false unless mapping_validator.valid?(@mapping)
       access_type_validator = EnumAttributeValidator.new('String', ["full_access", "messaging", "read_only"])
       return false unless access_type_validator.valid?(@access_type)
       purpose_validator = EnumAttributeValidator.new('String', ["connect", "migrate"])
@@ -255,6 +268,16 @@ module Repull
     end
 
     # Custom attribute writer method checking allowed values (enum).
+    # @param [Object] mapping Object to be assigned
+    def mapping=(mapping)
+      validator = EnumAttributeValidator.new('String', ["hosted", "api"])
+      unless validator.valid?(mapping)
+        fail ArgumentError, "invalid value for \"mapping\", must be one of #{validator.allowable_values}."
+      end
+      @mapping = mapping
+    end
+
+    # Custom attribute writer method checking allowed values (enum).
     # @param [Object] access_type Object to be assigned
     def access_type=(access_type)
       validator = EnumAttributeValidator.new('String', ["full_access", "messaging", "read_only"])
@@ -282,6 +305,7 @@ module Repull
           redirect_url == o.redirect_url &&
           state == o.state &&
           reservation_history_months == o.reservation_history_months &&
+          mapping == o.mapping &&
           access_type == o.access_type &&
           allowed_providers == o.allowed_providers &&
           include_request_only == o.include_request_only &&
@@ -301,7 +325,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [redirect_url, state, reservation_history_months, access_type, allowed_providers, include_request_only, locale, purpose, workspace, copy, scope].hash
+      [redirect_url, state, reservation_history_months, mapping, access_type, allowed_providers, include_request_only, locale, purpose, workspace, copy, scope].hash
     end
 
     # Builds the object from hash

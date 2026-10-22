@@ -23,6 +23,12 @@ module Repull
 
     attr_accessor :direction
 
+    # Delivery state. Inbound messages are `received`. An outbound message is `sending` while it is queued to the channel, `sent` once the channel accepted it, or `failed`. Only `sent` (or `received`) means the guest can see it.
+    attr_accessor :status
+
+    # Why a message is still `sending` or `failed`, in plain words. `null` otherwise.
+    attr_accessor :status_reason
+
     # Free-form sender role from the channel (e.g. `guest`, `host`, `system`, `airbnb`). Use `direction` for binary inbound/outbound logic.
     attr_accessor :sender_type
 
@@ -50,6 +56,7 @@ module Repull
 
     attr_accessor :sent_at
 
+    # When the message reached the channel. `null` while it is `sending` or when it `failed`.
     attr_accessor :delivered_at
 
     attr_accessor :read_at
@@ -60,6 +67,8 @@ module Repull
         :'id' => :'id',
         :'external_message_id' => :'externalMessageId',
         :'direction' => :'direction',
+        :'status' => :'status',
+        :'status_reason' => :'statusReason',
         :'sender_type' => :'senderType',
         :'sender_name' => :'senderName',
         :'sender_avatar' => :'senderAvatar',
@@ -91,6 +100,8 @@ module Repull
         :'id' => :'String',
         :'external_message_id' => :'String',
         :'direction' => :'String',
+        :'status' => :'String',
+        :'status_reason' => :'String',
         :'sender_type' => :'String',
         :'sender_name' => :'String',
         :'sender_avatar' => :'String',
@@ -110,10 +121,12 @@ module Repull
     def self.openapi_nullable
       Set.new([
         :'external_message_id',
+        :'status_reason',
         :'sender_type',
         :'sender_avatar',
         :'channel',
         :'translated_body',
+        :'delivered_at',
         :'read_at'
       ])
     end
@@ -144,6 +157,14 @@ module Repull
 
       if attributes.key?(:'direction')
         self.direction = attributes[:'direction']
+      end
+
+      if attributes.key?(:'status')
+        self.status = attributes[:'status']
+      end
+
+      if attributes.key?(:'status_reason')
+        self.status_reason = attributes[:'status_reason']
       end
 
       if attributes.key?(:'sender_type')
@@ -220,6 +241,8 @@ module Repull
           id == o.id &&
           external_message_id == o.external_message_id &&
           direction == o.direction &&
+          status == o.status &&
+          status_reason == o.status_reason &&
           sender_type == o.sender_type &&
           sender_name == o.sender_name &&
           sender_avatar == o.sender_avatar &&
@@ -243,7 +266,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, external_message_id, direction, sender_type, sender_name, sender_avatar, channel, body, translated_body, attachments, is_automated, ai_generated, sent_at, delivered_at, read_at].hash
+      [id, external_message_id, direction, status, status_reason, sender_type, sender_name, sender_avatar, channel, body, translated_body, attachments, is_automated, ai_generated, sent_at, delivered_at, read_at].hash
     end
 
     # Builds the object from hash

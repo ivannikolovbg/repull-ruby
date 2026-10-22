@@ -28,10 +28,13 @@ module Repull
     # The title guests see on the channel (e.g. the Airbnb listing title). `name` is the host's internal nickname for the listing; show `publicName` in anything a guest or end user reads. Present on inactive rows too.
     attr_accessor :public_name
 
-    # Street address (from the listing's `street` field).
+    # Street line only, as stored on the listing — no unit, state or postal code. Kept for existing integrations; read `addressDetails` for the full postal address.
     attr_accessor :address
 
+    # City as stored on the listing. Kept for existing integrations; `addressDetails.city` is the resolved city.
     attr_accessor :city
+
+    attr_accessor :address_details
 
     # Detail endpoint only. Decimal degrees, as a string.
     attr_accessor :latitude
@@ -69,6 +72,7 @@ module Repull
         :'public_name' => :'publicName',
         :'address' => :'address',
         :'city' => :'city',
+        :'address_details' => :'addressDetails',
         :'latitude' => :'latitude',
         :'longitude' => :'longitude',
         :'currency' => :'currency',
@@ -100,6 +104,7 @@ module Repull
         :'public_name' => :'String',
         :'address' => :'String',
         :'city' => :'String',
+        :'address_details' => :'PostalAddress',
         :'latitude' => :'String',
         :'longitude' => :'String',
         :'currency' => :'String',
@@ -165,6 +170,10 @@ module Repull
 
       if attributes.key?(:'city')
         self.city = attributes[:'city']
+      end
+
+      if attributes.key?(:'address_details')
+        self.address_details = attributes[:'address_details']
       end
 
       if attributes.key?(:'latitude')
@@ -234,6 +243,7 @@ module Repull
           public_name == o.public_name &&
           address == o.address &&
           city == o.city &&
+          address_details == o.address_details &&
           latitude == o.latitude &&
           longitude == o.longitude &&
           currency == o.currency &&
@@ -254,7 +264,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [accounts, id, name, public_name, address, city, latitude, longitude, currency, status, lifecycle_status, created_at, updated_at, channels, amenities].hash
+      [accounts, id, name, public_name, address, city, address_details, latitude, longitude, currency, status, lifecycle_status, created_at, updated_at, channels, amenities].hash
     end
 
     # Builds the object from hash

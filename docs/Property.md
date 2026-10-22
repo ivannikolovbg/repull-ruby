@@ -8,8 +8,9 @@
 | **id** | **String** | Internal Repull property ID. Equal to the listing id (&#x60;listings.id&#x60;); the same integer is used as &#x60;listingId&#x60; on reservations and &#x60;propertyId&#x60; on availability. | [optional] |
 | **name** | **String** | Property name — the host&#39;s internal nickname. | [optional] |
 | **public_name** | **String** | The title guests see on the channel (e.g. the Airbnb listing title). &#x60;name&#x60; is the host&#39;s internal nickname for the listing; show &#x60;publicName&#x60; in anything a guest or end user reads. Present on inactive rows too. | [optional] |
-| **address** | **String** | Street address (from the listing&#39;s &#x60;street&#x60; field). | [optional] |
-| **city** | **String** |  | [optional] |
+| **address** | **String** | Street line only, as stored on the listing — no unit, state or postal code. Kept for existing integrations; read &#x60;addressDetails&#x60; for the full postal address. | [optional] |
+| **city** | **String** | City as stored on the listing. Kept for existing integrations; &#x60;addressDetails.city&#x60; is the resolved city. | [optional] |
+| **address_details** | [**PostalAddress**](PostalAddress.md) |  | [optional] |
 | **latitude** | **String** | Detail endpoint only. Decimal degrees, as a string. | [optional] |
 | **longitude** | **String** | Detail endpoint only. Decimal degrees, as a string. | [optional] |
 | **currency** | **String** | ISO 4217 currency code for this property&#39;s pricing. | [optional] |
@@ -30,8 +31,9 @@ instance = Repull::Property.new(
   id: null,
   name: Oceanview Suite #3,
   public_name: Centre Oxford bright single room D,
-  address: null,
-  city: Miami Beach,
+  address: 2700 Northwest 2nd Avenue,
+  city: Miami,
+  address_details: null,
   latitude: 25.7617,
   longitude: -80.1918,
   currency: USD,

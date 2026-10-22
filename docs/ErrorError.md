@@ -37,7 +37,7 @@ instance = Repull::ErrorError.new(
   request_id: req_01J5X7Y8Z9ABCDEF12345678,
   field: check_in_after,
   value_received: garbage,
-  valid_values: [&quot;airbnb&quot;,&quot;booking&quot;,&quot;vrbo&quot;,&quot;plumguide&quot;],
+  valid_values: [&quot;airbnb&quot;,&quot;booking&quot;,&quot;vrbo&quot;],
   valid_params: [&quot;cursor&quot;,&quot;has_reservation&quot;,&quot;include_total&quot;,&quot;limit&quot;,&quot;listingId&quot;,&quot;q&quot;],
   endpoint: /v1/guests,
   did_you_mean: check_in_after,

@@ -25,6 +25,7 @@ module Repull
 
     attr_accessor :suggested_listing_id
 
+    # Channel details that identify the unit. Booking.com Extranet: `hotel` (property name), `hotelId` (Booking.com property ID), `roomId` (Booking.com room ID), `city`. Vrbo: `headline`, `address`, `vrboStatus`; the Vrbo listing ID is `unit_id`.
     attr_accessor :meta
 
     # Attribute mapping from ruby-style variable name to JSON key.

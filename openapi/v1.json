@@ -111,10 +111,6 @@
       "description": "VRBO channel management \u2014 listings and reservations"
     },
     {
-      "name": "Plumguide",
-      "description": "Plumguide channel management \u2014 availability, pricing, bookings"
-    },
-    {
       "name": "AI",
       "description": "AI-powered operations \u2014 guest responses, intent classification, listing generation, pricing suggestions"
     },
@@ -190,12 +186,17 @@
           "address": {
             "type": "string",
             "nullable": true,
-            "description": "Street address (from the listing's `street` field)."
+            "description": "Street line only, as stored on the listing \u2014 no unit, state or postal code. Kept for existing integrations; read `addressDetails` for the full postal address.",
+            "example": "2700 Northwest 2nd Avenue"
           },
           "city": {
             "type": "string",
             "nullable": true,
-            "example": "Miami Beach"
+            "description": "City as stored on the listing. Kept for existing integrations; `addressDetails.city` is the resolved city.",
+            "example": "Miami"
+          },
+          "addressDetails": {
+            "$ref": "#/components/schemas/PostalAddress"
           },
           "latitude": {
             "type": "string",
@@ -251,6 +252,55 @@
               "$ref": "#/components/schemas/ListingAmenity"
             },
             "description": "Amenity rows for the property. Detail endpoint only, and **only present when the caller passes `?include=amenities`.** Empty array (`[]`) when the property has no amenity rows."
+          }
+        }
+      },
+      "PostalAddress": {
+        "type": "object",
+        "description": "The full postal address, unit included. Returned on every active row of `GET /v1/properties`, `GET /v1/properties/{id}`, `GET /v1/listings` and `GET /v1/listings/{id}` (on listings, these fields sit inside `address`). Each part is read from the listing first, then from the connected channels (Airbnb, Vrbo, Booking.com), so `line2` carries the apartment or unit number that tells units in the same building apart. A part nobody has stored is `null`.",
+        "required": [
+          "line1",
+          "line2",
+          "city",
+          "state",
+          "postalCode",
+          "countryCode"
+        ],
+        "properties": {
+          "line1": {
+            "type": "string",
+            "nullable": true,
+            "description": "Street address: number and street.",
+            "example": "2700 Northwest 2nd Avenue"
+          },
+          "line2": {
+            "type": "string",
+            "nullable": true,
+            "description": "Apartment, unit, suite or building.",
+            "example": "Unit 241"
+          },
+          "city": {
+            "type": "string",
+            "nullable": true,
+            "example": "Miami"
+          },
+          "state": {
+            "type": "string",
+            "nullable": true,
+            "description": "State, province or region.",
+            "example": "FL"
+          },
+          "postalCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Postal or ZIP code.",
+            "example": "33127"
+          },
+          "countryCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "ISO 3166-1 alpha-2 country code.",
+            "example": "US"
           }
         }
       },
@@ -1294,6 +1344,15 @@
           "direction": {
             "type": "string"
           },
+          "status": {
+            "type": "string",
+            "description": "Delivery state. Inbound messages are `received`. An outbound message is `sending` while it is queued to the channel, `sent` once the channel accepted it, or `failed`. Only `sent` (or `received`) means the guest can see it."
+          },
+          "statusReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why a message is still `sending` or `failed`, in plain words. `null` otherwise."
+          },
           "senderType": {
             "type": "string",
             "nullable": true,
@@ -1342,7 +1401,9 @@
           },
           "deliveredAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the message reached the channel. `null` while it is `sending` or when it `failed`."
           },
           "readAt": {
             "type": "string",
@@ -2246,6 +2307,11 @@
                   ],
                   "description": "Vrbo only."
                 },
+                "notificationEmail": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Vrbo only. The address the host can add on Vrbo as a secondary email (with message and reservation notifications on) so new bookings, inquiries and messages arrive within a minute instead of at the scheduled check. Ask every host to add it: notifications are how Vrbo updates reach Repull, the scheduled check is the backup. Hosted Connect shows it on its mapping screen; show it in your own app when you create sessions with `mapping: \"api\"`."
+                },
                 "import": {
                   "nullable": true,
                   "allOf": [
@@ -2690,7 +2756,6 @@
           "listing.deleted",
           "listing.suspended",
           "listing.reactivated",
-          "calendar.updated",
           "account.created",
           "connect.session.completed",
           "account.disconnected",
@@ -3724,43 +3789,6 @@
           }
         }
       },
-      "CalendarUpdatedPayload": {
-        "type": "object",
-        "description": "Payload for `calendar.updated`. Availability or pricing for a listing was updated.",
-        "properties": {
-          "listingId": {
-            "type": "integer",
-            "example": 6250
-          },
-          "range": {
-            "type": "object",
-            "properties": {
-              "start": {
-                "type": "string",
-                "format": "date",
-                "example": "2026-06-01"
-              },
-              "end": {
-                "type": "string",
-                "format": "date",
-                "example": "2026-06-15"
-              }
-            }
-          },
-          "affectedDates": {
-            "type": "integer",
-            "example": 14
-          },
-          "pricingChanged": {
-            "type": "boolean",
-            "example": true
-          },
-          "availabilityChanged": {
-            "type": "boolean",
-            "example": false
-          }
-        }
-      },
       "AccountCreatedPayload": {
         "type": "object",
         "description": "Payload for `account.created`. An OAuth or API credential connection was completed by an end user.",
@@ -3807,7 +3835,7 @@
           "provider": {
             "type": "string",
             "nullable": true,
-            "description": "Channel or PMS: airbnb, booking, booking_extranet, vrbo, plumguide, hostaway, \u2026",
+            "description": "Channel or PMS: airbnb, booking, booking_extranet, vrbo, hostaway, \u2026",
             "example": "vrbo"
           },
           "externalAccountId": {
@@ -4842,42 +4870,6 @@
           }
         }
       },
-      "CalendarUpdatedEvent": {
-        "type": "object",
-        "required": [
-          "event",
-          "eventId",
-          "apiVersion",
-          "timestamp",
-          "data"
-        ],
-        "properties": {
-          "event": {
-            "type": "string",
-            "description": "The event name. This field is `event`, not `type`."
-          },
-          "eventId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
-          },
-          "apiVersion": {
-            "type": "string",
-            "example": "2026-04"
-          },
-          "timestamp": {
-            "type": "string",
-            "format": "date-time",
-            "description": "When this delivery was built."
-          },
-          "account": {
-            "$ref": "#/components/schemas/WebhookEventAccount"
-          },
-          "data": {
-            "$ref": "#/components/schemas/CalendarUpdatedPayload"
-          }
-        }
-      },
       "AccountCreatedEvent": {
         "type": "object",
         "required": [
@@ -5771,9 +5763,6 @@
             "$ref": "#/components/schemas/ListingReactivatedEvent"
           },
           {
-            "$ref": "#/components/schemas/CalendarUpdatedEvent"
-          },
-          {
             "$ref": "#/components/schemas/AccountCreatedEvent"
           },
           {
@@ -5845,7 +5834,6 @@
             "listing.deleted": "#/components/schemas/ListingDeletedEvent",
             "listing.suspended": "#/components/schemas/ListingSuspendedEvent",
             "listing.reactivated": "#/components/schemas/ListingReactivatedEvent",
-            "calendar.updated": "#/components/schemas/CalendarUpdatedEvent",
             "account.created": "#/components/schemas/AccountCreatedEvent",
             "connect.session.completed": "#/components/schemas/ConnectSessionCompletedEvent",
             "account.disconnected": "#/components/schemas/AccountDisconnectedEvent",
@@ -6147,22 +6135,6 @@
       "VrboListing": {
         "type": "object",
         "description": "A VRBO listing.",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "PlumguideListing": {
-        "type": "object",
-        "description": "A Plumguide listing.",
         "properties": {
           "id": {
             "type": "string"
@@ -7039,8 +7011,7 @@
                 "example": [
                   "airbnb",
                   "booking",
-                  "vrbo",
-                  "plumguide"
+                  "vrbo"
                 ]
               },
               "validParams": {
@@ -8001,20 +7972,6 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/VrboReservation"
-            }
-          },
-          "pagination": {
-            "$ref": "#/components/schemas/Pagination"
-          }
-        }
-      },
-      "PlumguideListingListResponse": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PlumguideListing"
             }
           },
           "pagination": {
@@ -9557,14 +9514,48 @@
           },
           "address": {
             "type": "object",
+            "description": "The listing's postal address, unit included. Each part is read from the listing first, then from the connected channels (Airbnb, Vrbo, Booking.com). On an inactive row only `city` is present.",
             "properties": {
               "street": {
                 "type": "string",
-                "nullable": true
+                "nullable": true,
+                "description": "Street line as stored on the listing. Kept for existing integrations; same value as `line1` unless the listing has no street of its own.",
+                "example": "2700 Northwest 2nd Avenue"
+              },
+              "line1": {
+                "type": "string",
+                "nullable": true,
+                "description": "Street address: number and street.",
+                "example": "2700 Northwest 2nd Avenue"
+              },
+              "line2": {
+                "type": "string",
+                "nullable": true,
+                "description": "Apartment, unit, suite or building.",
+                "example": "Unit 241"
               },
               "city": {
                 "type": "string",
-                "nullable": true
+                "nullable": true,
+                "example": "Miami"
+              },
+              "state": {
+                "type": "string",
+                "nullable": true,
+                "description": "State, province or region.",
+                "example": "FL"
+              },
+              "postalCode": {
+                "type": "string",
+                "nullable": true,
+                "description": "Postal or ZIP code.",
+                "example": "33127"
+              },
+              "countryCode": {
+                "type": "string",
+                "nullable": true,
+                "description": "ISO 3166-1 alpha-2 country code.",
+                "example": "US"
               }
             }
           },
@@ -18279,6 +18270,15 @@
                     "example": 24,
                     "description": "Airbnb \u2014 how many months of past reservations the first import pulls (1\u201360). Omit it for the default window. Upcoming stays are always imported. A wider window takes longer to import, because every extra month is more stays to fetch."
                   },
+                  "mapping": {
+                    "type": "string",
+                    "enum": [
+                      "hosted",
+                      "api"
+                    ],
+                    "default": "hosted",
+                    "description": "Where the channel's units get linked to listings. `hosted` (default): after a Vrbo or Booking.com Extranet sign-in, Connect shows a mapping step and returns to `redirectUrl` when it's confirmed. `api`: Connect skips that step and finishes right after sign-in. The connection reaches you in the `connect.session.completed` webhook (and as `connectionId` in the popup message), its handle is `vrbo:{connectionId}` or `booking_extranet:{connectionId}`; you list the units with `GET /v1/connections/{id}/units` and link them with `POST /v1/connections/{id}/mappings`. Nothing is imported until you post the mappings. Other providers ignore it."
+                  },
                   "accessType": {
                     "type": "string",
                     "enum": [
@@ -18517,7 +18517,7 @@
       "post": {
         "operationId": "create_connection",
         "summary": "Connect to PMS/OTA provider",
-        "description": "Establish a connection to a PMS or OTA platform. Credentials vary by provider \u2014 see docs for each provider.\n\nAirbnb-specific: pass `redirectUrl` (where to send the user after consent) and optionally `accessType`. Three tiers: `read_only` grants read-only scopes; `messaging` grants read scopes plus message read/send but NOT property management, so it can coexist with another app (e.g. an existing PMS) that already holds property management on the same Airbnb account; `full_access` \u2014 the default \u2014 grants full host scopes including the exclusive property management (only one app per Airbnb account can hold it). The response returns a hosted `url` to redirect the user to.\n\nBooking.com: pass `redirectUrl` (no `accessType`). The response returns a hosted `url` \u2014 send the user there to designate FantasticStay in their Booking.com Extranet and paste their Hotel ID. Same response shape as Airbnb (`url`, `sessionId`, `expiresAt`).\n\nPlumguide passes `clientId`/`clientSecret`. PMS providers are not connected by this call: send their credentials to `POST /v1/connect/{provider}/credentials`, or start a hosted session with `POST /v1/connect`.",
+        "description": "Establish a connection to a PMS or OTA platform. Credentials vary by provider \u2014 see docs for each provider.\n\nAirbnb-specific: pass `redirectUrl` (where to send the user after consent) and optionally `accessType`. Three tiers: `read_only` grants read-only scopes; `messaging` (shown to hosts as \"Messaging & reviews\") grants read scopes plus message read/send and review writes (reply to guest reviews, submit host reviews \u2014 Airbnb's `reviews_write`) but NOT property management, so it can coexist with another app (e.g. an existing PMS) that already holds property management on the same Airbnb account; `full_access` \u2014 the default \u2014 grants full host scopes including the exclusive property management (only one app per Airbnb account can hold it). The response returns a hosted `url` to redirect the user to.\n\nBooking.com: pass `redirectUrl` (no `accessType`). The response returns a hosted `url` \u2014 send the user there to select our connectivity provider in their Booking.com Extranet and paste their Hotel ID. Same response shape as Airbnb (`url`, `sessionId`, `expiresAt`).\n\nPMS providers are not connected by this call: send their credentials to `POST /v1/connect/{provider}/credentials`, or start a hosted session with `POST /v1/connect`.",
         "tags": [
           "Connect"
         ],
@@ -18546,7 +18546,7 @@
                       "messaging"
                     ],
                     "default": "full_access",
-                    "description": "Airbnb only \u2014 selects the OAuth scope set. 'read_only' grants read-only scopes; 'messaging' grants read scopes plus message read/send but NOT property management, so it can coexist with another app (e.g. an existing PMS) that already holds property management on the same Airbnb account; 'full_access' (default) grants full host scopes including the exclusive property management (only one app per Airbnb account can hold it). The hosted consent screen normally lets the host pick a tier; passing `accessType` explicitly fixes the tier and hides that choice, so the host can only continue with the tier you requested. Omit it to let the host choose."
+                    "description": "Airbnb only \u2014 selects the OAuth scope set. 'read_only' grants read-only scopes; 'messaging' (shown to hosts as \"Messaging & reviews\") grants read scopes plus message read/send and review writes (reply to guest reviews, submit host reviews \u2014 Airbnb's reviews_write) but NOT property management, so it can coexist with another app (e.g. an existing PMS) that already holds property management on the same Airbnb account; 'full_access' (default) grants full host scopes including the exclusive property management (only one app per Airbnb account can hold it). The hosted consent screen normally lets the host pick a tier; passing `accessType` explicitly fixes the tier and hides that choice, so the host can only continue with the tier you requested. Omit it to let the host choose."
                   },
                   "reservationHistoryMonths": {
                     "type": "integer",
@@ -18558,14 +18558,6 @@
                   "state": {
                     "type": "string",
                     "description": "Airbnb + Booking.com \u2014 your own correlation token, e.g. your user id (at most 500 characters). Echoed on the redirect back (`&state=`) and in the `connect.session.completed` webhook."
-                  },
-                  "clientId": {
-                    "type": "string",
-                    "description": "Plumguide \u2014 client ID."
-                  },
-                  "clientSecret": {
-                    "type": "string",
-                    "description": "Plumguide \u2014 client secret."
                   },
                   "locale": {
                     "type": "string",
@@ -19434,7 +19426,7 @@
       "get": {
         "operationId": "getChannelHealth",
         "summary": "Per-channel connectivity health",
-        "description": "Reports reachability and auth state for one channel (`airbnb`, `booking`, `vrbo`, `plumguide`). Use it to tell \"the channel is down\" apart from \"this workspace's connection expired\". `200` when `status` is `ok`, `503` when `degraded` or `down` (the body's `status` and `message` say which and why).\n\n**`vrbo`** reports the connector's own signals in a `vrbo` block: connected accounts, accounts VRBO signed out (their bookings, messages and calendar stop until reconnected \u2014 `down`), accounts whose inbox sync is late (`degraded`), and the calendar push queue backlog and its oldest wait (`degraded` past 3 hours). Its rate is calendar pushes VRBO refused over finished ones in the last 3 hours; failures inside Repull's own connector are reported apart as `vrbo.connector_errors` and do not count (`vrbo.window_hours`; `refresh_attempts_24h` / `refresh_rejections_24h` count that window for VRBO), judged only once at least 50 pushes finished and at least 5 failed \u2014 VRBO pushes run in bursts, so a day-long window would keep reporting a problem already fixed.",
+        "description": "Reports reachability and auth state for one channel (`airbnb`, `booking`, `vrbo`). Use it to tell \"the channel is down\" apart from \"this workspace's connection expired\". `200` when `status` is `ok`, `503` when `degraded` or `down` (the body's `status` and `message` say which and why).\n\n**`vrbo`** reports the connector's own signals in a `vrbo` block: connected accounts, accounts VRBO signed out (their bookings, messages and calendar stop until reconnected \u2014 `down`), accounts whose inbox sync is late (`degraded`), and the calendar push queue backlog and its oldest wait (`degraded` past 3 hours). Its rate is calendar pushes VRBO refused over finished ones in the last 3 hours; failures inside Repull's own connector are reported apart as `vrbo.connector_errors` and do not count (`vrbo.window_hours`; `refresh_attempts_24h` / `refresh_rejections_24h` count that window for VRBO), judged only once at least 50 pushes finished and at least 5 failed \u2014 VRBO pushes run in bursts, so a day-long window would keep reporting a problem already fixed.",
         "tags": [
           "Health"
         ],
@@ -19449,8 +19441,7 @@
               "enum": [
                 "airbnb",
                 "booking",
-                "vrbo",
-                "plumguide"
+                "vrbo"
               ]
             }
           }
@@ -19805,7 +19796,7 @@
       "post": {
         "operationId": "verifyBookingHotel",
         "summary": "Verify a Booking.com hotel ID for a Connect session",
-        "description": "Manual-paste fallback that closes the Booking.com claim flow. Call this after the customer completes Stage 1 designation in their Booking Extranet (ticking FantasticStay/Repull as their connectivity provider) and pastes their Hotel ID into the hosted picker.\n\nValidates the hotel against Booking's property API, persists the `pms_connections` row, kicks off the room import, and transitions the Connect session to `awaiting_room_mapping`.\n\nNo API key required \u2014 the `sessionId` is the capability token. Sessions in any terminal state are rejected.",
+        "description": "Manual-paste fallback that closes the Booking.com claim flow. Call this after the customer completes Stage 1 designation in their Booking Extranet (selecting our connectivity provider, named on the hosted Connect page) and pastes their Hotel ID into the hosted picker.\n\nValidates the hotel against Booking's property API, persists the `pms_connections` row, kicks off the room import, and transitions the Connect session to `awaiting_room_mapping`.\n\nNo API key required \u2014 the `sessionId` is the capability token. Sessions in any terminal state are rejected.",
         "tags": [
           "Connect"
         ],
@@ -27382,226 +27373,6 @@
                 }
               }
             }
-          }
-        }
-      }
-    },
-    "/v1/channels/plumguide/listings": {
-      "get": {
-        "operationId": "list_plumguide_listings",
-        "summary": "List Plumguide listings",
-        "description": "List Plumguide listings this workspace has access to. Plumguide is approval-based \u2014 listings appear once Plumguide has accepted them.",
-        "tags": [
-          "Plumguide"
-        ],
-        "responses": {
-          "200": {
-            "description": "Listings",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PlumguideListingListResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/channels/plumguide/availability": {
-      "get": {
-        "operationId": "get_plumguide_availability",
-        "summary": "Get Plumguide availability",
-        "description": "Read the per-day availability calendar for a Plumguide listing. Returns the same row shape as Airbnb availability for SDK convenience.\n\nReturns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
-        "tags": [
-          "Plumguide"
-        ],
-        "responses": {
-          "200": {
-            "description": "Availability"
-          },
-          "403": {
-            "$ref": "#/components/responses/ListingInactive"
-          }
-        }
-      },
-      "put": {
-        "operationId": "update_plumguide_availability",
-        "summary": "Push availability to Plumguide",
-        "description": "Push per-day availability changes to Plumguide. Plumguide accepts only the next 24 months \u2014 dates beyond that are silently ignored.\n\nReturns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
-        "tags": [
-          "Plumguide"
-        ],
-        "responses": {
-          "200": {
-            "description": "Pushed"
-          },
-          "403": {
-            "$ref": "#/components/responses/ListingInactive"
-          }
-        }
-      }
-    },
-    "/v1/channels/plumguide/pricing": {
-      "get": {
-        "operationId": "get_plumguide_pricing",
-        "summary": "Get Plumguide pricing",
-        "description": "Read the current pricing for a Plumguide listing (base price, currency, weekend uplift).\n\nReturns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
-        "tags": [
-          "Plumguide"
-        ],
-        "responses": {
-          "200": {
-            "description": "Pricing"
-          },
-          "403": {
-            "$ref": "#/components/responses/ListingInactive"
-          }
-        }
-      },
-      "put": {
-        "operationId": "update_plumguide_pricing",
-        "summary": "Push pricing to Plumguide",
-        "description": "Push pricing changes to Plumguide. Plumguide rounds all prices to whole units of the listing currency \u2014 sub-unit precision is silently truncated.\n\nReturns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
-        "tags": [
-          "Plumguide"
-        ],
-        "responses": {
-          "200": {
-            "description": "Pushed"
-          },
-          "403": {
-            "$ref": "#/components/responses/ListingInactive"
-          }
-        }
-      }
-    },
-    "/v1/channels/plumguide/bookings": {
-      "get": {
-        "operationId": "list_plumguide_bookings",
-        "summary": "List Plumguide bookings",
-        "description": "List Plumguide bookings. Default returns all bookings; pass `listing_id` to filter to one listing, or `booking_code` to fetch a single booking.\n\nReturns `403 listing_inactive` when `listing_id` or `booking_code` resolves to an inactive listing. The unfiltered list is read straight from Plum Guide and is not filtered by listing status.",
-        "tags": [
-          "Plumguide"
-        ],
-        "parameters": [
-          {
-            "name": "listing_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer"
-            },
-            "description": "Filter to a single Plumguide listing."
-          },
-          {
-            "name": "booking_code",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            },
-            "description": "Fetch a single booking by its Plumguide booking code."
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Bookings"
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "403": {
-            "$ref": "#/components/responses/ListingInactive"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          },
-          "500": {
-            "$ref": "#/components/responses/InternalError"
-          }
-        }
-      }
-    },
-    "/v1/channels/plumguide/webhooks": {
-      "get": {
-        "operationId": "get_plumguide_webhooks",
-        "summary": "Get Plumguide webhook config",
-        "description": "Read the current Plumguide webhook configuration for this workspace.",
-        "tags": [
-          "Plumguide"
-        ],
-        "responses": {
-          "200": {
-            "description": "Webhook config"
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          },
-          "500": {
-            "$ref": "#/components/responses/InternalError"
-          }
-        }
-      },
-      "put": {
-        "operationId": "update_plumguide_webhooks",
-        "summary": "Replace Plumguide webhook config",
-        "description": "Replace the Plumguide webhook configuration. The body carries the full webhook config payload \u2014 this is a full replacement, not a patch.",
-        "tags": [
-          "Plumguide"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": true,
-                "description": "Full Plumguide webhook config payload."
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Updated"
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          },
-          "500": {
-            "$ref": "#/components/responses/InternalError"
-          }
-        }
-      },
-      "delete": {
-        "operationId": "delete_plumguide_webhooks",
-        "summary": "Remove Plumguide webhook config",
-        "description": "Delete the Plumguide webhook configuration for this workspace. Plumguide stops delivering webhooks until a new config is set.",
-        "tags": [
-          "Plumguide"
-        ],
-        "responses": {
-          "200": {
-            "description": "Deleted"
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          },
-          "500": {
-            "$ref": "#/components/responses/InternalError"
           }
         }
       }
@@ -37098,6 +36869,11 @@
                         "completed"
                       ]
                     },
+                    "notification_email": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Vrbo only. Ask the host to add this address on Vrbo as a secondary email, with message and reservation notifications on. It is how new bookings, inquiries and guest messages reach Repull within a minute; without it they arrive at the next scheduled check. Hosted Connect asks for it on its mapping screen, so show it in your own flow when you map with `mapping: \"api\"`."
+                    },
                     "units": {
                       "type": "array",
                       "items": {
@@ -37121,7 +36897,8 @@
                             "nullable": true
                           },
                           "meta": {
-                            "type": "object"
+                            "type": "object",
+                            "description": "Channel details that identify the unit. Booking.com Extranet: `hotel` (property name), `hotelId` (Booking.com property ID), `roomId` (Booking.com room ID), `city`. Vrbo: `headline`, `address`, `vrboStatus`; the Vrbo listing ID is `unit_id`."
                           }
                         }
                       }

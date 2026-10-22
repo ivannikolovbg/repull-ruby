@@ -21,7 +21,7 @@ module Repull
     # The `state` you passed when creating the session.
     attr_accessor :state
 
-    # Channel or PMS: airbnb, booking, booking_extranet, vrbo, plumguide, hostaway, …
+    # Channel or PMS: airbnb, booking, booking_extranet, vrbo, hostaway, …
     attr_accessor :provider
 
     # The provider's own account id — Airbnb host id, Booking.com hotel id, Vrbo account id, or the PMS account.

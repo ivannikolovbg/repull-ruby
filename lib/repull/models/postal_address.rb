@@ -14,16 +14,34 @@ require 'date'
 require 'time'
 
 module Repull
-  class PlumguideListingListResponse < ApiModelBase
-    attr_accessor :data
+  # The full postal address, unit included. Returned on every active row of `GET /v1/properties`, `GET /v1/properties/{id}`, `GET /v1/listings` and `GET /v1/listings/{id}` (on listings, these fields sit inside `address`). Each part is read from the listing first, then from the connected channels (Airbnb, Vrbo, Booking.com), so `line2` carries the apartment or unit number that tells units in the same building apart. A part nobody has stored is `null`.
+  class PostalAddress < ApiModelBase
+    # Street address: number and street.
+    attr_accessor :line1
 
-    attr_accessor :pagination
+    # Apartment, unit, suite or building.
+    attr_accessor :line2
+
+    attr_accessor :city
+
+    # State, province or region.
+    attr_accessor :state
+
+    # Postal or ZIP code.
+    attr_accessor :postal_code
+
+    # ISO 3166-1 alpha-2 country code.
+    attr_accessor :country_code
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'data' => :'data',
-        :'pagination' => :'pagination'
+        :'line1' => :'line1',
+        :'line2' => :'line2',
+        :'city' => :'city',
+        :'state' => :'state',
+        :'postal_code' => :'postalCode',
+        :'country_code' => :'countryCode'
       }
     end
 
@@ -40,14 +58,24 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'data' => :'Array<PlumguideListing>',
-        :'pagination' => :'Pagination'
+        :'line1' => :'String',
+        :'line2' => :'String',
+        :'city' => :'String',
+        :'state' => :'String',
+        :'postal_code' => :'String',
+        :'country_code' => :'String'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'line1',
+        :'line2',
+        :'city',
+        :'state',
+        :'postal_code',
+        :'country_code'
       ])
     end
 
@@ -55,26 +83,52 @@ module Repull
     # @param [Hash] attributes Model attributes in the form of hash
     def initialize(attributes = {})
       if (!attributes.is_a?(Hash))
-        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::PlumguideListingListResponse` initialize method"
+        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::PostalAddress` initialize method"
       end
 
       # check to see if the attribute exists and convert string to symbol for hash key
       acceptable_attribute_map = self.class.acceptable_attribute_map
       attributes = attributes.each_with_object({}) { |(k, v), h|
         if (!acceptable_attribute_map.key?(k.to_sym))
-          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::PlumguideListingListResponse`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
+          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::PostalAddress`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
         end
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'data')
-        if (value = attributes[:'data']).is_a?(Array)
-          self.data = value
-        end
+      if attributes.key?(:'line1')
+        self.line1 = attributes[:'line1']
+      else
+        self.line1 = nil
       end
 
-      if attributes.key?(:'pagination')
-        self.pagination = attributes[:'pagination']
+      if attributes.key?(:'line2')
+        self.line2 = attributes[:'line2']
+      else
+        self.line2 = nil
+      end
+
+      if attributes.key?(:'city')
+        self.city = attributes[:'city']
+      else
+        self.city = nil
+      end
+
+      if attributes.key?(:'state')
+        self.state = attributes[:'state']
+      else
+        self.state = nil
+      end
+
+      if attributes.key?(:'postal_code')
+        self.postal_code = attributes[:'postal_code']
+      else
+        self.postal_code = nil
+      end
+
+      if attributes.key?(:'country_code')
+        self.country_code = attributes[:'country_code']
+      else
+        self.country_code = nil
       end
     end
 
@@ -98,8 +152,12 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          data == o.data &&
-          pagination == o.pagination
+          line1 == o.line1 &&
+          line2 == o.line2 &&
+          city == o.city &&
+          state == o.state &&
+          postal_code == o.postal_code &&
+          country_code == o.country_code
     end
 
     # @see the `==` method
@@ -111,7 +169,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [data, pagination].hash
+      [line1, line2, city, state, postal_code, country_code].hash
     end
 
     # Builds the object from hash

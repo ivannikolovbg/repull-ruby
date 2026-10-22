@@ -14,16 +14,38 @@ require 'date'
 require 'time'
 
 module Repull
+  # The listing's postal address, unit included. Each part is read from the listing first, then from the connected channels (Airbnb, Vrbo, Booking.com). On an inactive row only `city` is present.
   class ListingAddress < ApiModelBase
+    # Street line as stored on the listing. Kept for existing integrations; same value as `line1` unless the listing has no street of its own.
     attr_accessor :street
 
+    # Street address: number and street.
+    attr_accessor :line1
+
+    # Apartment, unit, suite or building.
+    attr_accessor :line2
+
     attr_accessor :city
+
+    # State, province or region.
+    attr_accessor :state
+
+    # Postal or ZIP code.
+    attr_accessor :postal_code
+
+    # ISO 3166-1 alpha-2 country code.
+    attr_accessor :country_code
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
         :'street' => :'street',
-        :'city' => :'city'
+        :'line1' => :'line1',
+        :'line2' => :'line2',
+        :'city' => :'city',
+        :'state' => :'state',
+        :'postal_code' => :'postalCode',
+        :'country_code' => :'countryCode'
       }
     end
 
@@ -41,7 +63,12 @@ module Repull
     def self.openapi_types
       {
         :'street' => :'String',
-        :'city' => :'String'
+        :'line1' => :'String',
+        :'line2' => :'String',
+        :'city' => :'String',
+        :'state' => :'String',
+        :'postal_code' => :'String',
+        :'country_code' => :'String'
       }
     end
 
@@ -49,7 +76,12 @@ module Repull
     def self.openapi_nullable
       Set.new([
         :'street',
-        :'city'
+        :'line1',
+        :'line2',
+        :'city',
+        :'state',
+        :'postal_code',
+        :'country_code'
       ])
     end
 
@@ -73,8 +105,28 @@ module Repull
         self.street = attributes[:'street']
       end
 
+      if attributes.key?(:'line1')
+        self.line1 = attributes[:'line1']
+      end
+
+      if attributes.key?(:'line2')
+        self.line2 = attributes[:'line2']
+      end
+
       if attributes.key?(:'city')
         self.city = attributes[:'city']
+      end
+
+      if attributes.key?(:'state')
+        self.state = attributes[:'state']
+      end
+
+      if attributes.key?(:'postal_code')
+        self.postal_code = attributes[:'postal_code']
+      end
+
+      if attributes.key?(:'country_code')
+        self.country_code = attributes[:'country_code']
       end
     end
 
@@ -99,7 +151,12 @@ module Repull
       return true if self.equal?(o)
       self.class == o.class &&
           street == o.street &&
-          city == o.city
+          line1 == o.line1 &&
+          line2 == o.line2 &&
+          city == o.city &&
+          state == o.state &&
+          postal_code == o.postal_code &&
+          country_code == o.country_code
     end
 
     # @see the `==` method
@@ -111,7 +168,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [street, city].hash
+      [street, line1, line2, city, state, postal_code, country_code].hash
     end
 
     # Builds the object from hash

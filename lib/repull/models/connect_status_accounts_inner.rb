@@ -33,6 +33,9 @@ module Repull
     # Vrbo only.
     attr_accessor :access_type
 
+    # Vrbo only. The address the host can add on Vrbo as a secondary email (with message and reservation notifications on) so new bookings, inquiries and messages arrive within a minute instead of at the scheduled check. Ask every host to add it: notifications are how Vrbo updates reach Repull, the scheduled check is the backup. Hosted Connect shows it on its mapping screen; show it in your own app when you create sessions with `mapping: \"api\"`.
+    attr_accessor :notification_email
+
     # Vrbo only: where the account import stands.
     attr_accessor :import
 
@@ -68,6 +71,7 @@ module Repull
         :'connected' => :'connected',
         :'email' => :'email',
         :'access_type' => :'accessType',
+        :'notification_email' => :'notificationEmail',
         :'import' => :'import'
       }
     end
@@ -92,6 +96,7 @@ module Repull
         :'connected' => :'Boolean',
         :'email' => :'String',
         :'access_type' => :'String',
+        :'notification_email' => :'String',
         :'import' => :'VrboImportStatus'
       }
     end
@@ -104,6 +109,7 @@ module Repull
         :'status',
         :'email',
         :'access_type',
+        :'notification_email',
         :'import'
       ])
     end
@@ -152,6 +158,10 @@ module Repull
         self.access_type = attributes[:'access_type']
       end
 
+      if attributes.key?(:'notification_email')
+        self.notification_email = attributes[:'notification_email']
+      end
+
       if attributes.key?(:'import')
         self.import = attributes[:'import']
       end
@@ -196,6 +206,7 @@ module Repull
           connected == o.connected &&
           email == o.email &&
           access_type == o.access_type &&
+          notification_email == o.notification_email &&
           import == o.import
     end
 
@@ -208,7 +219,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [external_account_id, name, picture_url, status, connected, email, access_type, import].hash
+      [external_account_id, name, picture_url, status, connected, email, access_type, notification_email, import].hash
     end
 
     # Builds the object from hash

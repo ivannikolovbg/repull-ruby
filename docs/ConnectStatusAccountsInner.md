@@ -11,6 +11,7 @@
 | **connected** | **Boolean** | True while the account is active and its authorization is usable. | [optional] |
 | **email** | **String** | Vrbo only: the account email. | [optional] |
 | **access_type** | **String** | Vrbo only. | [optional] |
+| **notification_email** | **String** | Vrbo only. The address the host can add on Vrbo as a secondary email (with message and reservation notifications on) so new bookings, inquiries and messages arrive within a minute instead of at the scheduled check. Ask every host to add it: notifications are how Vrbo updates reach Repull, the scheduled check is the backup. Hosted Connect shows it on its mapping screen; show it in your own app when you create sessions with &#x60;mapping: \&quot;api\&quot;&#x60;. | [optional] |
 | **import** | [**VrboImportStatus**](VrboImportStatus.md) | Vrbo only: where the account import stands. | [optional] |
 
 ## Example
@@ -26,6 +27,7 @@ instance = Repull::ConnectStatusAccountsInner.new(
   connected: true,
   email: null,
   access_type: null,
+  notification_email: null,
   import: null
 )
 ```
