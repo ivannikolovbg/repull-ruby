@@ -19,7 +19,7 @@ module Repull
     # Airbnb + Booking.com — where to redirect the user after they finish the hosted connect flow.
     attr_accessor :redirect_url
 
-    # Airbnb only — selects the OAuth scope set. 'read_only' grants read-only scopes; 'messaging' grants read scopes plus message read/send but NOT property management, so it can coexist with another app (e.g. an existing PMS) that already holds property management on the same Airbnb account; 'full_access' (default) grants full host scopes including the exclusive property management (only one app per Airbnb account can hold it). The hosted consent screen normally lets the host pick a tier; passing `accessType` explicitly fixes the tier and hides that choice, so the host can only continue with the tier you requested. Omit it to let the host choose.
+    # Airbnb only — selects the OAuth scope set. 'read_only' grants read-only scopes; 'messaging' (shown to hosts as \"Messaging & reviews\") grants read scopes plus message read/send and review writes (reply to guest reviews, submit host reviews — Airbnb's reviews_write) but NOT property management, so it can coexist with another app (e.g. an existing PMS) that already holds property management on the same Airbnb account; 'full_access' (default) grants full host scopes including the exclusive property management (only one app per Airbnb account can hold it). The hosted consent screen normally lets the host pick a tier; passing `accessType` explicitly fixes the tier and hides that choice, so the host can only continue with the tier you requested. Omit it to let the host choose.
     attr_accessor :access_type
 
     # Airbnb — how many months of past reservations the first import pulls (1–60). Omit it for the default window. Upcoming stays are always imported. A wider window takes longer to import, because every extra month is more stays to fetch.
@@ -27,12 +27,6 @@ module Repull
 
     # Airbnb + Booking.com — your own correlation token, e.g. your user id (at most 500 characters). Echoed on the redirect back (`&state=`) and in the `connect.session.completed` webhook.
     attr_accessor :state
-
-    # Plumguide — client ID.
-    attr_accessor :client_id
-
-    # Plumguide — client secret.
-    attr_accessor :client_secret
 
     # Airbnb only — optional UI language for the hosted Connect pages. Accepts any supported locale code (currently `en`, `fr`); unknown codes are ignored and resolution falls back to the workspace `default_language`, then `Accept-Language`, then `en`.
     attr_accessor :locale
@@ -66,8 +60,6 @@ module Repull
         :'access_type' => :'accessType',
         :'reservation_history_months' => :'reservationHistoryMonths',
         :'state' => :'state',
-        :'client_id' => :'clientId',
-        :'client_secret' => :'clientSecret',
         :'locale' => :'locale'
       }
     end
@@ -89,8 +81,6 @@ module Repull
         :'access_type' => :'String',
         :'reservation_history_months' => :'Integer',
         :'state' => :'String',
-        :'client_id' => :'String',
-        :'client_secret' => :'String',
         :'locale' => :'String'
       }
     end
@@ -134,14 +124,6 @@ module Repull
 
       if attributes.key?(:'state')
         self.state = attributes[:'state']
-      end
-
-      if attributes.key?(:'client_id')
-        self.client_id = attributes[:'client_id']
-      end
-
-      if attributes.key?(:'client_secret')
-        self.client_secret = attributes[:'client_secret']
       end
 
       if attributes.key?(:'locale')
@@ -213,8 +195,6 @@ module Repull
           access_type == o.access_type &&
           reservation_history_months == o.reservation_history_months &&
           state == o.state &&
-          client_id == o.client_id &&
-          client_secret == o.client_secret &&
           locale == o.locale
     end
 
@@ -227,7 +207,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [redirect_url, access_type, reservation_history_months, state, client_id, client_secret, locale].hash
+      [redirect_url, access_type, reservation_history_months, state, locale].hash
     end
 
     # Builds the object from hash

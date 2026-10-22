@@ -7,6 +7,7 @@
 | **connection_id** | **String** |  | [optional] |
 | **channel** | **String** |  | [optional] |
 | **status** | **String** |  | [optional] |
+| **notification_email** | **String** | Vrbo only. Ask the host to add this address on Vrbo as a secondary email, with message and reservation notifications on. It is how new bookings, inquiries and guest messages reach Repull within a minute; without it they arrive at the next scheduled check. Hosted Connect asks for it on its mapping screen, so show it in your own flow when you map with &#x60;mapping: \&quot;api\&quot;&#x60;. | [optional] |
 | **units** | [**Array&lt;ListConnectionUnits200ResponseUnitsInner&gt;**](ListConnectionUnits200ResponseUnitsInner.md) |  | [optional] |
 | **listing_options** | [**Array&lt;ListConnectionUnits200ResponseListingOptionsInner&gt;**](ListConnectionUnits200ResponseListingOptionsInner.md) |  | [optional] |
 | **missing_capabilities** | **Array&lt;String&gt;** |  | [optional] |
@@ -21,6 +22,7 @@ instance = Repull::ListConnectionUnits200Response.new(
   connection_id: null,
   channel: null,
   status: null,
+  notification_email: null,
   units: null,
   listing_options: null,
   missing_capabilities: null,

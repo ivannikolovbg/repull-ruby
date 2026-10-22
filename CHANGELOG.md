@@ -2,6 +2,15 @@
 
 All notable changes to the `repull` gem are documented here.
 
+## [0.2.35] - 2026-10-22
+
+### Added
+- `Property#address_details` (`PostalAddress`) on list/get properties: `line1`, `line2`, `city`, `state`, `postalCode`, `countryCode`. `line2` carries the apartment / unit number. The existing `address` string and `city` are unchanged.
+- `ListingAddress` gains `line1`, `line2`, `state`, `postal_code`, `country_code` next to `street` and `city`.
+
+### Changed
+- Regenerated from the live spec (also picks up the Plum Guide channel hidden until certified, and `calendar.updated` removed from webhook events).
+
 ## [0.2.34] - 2026-10-16
 
 ### Added
