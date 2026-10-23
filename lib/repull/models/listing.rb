@@ -57,6 +57,27 @@ module Repull
     # **Only present when the caller passes `?include=details`.** Sourced from `listings_details`. `null` when the listing has no details row stored (vs the field being absent — that signals the caller did not opt into the expansion).
     attr_accessor :details
 
+    # **Only present with `?include=rooms`.** Each room and its beds. `[]` when none are stored.
+    attr_accessor :rooms
+
+    # **Only present with `?include=policies`.** Cancellation, house rules, check-in and check-out, pets/smoking/events/children, quiet hours, deposit.
+    attr_accessor :policies
+
+    # **Only present with `?include=rules`.** Stay rules: min/max nights, booking window, advance notice, preparation time, and whether booking requests are allowed.
+    attr_accessor :rules
+
+    # **Only present with `?include=pricing`.** Standing prices: base and weekend rate, cleaning and extra-guest fees, deposit, weekly/monthly discounts. `null` when none are stored.
+    attr_accessor :pricing
+
+    # **Only present with `?include=fees`.** Every fee, the cleaning fee included, whatever channel or PMS it came from. `[]` when none.
+    attr_accessor :fees
+
+    # **Only present with `?include=taxes`.** Taxes charged to the guest. `[]` when none.
+    attr_accessor :taxes
+
+    # **Only present with `?include=photos`.** The listing photos in display order.
+    attr_accessor :photos
+
     attr_accessor :created_at
 
     attr_accessor :updated_at
@@ -79,6 +100,13 @@ module Repull
         :'amenities' => :'amenities',
         :'content' => :'content',
         :'details' => :'details',
+        :'rooms' => :'rooms',
+        :'policies' => :'policies',
+        :'rules' => :'rules',
+        :'pricing' => :'pricing',
+        :'fees' => :'fees',
+        :'taxes' => :'taxes',
+        :'photos' => :'photos',
         :'created_at' => :'createdAt',
         :'updated_at' => :'updatedAt'
       }
@@ -112,6 +140,13 @@ module Repull
         :'amenities' => :'Array<ListingAmenity>',
         :'content' => :'ListingContent',
         :'details' => :'ListingDetails',
+        :'rooms' => :'Array<ListingRoom>',
+        :'policies' => :'ListingPolicies',
+        :'rules' => :'ListingRules',
+        :'pricing' => :'ListingPricingSettings',
+        :'fees' => :'Array<ListingFee>',
+        :'taxes' => :'Array<ListingTax>',
+        :'photos' => :'Array<ListingContentPhoto>',
         :'created_at' => :'Time',
         :'updated_at' => :'Time'
       }
@@ -125,6 +160,9 @@ module Repull
         :'thumbnail_url',
         :'content',
         :'details',
+        :'policies',
+        :'rules',
+        :'pricing',
       ])
     end
 
@@ -210,6 +248,42 @@ module Repull
         self.details = attributes[:'details']
       end
 
+      if attributes.key?(:'rooms')
+        if (value = attributes[:'rooms']).is_a?(Array)
+          self.rooms = value
+        end
+      end
+
+      if attributes.key?(:'policies')
+        self.policies = attributes[:'policies']
+      end
+
+      if attributes.key?(:'rules')
+        self.rules = attributes[:'rules']
+      end
+
+      if attributes.key?(:'pricing')
+        self.pricing = attributes[:'pricing']
+      end
+
+      if attributes.key?(:'fees')
+        if (value = attributes[:'fees']).is_a?(Array)
+          self.fees = value
+        end
+      end
+
+      if attributes.key?(:'taxes')
+        if (value = attributes[:'taxes']).is_a?(Array)
+          self.taxes = value
+        end
+      end
+
+      if attributes.key?(:'photos')
+        if (value = attributes[:'photos']).is_a?(Array)
+          self.photos = value
+        end
+      end
+
       if attributes.key?(:'created_at')
         self.created_at = attributes[:'created_at']
       end
@@ -273,6 +347,13 @@ module Repull
           amenities == o.amenities &&
           content == o.content &&
           details == o.details &&
+          rooms == o.rooms &&
+          policies == o.policies &&
+          rules == o.rules &&
+          pricing == o.pricing &&
+          fees == o.fees &&
+          taxes == o.taxes &&
+          photos == o.photos &&
           created_at == o.created_at &&
           updated_at == o.updated_at
     end
@@ -286,7 +367,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [capabilities, kind, hotel, unit_count, units, id, name, public_name, address, thumbnail_url, status, channels, amenities, content, details, created_at, updated_at].hash
+      [capabilities, kind, hotel, unit_count, units, id, name, public_name, address, thumbnail_url, status, channels, amenities, content, details, rooms, policies, rules, pricing, fees, taxes, photos, created_at, updated_at].hash
     end
 
     # Builds the object from hash

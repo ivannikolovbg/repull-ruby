@@ -2749,6 +2749,10 @@
           "reservation.alteration.responded",
           "reservation.request.created",
           "reservation.request.updated",
+          "booking.unacknowledged",
+          "channel.sync.failed",
+          "channel.degraded",
+          "reservation.thread.assigned",
           "inquiry.created",
           "inquiry.updated",
           "listing.created",
@@ -4618,6 +4622,363 @@
           }
         }
       },
+      "ChannelSyncFailurePayload": {
+        "type": "object",
+        "description": "Payload for `channel.sync.failed`. A push of availability, rates or content to a connected channel did not land.",
+        "required": [
+          "object",
+          "failures"
+        ],
+        "properties": {
+          "object": {
+            "type": "object",
+            "required": [
+              "listingId",
+              "customerId",
+              "operation",
+              "total"
+            ],
+            "properties": {
+              "listingId": {
+                "type": "integer"
+              },
+              "customerId": {
+                "type": "integer"
+              },
+              "operation": {
+                "type": "string",
+                "enum": [
+                  "availability",
+                  "rate",
+                  "restriction",
+                  "content",
+                  "reservation"
+                ],
+                "description": "Which wire failed. A refused rate and a closed connection call for different responses."
+              },
+              "total": {
+                "type": "boolean",
+                "description": "true when NO mapping accepted the push. false means some did \u2014 the more dangerous case, because the listing is live somewhere and inconsistent."
+              },
+              "from": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "description": "Start of the date range the push covered, when the operation is date-scoped."
+              },
+              "to": {
+                "type": "string",
+                "format": "date",
+                "nullable": true
+              }
+            }
+          },
+          "failures": {
+            "type": "array",
+            "description": "One entry per channel mapping that refused the push.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "channel": {
+                  "type": "string",
+                  "example": "airbnb"
+                },
+                "externalListingId": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "The channel's own id for the room or listing."
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "rejected",
+                    "auth",
+                    "not_mapped",
+                    "unreachable",
+                    "unknown"
+                  ],
+                  "description": "`unknown` means we could not classify it \u2014 never that the channel refused."
+                },
+                "message": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "The channel's own message, verbatim."
+                }
+              }
+            }
+          },
+          "reservationId": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Set when the push was blocking dates for a booking just taken. Those nights are sold on one channel and still open on another \u2014 treat as urgent."
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ChannelSyncFailedEvent": {
+        "type": "object",
+        "required": [
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
+          "data"
+        ],
+        "properties": {
+          "event": {
+            "type": "string",
+            "description": "The event name. This field is `event`, not `type`."
+          },
+          "eventId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
+          },
+          "apiVersion": {
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ChannelSyncFailurePayload"
+          }
+        }
+      },
+      "ChannelDegradedPayload": {
+        "type": "object",
+        "description": "Payload for `channel.degraded`. A connection is failing repeatedly and will stop working. Sent on the transition into degraded or down, not on every health check.",
+        "required": [
+          "object"
+        ],
+        "properties": {
+          "object": {
+            "type": "object",
+            "required": [
+              "customerId",
+              "provider",
+              "status"
+            ],
+            "properties": {
+              "customerId": {
+                "type": "integer"
+              },
+              "provider": {
+                "type": "string",
+                "example": "booking"
+              },
+              "externalAccountId": {
+                "type": "string",
+                "nullable": true,
+                "description": "The provider's own account, host or hotel id."
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "degraded",
+                  "down"
+                ]
+              },
+              "detail": {
+                "type": "string",
+                "nullable": true,
+                "description": "What we observed, in the provider's words where possible. A bare \"degraded\" tells nobody what to fix."
+              }
+            }
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ChannelDegradedEvent": {
+        "type": "object",
+        "required": [
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
+          "data"
+        ],
+        "properties": {
+          "event": {
+            "type": "string",
+            "description": "The event name. This field is `event`, not `type`."
+          },
+          "eventId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "apiVersion": {
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ChannelDegradedPayload"
+          }
+        }
+      },
+      "ReservationThreadAssignedPayload": {
+        "type": "object",
+        "description": "Payload for `reservation.thread.assigned`. A message thread was attached to a booking. Threads are often born orphaned \u2014 a guest messages about a booking whose import has not landed \u2014 and adopted when the reservation arrives.",
+        "required": [
+          "object"
+        ],
+        "properties": {
+          "object": {
+            "type": "object",
+            "required": [
+              "reservationId",
+              "customerId",
+              "threadId"
+            ],
+            "properties": {
+              "reservationId": {
+                "type": "integer"
+              },
+              "customerId": {
+                "type": "integer"
+              },
+              "listingId": {
+                "type": "integer",
+                "nullable": true
+              },
+              "threadId": {
+                "type": "string",
+                "description": "Repull conversation id."
+              },
+              "externalThreadId": {
+                "type": "string",
+                "nullable": true,
+                "description": "The channel's own conversation id."
+              },
+              "previousReservationId": {
+                "type": "integer",
+                "nullable": true,
+                "description": "What the thread pointed at before. Null on the common orphan-adoption case; set when a thread moved between bookings."
+              }
+            }
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ReservationThreadAssignedEvent": {
+        "type": "object",
+        "required": [
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
+          "data"
+        ],
+        "properties": {
+          "event": {
+            "type": "string",
+            "description": "The event name. This field is `event`, not `type`."
+          },
+          "eventId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "apiVersion": {
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ReservationThreadAssignedPayload"
+          }
+        }
+      },
+      "BookingUnacknowledgedPayload": {
+        "type": "object",
+        "description": "Payload for `booking.unacknowledged`. A booking changed and your system has not acknowledged the change through the revision feed. Sent once per outstanding revision \u2014 not once per check \u2014 so a booking that keeps waiting does not keep alerting. A booking that changes AGAIN mints a new revision and does alert again, because that is a new thing to acknowledge. Acknowledging the revision stops it.",
+        "required": [
+          "object",
+          "revisionId",
+          "outstandingSince"
+        ],
+        "properties": {
+          "object": {
+            "$ref": "#/components/schemas/ReservationWebhookObject"
+          },
+          "revisionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The outstanding revision. Acknowledge this to stop the alert."
+          },
+          "outstandingSince": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the booking actually changed \u2014 NOT when we noticed. Revisions are minted when you first poll the feed, so a mint timestamp would measure how recently you looked rather than how long the booking has waited."
+          },
+          "outstandingHours": {
+            "type": "integer",
+            "description": "Whole hours since `outstandingSince`, for convenience."
+          }
+        }
+      },
+      "BookingUnacknowledgedEvent": {
+        "type": "object",
+        "required": [
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
+          "data"
+        ],
+        "properties": {
+          "event": {
+            "type": "string",
+            "description": "The event name. This field is `event`, not `type`."
+          },
+          "eventId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
+          },
+          "apiVersion": {
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this delivery was built."
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
+          },
+          "data": {
+            "$ref": "#/components/schemas/BookingUnacknowledgedPayload"
+          }
+        }
+      },
       "InquiryCreatedEvent": {
         "type": "object",
         "required": [
@@ -5742,6 +6103,18 @@
             "$ref": "#/components/schemas/ReservationRequestUpdatedEvent"
           },
           {
+            "$ref": "#/components/schemas/BookingUnacknowledgedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/ChannelSyncFailedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/ChannelDegradedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/ReservationThreadAssignedEvent"
+          },
+          {
             "$ref": "#/components/schemas/InquiryCreatedEvent"
           },
           {
@@ -5827,6 +6200,10 @@
             "reservation.alteration.responded": "#/components/schemas/ReservationAlterationRespondedEvent",
             "reservation.request.created": "#/components/schemas/ReservationRequestCreatedEvent",
             "reservation.request.updated": "#/components/schemas/ReservationRequestUpdatedEvent",
+            "booking.unacknowledged": "#/components/schemas/BookingUnacknowledgedEvent",
+            "channel.sync.failed": "#/components/schemas/ChannelSyncFailedEvent",
+            "channel.degraded": "#/components/schemas/ChannelDegradedEvent",
+            "reservation.thread.assigned": "#/components/schemas/ReservationThreadAssignedEvent",
             "inquiry.created": "#/components/schemas/InquiryCreatedEvent",
             "inquiry.updated": "#/components/schemas/InquiryUpdatedEvent",
             "listing.created": "#/components/schemas/ListingCreatedEvent",
@@ -9416,6 +9793,341 @@
           "isPresent"
         ]
       },
+      "ChargePer": {
+        "type": "string",
+        "enum": [
+          "stay",
+          "night",
+          "guest",
+          "guest_night"
+        ],
+        "description": "How often an amount is charged: once per stay, per night, per guest, or per guest per night."
+      },
+      "ListingRoom": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Room kind, Airbnb spelling: `bedroom`, `living_room`, `full_bathroom`, `kitchen`, \u2026",
+            "example": "bedroom"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "number": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Position among rooms of the same type (bedroom 1, 2, \u2026)."
+          },
+          "isPrivate": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "beds": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "queen_bed"
+                },
+                "quantity": {
+                  "type": "integer",
+                  "example": 1
+                }
+              }
+            }
+          }
+        }
+      },
+      "ListingPolicies": {
+        "type": "object",
+        "properties": {
+          "cancellationPolicy": {
+            "type": "string",
+            "nullable": true,
+            "example": "flexible"
+          },
+          "houseRules": {
+            "type": "string",
+            "nullable": true
+          },
+          "checkIn": {
+            "type": "object",
+            "properties": {
+              "method": {
+                "type": "string",
+                "nullable": true,
+                "description": "`lockbox`, `smartlock`, `keypad`, `doorman`, `host_greets`, `building_staff`, `other`.",
+                "example": "lockbox"
+              },
+              "instructions": {
+                "type": "string",
+                "nullable": true
+              },
+              "from": {
+                "type": "string",
+                "nullable": true,
+                "example": "15:00"
+              },
+              "until": {
+                "type": "string",
+                "nullable": true,
+                "example": "22:00"
+              }
+            }
+          },
+          "checkOut": {
+            "type": "object",
+            "properties": {
+              "until": {
+                "type": "string",
+                "nullable": true,
+                "example": "11:00"
+              }
+            }
+          },
+          "allowsPets": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "allowsSmoking": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "allowsEvents": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "allowsChildren": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "allowsInfants": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "childrenMinAge": {
+            "type": "integer",
+            "nullable": true
+          },
+          "quietHours": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "start": {
+                "type": "string",
+                "example": "22:00"
+              },
+              "end": {
+                "type": "string",
+                "example": "07:00"
+              }
+            }
+          },
+          "securityDeposit": {
+            "type": "number",
+            "nullable": true,
+            "description": "In the listing currency."
+          }
+        }
+      },
+      "ListingRules": {
+        "type": "object",
+        "properties": {
+          "minNights": {
+            "type": "integer",
+            "nullable": true
+          },
+          "maxNights": {
+            "type": "integer",
+            "nullable": true
+          },
+          "bookingWindowDays": {
+            "type": "integer",
+            "nullable": true,
+            "description": "How far ahead a guest can book. `null` when unlimited or not set."
+          },
+          "advanceNoticeHours": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Hours of notice required before check-in."
+          },
+          "preparationDays": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Nights blocked between stays."
+          },
+          "allowsBookingRequests": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether guests may send a booking request inside the notice window."
+          },
+          "instantBook": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ListingPricingSettings": {
+        "type": "object",
+        "description": "The listing's standing prices. Nightly rates per date are on `GET /v1/availability/{propertyId}`.",
+        "properties": {
+          "currency": {
+            "type": "string",
+            "nullable": true,
+            "example": "GBP"
+          },
+          "basePrice": {
+            "type": "number",
+            "nullable": true,
+            "description": "Default nightly rate."
+          },
+          "weekendPrice": {
+            "type": "number",
+            "nullable": true
+          },
+          "cleaningFee": {
+            "type": "number",
+            "nullable": true
+          },
+          "extraGuestFee": {
+            "type": "number",
+            "nullable": true,
+            "description": "Per extra guest per night, above `guestsIncluded`."
+          },
+          "guestsIncluded": {
+            "type": "integer",
+            "nullable": true
+          },
+          "securityDeposit": {
+            "type": "number",
+            "nullable": true
+          },
+          "weeklyDiscountPercent": {
+            "type": "number",
+            "nullable": true,
+            "description": "Percent off for 7+ nights: `10` is 10%."
+          },
+          "monthlyDiscountPercent": {
+            "type": "number",
+            "nullable": true,
+            "description": "Percent off for 28+ nights."
+          }
+        }
+      },
+      "ListingFee": {
+        "type": "object",
+        "description": "A fee on top of the nightly rate, the cleaning fee included. One shape for every channel and PMS.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "`cleaning`, `pet`, `linen`, `resort`, `management`, `community`, or the source's own kind.",
+            "example": "cleaning"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "example": "Damage Waiver"
+          },
+          "amount": {
+            "type": "number",
+            "description": "In the listing currency when `amountType` is `flat`; a percent when `percent`.",
+            "example": 35
+          },
+          "amountType": {
+            "type": "string"
+          },
+          "chargedPer": {
+            "$ref": "#/components/schemas/ChargePer"
+          },
+          "optional": {
+            "type": "boolean",
+            "description": "Offered to the guest (an add-on) rather than always charged."
+          },
+          "source": {
+            "type": "string",
+            "description": "Where it was read from: `airbnb`, `guesty`, \u2026",
+            "example": "guesty"
+          }
+        }
+      },
+      "ListingTax": {
+        "type": "object",
+        "description": "A tax charged to the guest. One shape for every channel and PMS.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "`vat`, `vat_gst`, `city_tax`, `transient_occupancy_tax`, \u2026",
+            "example": "vat"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "example": "VAT"
+          },
+          "amount": {
+            "type": "number",
+            "example": 20
+          },
+          "amountType": {
+            "type": "string"
+          },
+          "chargedPer": {
+            "$ref": "#/components/schemas/ChargePer"
+          },
+          "appliesTo": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            },
+            "description": "What it is charged on (`accommodation`, `cleaning`, other fee types). `null`: the whole stay."
+          },
+          "included": {
+            "type": "boolean",
+            "description": "Already included in the price rather than added on top."
+          },
+          "source": {
+            "type": "string",
+            "description": "`airbnb` (host-remitted), `airbnb_collected` (Airbnb collects and remits), `guesty`, \u2026"
+          }
+        }
+      },
+      "ListingContentPhoto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "thumbnailUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "caption": {
+            "type": "string",
+            "nullable": true
+          },
+          "category": {
+            "type": "string",
+            "nullable": true
+          },
+          "width": {
+            "type": "integer",
+            "nullable": true
+          },
+          "height": {
+            "type": "integer",
+            "nullable": true
+          },
+          "sortOrder": {
+            "type": "integer"
+          }
+        }
+      },
       "Listing": {
         "type": "object",
         "description": "A vacation rental listing in your Repull workspace.\n\nAn **inactive** listing appears only in `GET /v1/listings`, and only when `?status=` asks for it. Such a row carries identity fields only \u2014 `id`, `name`, `status`, `inactiveReason`, `address.city`, `channels` \u2014 so the street, `content`, `details`, `createdAt` and `updatedAt` are absent until the listing is activated. `inactiveReason` is `plan_limit` (held back by the plan; activating needs a free slot or an upgrade), `unlisted_on_airbnb`, or `deactivated` (switched off by you). `GET /v1/listings/{id}` and every other listing endpoint answer `403 listing_inactive` for it. The one field you can add back is `thumbnailUrl`, by passing `?include=thumbnail` \u2014 enough to render an activate/deactivate picker with pictures from a single request.",
@@ -9599,6 +10311,61 @@
             ],
             "nullable": true,
             "description": "**Only present when the caller passes `?include=details`.** Sourced from `listings_details`. `null` when the listing has no details row stored (vs the field being absent \u2014 that signals the caller did not opt into the expansion)."
+          },
+          "rooms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ListingRoom"
+            },
+            "description": "**Only present with `?include=rooms`.** Each room and its beds. `[]` when none are stored."
+          },
+          "policies": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ListingPolicies"
+              }
+            ],
+            "nullable": true,
+            "description": "**Only present with `?include=policies`.** Cancellation, house rules, check-in and check-out, pets/smoking/events/children, quiet hours, deposit."
+          },
+          "rules": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ListingRules"
+              }
+            ],
+            "nullable": true,
+            "description": "**Only present with `?include=rules`.** Stay rules: min/max nights, booking window, advance notice, preparation time, and whether booking requests are allowed."
+          },
+          "pricing": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ListingPricingSettings"
+              }
+            ],
+            "nullable": true,
+            "description": "**Only present with `?include=pricing`.** Standing prices: base and weekend rate, cleaning and extra-guest fees, deposit, weekly/monthly discounts. `null` when none are stored."
+          },
+          "fees": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ListingFee"
+            },
+            "description": "**Only present with `?include=fees`.** Every fee, the cleaning fee included, whatever channel or PMS it came from. `[]` when none."
+          },
+          "taxes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ListingTax"
+            },
+            "description": "**Only present with `?include=taxes`.** Taxes charged to the guest. `[]` when none."
+          },
+          "photos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ListingContentPhoto"
+            },
+            "description": "**Only present with `?include=photos`.** The listing photos in display order."
           },
           "createdAt": {
             "type": "string",
@@ -18277,7 +19044,7 @@
                       "api"
                     ],
                     "default": "hosted",
-                    "description": "Where the channel's units get linked to listings. `hosted` (default): after a Vrbo or Booking.com Extranet sign-in, Connect shows a mapping step and returns to `redirectUrl` when it's confirmed. `api`: Connect skips that step and finishes right after sign-in. The connection reaches you in the `connect.session.completed` webhook (and as `connectionId` in the popup message), its handle is `vrbo:{connectionId}` or `booking_extranet:{connectionId}`; you list the units with `GET /v1/connections/{id}/units` and link them with `POST /v1/connections/{id}/mappings`. Nothing is imported until you post the mappings. Other providers ignore it."
+                    "description": "Where the channel's units get linked to listings. `hosted` (default): after a Vrbo or Booking.com Extranet sign-in, Connect shows a mapping step and returns to `redirectUrl` when it's confirmed. `api`: Connect skips that step and finishes right after sign-in. The connection reaches you in the `connect.session.completed` webhook as `account.externalAccountId` (its `connectionId` is null for these two), and as `connectionId` in the popup message and `accountId` on the redirect, all the same id; its handle is `vrbo:{id}` or `booking_extranet:{id}`; you list the units with `GET /v1/connections/{id}/units` and link them with `POST /v1/connections/{id}/mappings`. Nothing is imported until you post the mappings. Other providers ignore it."
                   },
                   "accessType": {
                     "type": "string",
@@ -18304,7 +19071,7 @@
                   "locale": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Optional UI language for the hosted Connect pages. Accepts any supported locale code (currently `en`, `fr`). When set it pins the language for the whole flow, overriding the workspace `default_language`. Unknown codes are ignored and the page falls back to the workspace default, then `Accept-Language`, then `en`. The end user can still override per-visit with a `?locale=` query param on the hosted page.",
+                    "description": "Optional UI language for the hosted Connect pages. Accepts any supported locale code (currently `en`, `fr`, `de`, `es`, `it`, `nl`). When set it pins the language for the whole flow, overriding the workspace `default_language`. Unknown codes are ignored and the page falls back to the workspace default, then `Accept-Language`, then `en`. The end user can still override per-visit with a `?locale=` query param on the hosted page.",
                     "example": "fr"
                   },
                   "purpose": {
@@ -18562,7 +19329,7 @@
                   "locale": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Airbnb only \u2014 optional UI language for the hosted Connect pages. Accepts any supported locale code (currently `en`, `fr`); unknown codes are ignored and resolution falls back to the workspace `default_language`, then `Accept-Language`, then `en`.",
+                    "description": "Airbnb and Booking.com \u2014 optional UI language for the hosted Connect pages. Accepts any supported locale code (currently `en`, `fr`, `de`, `es`, `it`, `nl`); unknown codes are ignored and resolution falls back to the workspace `default_language`, then `Accept-Language`, then `en`.",
                     "example": "fr"
                   }
                 }
@@ -18586,7 +19353,7 @@
       "delete": {
         "operationId": "delete_connection",
         "summary": "Disconnect provider",
-        "description": "Disconnect ONE connected account of a provider from this workspace. Supported for `airbnb` and `booking`.\n\n**Which account.** Pass `accountId` \u2014 for Airbnb the host id (`accounts[].externalAccountId` from `GET /v1/connect/airbnb`), for Booking.com the hotel id. It is optional only when the workspace has exactly one account for the provider. With several and no `accountId`, the call returns `422` with the account ids in `valid_values` instead of guessing. An `accountId` that is not connected to this workspace returns `404`. Disconnecting one account leaves the others connected.\n\n**What happens.** The account's stored authorization is removed and it stops syncing. Its listings are **deactivated**, not deleted: they stop counting toward your plan's listing limit, their data is kept, and they are returned in `listingsDeactivated`. A listing that is still connected through another account or channel stays active. Reconnect the account, then activate the listings with `POST /v1/listings/status`.\n\nThe change is all or nothing. For Airbnb, the host can also revoke access on Airbnb's side (Account \u2192 Privacy & sharing \u2192 Connected apps); that alone does not update this workspace, so call this endpoint as well.\n\nOther providers return `501 not_implemented` with instructions for disconnecting on the provider's side. That answer depends only on the provider, not on your workspace: an unsupported provider returns `501` whether or not you have a connection to it. `404 not_found` on a supported provider means this workspace has no connection to it (or, with `accountId`, that the account is not connected here).",
+        "description": "Disconnect ONE connected account of a provider from this workspace. Supported for `airbnb`, `booking` and `vrbo-login`.\n\n**Which account.** Pass `accountId` \u2014 for Airbnb the host id (`accounts[].externalAccountId` from `GET /v1/connect/airbnb`), for Booking.com the hotel id, for `vrbo-login` the sign-in's `accounts[].externalAccountId` from `GET /v1/connect/vrbo-login`. It is optional only when the workspace has exactly one account for the provider. With several and no `accountId`, the call returns `422` with the account ids in `valid_values` instead of guessing. An `accountId` that is not connected to this workspace returns `404`. Disconnecting one account leaves the others connected.\n\n**What happens.** The account's stored authorization is removed and it stops syncing. Its listings are **deactivated**, not deleted: they stop counting toward your plan's listing limit, their data is kept, and they are returned in `listingsDeactivated`. A listing that is still connected through another account or channel stays active. Reconnect the account, then activate the listings with `POST /v1/listings/status`.\n\nThe change is all or nothing. For Airbnb, the host can also revoke access on Airbnb's side (Account \u2192 Privacy & sharing \u2192 Connected apps); that alone does not update this workspace, so call this endpoint as well.\n\nOther providers return `501 not_implemented` with instructions for disconnecting on the provider's side. That answer depends only on the provider, not on your workspace: an unsupported provider returns `501` whether or not you have a connection to it. `404 not_found` on a supported provider means this workspace has no connection to it (or, with `accountId`, that the account is not connected here).",
         "tags": [
           "Connect"
         ],
@@ -25143,7 +25910,7 @@
       "get": {
         "operationId": "listListings",
         "summary": "List listings",
-        "description": "Cursor-paginated list of listings owned by the authenticated workspace. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request to walk the full set. `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) \u2014 see the `offset` parameter below. Mutually exclusive with `cursor`. Filters: `q` (substring on name/street/city), `status`, `channel`.\n\n**Optional expansions:** Pass `?include=content` to enrich each row with the rich content slab (summary, description, space, house rules, etc. \u2014 sourced from `listings_descriptions` for the `en` locale). Pass `?include=details` for the structural slab (bedrooms, bathrooms, person capacity, check-in window, wifi, house manual, etc.). Both default to `null` per row when the underlying `listings_descriptions` / `listings_details` row is missing \u2014 distinct from the field being absent (which signals the expansion was not requested). Pass `?include=thumbnail` to guarantee `thumbnailUrl` on every returned row \u2014 including the reduced inactive ones. Combine comma-separated, e.g. `?include=content,thumbnail`. The default response stays lean; consumers must opt in.\n\n**Inactive listings:** by default only active listings are returned. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated, so when `status` asks for inactive ones they carry only `id`, `name`, `status` and `channels` \u2014 enough to choose what to activate with `PATCH /v1/listings/{id}`. The `content` and `details` expansions are not applied to them. `?include=thumbnail` is the one exception: it adds `thumbnailUrl` to an inactive row so a single request can render an active/inactive selection screen with pictures, instead of one follow-up call per listing (which an inactive listing would answer with `403 listing_inactive` anyway).",
+        "description": "Cursor-paginated list of listings owned by the authenticated workspace. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request to walk the full set. `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) \u2014 see the `offset` parameter below. Mutually exclusive with `cursor`. Filters: `q` (substring on name/street/city), `status`, `channel`.\n\n**Optional expansions:** Pass `?include=content` to enrich each row with the rich content slab (summary, description, space, house rules, etc. \u2014 sourced from `listings_descriptions` for the `en` locale). Pass `?include=details` for the structural slab (bedrooms, bathrooms, person capacity, check-in window, wifi, house manual, etc.). Both default to `null` per row when the underlying `listings_descriptions` / `listings_details` row is missing \u2014 distinct from the field being absent (which signals the expansion was not requested). Pass `?include=thumbnail` to guarantee `thumbnailUrl` on every returned row \u2014 including the reduced inactive ones. Pass `rooms`, `policies`, `rules`, `pricing`, `fees`, `taxes` or `photos` for the same sections as `GET /v1/listings/{id}`, loaded for the whole page in one go. Combine comma-separated, e.g. `?include=content,thumbnail`. The default response stays lean; consumers must opt in.\n\n**Inactive listings:** by default only active listings are returned. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated, so when `status` asks for inactive ones they carry only `id`, `name`, `status` and `channels` \u2014 enough to choose what to activate with `PATCH /v1/listings/{id}`. The `content` and `details` expansions are not applied to them. `?include=thumbnail` is the one exception: it adds `thumbnailUrl` to an inactive row so a single request can render an active/inactive selection screen with pictures, instead of one follow-up call per listing (which an inactive listing would answer with `403 listing_inactive` anyway).",
         "tags": [
           "Listings"
         ],
@@ -25213,7 +25980,7 @@
               "type": "string",
               "example": "content,thumbnail"
             },
-            "description": "Comma-separated optional expansions. Currently supported: `content`, `details`, `thumbnail`. `thumbnail` guarantees `thumbnailUrl` on every row and is the only expansion that applies to inactive listings. Unknown values return 422 with a `valid_values` envelope. (Note: `amenities` is not yet supported on the list endpoint \u2014 use the detail endpoint to fetch amenity rows for a single listing.)"
+            "description": "Comma-separated optional expansions. Currently supported: `content`, `details`, `thumbnail`, `rooms`, `policies`, `rules`, `pricing`, `fees`, `taxes`, `photos` (the last seven are described on `GET /v1/listings/{id}`; read for the whole page at once). `thumbnail` guarantees `thumbnailUrl` on every row and is the only expansion that applies to inactive listings. Unknown values return 422 with a `valid_values` envelope. (Note: `amenities` is not yet supported on the list endpoint \u2014 use the detail endpoint to fetch amenity rows for a single listing.)"
           }
         ],
         "responses": {
@@ -25276,7 +26043,7 @@
       "get": {
         "operationId": "getListing",
         "summary": "Get a listing",
-        "description": "Fetch a single listing by id. Returns the same shape as one element of the `GET /v1/listings` response, so you can bind the result to the same model. Cross-tenant access (a listing that belongs to a different workspace) returns 404 \u2014 never 403, never reveals the listing's existence.\n\n**Optional expansions:** Pass `?include=amenities` to enrich the response with the listing's amenity rows (`[]` when the listing has none). Pass `?include=content` for the rich content slab (summary, description, space, house rules, etc. \u2014 sourced from `listings_descriptions` for the `en` locale; `null` when no row is stored). Pass `?include=details` for the structural slab (bedrooms, bathrooms, person capacity, check-in window, wifi, house manual, etc.; `null` when no row is stored). Combine comma-separated, e.g. `?include=amenities,content,details`. The default response stays lean; consumers must opt in.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "description": "Fetch a single listing by id. Returns the same shape as one element of the `GET /v1/listings` response, so you can bind the result to the same model. Cross-tenant access (a listing that belongs to a different workspace) returns 404 \u2014 never 403, never reveals the listing's existence.\n\n**Optional expansions:** Pass `?include=amenities` to enrich the response with the listing's amenity rows (`[]` when the listing has none). Pass `?include=content` for the rich content slab (summary, description, space, house rules, etc. \u2014 sourced from `listings_descriptions` for the `en` locale; `null` when no row is stored). Pass `?include=details` for the structural slab (bedrooms, bathrooms, person capacity, check-in window, wifi, house manual, etc.; `null` when no row is stored). Pass `?include=rooms` for rooms and beds, `policies` for cancellation, house rules, check-in/out and guest rules, `rules` for stay rules (min/max nights, booking window, notice, preparation time), `pricing` for standing prices and discounts, `fees` and `taxes` for every fee and tax in one shape whatever channel or PMS the listing comes from, and `photos`. Combine comma-separated, e.g. `?include=content,details,rooms,policies,pricing,fees,taxes`. The default response stays lean; consumers must opt in.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
         "tags": [
           "Listings"
         ],
@@ -25301,7 +26068,7 @@
               "type": "string",
               "example": "content,details"
             },
-            "description": "Comma-separated optional expansions. Currently supported: `amenities`, `content`, `details`. Unknown values return 422 with a `valid_values` envelope."
+            "description": "Comma-separated optional expansions. Currently supported: `amenities`, `content`, `details`, `rooms`, `policies`, `rules`, `pricing`, `fees`, `taxes`, `photos`. Unknown values return 422 with a `valid_values` envelope."
           }
         ],
         "responses": {
@@ -39272,6 +40039,822 @@
           },
           "502": {
             "description": "The channel didn't answer"
+          }
+        }
+      }
+    },
+    "/v1/migrations/channex": {
+      "post": {
+        "operationId": "importFromChannex",
+        "summary": "Import from Channex",
+        "description": "Move a workspace off Channex without changing a single id on your side. Pass your Channex API key: Repull reads your Channex properties, room types, rate plans, webhooks, signing keys, channels and upcoming bookings through Channex's own API (read-only \u2014 nothing is written to Channex, and the key is not stored). Each Channex property is matched to your Repull listing or hotel (by Booking.com hotel/room and Airbnb/Vrbo listing ids, then by title and address) or created; every Channex id then resolves, and is returned, unchanged on the Channex-compatible API at `/channex/api/v1`. Webhooks are recreated inactive; activate them with `POST /channex/api/v1/migration/cutover`. Safe to re-run: a run that hits its time budget returns `complete: false` and the next run continues.",
+        "tags": [
+          "Migrate"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "apiKey"
+                ],
+                "properties": {
+                  "apiKey": {
+                    "type": "string",
+                    "description": "Your Channex API key (the `user-api-key` header value). Used for this request only."
+                  },
+                  "environment": {
+                    "type": "string",
+                    "enum": [
+                      "production",
+                      "staging"
+                    ],
+                    "default": "production",
+                    "description": "`production` reads app.channex.io, `staging` reads staging.channex.io."
+                  },
+                  "dryRun": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Match and report without writing anything."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Dry run: what the import would do",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "environment": {
+                          "type": "string",
+                          "enum": [
+                            "production",
+                            "staging"
+                          ]
+                        },
+                        "dryRun": {
+                          "type": "boolean"
+                        },
+                        "complete": {
+                          "type": "boolean",
+                          "description": "False when the time budget ran out; run the same request again to continue."
+                        },
+                        "startedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "finishedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "summary": {
+                          "type": "object",
+                          "properties": {
+                            "properties": {
+                              "type": "object",
+                              "properties": {
+                                "matched": {
+                                  "type": "integer"
+                                },
+                                "created": {
+                                  "type": "integer"
+                                },
+                                "needsAction": {
+                                  "type": "integer"
+                                }
+                              }
+                            },
+                            "roomTypes": {
+                              "type": "object",
+                              "properties": {
+                                "matched": {
+                                  "type": "integer"
+                                },
+                                "created": {
+                                  "type": "integer"
+                                },
+                                "needsAction": {
+                                  "type": "integer"
+                                }
+                              }
+                            },
+                            "ratePlans": {
+                              "type": "object",
+                              "properties": {
+                                "matched": {
+                                  "type": "integer"
+                                },
+                                "created": {
+                                  "type": "integer"
+                                },
+                                "needsAction": {
+                                  "type": "integer"
+                                }
+                              }
+                            },
+                            "webhooks": {
+                              "type": "object",
+                              "properties": {
+                                "matched": {
+                                  "type": "integer"
+                                },
+                                "created": {
+                                  "type": "integer"
+                                },
+                                "needsAction": {
+                                  "type": "integer"
+                                }
+                              }
+                            },
+                            "signingKeys": {
+                              "type": "object",
+                              "properties": {
+                                "matched": {
+                                  "type": "integer"
+                                },
+                                "created": {
+                                  "type": "integer"
+                                },
+                                "needsAction": {
+                                  "type": "integer"
+                                }
+                              }
+                            },
+                            "channels": {
+                              "type": "object",
+                              "properties": {
+                                "matched": {
+                                  "type": "integer"
+                                },
+                                "created": {
+                                  "type": "integer"
+                                },
+                                "needsAction": {
+                                  "type": "integer"
+                                }
+                              }
+                            },
+                            "bookings": {
+                              "type": "object",
+                              "properties": {
+                                "read": {
+                                  "type": "integer"
+                                },
+                                "linked": {
+                                  "type": "integer"
+                                },
+                                "waiting": {
+                                  "type": "integer"
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "properties": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "channexId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The Channex id, which keeps resolving on `/channex/api/v1`."
+                              },
+                              "title": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "matched",
+                                  "created",
+                                  "needs_action"
+                                ]
+                              },
+                              "detail": {
+                                "type": "string",
+                                "nullable": true,
+                                "description": "How it was matched, or what to do."
+                              },
+                              "repullListingId": {
+                                "type": "integer",
+                                "nullable": true
+                              }
+                            }
+                          }
+                        },
+                        "roomTypes": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "channexId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The Channex id, which keeps resolving on `/channex/api/v1`."
+                              },
+                              "title": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "matched",
+                                  "created",
+                                  "needs_action"
+                                ]
+                              },
+                              "detail": {
+                                "type": "string",
+                                "nullable": true,
+                                "description": "How it was matched, or what to do."
+                              },
+                              "repullListingId": {
+                                "type": "integer",
+                                "nullable": true
+                              }
+                            }
+                          }
+                        },
+                        "ratePlans": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "channexId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The Channex id, which keeps resolving on `/channex/api/v1`."
+                              },
+                              "title": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "matched",
+                                  "created",
+                                  "needs_action"
+                                ]
+                              },
+                              "detail": {
+                                "type": "string",
+                                "nullable": true,
+                                "description": "How it was matched, or what to do."
+                              },
+                              "repullListingId": {
+                                "type": "integer",
+                                "nullable": true
+                              }
+                            }
+                          }
+                        },
+                        "webhooks": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "channexId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The Channex id, which keeps resolving on `/channex/api/v1`."
+                              },
+                              "title": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "matched",
+                                  "created",
+                                  "needs_action"
+                                ]
+                              },
+                              "detail": {
+                                "type": "string",
+                                "nullable": true,
+                                "description": "How it was matched, or what to do."
+                              },
+                              "repullListingId": {
+                                "type": "integer",
+                                "nullable": true
+                              }
+                            }
+                          }
+                        },
+                        "signingKeys": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "channexId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The Channex id, which keeps resolving on `/channex/api/v1`."
+                              },
+                              "title": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "matched",
+                                  "created",
+                                  "needs_action"
+                                ]
+                              },
+                              "detail": {
+                                "type": "string",
+                                "nullable": true,
+                                "description": "How it was matched, or what to do."
+                              },
+                              "repullListingId": {
+                                "type": "integer",
+                                "nullable": true
+                              }
+                            }
+                          }
+                        },
+                        "channels": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "channexId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The Channex id, which keeps resolving on `/channex/api/v1`."
+                              },
+                              "title": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "matched",
+                                  "created",
+                                  "needs_action"
+                                ]
+                              },
+                              "detail": {
+                                "type": "string",
+                                "nullable": true,
+                                "description": "How it was matched, or what to do."
+                              },
+                              "repullListingId": {
+                                "type": "integer",
+                                "nullable": true
+                              },
+                              "channel": {
+                                "type": "string",
+                                "description": "Channex adapter code (BookingCom, AirBNB, VRBO\u2026)."
+                              },
+                              "providerSwitch": {
+                                "type": "string",
+                                "enum": [
+                                  "switched",
+                                  "required",
+                                  "unsupported"
+                                ]
+                              },
+                              "instructions": {
+                                "type": "string",
+                                "nullable": true
+                              }
+                            }
+                          }
+                        },
+                        "warnings": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "nextSteps": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "The import report",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "environment": {
+                          "type": "string",
+                          "enum": [
+                            "production",
+                            "staging"
+                          ]
+                        },
+                        "dryRun": {
+                          "type": "boolean"
+                        },
+                        "complete": {
+                          "type": "boolean",
+                          "description": "False when the time budget ran out; run the same request again to continue."
+                        },
+                        "startedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "finishedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "summary": {
+                          "type": "object",
+                          "properties": {
+                            "properties": {
+                              "type": "object",
+                              "properties": {
+                                "matched": {
+                                  "type": "integer"
+                                },
+                                "created": {
+                                  "type": "integer"
+                                },
+                                "needsAction": {
+                                  "type": "integer"
+                                }
+                              }
+                            },
+                            "roomTypes": {
+                              "type": "object",
+                              "properties": {
+                                "matched": {
+                                  "type": "integer"
+                                },
+                                "created": {
+                                  "type": "integer"
+                                },
+                                "needsAction": {
+                                  "type": "integer"
+                                }
+                              }
+                            },
+                            "ratePlans": {
+                              "type": "object",
+                              "properties": {
+                                "matched": {
+                                  "type": "integer"
+                                },
+                                "created": {
+                                  "type": "integer"
+                                },
+                                "needsAction": {
+                                  "type": "integer"
+                                }
+                              }
+                            },
+                            "webhooks": {
+                              "type": "object",
+                              "properties": {
+                                "matched": {
+                                  "type": "integer"
+                                },
+                                "created": {
+                                  "type": "integer"
+                                },
+                                "needsAction": {
+                                  "type": "integer"
+                                }
+                              }
+                            },
+                            "signingKeys": {
+                              "type": "object",
+                              "properties": {
+                                "matched": {
+                                  "type": "integer"
+                                },
+                                "created": {
+                                  "type": "integer"
+                                },
+                                "needsAction": {
+                                  "type": "integer"
+                                }
+                              }
+                            },
+                            "channels": {
+                              "type": "object",
+                              "properties": {
+                                "matched": {
+                                  "type": "integer"
+                                },
+                                "created": {
+                                  "type": "integer"
+                                },
+                                "needsAction": {
+                                  "type": "integer"
+                                }
+                              }
+                            },
+                            "bookings": {
+                              "type": "object",
+                              "properties": {
+                                "read": {
+                                  "type": "integer"
+                                },
+                                "linked": {
+                                  "type": "integer"
+                                },
+                                "waiting": {
+                                  "type": "integer"
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "properties": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "channexId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The Channex id, which keeps resolving on `/channex/api/v1`."
+                              },
+                              "title": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "matched",
+                                  "created",
+                                  "needs_action"
+                                ]
+                              },
+                              "detail": {
+                                "type": "string",
+                                "nullable": true,
+                                "description": "How it was matched, or what to do."
+                              },
+                              "repullListingId": {
+                                "type": "integer",
+                                "nullable": true
+                              }
+                            }
+                          }
+                        },
+                        "roomTypes": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "channexId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The Channex id, which keeps resolving on `/channex/api/v1`."
+                              },
+                              "title": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "matched",
+                                  "created",
+                                  "needs_action"
+                                ]
+                              },
+                              "detail": {
+                                "type": "string",
+                                "nullable": true,
+                                "description": "How it was matched, or what to do."
+                              },
+                              "repullListingId": {
+                                "type": "integer",
+                                "nullable": true
+                              }
+                            }
+                          }
+                        },
+                        "ratePlans": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "channexId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The Channex id, which keeps resolving on `/channex/api/v1`."
+                              },
+                              "title": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "matched",
+                                  "created",
+                                  "needs_action"
+                                ]
+                              },
+                              "detail": {
+                                "type": "string",
+                                "nullable": true,
+                                "description": "How it was matched, or what to do."
+                              },
+                              "repullListingId": {
+                                "type": "integer",
+                                "nullable": true
+                              }
+                            }
+                          }
+                        },
+                        "webhooks": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "channexId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The Channex id, which keeps resolving on `/channex/api/v1`."
+                              },
+                              "title": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "matched",
+                                  "created",
+                                  "needs_action"
+                                ]
+                              },
+                              "detail": {
+                                "type": "string",
+                                "nullable": true,
+                                "description": "How it was matched, or what to do."
+                              },
+                              "repullListingId": {
+                                "type": "integer",
+                                "nullable": true
+                              }
+                            }
+                          }
+                        },
+                        "signingKeys": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "channexId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The Channex id, which keeps resolving on `/channex/api/v1`."
+                              },
+                              "title": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "matched",
+                                  "created",
+                                  "needs_action"
+                                ]
+                              },
+                              "detail": {
+                                "type": "string",
+                                "nullable": true,
+                                "description": "How it was matched, or what to do."
+                              },
+                              "repullListingId": {
+                                "type": "integer",
+                                "nullable": true
+                              }
+                            }
+                          }
+                        },
+                        "channels": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "channexId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The Channex id, which keeps resolving on `/channex/api/v1`."
+                              },
+                              "title": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "matched",
+                                  "created",
+                                  "needs_action"
+                                ]
+                              },
+                              "detail": {
+                                "type": "string",
+                                "nullable": true,
+                                "description": "How it was matched, or what to do."
+                              },
+                              "repullListingId": {
+                                "type": "integer",
+                                "nullable": true
+                              },
+                              "channel": {
+                                "type": "string",
+                                "description": "Channex adapter code (BookingCom, AirBNB, VRBO\u2026)."
+                              },
+                              "providerSwitch": {
+                                "type": "string",
+                                "enum": [
+                                  "switched",
+                                  "required",
+                                  "unsupported"
+                                ]
+                              },
+                              "instructions": {
+                                "type": "string",
+                                "nullable": true
+                              }
+                            }
+                          }
+                        },
+                        "warnings": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "nextSteps": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/InternalError"
           }
         }
       }

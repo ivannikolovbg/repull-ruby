@@ -408,6 +408,74 @@ module Repull
       return data, status_code, headers
     end
 
+    # Import from Channex
+    # Move a workspace off Channex without changing a single id on your side. Pass your Channex API key: Repull reads your Channex properties, room types, rate plans, webhooks, signing keys, channels and upcoming bookings through Channex's own API (read-only — nothing is written to Channex, and the key is not stored). Each Channex property is matched to your Repull listing or hotel (by Booking.com hotel/room and Airbnb/Vrbo listing ids, then by title and address) or created; every Channex id then resolves, and is returned, unchanged on the Channex-compatible API at `/channex/api/v1`. Webhooks are recreated inactive; activate them with `POST /channex/api/v1/migration/cutover`. Safe to re-run: a run that hits its time budget returns `complete: false` and the next run continues.
+    # @param import_from_channex_request [ImportFromChannexRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [ImportFromChannex200Response]
+    def import_from_channex(import_from_channex_request, opts = {})
+      data, _status_code, _headers = import_from_channex_with_http_info(import_from_channex_request, opts)
+      data
+    end
+
+    # Import from Channex
+    # Move a workspace off Channex without changing a single id on your side. Pass your Channex API key: Repull reads your Channex properties, room types, rate plans, webhooks, signing keys, channels and upcoming bookings through Channex&#39;s own API (read-only — nothing is written to Channex, and the key is not stored). Each Channex property is matched to your Repull listing or hotel (by Booking.com hotel/room and Airbnb/Vrbo listing ids, then by title and address) or created; every Channex id then resolves, and is returned, unchanged on the Channex-compatible API at &#x60;/channex/api/v1&#x60;. Webhooks are recreated inactive; activate them with &#x60;POST /channex/api/v1/migration/cutover&#x60;. Safe to re-run: a run that hits its time budget returns &#x60;complete: false&#x60; and the next run continues.
+    # @param import_from_channex_request [ImportFromChannexRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(ImportFromChannex200Response, Integer, Hash)>] ImportFromChannex200Response data, response status code and response headers
+    def import_from_channex_with_http_info(import_from_channex_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: MigrateApi.import_from_channex ...'
+      end
+      # verify the required parameter 'import_from_channex_request' is set
+      if @api_client.config.client_side_validation && import_from_channex_request.nil?
+        fail ArgumentError, "Missing the required parameter 'import_from_channex_request' when calling MigrateApi.import_from_channex"
+      end
+      # resource path
+      local_var_path = '/v1/migrations/channex'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(import_from_channex_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'ImportFromChannex200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"MigrateApi.import_from_channex",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: MigrateApi#import_from_channex\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # List migrations
     # Every property manager your workspace has moved through Repull Migrate, newest first, each with where it stands. Page with `pagination.nextCursor`.
     # @param [Hash] opts the optional parameters

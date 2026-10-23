@@ -28,7 +28,7 @@ module Repull
     # Airbnb + Booking.com — your own correlation token, e.g. your user id (at most 500 characters). Echoed on the redirect back (`&state=`) and in the `connect.session.completed` webhook.
     attr_accessor :state
 
-    # Airbnb only — optional UI language for the hosted Connect pages. Accepts any supported locale code (currently `en`, `fr`); unknown codes are ignored and resolution falls back to the workspace `default_language`, then `Accept-Language`, then `en`.
+    # Airbnb and Booking.com — optional UI language for the hosted Connect pages. Accepts any supported locale code (currently `en`, `fr`, `de`, `es`, `it`, `nl`); unknown codes are ignored and resolution falls back to the workspace `default_language`, then `Accept-Language`, then `en`.
     attr_accessor :locale
 
     class EnumAttributeValidator

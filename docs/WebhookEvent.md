@@ -21,6 +21,9 @@ Repull::WebhookEvent.openapi_one_of
 #   :'AccountImportStartedEvent',
 #   :'AiOperationCompletedEvent',
 #   :'AiOperationFailedEvent',
+#   :'BookingUnacknowledgedEvent',
+#   :'ChannelDegradedEvent',
+#   :'ChannelSyncFailedEvent',
 #   :'ConnectSessionCompletedEvent',
 #   :'InquiryCreatedEvent',
 #   :'InquiryUpdatedEvent',
@@ -44,6 +47,7 @@ Repull::WebhookEvent.openapi_one_of
 #   :'ReservationMessageUpdatedEvent',
 #   :'ReservationRequestCreatedEvent',
 #   :'ReservationRequestUpdatedEvent',
+#   :'ReservationThreadAssignedEvent',
 #   :'ReservationUpdatedEvent',
 #   :'ReviewCreatedEvent',
 #   :'ReviewRespondedEvent',
@@ -83,6 +87,9 @@ Repull::WebhookEvent.openapi_discriminator_mapping
 #   :'account.import.started' => :'AccountImportStartedEvent',
 #   :'ai.operation.completed' => :'AiOperationCompletedEvent',
 #   :'ai.operation.failed' => :'AiOperationFailedEvent',
+#   :'booking.unacknowledged' => :'BookingUnacknowledgedEvent',
+#   :'channel.degraded' => :'ChannelDegradedEvent',
+#   :'channel.sync.failed' => :'ChannelSyncFailedEvent',
 #   :'connect.session.completed' => :'ConnectSessionCompletedEvent',
 #   :'inquiry.created' => :'InquiryCreatedEvent',
 #   :'inquiry.updated' => :'InquiryUpdatedEvent',
@@ -106,6 +113,7 @@ Repull::WebhookEvent.openapi_discriminator_mapping
 #   :'reservation.message.updated' => :'ReservationMessageUpdatedEvent',
 #   :'reservation.request.created' => :'ReservationRequestCreatedEvent',
 #   :'reservation.request.updated' => :'ReservationRequestUpdatedEvent',
+#   :'reservation.thread.assigned' => :'ReservationThreadAssignedEvent',
 #   :'reservation.updated' => :'ReservationUpdatedEvent',
 #   :'review.created' => :'ReviewCreatedEvent',
 #   :'review.responded' => :'ReviewRespondedEvent',
@@ -144,6 +152,9 @@ Repull::WebhookEvent.build(data_that_doesnt_match)
 - `AccountImportStartedEvent`
 - `AiOperationCompletedEvent`
 - `AiOperationFailedEvent`
+- `BookingUnacknowledgedEvent`
+- `ChannelDegradedEvent`
+- `ChannelSyncFailedEvent`
 - `ConnectSessionCompletedEvent`
 - `InquiryCreatedEvent`
 - `InquiryUpdatedEvent`
@@ -167,6 +178,7 @@ Repull::WebhookEvent.build(data_that_doesnt_match)
 - `ReservationMessageUpdatedEvent`
 - `ReservationRequestCreatedEvent`
 - `ReservationRequestUpdatedEvent`
+- `ReservationThreadAssignedEvent`
 - `ReservationUpdatedEvent`
 - `ReviewCreatedEvent`
 - `ReviewRespondedEvent`

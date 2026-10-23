@@ -2,6 +2,15 @@
 
 All notable changes to the `repull` gem are documented here.
 
+## [0.2.36] - 2026-10-23
+
+### Added
+- Listing expansions on `ListingsApi#list_listings` / `#get_listing`: pass `include: 'rooms,policies,rules,pricing,fees,taxes,photos'` (comma-separated, combinable with `content` / `details`). `Listing` gains `rooms` (`ListingRoom`), `policies` (`ListingPolicies`), `rules` (`ListingRules`), `pricing` (`ListingPricingSettings`), `fees` (`ListingFee`), `taxes` (`ListingTax`) and `photos` (`ListingContentPhoto`). Fees and taxes carry `charged_per` (`ChargePer`: `stay`, `night`, `guest`, `guest_night`); rules carry `allows_booking_requests` and `instant_book`.
+
+### Changed
+- Removed the stale `PlumguideApi` spec left over from 0.2.35.
+- Regenerated from the live spec (also picks up `POST /v1/migrations/channex` and the `booking.unacknowledged`, `channel.degraded`, `channel.sync.failed` and `reservation.thread.assigned` webhook events).
+
 ## [0.2.35] - 2026-10-22
 
 ### Added

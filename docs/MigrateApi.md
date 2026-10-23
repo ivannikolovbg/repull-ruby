@@ -10,6 +10,7 @@ All URIs are relative to *https://api.repull.dev*
 | [**get_migration**](MigrateApi.md#get_migration) | **GET** /v1/migrations/{workspaceId} | Get a migration |
 | [**get_migration_channel_map**](MigrateApi.md#get_migration_channel_map) | **GET** /v1/migrations/{workspaceId}/channel-map | Get channel links |
 | [**get_migration_report**](MigrateApi.md#get_migration_report) | **GET** /v1/migrations/{workspaceId}/report | Get a migration report |
+| [**import_from_channex**](MigrateApi.md#import_from_channex) | **POST** /v1/migrations/channex | Import from Channex |
 | [**list_migrations**](MigrateApi.md#list_migrations) | **GET** /v1/migrations | List migrations |
 | [**run_migration_import**](MigrateApi.md#run_migration_import) | **POST** /v1/migrations/{workspaceId}/import | Run the import again |
 
@@ -427,6 +428,75 @@ end
 ### HTTP request headers
 
 - **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## import_from_channex
+
+> <ImportFromChannex200Response> import_from_channex(import_from_channex_request)
+
+Import from Channex
+
+Move a workspace off Channex without changing a single id on your side. Pass your Channex API key: Repull reads your Channex properties, room types, rate plans, webhooks, signing keys, channels and upcoming bookings through Channex's own API (read-only — nothing is written to Channex, and the key is not stored). Each Channex property is matched to your Repull listing or hotel (by Booking.com hotel/room and Airbnb/Vrbo listing ids, then by title and address) or created; every Channex id then resolves, and is returned, unchanged on the Channex-compatible API at `/channex/api/v1`. Webhooks are recreated inactive; activate them with `POST /channex/api/v1/migration/cutover`. Safe to re-run: a run that hits its time budget returns `complete: false` and the next run continues.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::MigrateApi.new
+import_from_channex_request = Repull::ImportFromChannexRequest.new({api_key: 'api_key_example'}) # ImportFromChannexRequest | 
+
+begin
+  # Import from Channex
+  result = api_instance.import_from_channex(import_from_channex_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling MigrateApi->import_from_channex: #{e}"
+end
+```
+
+#### Using the import_from_channex_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<ImportFromChannex200Response>, Integer, Hash)> import_from_channex_with_http_info(import_from_channex_request)
+
+```ruby
+begin
+  # Import from Channex
+  data, status_code, headers = api_instance.import_from_channex_with_http_info(import_from_channex_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <ImportFromChannex200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling MigrateApi->import_from_channex_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **import_from_channex_request** | [**ImportFromChannexRequest**](ImportFromChannexRequest.md) |  |  |
+
+### Return type
+
+[**ImportFromChannex200Response**](ImportFromChannex200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 
