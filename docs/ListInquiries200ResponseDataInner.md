@@ -11,6 +11,7 @@
 | **status** | **String** | &#x60;open&#x60; — nobody has answered and the stay is still ahead; &#x60;pre_approved&#x60;; &#x60;special_offer_sent&#x60; (from the API, a connected app, or Airbnb’s own app); &#x60;booked&#x60; — the guest booked (&#x60;reservationId&#x60;); &#x60;expired&#x60; — the stay has started or Airbnb expired it; &#x60;declined&#x60;; &#x60;not_possible&#x60; — Airbnb says the dates cannot be booked. |  |
 | **check_in** | **Date** |  |  |
 | **check_out** | **Date** |  |  |
+| **guest** | [**ListInquiries200ResponseDataInnerGuest**](ListInquiries200ResponseDataInnerGuest.md) |  |  |
 | **guests** | [**ListInquiries200ResponseDataInnerGuests**](ListInquiries200ResponseDataInnerGuests.md) |  |  |
 | **expected_payout** | [**ListInquiries200ResponseDataInnerExpectedPayout**](ListInquiries200ResponseDataInnerExpectedPayout.md) |  |  |
 | **reservation_id** | **String** | The reservation the inquiry became, once booked. |  |
@@ -33,6 +34,7 @@ instance = Repull::ListInquiries200ResponseDataInner.new(
   status: null,
   check_in: Wed Sep 23 00:00:00 UTC 2026,
   check_out: Sun Oct 11 00:00:00 UTC 2026,
+  guest: null,
   guests: null,
   expected_payout: null,
   reservation_id: null,

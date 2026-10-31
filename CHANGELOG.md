@@ -2,6 +2,17 @@
 
 All notable changes to the `repull` gem are documented here.
 
+## [0.2.37] - 2026-10-31
+
+### Added
+- `Reservation#access_codes` (`ReservationAccessCode`): door codes from the PMS's lock manager (Guesty Locks Manager) — `code`, `type` (`guest` / `backup` / `other`), `status`, `valid_from`, `valid_until`, `locks`, `source`, `updated_at`. `nil` when codes are not read for the reservation.
+- `Reservation#pms_reservation_id`: the PMS's own reservation id (e.g. Guesty `_id`).
+- `ListingChannel#account`: which connected account each listing channel belongs to; `account.disconnected` payloads carry the account's `listings`.
+- `ConnectApi#submit_ciirus_credentials` (`POST /v1/connect/ciirus`).
+
+### Changed
+- Regenerated from the live spec. `scripts/regen.sh` now carries the current gem version (it was resetting `VERSION` to 0.2.34).
+
 ## [0.2.36] - 2026-10-23
 
 ### Added

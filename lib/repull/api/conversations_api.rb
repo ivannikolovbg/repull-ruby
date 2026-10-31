@@ -101,7 +101,7 @@ module Repull
     end
 
     # Get conversation detail
-    # Returns one thread (the same shape as the list-row `Conversation`) plus expanded `host` (from `airbnb_hosts` for the thread's `host_id`) and `guest` (resolved via the thread's `reservation_id`, with up to 50 contacts) blocks.  A conversation that belongs to an inactive listing (by the thread's listing or its reservation's listing) returns `403 listing_inactive`. Inactive listings keep syncing; activate the listing to use it here.
+    # Returns one thread (the same shape as the list-row `Conversation`) plus expanded `host` (from `airbnb_hosts` for the thread's `host_id`) and `guest` (resolved via the thread's `reservation_id`, with up to 50 contacts) blocks. On an inquiry (no reservation yet) `guest` carries the first name Airbnb shares with the inquiry; contacts such as the phone number arrive once the guest books.  A conversation that belongs to an inactive listing (by the thread's listing or its reservation's listing) returns `403 listing_inactive`. Inactive listings keep syncing; activate the listing to use it here.
     # @param id [Integer] Internal Repull thread id.
     # @param [Hash] opts the optional parameters
     # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.
@@ -112,7 +112,7 @@ module Repull
     end
 
     # Get conversation detail
-    # Returns one thread (the same shape as the list-row &#x60;Conversation&#x60;) plus expanded &#x60;host&#x60; (from &#x60;airbnb_hosts&#x60; for the thread&#39;s &#x60;host_id&#x60;) and &#x60;guest&#x60; (resolved via the thread&#39;s &#x60;reservation_id&#x60;, with up to 50 contacts) blocks.  A conversation that belongs to an inactive listing (by the thread&#39;s listing or its reservation&#39;s listing) returns &#x60;403 listing_inactive&#x60;. Inactive listings keep syncing; activate the listing to use it here.
+    # Returns one thread (the same shape as the list-row &#x60;Conversation&#x60;) plus expanded &#x60;host&#x60; (from &#x60;airbnb_hosts&#x60; for the thread&#39;s &#x60;host_id&#x60;) and &#x60;guest&#x60; (resolved via the thread&#39;s &#x60;reservation_id&#x60;, with up to 50 contacts) blocks. On an inquiry (no reservation yet) &#x60;guest&#x60; carries the first name Airbnb shares with the inquiry; contacts such as the phone number arrive once the guest books.  A conversation that belongs to an inactive listing (by the thread&#39;s listing or its reservation&#39;s listing) returns &#x60;403 listing_inactive&#x60;. Inactive listings keep syncing; activate the listing to use it here.
     # @param id [Integer] Internal Repull thread id.
     # @param [Hash] opts the optional parameters
     # @option opts [String] :x_schema Apply a custom or built-in schema to transform the response. Built-in: &#x60;native&#x60; (default), &#x60;calry&#x60;, &#x60;calry-v1&#x60;. Custom: any schema name created via &#x60;POST /v1/schema/custom&#x60;. Unknown / inactive schema names fall back to &#x60;native&#x60;.

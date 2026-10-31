@@ -30,6 +30,9 @@ module Repull
     # Why the connection was lost. `refresh_token_rejected` — upstream OAuth refresh endpoint returned a hard rejection. `manual_disconnect` — host/admin disconnected via the dashboard. `auth_expired` — credentials aged out without ever being used. `revoked_upstream` — provider notified us the user revoked access.
     attr_accessor :reason
 
+    # The listings this account holds in your workspace — the ones that stop syncing until it is reconnected. Identity only; inactive listings included. Matches `channels[].account` on `GET /v1/listings`. Empty when the account has no listings here.
+    attr_accessor :listings
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
@@ -38,7 +41,8 @@ module Repull
         :'connection_id' => :'connectionId',
         :'provider' => :'provider',
         :'disconnected_at' => :'disconnectedAt',
-        :'reason' => :'reason'
+        :'reason' => :'reason',
+        :'listings' => :'listings'
       }
     end
 
@@ -60,7 +64,8 @@ module Repull
         :'connection_id' => :'String',
         :'provider' => :'String',
         :'disconnected_at' => :'Time',
-        :'reason' => :'String'
+        :'reason' => :'String',
+        :'listings' => :'Array<AccountDisconnectedPayloadListingsInner>'
       }
     end
 
@@ -110,6 +115,12 @@ module Repull
       if attributes.key?(:'reason')
         self.reason = attributes[:'reason']
       end
+
+      if attributes.key?(:'listings')
+        if (value = attributes[:'listings']).is_a?(Array)
+          self.listings = value
+        end
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -137,7 +148,8 @@ module Repull
           connection_id == o.connection_id &&
           provider == o.provider &&
           disconnected_at == o.disconnected_at &&
-          reason == o.reason
+          reason == o.reason &&
+          listings == o.listings
     end
 
     # @see the `==` method
@@ -149,7 +161,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [workspace_id, account_id, connection_id, provider, disconnected_at, reason].hash
+      [workspace_id, account_id, connection_id, provider, disconnected_at, reason, listings].hash
     end
 
     # Builds the object from hash

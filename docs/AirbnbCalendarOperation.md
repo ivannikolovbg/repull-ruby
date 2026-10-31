@@ -10,8 +10,8 @@
 | **daily_price** | **Float** | Nightly price override, in the listing currency. | [optional] |
 | **availability** | **String** | Stop-sell is expressed here: &#x60;unavailable&#x60; blocks the date(s); &#x60;available&#x60; re-opens; &#x60;default&#x60; reverts to rule-based availability. | [optional] |
 | **busy_subtype** | **String** | Why a blocked date is blocked. Airbnb requires it whenever &#x60;availability&#x60; is &#x60;unavailable&#x60;; when you leave it out, Repull sends **&#x60;BLOCKED_BY_HOST&#x60;**. Use &#x60;OUTSIDE_RESERVATION&#x60; for a date held by a booking made on another channel. | [optional] |
-| **min_nights** | **Integer** | Minimum length of stay for the date(s). | [optional] |
-| **max_nights** | **Integer** | Maximum length of stay for the date(s); no lower than &#x60;min_nights&#x60;. | [optional] |
+| **min_nights** | **Integer** | Minimum length of stay for the date(s), 1–1125. Send &#x60;-1&#x60; to drop the date&#39;s own minimum so it follows the listing default again (&#x60;default_min_nights&#x60;). &#x60;0&#x60; and &#x60;null&#x60; do not clear it. | [optional] |
+| **max_nights** | **Integer** | Maximum length of stay for the date(s), 1–1125 and no lower than &#x60;min_nights&#x60;. Send &#x60;-1&#x60; to drop the date&#39;s own maximum so it follows the listing default again (&#x60;default_max_nights&#x60;). | [optional] |
 | **closed_to_arrival** | **Boolean** | Closed-to-arrival — no check-ins on the affected date(s). | [optional] |
 | **closed_to_departure** | **Boolean** | Closed-to-departure — no check-outs on the affected date(s). | [optional] |
 | **notes** | **String** |  | [optional] |

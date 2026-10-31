@@ -73,6 +73,12 @@ module Repull
 
     attr_accessor :unit
 
+    # The PMS's own id for this reservation (for example Guesty's reservation `_id`), so you can look it up in the PMS. `null` when the reservation did not come from a PMS.
+    attr_accessor :pms_reservation_id
+
+    # Door codes for the stay from the PMS's lock manager (today: Guesty Locks Manager), refreshed about every 30 minutes for stays checking in within 14 days that have not checked out. `null` when the reservation's codes are not read from a PMS. `[]` when they are and there is none yet, and for a cancelled stay.
+    attr_accessor :access_codes
+
     # Inline guest summary. May be undefined for owner-blocks / pre-arrival rows.
     attr_accessor :primary_guest
 
@@ -126,6 +132,8 @@ module Repull
         :'platform' => :'platform',
         :'confirmation_code' => :'confirmationCode',
         :'unit' => :'unit',
+        :'pms_reservation_id' => :'pmsReservationId',
+        :'access_codes' => :'accessCodes',
         :'primary_guest' => :'primaryGuest',
         :'occupancy' => :'occupancy',
         :'financials' => :'financials',
@@ -172,6 +180,8 @@ module Repull
         :'platform' => :'String',
         :'confirmation_code' => :'String',
         :'unit' => :'ReservationUnit',
+        :'pms_reservation_id' => :'String',
+        :'access_codes' => :'Array<ReservationAccessCode>',
         :'primary_guest' => :'ReservationPrimaryGuest',
         :'occupancy' => :'ReservationOccupancy',
         :'financials' => :'ReservationFinancials',
@@ -198,6 +208,8 @@ module Repull
         :'source',
         :'platform',
         :'unit',
+        :'pms_reservation_id',
+        :'access_codes',
         :'booked_at',
         :'guest_name'
       ])
@@ -309,6 +321,16 @@ module Repull
 
       if attributes.key?(:'unit')
         self.unit = attributes[:'unit']
+      end
+
+      if attributes.key?(:'pms_reservation_id')
+        self.pms_reservation_id = attributes[:'pms_reservation_id']
+      end
+
+      if attributes.key?(:'access_codes')
+        if (value = attributes[:'access_codes']).is_a?(Array)
+          self.access_codes = value
+        end
       end
 
       if attributes.key?(:'primary_guest')
@@ -518,6 +540,8 @@ module Repull
           platform == o.platform &&
           confirmation_code == o.confirmation_code &&
           unit == o.unit &&
+          pms_reservation_id == o.pms_reservation_id &&
+          access_codes == o.access_codes &&
           primary_guest == o.primary_guest &&
           occupancy == o.occupancy &&
           financials == o.financials &&
@@ -539,7 +563,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [account, id, listing_id, guest_id, check_in, check_out, check_in_time, check_out_time, guest_notes, conversation_id, external_thread_id, inquiry_id, status, status_detail, pending_reason, respond_by, source, platform, confirmation_code, unit, primary_guest, occupancy, financials, total_price, currency, guest_details, created_at, updated_at, booked_at, guest_name].hash
+      [account, id, listing_id, guest_id, check_in, check_out, check_in_time, check_out_time, guest_notes, conversation_id, external_thread_id, inquiry_id, status, status_detail, pending_reason, respond_by, source, platform, confirmation_code, unit, pms_reservation_id, access_codes, primary_guest, occupancy, financials, total_price, currency, guest_details, created_at, updated_at, booked_at, guest_name].hash
     end
 
     # Builds the object from hash

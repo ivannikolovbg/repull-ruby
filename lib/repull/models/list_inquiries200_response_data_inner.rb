@@ -32,6 +32,8 @@ module Repull
 
     attr_accessor :check_out
 
+    attr_accessor :guest
+
     attr_accessor :guests
 
     attr_accessor :expected_payout
@@ -83,6 +85,7 @@ module Repull
         :'status' => :'status',
         :'check_in' => :'checkIn',
         :'check_out' => :'checkOut',
+        :'guest' => :'guest',
         :'guests' => :'guests',
         :'expected_payout' => :'expectedPayout',
         :'reservation_id' => :'reservationId',
@@ -114,6 +117,7 @@ module Repull
         :'status' => :'String',
         :'check_in' => :'Date',
         :'check_out' => :'Date',
+        :'guest' => :'ListInquiries200ResponseDataInnerGuest',
         :'guests' => :'ListInquiries200ResponseDataInnerGuests',
         :'expected_payout' => :'ListInquiries200ResponseDataInnerExpectedPayout',
         :'reservation_id' => :'String',
@@ -199,6 +203,12 @@ module Repull
         self.check_out = nil
       end
 
+      if attributes.key?(:'guest')
+        self.guest = attributes[:'guest']
+      else
+        self.guest = nil
+      end
+
       if attributes.key?(:'guests')
         self.guests = attributes[:'guests']
       else
@@ -265,6 +275,10 @@ module Repull
         invalid_properties.push('invalid value for "status", status cannot be nil.')
       end
 
+      if @guest.nil?
+        invalid_properties.push('invalid value for "guest", guest cannot be nil.')
+      end
+
       if @guests.nil?
         invalid_properties.push('invalid value for "guests", guests cannot be nil.')
       end
@@ -285,6 +299,7 @@ module Repull
       return false if @status.nil?
       status_validator = EnumAttributeValidator.new('String', ["open", "pre_approved", "special_offer_sent", "booked", "expired", "declined", "not_possible"])
       return false unless status_validator.valid?(@status)
+      return false if @guest.nil?
       return false if @guests.nil?
       return false if @expected_payout.nil?
       true
@@ -321,6 +336,16 @@ module Repull
     end
 
     # Custom attribute writer method with validation
+    # @param [Object] guest Value to be assigned
+    def guest=(guest)
+      if guest.nil?
+        fail ArgumentError, 'guest cannot be nil'
+      end
+
+      @guest = guest
+    end
+
+    # Custom attribute writer method with validation
     # @param [Object] guests Value to be assigned
     def guests=(guests)
       if guests.nil?
@@ -352,6 +377,7 @@ module Repull
           status == o.status &&
           check_in == o.check_in &&
           check_out == o.check_out &&
+          guest == o.guest &&
           guests == o.guests &&
           expected_payout == o.expected_payout &&
           reservation_id == o.reservation_id &&
@@ -371,7 +397,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, conversation_id, listing_id, channel, status, check_in, check_out, guests, expected_payout, reservation_id, relayed_by, respond_by, responded_at, created_at, updated_at].hash
+      [id, conversation_id, listing_id, channel, status, check_in, check_out, guest, guests, expected_payout, reservation_id, relayed_by, respond_by, responded_at, created_at, updated_at].hash
     end
 
     # Builds the object from hash

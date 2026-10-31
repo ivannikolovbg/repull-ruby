@@ -11,6 +11,7 @@
 | **status** | **String** | Same vocabulary as &#x60;GET /v1/inquiries&#x60;: &#x60;open&#x60; needs an answer; &#x60;booked&#x60; means the guest booked (&#x60;reservationId&#x60;). |  |
 | **check_in** | **Date** |  | [optional] |
 | **check_out** | **Date** |  | [optional] |
+| **guest** | [**InquiryWebhookObjectGuest**](InquiryWebhookObjectGuest.md) |  | [optional] |
 | **guests** | [**InquiryWebhookObjectGuests**](InquiryWebhookObjectGuests.md) |  | [optional] |
 | **expected_payout** | [**InquiryWebhookObjectExpectedPayout**](InquiryWebhookObjectExpectedPayout.md) |  | [optional] |
 | **reservation_id** | **String** | The reservation the inquiry became, once booked. | [optional] |
@@ -33,6 +34,7 @@ instance = Repull::InquiryWebhookObject.new(
   status: open,
   check_in: Fri Oct 23 00:00:00 UTC 2026,
   check_out: Wed Nov 11 00:00:00 UTC 2026,
+  guest: null,
   guests: null,
   expected_payout: null,
   reservation_id: null,

@@ -34,10 +34,10 @@ module Repull
     # Why a blocked date is blocked. Airbnb requires it whenever `availability` is `unavailable`; when you leave it out, Repull sends **`BLOCKED_BY_HOST`**. Use `OUTSIDE_RESERVATION` for a date held by a booking made on another channel.
     attr_accessor :busy_subtype
 
-    # Minimum length of stay for the date(s).
+    # Minimum length of stay for the date(s), 1–1125. Send `-1` to drop the date's own minimum so it follows the listing default again (`default_min_nights`). `0` and `null` do not clear it.
     attr_accessor :min_nights
 
-    # Maximum length of stay for the date(s); no lower than `min_nights`.
+    # Maximum length of stay for the date(s), 1–1125 and no lower than `min_nights`. Send `-1` to drop the date's own maximum so it follows the listing default again (`default_max_nights`).
     attr_accessor :max_nights
 
     # Closed-to-arrival — no check-ins on the affected date(s).
@@ -189,16 +189,16 @@ module Repull
         invalid_properties.push('invalid value for "min_nights", must be smaller than or equal to 1125.')
       end
 
-      if !@min_nights.nil? && @min_nights < 1
-        invalid_properties.push('invalid value for "min_nights", must be greater than or equal to 1.')
+      if !@min_nights.nil? && @min_nights < -1
+        invalid_properties.push('invalid value for "min_nights", must be greater than or equal to -1.')
       end
 
       if !@max_nights.nil? && @max_nights > 1125
         invalid_properties.push('invalid value for "max_nights", must be smaller than or equal to 1125.')
       end
 
-      if !@max_nights.nil? && @max_nights < 1
-        invalid_properties.push('invalid value for "max_nights", must be greater than or equal to 1.')
+      if !@max_nights.nil? && @max_nights < -1
+        invalid_properties.push('invalid value for "max_nights", must be greater than or equal to -1.')
       end
 
       invalid_properties
@@ -211,9 +211,9 @@ module Repull
       return false if !@dates.nil? && @dates.length < 1
       return false if !@daily_price.nil? && @daily_price < 0
       return false if !@min_nights.nil? && @min_nights > 1125
-      return false if !@min_nights.nil? && @min_nights < 1
+      return false if !@min_nights.nil? && @min_nights < -1
       return false if !@max_nights.nil? && @max_nights > 1125
-      return false if !@max_nights.nil? && @max_nights < 1
+      return false if !@max_nights.nil? && @max_nights < -1
       true
     end
 
@@ -244,8 +244,8 @@ module Repull
         fail ArgumentError, 'invalid value for "min_nights", must be smaller than or equal to 1125.'
       end
 
-      if !min_nights.nil? && min_nights < 1
-        fail ArgumentError, 'invalid value for "min_nights", must be greater than or equal to 1.'
+      if !min_nights.nil? && min_nights < -1
+        fail ArgumentError, 'invalid value for "min_nights", must be greater than or equal to -1.'
       end
 
       @min_nights = min_nights
@@ -258,8 +258,8 @@ module Repull
         fail ArgumentError, 'invalid value for "max_nights", must be smaller than or equal to 1125.'
       end
 
-      if !max_nights.nil? && max_nights < 1
-        fail ArgumentError, 'invalid value for "max_nights", must be greater than or equal to 1.'
+      if !max_nights.nil? && max_nights < -1
+        fail ArgumentError, 'invalid value for "max_nights", must be greater than or equal to -1.'
       end
 
       @max_nights = max_nights

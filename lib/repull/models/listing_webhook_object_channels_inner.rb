@@ -25,6 +25,9 @@ module Repull
 
     attr_accessor :sync_category
 
+    # The connected account this listing belongs to on this channel — for Airbnb the host account (`externalAccountId` is the Airbnb host id). The same account `account.disconnected` names, so a disconnect can be matched to its listings. Null when it cannot be resolved.
+    attr_accessor :account
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
@@ -32,7 +35,8 @@ module Repull
         :'external_id' => :'externalId',
         :'active' => :'active',
         :'sync_enabled' => :'syncEnabled',
-        :'sync_category' => :'syncCategory'
+        :'sync_category' => :'syncCategory',
+        :'account' => :'account'
       }
     end
 
@@ -53,14 +57,16 @@ module Repull
         :'external_id' => :'String',
         :'active' => :'Boolean',
         :'sync_enabled' => :'Boolean',
-        :'sync_category' => :'String'
+        :'sync_category' => :'String',
+        :'account' => :'RecordAccount'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
-        :'sync_category'
+        :'sync_category',
+        :'account'
       ])
     end
 
@@ -99,6 +105,10 @@ module Repull
       if attributes.key?(:'sync_category')
         self.sync_category = attributes[:'sync_category']
       end
+
+      if attributes.key?(:'account')
+        self.account = attributes[:'account']
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -125,7 +135,8 @@ module Repull
           external_id == o.external_id &&
           active == o.active &&
           sync_enabled == o.sync_enabled &&
-          sync_category == o.sync_category
+          sync_category == o.sync_category &&
+          account == o.account
     end
 
     # @see the `==` method
@@ -137,7 +148,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [platform, external_id, active, sync_enabled, sync_category].hash
+      [platform, external_id, active, sync_enabled, sync_category, account].hash
     end
 
     # Builds the object from hash

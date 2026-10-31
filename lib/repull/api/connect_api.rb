@@ -226,7 +226,7 @@ module Repull
     end
 
     # Disconnect provider
-    # Disconnect ONE connected account of a provider from this workspace. Supported for `airbnb`, `booking` and `vrbo-login`.  **Which account.** Pass `accountId` — for Airbnb the host id (`accounts[].externalAccountId` from `GET /v1/connect/airbnb`), for Booking.com the hotel id, for `vrbo-login` the sign-in's `accounts[].externalAccountId` from `GET /v1/connect/vrbo-login`. It is optional only when the workspace has exactly one account for the provider. With several and no `accountId`, the call returns `422` with the account ids in `valid_values` instead of guessing. An `accountId` that is not connected to this workspace returns `404`. Disconnecting one account leaves the others connected.  **What happens.** The account's stored authorization is removed and it stops syncing. Its listings are **deactivated**, not deleted: they stop counting toward your plan's listing limit, their data is kept, and they are returned in `listingsDeactivated`. A listing that is still connected through another account or channel stays active. Reconnect the account, then activate the listings with `POST /v1/listings/status`.  The change is all or nothing. For Airbnb, the host can also revoke access on Airbnb's side (Account → Privacy & sharing → Connected apps); that alone does not update this workspace, so call this endpoint as well.  Other providers return `501 not_implemented` with instructions for disconnecting on the provider's side. That answer depends only on the provider, not on your workspace: an unsupported provider returns `501` whether or not you have a connection to it. `404 not_found` on a supported provider means this workspace has no connection to it (or, with `accountId`, that the account is not connected here).
+    # Disconnect ONE connected account of a provider from this workspace. Supported for `airbnb`, `booking`, `vrbo-login` and every PMS (`guesty`, `hostaway`, `hospitable`, …).  **Which account.** Pass `accountId` — for Airbnb the host id (`accounts[].externalAccountId` from `GET /v1/connect/airbnb`), for Booking.com the hotel id, for `vrbo-login` the sign-in's `accounts[].externalAccountId` from `GET /v1/connect/vrbo-login`. It is optional only when the workspace has exactly one account for the provider. With several and no `accountId`, the call returns `422` with the account ids in `valid_values` instead of guessing. An `accountId` that is not connected to this workspace returns `404`. Disconnecting one account leaves the others connected.  **What happens.** The account's stored authorization is removed and it stops syncing. Its listings are **deactivated**, not deleted: they stop counting toward your plan's listing limit, their data is kept, and they are returned in `listingsDeactivated`. A listing that is still connected through another account or channel stays active. Reconnect the account, then activate the listings with `POST /v1/listings/status`.  The change is all or nothing. For Airbnb, the host can also revoke access on Airbnb's side (Account → Privacy & sharing → Connected apps); that alone does not update this workspace, so call this endpoint as well.  **PMS.** A workspace has one connection per PMS, so no `accountId` is needed. Disconnecting stops syncing, clears the stored credentials and deactivates the connection's listings; nothing is deleted, and reservations and messages stay. The response also carries `connectionId`. The PMS's own webhook subscription is left in place, because the same PMS account can be connected to another workspace (such as a Repull Migrate workspace). Reconnect with a new Connect session.  Other providers return `501 not_implemented` with instructions for disconnecting on the provider's side. That answer depends only on the provider, not on your workspace: an unsupported provider returns `501` whether or not you have a connection to it. `404 not_found` on a supported provider means this workspace has no connection to it (or, with `accountId`, that the account is not connected here).
     # @param provider [String] PMS provider slug (e.g., hostaway, guesty, ownerrez)
     # @param [Hash] opts the optional parameters
     # @option opts [String] :account_id The account to disconnect: the Airbnb host id (&#x60;accounts[].externalAccountId&#x60; on &#x60;GET /v1/connect/airbnb&#x60;) or the Booking.com hotel id. Required when the workspace has more than one connected account for the provider. Not the same as the &#x60;X-Account-Id&#x60; header.
@@ -237,7 +237,7 @@ module Repull
     end
 
     # Disconnect provider
-    # Disconnect ONE connected account of a provider from this workspace. Supported for &#x60;airbnb&#x60;, &#x60;booking&#x60; and &#x60;vrbo-login&#x60;.  **Which account.** Pass &#x60;accountId&#x60; — for Airbnb the host id (&#x60;accounts[].externalAccountId&#x60; from &#x60;GET /v1/connect/airbnb&#x60;), for Booking.com the hotel id, for &#x60;vrbo-login&#x60; the sign-in&#39;s &#x60;accounts[].externalAccountId&#x60; from &#x60;GET /v1/connect/vrbo-login&#x60;. It is optional only when the workspace has exactly one account for the provider. With several and no &#x60;accountId&#x60;, the call returns &#x60;422&#x60; with the account ids in &#x60;valid_values&#x60; instead of guessing. An &#x60;accountId&#x60; that is not connected to this workspace returns &#x60;404&#x60;. Disconnecting one account leaves the others connected.  **What happens.** The account&#39;s stored authorization is removed and it stops syncing. Its listings are **deactivated**, not deleted: they stop counting toward your plan&#39;s listing limit, their data is kept, and they are returned in &#x60;listingsDeactivated&#x60;. A listing that is still connected through another account or channel stays active. Reconnect the account, then activate the listings with &#x60;POST /v1/listings/status&#x60;.  The change is all or nothing. For Airbnb, the host can also revoke access on Airbnb&#39;s side (Account → Privacy &amp; sharing → Connected apps); that alone does not update this workspace, so call this endpoint as well.  Other providers return &#x60;501 not_implemented&#x60; with instructions for disconnecting on the provider&#39;s side. That answer depends only on the provider, not on your workspace: an unsupported provider returns &#x60;501&#x60; whether or not you have a connection to it. &#x60;404 not_found&#x60; on a supported provider means this workspace has no connection to it (or, with &#x60;accountId&#x60;, that the account is not connected here).
+    # Disconnect ONE connected account of a provider from this workspace. Supported for &#x60;airbnb&#x60;, &#x60;booking&#x60;, &#x60;vrbo-login&#x60; and every PMS (&#x60;guesty&#x60;, &#x60;hostaway&#x60;, &#x60;hospitable&#x60;, …).  **Which account.** Pass &#x60;accountId&#x60; — for Airbnb the host id (&#x60;accounts[].externalAccountId&#x60; from &#x60;GET /v1/connect/airbnb&#x60;), for Booking.com the hotel id, for &#x60;vrbo-login&#x60; the sign-in&#39;s &#x60;accounts[].externalAccountId&#x60; from &#x60;GET /v1/connect/vrbo-login&#x60;. It is optional only when the workspace has exactly one account for the provider. With several and no &#x60;accountId&#x60;, the call returns &#x60;422&#x60; with the account ids in &#x60;valid_values&#x60; instead of guessing. An &#x60;accountId&#x60; that is not connected to this workspace returns &#x60;404&#x60;. Disconnecting one account leaves the others connected.  **What happens.** The account&#39;s stored authorization is removed and it stops syncing. Its listings are **deactivated**, not deleted: they stop counting toward your plan&#39;s listing limit, their data is kept, and they are returned in &#x60;listingsDeactivated&#x60;. A listing that is still connected through another account or channel stays active. Reconnect the account, then activate the listings with &#x60;POST /v1/listings/status&#x60;.  The change is all or nothing. For Airbnb, the host can also revoke access on Airbnb&#39;s side (Account → Privacy &amp; sharing → Connected apps); that alone does not update this workspace, so call this endpoint as well.  **PMS.** A workspace has one connection per PMS, so no &#x60;accountId&#x60; is needed. Disconnecting stops syncing, clears the stored credentials and deactivates the connection&#39;s listings; nothing is deleted, and reservations and messages stay. The response also carries &#x60;connectionId&#x60;. The PMS&#39;s own webhook subscription is left in place, because the same PMS account can be connected to another workspace (such as a Repull Migrate workspace). Reconnect with a new Connect session.  Other providers return &#x60;501 not_implemented&#x60; with instructions for disconnecting on the provider&#39;s side. That answer depends only on the provider, not on your workspace: an unsupported provider returns &#x60;501&#x60; whether or not you have a connection to it. &#x60;404 not_found&#x60; on a supported provider means this workspace has no connection to it (or, with &#x60;accountId&#x60;, that the account is not connected here).
     # @param provider [String] PMS provider slug (e.g., hostaway, guesty, ownerrez)
     # @param [Hash] opts the optional parameters
     # @option opts [String] :account_id The account to disconnect: the Airbnb host id (&#x60;accounts[].externalAccountId&#x60; on &#x60;GET /v1/connect/airbnb&#x60;) or the Booking.com hotel id. Required when the workspace has more than one connected account for the provider. Not the same as the &#x60;X-Account-Id&#x60; header.
@@ -1484,6 +1484,74 @@ module Repull
       data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: ConnectApi#submit_bookingsync_credentials\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Submit CiiRUS credentials for a Connect session
+    # Completes a credentials-pattern connection for CiiRUS with the property manager's CiiRUS API username and password.  **What syncs.** Units become listings (with descriptions, photos, amenities, rooms and house rules); reservations (with their charge and tax breakdown and payments) and reviews are imported, then polled for changes. Bookings can be created, quoted, changed and cancelled in CiiRUS — see `capabilities.reservations` on `GET /v1/connect/ciirus`. Guest messages are not available through CiiRUS's API.  **Where the credentials come from.** The CiiRUS API Explorer gives the API username and password after signing in with the CiiRUS MC username and company password; CiiRUS support can also issue them. Credentials that see several suppliers (management companies) also need `managementCompanyUserId`.  **IP whitelist.** CiiRUS only accepts calls from whitelisted IP addresses, and answers a wrong password and a non-whitelisted address the same way. When this returns `invalid_credentials` with correct credentials, ask CiiRUS support to whitelist Repull for the API user.  The credentials are validated against CiiRUS before anything is stored, so invalid ones return `invalid_credentials` rather than creating a dead connection. On success only the credential fields below are stored, and the first sync of listings and reservations is queued.  CiiRUS has no webhooks: after the first sync, reservation changes are picked up by polling about once a minute.  Reconnecting replaces the stored credentials on the workspace's existing CiiRUS connection — the `pmsConnectionId` stays the same.  No API key required when called with a `sessionId` — the session is the capability token.
+    # @param submit_ciirus_credentials_request [SubmitCiirusCredentialsRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [SubmitCiirusCredentials200Response]
+    def submit_ciirus_credentials(submit_ciirus_credentials_request, opts = {})
+      data, _status_code, _headers = submit_ciirus_credentials_with_http_info(submit_ciirus_credentials_request, opts)
+      data
+    end
+
+    # Submit CiiRUS credentials for a Connect session
+    # Completes a credentials-pattern connection for CiiRUS with the property manager&#39;s CiiRUS API username and password.  **What syncs.** Units become listings (with descriptions, photos, amenities, rooms and house rules); reservations (with their charge and tax breakdown and payments) and reviews are imported, then polled for changes. Bookings can be created, quoted, changed and cancelled in CiiRUS — see &#x60;capabilities.reservations&#x60; on &#x60;GET /v1/connect/ciirus&#x60;. Guest messages are not available through CiiRUS&#39;s API.  **Where the credentials come from.** The CiiRUS API Explorer gives the API username and password after signing in with the CiiRUS MC username and company password; CiiRUS support can also issue them. Credentials that see several suppliers (management companies) also need &#x60;managementCompanyUserId&#x60;.  **IP whitelist.** CiiRUS only accepts calls from whitelisted IP addresses, and answers a wrong password and a non-whitelisted address the same way. When this returns &#x60;invalid_credentials&#x60; with correct credentials, ask CiiRUS support to whitelist Repull for the API user.  The credentials are validated against CiiRUS before anything is stored, so invalid ones return &#x60;invalid_credentials&#x60; rather than creating a dead connection. On success only the credential fields below are stored, and the first sync of listings and reservations is queued.  CiiRUS has no webhooks: after the first sync, reservation changes are picked up by polling about once a minute.  Reconnecting replaces the stored credentials on the workspace&#39;s existing CiiRUS connection — the &#x60;pmsConnectionId&#x60; stays the same.  No API key required when called with a &#x60;sessionId&#x60; — the session is the capability token.
+    # @param submit_ciirus_credentials_request [SubmitCiirusCredentialsRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(SubmitCiirusCredentials200Response, Integer, Hash)>] SubmitCiirusCredentials200Response data, response status code and response headers
+    def submit_ciirus_credentials_with_http_info(submit_ciirus_credentials_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ConnectApi.submit_ciirus_credentials ...'
+      end
+      # verify the required parameter 'submit_ciirus_credentials_request' is set
+      if @api_client.config.client_side_validation && submit_ciirus_credentials_request.nil?
+        fail ArgumentError, "Missing the required parameter 'submit_ciirus_credentials_request' when calling ConnectApi.submit_ciirus_credentials"
+      end
+      # resource path
+      local_var_path = '/v1/connect/ciirus/credentials'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(submit_ciirus_credentials_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'SubmitCiirusCredentials200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"ConnectApi.submit_ciirus_credentials",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ConnectApi#submit_ciirus_credentials\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end

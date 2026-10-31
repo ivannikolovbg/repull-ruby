@@ -10,6 +10,7 @@
 | **provider** | **String** |  | [optional] |
 | **disconnected_at** | **Time** |  | [optional] |
 | **reason** | **String** | Why the connection was lost. &#x60;refresh_token_rejected&#x60; — upstream OAuth refresh endpoint returned a hard rejection. &#x60;manual_disconnect&#x60; — host/admin disconnected via the dashboard. &#x60;auth_expired&#x60; — credentials aged out without ever being used. &#x60;revoked_upstream&#x60; — provider notified us the user revoked access. | [optional] |
+| **listings** | [**Array&lt;AccountDisconnectedPayloadListingsInner&gt;**](AccountDisconnectedPayloadListingsInner.md) | The listings this account holds in your workspace — the ones that stop syncing until it is reconnected. Identity only; inactive listings included. Matches &#x60;channels[].account&#x60; on &#x60;GET /v1/listings&#x60;. Empty when the account has no listings here. | [optional] |
 
 ## Example
 
@@ -22,7 +23,8 @@ instance = Repull::AccountDisconnectedPayload.new(
   connection_id: null,
   provider: airbnb,
   disconnected_at: 2026-05-01T17:00Z,
-  reason: refresh_token_rejected
+  reason: refresh_token_rejected,
+  listings: null
 )
 ```
 

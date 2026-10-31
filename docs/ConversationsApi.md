@@ -98,7 +98,7 @@ end
 
 Get conversation detail
 
-Returns one thread (the same shape as the list-row `Conversation`) plus expanded `host` (from `airbnb_hosts` for the thread's `host_id`) and `guest` (resolved via the thread's `reservation_id`, with up to 50 contacts) blocks.  A conversation that belongs to an inactive listing (by the thread's listing or its reservation's listing) returns `403 listing_inactive`. Inactive listings keep syncing; activate the listing to use it here.
+Returns one thread (the same shape as the list-row `Conversation`) plus expanded `host` (from `airbnb_hosts` for the thread's `host_id`) and `guest` (resolved via the thread's `reservation_id`, with up to 50 contacts) blocks. On an inquiry (no reservation yet) `guest` carries the first name Airbnb shares with the inquiry; contacts such as the phone number arrive once the guest books.  A conversation that belongs to an inactive listing (by the thread's listing or its reservation's listing) returns `403 listing_inactive`. Inactive listings keep syncing; activate the listing to use it here.
 
 ### Examples
 

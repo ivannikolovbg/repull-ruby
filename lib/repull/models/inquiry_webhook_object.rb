@@ -33,6 +33,8 @@ module Repull
 
     attr_accessor :check_out
 
+    attr_accessor :guest
+
     attr_accessor :guests
 
     attr_accessor :expected_payout
@@ -61,6 +63,7 @@ module Repull
         :'status' => :'status',
         :'check_in' => :'checkIn',
         :'check_out' => :'checkOut',
+        :'guest' => :'guest',
         :'guests' => :'guests',
         :'expected_payout' => :'expectedPayout',
         :'reservation_id' => :'reservationId',
@@ -92,6 +95,7 @@ module Repull
         :'status' => :'String',
         :'check_in' => :'Date',
         :'check_out' => :'Date',
+        :'guest' => :'InquiryWebhookObjectGuest',
         :'guests' => :'InquiryWebhookObjectGuests',
         :'expected_payout' => :'InquiryWebhookObjectExpectedPayout',
         :'reservation_id' => :'String',
@@ -165,6 +169,10 @@ module Repull
 
       if attributes.key?(:'check_out')
         self.check_out = attributes[:'check_out']
+      end
+
+      if attributes.key?(:'guest')
+        self.guest = attributes[:'guest']
       end
 
       if attributes.key?(:'guests')
@@ -257,6 +265,7 @@ module Repull
           status == o.status &&
           check_in == o.check_in &&
           check_out == o.check_out &&
+          guest == o.guest &&
           guests == o.guests &&
           expected_payout == o.expected_payout &&
           reservation_id == o.reservation_id &&
@@ -276,7 +285,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, conversation_id, listing_id, channel, status, check_in, check_out, guests, expected_payout, reservation_id, relayed_by, respond_by, responded_at, created_at, updated_at].hash
+      [id, conversation_id, listing_id, channel, status, check_in, check_out, guest, guests, expected_payout, reservation_id, relayed_by, respond_by, responded_at, created_at, updated_at].hash
     end
 
     # Builds the object from hash
