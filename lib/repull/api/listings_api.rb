@@ -689,8 +689,8 @@ module Repull
       return data, status_code, headers
     end
 
-    # List a listing's units (rooms)
-    # The physical rooms under a listing. For a hotel-model PMS (Mews, Cloudbeds) a listing is a room type: prices, restrictions and availability are set on the room type, and each reservation is assigned one of these rooms (`reservation.unit.id`). A room can belong to more than one room type.  Any other listing is a single home, which is its own unit, and returns an empty list.
+    # List a listing's units
+    # The units under a listing.  - **Hotel-model PMS (Mews, Cloudbeds):** the listing is a room type and these are its physical rooms. Prices, restrictions and availability are set on the room type, and each reservation is assigned one of these rooms (`reservation.unit.id`). A room can belong to more than one room type. - **Guesty multi-unit listing:** the listing is the parent channels sell, and these are its units. Each unit is also a listing of its own (`listingId`), with its own calendar and stays; a stay on a unit carries `reservation.unit`.  Which unit is free on which night: `units` per day on `GET /v1/availability/{propertyId}`. Any other listing is a single home, which is its own unit, and returns an empty list.
     # @param id [Integer] Listing id.
     # @param [Hash] opts the optional parameters
     # @return [ListListingUnits200Response]
@@ -699,8 +699,8 @@ module Repull
       data
     end
 
-    # List a listing&#39;s units (rooms)
-    # The physical rooms under a listing. For a hotel-model PMS (Mews, Cloudbeds) a listing is a room type: prices, restrictions and availability are set on the room type, and each reservation is assigned one of these rooms (&#x60;reservation.unit.id&#x60;). A room can belong to more than one room type.  Any other listing is a single home, which is its own unit, and returns an empty list.
+    # List a listing&#39;s units
+    # The units under a listing.  - **Hotel-model PMS (Mews, Cloudbeds):** the listing is a room type and these are its physical rooms. Prices, restrictions and availability are set on the room type, and each reservation is assigned one of these rooms (&#x60;reservation.unit.id&#x60;). A room can belong to more than one room type. - **Guesty multi-unit listing:** the listing is the parent channels sell, and these are its units. Each unit is also a listing of its own (&#x60;listingId&#x60;), with its own calendar and stays; a stay on a unit carries &#x60;reservation.unit&#x60;.  Which unit is free on which night: &#x60;units&#x60; per day on &#x60;GET /v1/availability/{propertyId}&#x60;. Any other listing is a single home, which is its own unit, and returns an empty list.
     # @param id [Integer] Listing id.
     # @param [Hash] opts the optional parameters
     # @return [Array<(ListListingUnits200Response, Integer, Hash)>] ListListingUnits200Response data, response status code and response headers

@@ -14,7 +14,7 @@ All URIs are relative to *https://api.repull.dev*
 | [**get_listing_markups**](ListingsApi.md#get_listing_markups) | **GET** /v1/listings/{id}/markups | Get a listing&#39;s channel markups |
 | [**get_listing_publish_status**](ListingsApi.md#get_listing_publish_status) | **GET** /v1/listings/{id}/publish-status | Per-channel publish status |
 | [**list_listing_photos**](ListingsApi.md#list_listing_photos) | **GET** /v1/listings/{id}/photos | List a listing&#39;s stored photos |
-| [**list_listing_units**](ListingsApi.md#list_listing_units) | **GET** /v1/listings/{id}/units | List a listing&#39;s units (rooms) |
+| [**list_listing_units**](ListingsApi.md#list_listing_units) | **GET** /v1/listings/{id}/units | List a listing&#39;s units |
 | [**list_listings**](ListingsApi.md#list_listings) | **GET** /v1/listings | List listings |
 | [**publish_listing_to_airbnb**](ListingsApi.md#publish_listing_to_airbnb) | **POST** /v1/listings/{id}/publish/airbnb | Publish a listing to Airbnb |
 | [**publish_listing_to_booking**](ListingsApi.md#publish_listing_to_booking) | **POST** /v1/listings/{id}/publish/booking | Publish a listing to Booking.com |
@@ -735,9 +735,9 @@ end
 
 > <ListListingUnits200Response> list_listing_units(id)
 
-List a listing's units (rooms)
+List a listing's units
 
-The physical rooms under a listing. For a hotel-model PMS (Mews, Cloudbeds) a listing is a room type: prices, restrictions and availability are set on the room type, and each reservation is assigned one of these rooms (`reservation.unit.id`). A room can belong to more than one room type.  Any other listing is a single home, which is its own unit, and returns an empty list.
+The units under a listing.  - **Hotel-model PMS (Mews, Cloudbeds):** the listing is a room type and these are its physical rooms. Prices, restrictions and availability are set on the room type, and each reservation is assigned one of these rooms (`reservation.unit.id`). A room can belong to more than one room type. - **Guesty multi-unit listing:** the listing is the parent channels sell, and these are its units. Each unit is also a listing of its own (`listingId`), with its own calendar and stays; a stay on a unit carries `reservation.unit`.  Which unit is free on which night: `units` per day on `GET /v1/availability/{propertyId}`. Any other listing is a single home, which is its own unit, and returns an empty list.
 
 ### Examples
 
@@ -754,7 +754,7 @@ api_instance = Repull::ListingsApi.new
 id = 56 # Integer | Listing id.
 
 begin
-  # List a listing's units (rooms)
+  # List a listing's units
   result = api_instance.list_listing_units(id)
   p result
 rescue Repull::ApiError => e
@@ -770,7 +770,7 @@ This returns an Array which contains the response data, status code and headers.
 
 ```ruby
 begin
-  # List a listing's units (rooms)
+  # List a listing's units
   data, status_code, headers = api_instance.list_listing_units_with_http_info(id)
   p status_code # => 2xx
   p headers # => { ... }

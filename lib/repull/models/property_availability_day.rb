@@ -28,8 +28,11 @@ module Repull
     # Minimum-stay requirement for a stay starting on this date. Falls back to the listing-level default min-nights when the calendar row carries none.
     attr_accessor :min_nights
 
-    # Units still sellable that night. 1 or 0 for a single home. For a hotel-model listing (a Mews or Cloudbeds room type) the rooms of that type left, e.g. 3 of 5 — see `GET /v1/listings/{id}/units`. `available` is false whenever this is 0.
+    # Units still sellable that night. 1 or 0 for a single home. For a listing with units (a Mews or Cloudbeds room type, a Guesty multi-unit listing) the units left, e.g. 3 of 5 — see `GET /v1/listings/{id}/units`. `available` is false whenever this is 0.
     attr_accessor :available_units
+
+    # Only on a listing with units (a Mews or Cloudbeds room type, a Guesty multi-unit listing): each active unit and whether it is free that night. A unit is taken when a stay is on it, a room block covers it, or (for a unit that is a listing of its own) its own calendar is closed. Ids are the listing's `units[].id` and a reservation's `unit.id`.
+    attr_accessor :units
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
@@ -38,7 +41,8 @@ module Repull
         :'available' => :'available',
         :'price' => :'price',
         :'min_nights' => :'minNights',
-        :'available_units' => :'availableUnits'
+        :'available_units' => :'availableUnits',
+        :'units' => :'units'
       }
     end
 
@@ -59,7 +63,8 @@ module Repull
         :'available' => :'Boolean',
         :'price' => :'Float',
         :'min_nights' => :'Integer',
-        :'available_units' => :'Integer'
+        :'available_units' => :'Integer',
+        :'units' => :'Array<PropertyAvailabilityUnit>'
       }
     end
 
@@ -113,6 +118,12 @@ module Repull
         self.available_units = attributes[:'available_units']
       else
         self.available_units = nil
+      end
+
+      if attributes.key?(:'units')
+        if (value = attributes[:'units']).is_a?(Array)
+          self.units = value
+        end
       end
     end
 
@@ -224,7 +235,8 @@ module Repull
           available == o.available &&
           price == o.price &&
           min_nights == o.min_nights &&
-          available_units == o.available_units
+          available_units == o.available_units &&
+          units == o.units
     end
 
     # @see the `==` method
@@ -236,7 +248,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [date, available, price, min_nights, available_units].hash
+      [date, available, price, min_nights, available_units, units].hash
     end
 
     # Builds the object from hash

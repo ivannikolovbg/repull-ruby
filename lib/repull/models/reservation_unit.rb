@@ -14,7 +14,7 @@ require 'date'
 require 'time'
 
 module Repull
-  # The physical room the stay was assigned, for a hotel-model PMS (Mews, Cloudbeds) where the listing is a room type. `null` when no room is assigned yet, and for every listing that is a single home.
+  # The unit the stay is on: the room assigned by a hotel-model PMS (Mews, Cloudbeds) where the listing is a room type, or the unit of a Guesty multi-unit listing (the stay's `listingId` is then that unit's own listing). Matches the listing's `units[].id` and the per-night `units` on availability. `null` when no unit is assigned yet, and for every listing that is a single home.
   class ReservationUnit < ApiModelBase
     # The room id, as listed by `GET /v1/listings/{id}/units`.
     attr_accessor :id

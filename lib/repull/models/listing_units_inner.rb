@@ -15,6 +15,7 @@ require 'time'
 
 module Repull
   class ListingUnitsInner < ApiModelBase
+    # Unit id — what `reservation.unit.id` and the per-night `units[].id` on availability refer to.
     attr_accessor :id
 
     attr_accessor :name
@@ -27,7 +28,11 @@ module Repull
 
     attr_accessor :floor
 
+    # The PMS the unit comes from: `cloudbeds`, `mews`, `guesty`, …
     attr_accessor :source
+
+    # The unit's own Repull listing id when the unit is a listing too (a Guesty multi-unit listing's units, each with its own calendar), else `null`.
+    attr_accessor :listing_id
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
@@ -38,7 +43,8 @@ module Repull
         :'parent_id' => :'parentId',
         :'housekeeping_status' => :'housekeepingStatus',
         :'floor' => :'floor',
-        :'source' => :'source'
+        :'source' => :'source',
+        :'listing_id' => :'listingId'
       }
     end
 
@@ -61,7 +67,8 @@ module Repull
         :'parent_id' => :'String',
         :'housekeeping_status' => :'String',
         :'floor' => :'String',
-        :'source' => :'String'
+        :'source' => :'String',
+        :'listing_id' => :'String'
       }
     end
 
@@ -71,6 +78,7 @@ module Repull
         :'parent_id',
         :'housekeeping_status',
         :'floor',
+        :'listing_id'
       ])
     end
 
@@ -117,6 +125,10 @@ module Repull
       if attributes.key?(:'source')
         self.source = attributes[:'source']
       end
+
+      if attributes.key?(:'listing_id')
+        self.listing_id = attributes[:'listing_id']
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -145,7 +157,8 @@ module Repull
           parent_id == o.parent_id &&
           housekeeping_status == o.housekeeping_status &&
           floor == o.floor &&
-          source == o.source
+          source == o.source &&
+          listing_id == o.listing_id
     end
 
     # @see the `==` method
@@ -157,7 +170,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, name, active, parent_id, housekeeping_status, floor, source].hash
+      [id, name, active, parent_id, housekeeping_status, floor, source, listing_id].hash
     end
 
     # Builds the object from hash

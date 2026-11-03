@@ -2,6 +2,11 @@
 
 All notable changes to the `repull` gem are documented here.
 
+## 0.2.39 — 2026-11-03
+
+- Availability: each day on a listing with units (Cloudbeds/Mews room type, Guesty multi-unit listing) carries `units: [{ id, available }]` — which unit is free that night.
+- Listings: `parent` on a unit of a Guesty multi-unit listing; `units[].listingId` (the unit's own listing).
+
 ## 0.2.38 — 2026-11-03
 
 - Channel health `status` can now be `unknown`: the health numbers could not be read at that moment (HTTP 200, `message` gives the reason). Regenerated from the live spec.

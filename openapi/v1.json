@@ -338,8 +338,45 @@
           "availableUnits": {
             "type": "integer",
             "minimum": 0,
-            "description": "Units still sellable that night. 1 or 0 for a single home. For a hotel-model listing (a Mews or Cloudbeds room type) the rooms of that type left, e.g. 3 of 5 \u2014 see `GET /v1/listings/{id}/units`. `available` is false whenever this is 0.",
+            "description": "Units still sellable that night. 1 or 0 for a single home. For a listing with units (a Mews or Cloudbeds room type, a Guesty multi-unit listing) the units left, e.g. 3 of 5 \u2014 see `GET /v1/listings/{id}/units`. `available` is false whenever this is 0.",
             "example": 1
+          },
+          "units": {
+            "type": "array",
+            "description": "Only on a listing with units (a Mews or Cloudbeds room type, a Guesty multi-unit listing): each active unit and whether it is free that night. A unit is taken when a stay is on it, a room block covers it, or (for a unit that is a listing of its own) its own calendar is closed. Ids are the listing's `units[].id` and a reservation's `unit.id`.",
+            "items": {
+              "$ref": "#/components/schemas/PropertyAvailabilityUnit"
+            },
+            "example": [
+              {
+                "id": "unit_a",
+                "available": true
+              },
+              {
+                "id": "unit_b",
+                "available": false
+              }
+            ]
+          }
+        }
+      },
+      "PropertyAvailabilityUnit": {
+        "type": "object",
+        "description": "One unit on one night.",
+        "required": [
+          "id",
+          "available"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unit id: `units[].id` on the listing, `unit.id` on a reservation.",
+            "example": "unit_b"
+          },
+          "available": {
+            "type": "boolean",
+            "description": "Whether this unit is free that night.",
+            "example": false
           }
         }
       },
@@ -813,7 +850,7 @@
           "unit": {
             "type": "object",
             "nullable": true,
-            "description": "The physical room the stay was assigned, for a hotel-model PMS (Mews, Cloudbeds) where the listing is a room type. `null` when no room is assigned yet, and for every listing that is a single home.",
+            "description": "The unit the stay is on: the room assigned by a hotel-model PMS (Mews, Cloudbeds) where the listing is a room type, or the unit of a Guesty multi-unit listing (the stay's `listingId` is then that unit's own listing). Matches the listing's `units[].id` and the per-night `units` on availability. `null` when no unit is assigned yet, and for every listing that is a single home.",
             "properties": {
               "id": {
                 "type": "string",
@@ -10298,7 +10335,22 @@
           },
           "kind": {
             "type": "string",
-            "description": "`room_type` when the listing sells several identical units (a hotel room type: `unitCount` > 1) or is a hotel PMS room type; `home` otherwise. See the Hotels & multi-unit guide."
+            "description": "`room_type` when the listing sells several units (a hotel room type or a Guesty multi-unit listing: `unitCount` > 1) or is a hotel PMS room type; `home` otherwise. See the Hotels & multi-unit guide."
+          },
+          "parent": {
+            "type": "object",
+            "nullable": true,
+            "description": "The multi-unit listing this listing is one unit of (a Guesty multi-unit listing's unit, which has its own calendar and stays). The parent lists it in `units[]` with this listing's id as `units[].listingId`. `null` otherwise.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Repull listing id of the multi-unit listing."
+              },
+              "name": {
+                "type": "string",
+                "nullable": true
+              }
+            }
           },
           "hotel": {
             "type": "object",
@@ -10326,16 +10378,17 @@
           "unitCount": {
             "type": "integer",
             "minimum": 1,
-            "description": "How many identical units (rooms) this listing sells: the hotel PMS rooms of the room type, the room count on Booking.com, or 1 for a home. Rooms left per night are `availableUnits` on `GET /v1/availability/{propertyId}`."
+            "description": "How many units (rooms) this listing sells: the hotel PMS rooms of the room type, the units of a Guesty multi-unit listing, the room count on Booking.com, or 1 for a home. Units left per night are `availableUnits` on `GET /v1/availability/{propertyId}`, and which unit is free is `units` there."
           },
           "units": {
             "type": "array",
-            "description": "`GET /v1/listings/{id}` only. The physical rooms under a hotel-model listing (a Mews or Cloudbeds room type); empty for a single home. Same items as `GET /v1/listings/{id}/units`.",
+            "description": "`GET /v1/listings/{id}` only. The units under the listing: a Mews or Cloudbeds room type's rooms, or a Guesty multi-unit listing's units; empty for a single home. Same items as `GET /v1/listings/{id}/units`.",
             "items": {
               "type": "object",
               "properties": {
                 "id": {
-                  "type": "string"
+                  "type": "string",
+                  "description": "Unit id \u2014 what `reservation.unit.id` and the per-night `units[].id` on availability refer to."
                 },
                 "name": {
                   "type": "string"
@@ -10356,7 +10409,13 @@
                   "nullable": true
                 },
                 "source": {
-                  "type": "string"
+                  "type": "string",
+                  "description": "The PMS the unit comes from: `cloudbeds`, `mews`, `guesty`, \u2026"
+                },
+                "listingId": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "The unit's own Repull listing id when the unit is a listing too (a Guesty multi-unit listing's units, each with its own calendar), else `null`."
                 }
               }
             }
@@ -16829,7 +16888,7 @@
       "get": {
         "operationId": "get_availability",
         "summary": "Get property availability",
-        "description": "Channel-agnostic day-by-day availability calendar for a property over a date window. Returns a thin per-date shape \u2014 `{ date, available, price, minNights, availableUnits }` \u2014 projected from the property calendar. `availableUnits` is 1 or 0 for a single home, and the rooms of the type left for a hotel-model listing (a Mews or Cloudbeds room type).\n\nThe `from` and `to` query params are **required** (ISO `YYYY-MM-DD`, inclusive) \u2014 omitting or malforming either returns 422. The window is capped at 366 days; longer ranges are truncated to the first 366 days.\n\n**`days` contains only the dates we actually hold calendar data for.** Requested dates with no calendar row are listed in `coverage.missingDates` \u2014 their availability is unknown. Never treat a missing date as bookable: this endpoint deliberately does not synthesise availability, because a fabricated open date can be double-booked. A property with no calendar still returns a real 200 (`days: []`, every date in `coverage.missingDates`), never a 404 \u2014 404 means the property id does not exist or belongs to a different workspace.\n\nThis endpoint is read-only, and the projected per-date shape carries **availability, units left, price, and min-nights only** \u2014 it does NOT expose max-stay, closed-to-arrival (CTA), closed-to-departure (CTD), or the dedicated stop-sell flag. To read or write that full restriction set on Booking.com use the channel routes: `GET`/`PUT /v1/channels/booking/availability` (with the room + rate ids from `GET /v1/channels/booking/properties/{id}/rooms`). To **write** calendar values use `PUT /v1/availability/{propertyId}` (or `PATCH /v1/availability/batch`), which updates the property calendar and pushes to its connected channels; channel-only settings stay on the channel routes.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "description": "Channel-agnostic day-by-day availability calendar for a property over a date window. Returns a thin per-date shape \u2014 `{ date, available, price, minNights, availableUnits }` \u2014 projected from the property calendar. `availableUnits` is 1 or 0 for a single home, and the units left for a listing with units (a Mews or Cloudbeds room type, a Guesty multi-unit listing). On such a listing each day also carries `units: [{ id, available }]` \u2014 which unit is free that night, with the ids of the listing's `units[]` and a reservation's `unit`.\n\nThe `from` and `to` query params are **required** (ISO `YYYY-MM-DD`, inclusive) \u2014 omitting or malforming either returns 422. The window is capped at 366 days; longer ranges are truncated to the first 366 days.\n\n**`days` contains only the dates we actually hold calendar data for.** Requested dates with no calendar row are listed in `coverage.missingDates` \u2014 their availability is unknown. Never treat a missing date as bookable: this endpoint deliberately does not synthesise availability, because a fabricated open date can be double-booked. A property with no calendar still returns a real 200 (`days: []`, every date in `coverage.missingDates`), never a 404 \u2014 404 means the property id does not exist or belongs to a different workspace.\n\nThis endpoint is read-only, and the projected per-date shape carries **availability, units left, price, and min-nights only** \u2014 it does NOT expose max-stay, closed-to-arrival (CTA), closed-to-departure (CTD), or the dedicated stop-sell flag. To read or write that full restriction set on Booking.com use the channel routes: `GET`/`PUT /v1/channels/booking/availability` (with the room + rate ids from `GET /v1/channels/booking/properties/{id}/rooms`). To **write** calendar values use `PUT /v1/availability/{propertyId}` (or `PATCH /v1/availability/batch`), which updates the property calendar and pushes to its connected channels; channel-only settings stay on the channel routes.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
         "tags": [
           "Availability"
         ],
@@ -35940,8 +35999,8 @@
     "/v1/listings/{id}/units": {
       "get": {
         "operationId": "listListingUnits",
-        "summary": "List a listing's units (rooms)",
-        "description": "The physical rooms under a listing. For a hotel-model PMS (Mews, Cloudbeds) a listing is a room type: prices, restrictions and availability are set on the room type, and each reservation is assigned one of these rooms (`reservation.unit.id`). A room can belong to more than one room type.\n\nAny other listing is a single home, which is its own unit, and returns an empty list.",
+        "summary": "List a listing's units",
+        "description": "The units under a listing.\n\n- **Hotel-model PMS (Mews, Cloudbeds):** the listing is a room type and these are its physical rooms. Prices, restrictions and availability are set on the room type, and each reservation is assigned one of these rooms (`reservation.unit.id`). A room can belong to more than one room type.\n- **Guesty multi-unit listing:** the listing is the parent channels sell, and these are its units. Each unit is also a listing of its own (`listingId`), with its own calendar and stays; a stay on a unit carries `reservation.unit`.\n\nWhich unit is free on which night: `units` per day on `GET /v1/availability/{propertyId}`. Any other listing is a single home, which is its own unit, and returns an empty list.",
         "tags": [
           "Listings"
         ],
@@ -35978,7 +36037,7 @@
                         "properties": {
                           "id": {
                             "type": "string",
-                            "description": "The PMS's id for the room; `reservation.unit.id` refers to it."
+                            "description": "The PMS's id for the unit; `reservation.unit.id` and the per-night `units[].id` on `GET /v1/availability/{propertyId}` refer to it."
                           },
                           "name": {
                             "type": "string",
@@ -36003,7 +36062,13 @@
                           },
                           "source": {
                             "type": "string",
-                            "example": "mews"
+                            "example": "mews",
+                            "description": "The PMS the unit comes from: `cloudbeds`, `mews`, `guesty`, \u2026"
+                          },
+                          "listingId": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "The unit's own Repull listing id when the unit is a listing too (a Guesty multi-unit listing's units, each with its own calendar and stays), else null."
                           }
                         }
                       }
