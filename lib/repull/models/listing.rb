@@ -18,15 +18,17 @@ module Repull
   class Listing < ApiModelBase
     attr_accessor :capabilities
 
-    # `room_type` when the listing sells several identical units (a hotel room type: `unitCount` > 1) or is a hotel PMS room type; `home` otherwise. See the Hotels & multi-unit guide.
+    # `room_type` when the listing sells several units (a hotel room type or a Guesty multi-unit listing: `unitCount` > 1) or is a hotel PMS room type; `home` otherwise. See the Hotels & multi-unit guide.
     attr_accessor :kind
+
+    attr_accessor :parent
 
     attr_accessor :hotel
 
-    # How many identical units (rooms) this listing sells: the hotel PMS rooms of the room type, the room count on Booking.com, or 1 for a home. Rooms left per night are `availableUnits` on `GET /v1/availability/{propertyId}`.
+    # How many units (rooms) this listing sells: the hotel PMS rooms of the room type, the units of a Guesty multi-unit listing, the room count on Booking.com, or 1 for a home. Units left per night are `availableUnits` on `GET /v1/availability/{propertyId}`, and which unit is free is `units` there.
     attr_accessor :unit_count
 
-    # `GET /v1/listings/{id}` only. The physical rooms under a hotel-model listing (a Mews or Cloudbeds room type); empty for a single home. Same items as `GET /v1/listings/{id}/units`.
+    # `GET /v1/listings/{id}` only. The units under the listing: a Mews or Cloudbeds room type's rooms, or a Guesty multi-unit listing's units; empty for a single home. Same items as `GET /v1/listings/{id}/units`.
     attr_accessor :units
 
     # Repull listing id
@@ -87,6 +89,7 @@ module Repull
       {
         :'capabilities' => :'capabilities',
         :'kind' => :'kind',
+        :'parent' => :'parent',
         :'hotel' => :'hotel',
         :'unit_count' => :'unitCount',
         :'units' => :'units',
@@ -127,6 +130,7 @@ module Repull
       {
         :'capabilities' => :'ListingCapabilities',
         :'kind' => :'String',
+        :'parent' => :'ListingParent',
         :'hotel' => :'ListingHotel',
         :'unit_count' => :'Integer',
         :'units' => :'Array<ListingUnitsInner>',
@@ -155,6 +159,7 @@ module Repull
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'parent',
         :'hotel',
         :'public_name',
         :'thumbnail_url',
@@ -188,6 +193,10 @@ module Repull
 
       if attributes.key?(:'kind')
         self.kind = attributes[:'kind']
+      end
+
+      if attributes.key?(:'parent')
+        self.parent = attributes[:'parent']
       end
 
       if attributes.key?(:'hotel')
@@ -334,6 +343,7 @@ module Repull
       self.class == o.class &&
           capabilities == o.capabilities &&
           kind == o.kind &&
+          parent == o.parent &&
           hotel == o.hotel &&
           unit_count == o.unit_count &&
           units == o.units &&
@@ -367,7 +377,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [capabilities, kind, hotel, unit_count, units, id, name, public_name, address, thumbnail_url, status, channels, amenities, content, details, rooms, policies, rules, pricing, fees, taxes, photos, created_at, updated_at].hash
+      [capabilities, kind, parent, hotel, unit_count, units, id, name, public_name, address, thumbnail_url, status, channels, amenities, content, details, rooms, policies, rules, pricing, fees, taxes, photos, created_at, updated_at].hash
     end
 
     # Builds the object from hash

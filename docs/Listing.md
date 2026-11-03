@@ -5,10 +5,11 @@
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **capabilities** | [**ListingCapabilities**](ListingCapabilities.md) |  | [optional] |
-| **kind** | **String** | &#x60;room_type&#x60; when the listing sells several identical units (a hotel room type: &#x60;unitCount&#x60; &gt; 1) or is a hotel PMS room type; &#x60;home&#x60; otherwise. See the Hotels &amp; multi-unit guide. | [optional] |
+| **kind** | **String** | &#x60;room_type&#x60; when the listing sells several units (a hotel room type or a Guesty multi-unit listing: &#x60;unitCount&#x60; &gt; 1) or is a hotel PMS room type; &#x60;home&#x60; otherwise. See the Hotels &amp; multi-unit guide. | [optional] |
+| **parent** | [**ListingParent**](ListingParent.md) |  | [optional] |
 | **hotel** | [**ListingHotel**](ListingHotel.md) |  | [optional] |
-| **unit_count** | **Integer** | How many identical units (rooms) this listing sells: the hotel PMS rooms of the room type, the room count on Booking.com, or 1 for a home. Rooms left per night are &#x60;availableUnits&#x60; on &#x60;GET /v1/availability/{propertyId}&#x60;. | [optional] |
-| **units** | [**Array&lt;ListingUnitsInner&gt;**](ListingUnitsInner.md) | &#x60;GET /v1/listings/{id}&#x60; only. The physical rooms under a hotel-model listing (a Mews or Cloudbeds room type); empty for a single home. Same items as &#x60;GET /v1/listings/{id}/units&#x60;. | [optional] |
+| **unit_count** | **Integer** | How many units (rooms) this listing sells: the hotel PMS rooms of the room type, the units of a Guesty multi-unit listing, the room count on Booking.com, or 1 for a home. Units left per night are &#x60;availableUnits&#x60; on &#x60;GET /v1/availability/{propertyId}&#x60;, and which unit is free is &#x60;units&#x60; there. | [optional] |
+| **units** | [**Array&lt;ListingUnitsInner&gt;**](ListingUnitsInner.md) | &#x60;GET /v1/listings/{id}&#x60; only. The units under the listing: a Mews or Cloudbeds room type&#39;s rooms, or a Guesty multi-unit listing&#39;s units; empty for a single home. Same items as &#x60;GET /v1/listings/{id}/units&#x60;. | [optional] |
 | **id** | **String** | Repull listing id | [optional] |
 | **name** | **String** | The host&#39;s internal nickname for the listing. | [optional] |
 | **public_name** | **String** | The title guests see on the channel (e.g. the Airbnb listing title). &#x60;name&#x60; is the host&#39;s internal nickname for the listing; show &#x60;publicName&#x60; in anything a guest or end user reads. Present on inactive rows too. | [optional] |
@@ -37,6 +38,7 @@ require 'repull'
 instance = Repull::Listing.new(
   capabilities: null,
   kind: null,
+  parent: null,
   hotel: null,
   unit_count: null,
   units: null,
