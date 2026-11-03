@@ -20345,7 +20345,7 @@
       "get": {
         "operationId": "getChannelHealth",
         "summary": "Per-channel connectivity health",
-        "description": "Reports reachability and auth state for one channel (`airbnb`, `booking`, `vrbo`). Use it to tell \"the channel is down\" apart from \"this workspace's connection expired\". `200` when `status` is `ok`, `503` when `degraded` or `down` (the body's `status` and `message` say which and why).\n\n**`vrbo`** reports the connector's own signals in a `vrbo` block: connected accounts, accounts VRBO signed out (their bookings, messages and calendar stop until reconnected \u2014 `down`), accounts whose inbox sync is late (`degraded`), and the calendar push queue backlog and its oldest wait (`degraded` past 3 hours). Its rate is calendar pushes VRBO refused over finished ones in the last 3 hours; failures inside Repull's own connector are reported apart as `vrbo.connector_errors` and do not count (`vrbo.window_hours`; `refresh_attempts_24h` / `refresh_rejections_24h` count that window for VRBO), judged only once at least 50 pushes finished and at least 5 failed \u2014 VRBO pushes run in bursts, so a day-long window would keep reporting a problem already fixed.",
+        "description": "Reports reachability and auth state for one channel (`airbnb`, `booking`, `vrbo`). Use it to tell \"the channel is down\" apart from \"this workspace's connection expired\". `200` when `status` is `ok`, `503` when `degraded` or `down` (the body's `status` and `message` say which and why). `unknown` (`200`) means the health numbers could not be read at that moment; `message` gives the reason.\n\n**`vrbo`** reports the connector's own signals in a `vrbo` block: connected accounts, accounts VRBO signed out (their bookings, messages and calendar stop until reconnected \u2014 `down`), accounts whose inbox sync is late (`degraded`), and the calendar push queue backlog and its oldest wait (`degraded` past 3 hours). Its rate is calendar pushes VRBO refused over finished ones in the last 3 hours; failures inside Repull's own connector are reported apart as `vrbo.connector_errors` and do not count (`vrbo.window_hours`; `refresh_attempts_24h` / `refresh_rejections_24h` count that window for VRBO), judged only once at least 50 pushes finished and at least 5 failed \u2014 VRBO pushes run in bursts, so a day-long window would keep reporting a problem already fixed.",
         "tags": [
           "Health"
         ],
@@ -20379,7 +20379,8 @@
                       "enum": [
                         "ok",
                         "degraded",
-                        "down"
+                        "down",
+                        "unknown"
                       ]
                     },
                     "vrbo": {
