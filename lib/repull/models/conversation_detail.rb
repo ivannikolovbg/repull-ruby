@@ -16,7 +16,7 @@ require 'time'
 module Repull
   # Returned by `GET /v1/conversations/{id}`. Extends the list-row `Conversation` shape with expanded `host` + `guest` blocks so SDK consumers can render thread headers without an extra round-trip.
   class ConversationDetail < ApiModelBase
-    # The connected account this conversation belongs to. List endpoint.
+    # The connected account this conversation belongs to, the same block as the message webhooks. On the list and on `GET /v1/conversations/{id}`.
     attr_accessor :account
 
     attr_accessor :id

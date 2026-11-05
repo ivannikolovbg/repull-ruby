@@ -1233,7 +1233,7 @@
                 "$ref": "#/components/schemas/RecordAccount"
               }
             ],
-            "description": "The connected account this conversation belongs to. List endpoint."
+            "description": "The connected account this conversation belongs to, the same block as the message webhooks. On the list and on `GET /v1/conversations/{id}`."
           },
           "id": {
             "type": "string"
@@ -10482,6 +10482,18 @@
               }
             }
           },
+          "latitude": {
+            "type": "string",
+            "nullable": true,
+            "description": "`GET /v1/listings/{id}` only. Map pin latitude in decimal degrees, as a string; the same value as `GET /v1/properties/{id}`. Null when the listing has no coordinates.",
+            "example": "25.7617"
+          },
+          "longitude": {
+            "type": "string",
+            "nullable": true,
+            "description": "`GET /v1/listings/{id}` only. Map pin longitude in decimal degrees, as a string; the same value as `GET /v1/properties/{id}`. Null when the listing has no coordinates.",
+            "example": "-80.1918"
+          },
           "thumbnailUrl": {
             "type": "string",
             "format": "uri",
@@ -18602,7 +18614,7 @@
       "post": {
         "operationId": "send_conversation_message",
         "summary": "Send a message to the guest",
-        "description": "Sends a message to the guest on this conversation and records it in the thread.\n\nOmit `channel` and the message goes out on whichever channel the conversation already uses (Airbnb, Booking.com, VRBO, SMS, email or the direct-booking site) \u2014 that is the right default. Pass `channel` only to force a specific one.\n\nThe message is attributed to the API: it is recorded with `aiGenerated` false so an API send is never counted as an automated reply.\n\n### Airbnb rewrites links \u2014 check `contentRewritten`\n\nAirbnb rejects guest messages containing a link, an email address or a phone number, and names the offending text. When that happens the offending fragment is stripped and the remainder is re-sent once, which means **the guest receives a message that is not the one you wrote**. Reporting that as a plain success would be a lie, so every response carries `contentRewritten`; when it is `true`, `deliveredContent` is the text that actually reached the guest. Check it before assuming your message went out verbatim.\n\nWhen the text cannot be salvaged (the link is most of the message) nothing is delivered and the call returns `422 message_not_sent` with the channel's verbatim refusal in `statusReason`.\n\nSend `Idempotency-Key` \u2014 without it, retrying after a network timeout sends the guest the same message twice.\n\n### Attachments\n\nSend files with `attachments: [{ url, contentType?, filename? }]` \u2014 public `https://` URLs, up to 5 per request, 10 MB each. `message` may be omitted when there are attachments (except on Booking.com). Repull downloads each file, reads its real type from the bytes, keeps a durable copy and delivers it through the channel's own file flow. **Every file is checked before anything is sent**: if one is unreachable, too large or of a type the channel refuses, the call returns 422 naming the file (`index`) and the guest receives nothing.\n\n| Channel | Accepted types | Text | How it arrives |\n|---|---|---|---|\n| Airbnb | JPEG, PNG, GIF, WebP (converted to JPEG), MP4, QuickTime | optional | each file as its own message, then the text as a separate message |\n| Booking.com | JPEG, PNG | **required** | one message carrying the text and every file |\n| VRBO, SMS, email, direct-booking site chat | \u2014 | \u2014 | `422 attachments_not_supported`, nothing sent |\n\nAirbnb does not allow files in pre-booking (inquiry) conversations; that refusal comes back as `422 message_not_sent`. Because Airbnb delivers files one message at a time, a later file can be refused after earlier ones arrived \u2014 that returns `422 message_partially_sent` with `parts` saying exactly which messages reached the guest; resend only the rest.\n\nThe response's `attachments` lists each file's durable `url`, and `parts` lists every channel message the send produced. Read-back (`GET /v1/conversations/{id}/messages`) shows the same files in each message's `attachments`.\n\n**Inactive listings:** a conversation that belongs to an inactive listing returns `403 listing_inactive` and no message is sent. Activate the listing first.",
+        "description": "Sends a message to the guest on this conversation and records it in the thread.\n\nOmit `channel` and the message goes out on whichever channel the conversation already uses (Airbnb, Booking.com, VRBO, SMS, email or the direct-booking site) \u2014 that is the right default. Pass `channel` only to force a specific one.\n\nThe message is attributed to the API: it is recorded with `aiGenerated` false so an API send is never counted as an automated reply.\n\n### Airbnb rewrites links \u2014 check `contentRewritten`\n\nAirbnb rejects guest messages containing a link, an email address or a phone number, and names the offending text. When that happens the offending fragment is stripped and the remainder is re-sent once, which means **the guest receives a message that is not the one you wrote**. Reporting that as a plain success would be a lie, so every response carries `contentRewritten`; when it is `true`, `deliveredContent` is the text that actually reached the guest. Check it before assuming your message went out verbatim.\n\nWhen the text cannot be salvaged (the link is most of the message) nothing is delivered and the call returns `422 message_not_sent` with the channel's verbatim refusal in `statusReason`. `message_not_sent` only ever means the channel refused: a fault on Repull's side (a dropped database connection, a timeout) is `503 internal_error` with `sent: false` when nothing was delivered \u2014 retry it unchanged with the same `Idempotency-Key`.\n\nSend `Idempotency-Key` \u2014 without it, retrying after a network timeout sends the guest the same message twice.\n\n### Attachments\n\nSend files with `attachments: [{ url, contentType?, filename? }]` \u2014 public `https://` URLs, up to 5 per request, 10 MB each. `message` may be omitted when there are attachments (except on Booking.com). Repull downloads each file, reads its real type from the bytes, keeps a durable copy and delivers it through the channel's own file flow. **Every file is checked before anything is sent**: if one is unreachable, too large or of a type the channel refuses, the call returns 422 naming the file (`index`) and the guest receives nothing.\n\n| Channel | Accepted types | Text | How it arrives |\n|---|---|---|---|\n| Airbnb | JPEG, PNG, GIF, WebP (converted to JPEG), MP4, QuickTime | optional | each file as its own message, then the text as a separate message |\n| Booking.com | JPEG, PNG | **required** | one message carrying the text and every file |\n| VRBO, SMS, email, direct-booking site chat | \u2014 | \u2014 | `422 attachments_not_supported`, nothing sent |\n\nAirbnb does not allow files in pre-booking (inquiry) conversations; that refusal comes back as `422 message_not_sent`. Because Airbnb delivers files one message at a time, a later file can be refused after earlier ones arrived \u2014 that returns `422 message_partially_sent` with `parts` saying exactly which messages reached the guest; resend only the rest.\n\nThe response's `attachments` lists each file's durable `url`, and `parts` lists every channel message the send produced. Read-back (`GET /v1/conversations/{id}/messages`) shows the same files in each message's `attachments`.\n\n**Inactive listings:** a conversation that belongs to an inactive listing returns `403 listing_inactive` and no message is sent. Activate the listing first.",
         "tags": [
           "Conversations"
         ],
@@ -18723,7 +18735,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "`listing_inactive` \u2014 the conversation belongs to an inactive listing, so nothing was sent. The error names the listing.",
+            "description": "`listing_inactive` \u2014 the conversation belongs to an inactive listing, so nothing was sent. The error names the listing. `connection_reauth_required` \u2014 the channel account behind this conversation has no working credentials (`reconnectRequired: true`); nothing was sent and the text was not refused. Reconnect via `POST /v1/connect/{provider}`, then send again.",
             "content": {
               "application/json": {
                 "schema": {
@@ -18760,7 +18772,7 @@
             }
           },
           "422": {
-            "description": "Nothing was sent unless the code is `message_partially_sent`. Codes: `invalid_params` (malformed body, field named), `message_not_sent` (the channel refused \u2014 `statusReason` has its words), `attachments_not_supported`, `too_many_attachments`, `attachment_requires_message`, `attachment_url_not_allowed`, `attachment_unreachable`, `attachment_too_large`, `attachment_type_not_supported` (each names the file in `index`/`field` and the conversation's `channel`), and `message_partially_sent` (some channel messages were delivered \u2014 `parts` says which).",
+            "description": "Nothing was sent unless the code is `message_partially_sent`. Codes: `invalid_params` (malformed body, field named), `message_not_sent` (the channel itself refused \u2014 `statusReason` has its words verbatim; a failure on Repull's side is never `message_not_sent`, it is `503 internal_error`), `attachments_not_supported`, `too_many_attachments`, `attachment_requires_message`, `attachment_url_not_allowed`, `attachment_unreachable`, `attachment_too_large`, `attachment_type_not_supported` (each names the file in `index`/`field` and the conversation's `channel`), and `message_partially_sent` (some channel messages were delivered \u2014 `parts` says which).",
             "content": {
               "application/json": {
                 "schema": {
@@ -18951,11 +18963,30 @@
             }
           },
           "503": {
-            "description": "`attachment_storage_failed` \u2014 a file could not be stored for delivery. Nothing was sent; retry with the same `Idempotency-Key` after `retry_after` seconds.",
+            "description": "A temporary fault on Repull's side \u2014 never a verdict on the message. `internal_error`: the send failed inside Repull (a dropped database connection, a timeout) before the channel refused anything. `sent` says whether the message reached the channel: with `messageId: null` and `sent: false` nothing was delivered or recorded, and retrying the same request with the same `Idempotency-Key` after `retry_after` seconds sends it once. With a `messageId`, check that message in `GET /v1/conversations/{id}/messages` before resending. `attachment_storage_failed`: a file could not be stored for delivery; nothing was sent, retry the same way. A 503 is never stored against the `Idempotency-Key`, so the retry runs for real. Do not edit the text: it was not refused.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "internalNotSent": {
+                    "summary": "Repull lost its database connection before the send reached Airbnb \u2014 not sent, retry with the same key",
+                    "value": {
+                      "error": {
+                        "code": "internal_error",
+                        "message": "The message was not sent: Repull hit a temporary fault on its side before the message reached Airbnb. Nothing was delivered to the guest and nothing was recorded in the conversation.",
+                        "fix": "Retry the same request with the same `Idempotency-Key` after `retry_after` seconds \u2014 this failure is not stored against the key, so the retry sends the message for real, once. Do not change the text: it was not refused.",
+                        "docs_url": "https://repull.dev/docs/errors/internal_error",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "retry_after": 5,
+                        "retryable": true,
+                        "sent": false,
+                        "channel": "airbnb",
+                        "messageId": null
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -19197,7 +19228,7 @@
       "get": {
         "operationId": "list_connections",
         "summary": "List PMS/OTA connections",
-        "description": "Returns every PMS and OTA connection in the workspace, each with its `status`.\n\n**Spot connections that need attention.** A connection whose `status` is not `active` may need the host to do something before it works \u2014 most commonly a Booking.com Extranet connection where the invited user was granted only partial access (`status: \"needs_permissions\"`). A Smoobu connection still on a legacy single API key carries `action.reason: \"reauth_required\"` while its `status` is `active`: Smoobu stops accepting those keys on October 31, 2026, and `fixUrl` opens the form for a new API key + secret (the connection id stays the same). These connections carry two extra fields:\n\n- `action` \u2014 `{ required: true, reason, message }`. `reason` is a stable machine code (e.g. `needs_permissions`); `message` is a host-facing one-liner describing what to do.\n- `fixUrl` \u2014 a durable link that reopens the hosted Connect flow **bound to that account, on the fix screen** (e.g. \"grant full access\" + a Re-check button). It is safe to store and show in your own dashboard.\n\n**Self-serve repair:** when `action.required` is true, surface a \"Fix\" button that opens `fixUrl` in a new tab (or embed it). The host resolves the issue (e.g. grants the user full access in Booking.com) and clicks Re-check; the import finishes on its own and the connection flips back to `active` \u2014 no re-invite, no support ticket. Poll this endpoint (or read it after the host returns) to confirm `action` has cleared.",
+        "description": "Returns every PMS and OTA connection in the workspace, each with its `status`.\n\n**One entry per Booking.com Extranet hotel login.** Each hotel that invites the Repull user connects as its own login, with its own `externalAccountId` (handle `booking_extranet:{externalAccountId}`). A new hotel adds an entry next to the existing ones and never replaces them; the entries share the workspace's Extranet `id`, and each hotel's listings, reservations, conversations and reviews stay under its own login (filter them with `?account=booking_extranet:{externalAccountId}`).\n\n**Spot connections that need attention.** A connection whose `status` is not `active` may need the host to do something before it works \u2014 most commonly a Booking.com Extranet connection where the invited user was granted only partial access (`status: \"needs_permissions\"`). A Smoobu connection still on a legacy single API key carries `action.reason: \"reauth_required\"` while its `status` is `active`: Smoobu stops accepting those keys on October 31, 2026, and `fixUrl` opens the form for a new API key + secret (the connection id stays the same). These connections carry two extra fields:\n\n- `action` \u2014 `{ required: true, reason, message }`. `reason` is a stable machine code (e.g. `needs_permissions`); `message` is a host-facing one-liner describing what to do.\n- `fixUrl` \u2014 a durable link that reopens the hosted Connect flow **bound to that account, on the fix screen** (e.g. \"grant full access\" + a Re-check button). It is safe to store and show in your own dashboard.\n\n**Self-serve repair:** when `action.required` is true, surface a \"Fix\" button that opens `fixUrl` in a new tab (or embed it). The host resolves the issue (e.g. grants the user full access in Booking.com) and clicks Re-check; the import finishes on its own and the connection flips back to `active` \u2014 no re-invite, no support ticket. Poll this endpoint (or read it after the host returns) to confirm `action` has cleared.",
         "tags": [
           "Connect"
         ],
@@ -22534,6 +22565,16 @@
           },
           "502": {
             "$ref": "#/components/responses/AirbnbUpstreamError"
+          },
+          "503": {
+            "description": "With `mediaUrl`: `internal_error` \u2014 the send failed on Repull's side (a dropped database connection, a timeout), not at Airbnb. With `sent: false` and `messageId: null` nothing reached the guest; retry the same request with the same `Idempotency-Key` after `retry_after` seconds. Never stored against the key. `message_not_sent` is reserved for Airbnb's own refusals.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }

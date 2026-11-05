@@ -42,6 +42,12 @@ module Repull
 
     attr_accessor :address
 
+    # `GET /v1/listings/{id}` only. Map pin latitude in decimal degrees, as a string; the same value as `GET /v1/properties/{id}`. Null when the listing has no coordinates.
+    attr_accessor :latitude
+
+    # `GET /v1/listings/{id}` only. Map pin longitude in decimal degrees, as a string; the same value as `GET /v1/properties/{id}`. Null when the listing has no coordinates.
+    attr_accessor :longitude
+
     # Cover photo URL. Always present on an active listing. On an **inactive** one it is present only when the caller passes `?include=thumbnail`; `null` means the listing has no cover photo stored, absent means the expansion was not requested.
     attr_accessor :thumbnail_url
 
@@ -97,6 +103,8 @@ module Repull
         :'name' => :'name',
         :'public_name' => :'publicName',
         :'address' => :'address',
+        :'latitude' => :'latitude',
+        :'longitude' => :'longitude',
         :'thumbnail_url' => :'thumbnailUrl',
         :'status' => :'status',
         :'channels' => :'channels',
@@ -138,6 +146,8 @@ module Repull
         :'name' => :'String',
         :'public_name' => :'String',
         :'address' => :'ListingAddress',
+        :'latitude' => :'String',
+        :'longitude' => :'String',
         :'thumbnail_url' => :'String',
         :'status' => :'String',
         :'channels' => :'Array<ListingChannel>',
@@ -162,6 +172,8 @@ module Repull
         :'parent',
         :'hotel',
         :'public_name',
+        :'latitude',
+        :'longitude',
         :'thumbnail_url',
         :'content',
         :'details',
@@ -227,6 +239,14 @@ module Repull
 
       if attributes.key?(:'address')
         self.address = attributes[:'address']
+      end
+
+      if attributes.key?(:'latitude')
+        self.latitude = attributes[:'latitude']
+      end
+
+      if attributes.key?(:'longitude')
+        self.longitude = attributes[:'longitude']
       end
 
       if attributes.key?(:'thumbnail_url')
@@ -351,6 +371,8 @@ module Repull
           name == o.name &&
           public_name == o.public_name &&
           address == o.address &&
+          latitude == o.latitude &&
+          longitude == o.longitude &&
           thumbnail_url == o.thumbnail_url &&
           status == o.status &&
           channels == o.channels &&
@@ -377,7 +399,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [capabilities, kind, parent, hotel, unit_count, units, id, name, public_name, address, thumbnail_url, status, channels, amenities, content, details, rooms, policies, rules, pricing, fees, taxes, photos, created_at, updated_at].hash
+      [capabilities, kind, parent, hotel, unit_count, units, id, name, public_name, address, latitude, longitude, thumbnail_url, status, channels, amenities, content, details, rooms, policies, rules, pricing, fees, taxes, photos, created_at, updated_at].hash
     end
 
     # Builds the object from hash

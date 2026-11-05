@@ -14,6 +14,8 @@
 | **name** | **String** | The host&#39;s internal nickname for the listing. | [optional] |
 | **public_name** | **String** | The title guests see on the channel (e.g. the Airbnb listing title). &#x60;name&#x60; is the host&#39;s internal nickname for the listing; show &#x60;publicName&#x60; in anything a guest or end user reads. Present on inactive rows too. | [optional] |
 | **address** | [**ListingAddress**](ListingAddress.md) |  | [optional] |
+| **latitude** | **String** | &#x60;GET /v1/listings/{id}&#x60; only. Map pin latitude in decimal degrees, as a string; the same value as &#x60;GET /v1/properties/{id}&#x60;. Null when the listing has no coordinates. | [optional] |
+| **longitude** | **String** | &#x60;GET /v1/listings/{id}&#x60; only. Map pin longitude in decimal degrees, as a string; the same value as &#x60;GET /v1/properties/{id}&#x60;. Null when the listing has no coordinates. | [optional] |
 | **thumbnail_url** | **String** | Cover photo URL. Always present on an active listing. On an **inactive** one it is present only when the caller passes &#x60;?include&#x3D;thumbnail&#x60;; &#x60;null&#x60; means the listing has no cover photo stored, absent means the expansion was not requested. | [optional] |
 | **status** | **String** |  | [optional] |
 | **channels** | [**Array&lt;ListingChannel&gt;**](ListingChannel.md) | Channels (Airbnb, Booking, VRBO, etc.) the listing is connected to. | [optional] |
@@ -46,6 +48,8 @@ instance = Repull::Listing.new(
   name: I - Stafford Apartment,
   public_name: Centre Oxford bright single room D,
   address: null,
+  latitude: 25.7617,
+  longitude: -80.1918,
   thumbnail_url: null,
   status: null,
   channels: null,

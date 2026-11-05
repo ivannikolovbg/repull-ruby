@@ -16,7 +16,7 @@ require 'time'
 module Repull
   # Channel-agnostic message thread between the host workspace and a guest. Returned by `GET /v1/conversations`. The `id` is the internal Repull thread id (integer) — pass it back as the `{id}` path param on detail / messages calls.
   class Conversation < ApiModelBase
-    # The connected account this conversation belongs to. List endpoint.
+    # The connected account this conversation belongs to, the same block as the message webhooks. On the list and on `GET /v1/conversations/{id}`.
     attr_accessor :account
 
     attr_accessor :id

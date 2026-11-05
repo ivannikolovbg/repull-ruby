@@ -4,7 +4,7 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **account** | [**RecordAccount**](RecordAccount.md) | The connected account this conversation belongs to. List endpoint. | [optional] |
+| **account** | [**RecordAccount**](RecordAccount.md) | The connected account this conversation belongs to, the same block as the message webhooks. On the list and on &#x60;GET /v1/conversations/{id}&#x60;. | [optional] |
 | **id** | **String** |  | [optional] |
 | **platform** | **String** |  | [optional] |
 | **external_thread_id** | **String** | The source channel&#39;s own thread id (Airbnb thread id, Booking conversation id, …). Pass this as the &#x60;{threadId}&#x60; path param on &#x60;POST /v1/channels/airbnb/messaging/{threadId}/messages&#x60; to reply — it is the bridge from a unified conversation straight to the provider-specific send call. &#x60;null&#x60; when the thread has no external id yet (e.g. a website/email thread). | [optional] |
