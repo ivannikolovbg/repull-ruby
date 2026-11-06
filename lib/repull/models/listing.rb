@@ -56,6 +56,9 @@ module Repull
     # Channels (Airbnb, Booking, VRBO, etc.) the listing is connected to.
     attr_accessor :channels
 
+    # Airbnb listings: every account on the listing (owner and co-hosts), whether each is connected, and which one acts by default. `defaultAccount: null` means no connected account can reach the listing — connect one of `accounts`.
+    attr_accessor :airbnb_access
+
     # Amenity rows for the listing. **Only present when the caller passes `?include=amenities`.** Empty array (`[]`) when the listing has no amenity rows.
     attr_accessor :amenities
 
@@ -108,6 +111,7 @@ module Repull
         :'thumbnail_url' => :'thumbnailUrl',
         :'status' => :'status',
         :'channels' => :'channels',
+        :'airbnb_access' => :'airbnbAccess',
         :'amenities' => :'amenities',
         :'content' => :'content',
         :'details' => :'details',
@@ -151,6 +155,7 @@ module Repull
         :'thumbnail_url' => :'String',
         :'status' => :'String',
         :'channels' => :'Array<ListingChannel>',
+        :'airbnb_access' => :'AirbnbAccess',
         :'amenities' => :'Array<ListingAmenity>',
         :'content' => :'ListingContent',
         :'details' => :'ListingDetails',
@@ -261,6 +266,10 @@ module Repull
         if (value = attributes[:'channels']).is_a?(Array)
           self.channels = value
         end
+      end
+
+      if attributes.key?(:'airbnb_access')
+        self.airbnb_access = attributes[:'airbnb_access']
       end
 
       if attributes.key?(:'amenities')
@@ -376,6 +385,7 @@ module Repull
           thumbnail_url == o.thumbnail_url &&
           status == o.status &&
           channels == o.channels &&
+          airbnb_access == o.airbnb_access &&
           amenities == o.amenities &&
           content == o.content &&
           details == o.details &&
@@ -399,7 +409,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [capabilities, kind, parent, hotel, unit_count, units, id, name, public_name, address, latitude, longitude, thumbnail_url, status, channels, amenities, content, details, rooms, policies, rules, pricing, fees, taxes, photos, created_at, updated_at].hash
+      [capabilities, kind, parent, hotel, unit_count, units, id, name, public_name, address, latitude, longitude, thumbnail_url, status, channels, airbnb_access, amenities, content, details, rooms, policies, rules, pricing, fees, taxes, photos, created_at, updated_at].hash
     end
 
     # Builds the object from hash

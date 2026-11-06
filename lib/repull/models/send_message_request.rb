@@ -22,6 +22,9 @@ module Repull
     # Force a channel. Omit to send on whichever channel the conversation already uses, which is the right default. One of `airbnb`, `booking`, `vrbo`, `sms`, `email`, `website` — except on a conversation a connected PMS relays (Guesty, Hostaway, …), where the message is sent through the PMS and `channel` is passed to it: the PMS's own channel/module name (Guesty `airbnb2`, `bookingCom`, `email`, `sms`, …) or one of Repull's names, which the PMS maps. A PMS that cannot choose a channel returns `422 pms_write_unsupported`; `GET /v1/connect/{provider}` → `capabilities.pms.conversations.channelSelect` says so beforehand.
     attr_accessor :channel
 
+    # Airbnb conversations: send as exactly this connected account — the listing's owner or one of its co-hosts — e.g. your team co-host. Never swapped for another account: if it is disconnected or not on the listing, nothing is sent and the error says why. Omit it and the conversation's own account sends while it is connected, otherwise the listing's owner, otherwise a connected co-host. Connected accounts are on `GET /v1/connect`.
+    attr_accessor :account
+
     # Files to send. See the per-channel table above. On a conversation a connected PMS relays, files go through the PMS — `422 pms_write_unsupported` when its API cannot send them (`capabilities.pms.conversations.attachments` on `GET /v1/connect/{provider}`).
     attr_accessor :attachments
 
@@ -30,6 +33,7 @@ module Repull
       {
         :'message' => :'message',
         :'channel' => :'channel',
+        :'account' => :'account',
         :'attachments' => :'attachments'
       }
     end
@@ -49,6 +53,7 @@ module Repull
       {
         :'message' => :'String',
         :'channel' => :'String',
+        :'account' => :'String',
         :'attachments' => :'Array<SendMessageAttachment>'
       }
     end
@@ -83,6 +88,10 @@ module Repull
         self.channel = attributes[:'channel']
       end
 
+      if attributes.key?(:'account')
+        self.account = attributes[:'account']
+      end
+
       if attributes.key?(:'attachments')
         if (value = attributes[:'attachments']).is_a?(Array)
           self.attachments = value
@@ -97,6 +106,11 @@ module Repull
       invalid_properties = Array.new
       if !@message.nil? && @message.to_s.length > 4000
         invalid_properties.push('invalid value for "message", the character length must be smaller than or equal to 4000.')
+      end
+
+      pattern = Regexp.new(/^airbnb:\d+$/)
+      if !@account.nil? && @account !~ pattern
+        invalid_properties.push("invalid value for \"account\", must conform to the pattern #{pattern}.")
       end
 
       if !@attachments.nil? && @attachments.length > 5
@@ -115,6 +129,7 @@ module Repull
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
       return false if !@message.nil? && @message.to_s.length > 4000
+      return false if !@account.nil? && @account !~ Regexp.new(/^airbnb:\d+$/)
       return false if !@attachments.nil? && @attachments.length > 5
       return false if !@attachments.nil? && @attachments.length < 1
       true
@@ -132,6 +147,21 @@ module Repull
       end
 
       @message = message
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] account Value to be assigned
+    def account=(account)
+      if account.nil?
+        fail ArgumentError, 'account cannot be nil'
+      end
+
+      pattern = Regexp.new(/^airbnb:\d+$/)
+      if account !~ pattern
+        fail ArgumentError, "invalid value for \"account\", must conform to the pattern #{pattern}."
+      end
+
+      @account = account
     end
 
     # Custom attribute writer method with validation
@@ -159,6 +189,7 @@ module Repull
       self.class == o.class &&
           message == o.message &&
           channel == o.channel &&
+          account == o.account &&
           attachments == o.attachments
     end
 
@@ -171,7 +202,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [message, channel, attachments].hash
+      [message, channel, account, attachments].hash
     end
 
     # Builds the object from hash

@@ -1235,6 +1235,15 @@
             ],
             "description": "The connected account this conversation belongs to, the same block as the message webhooks. On the list and on `GET /v1/conversations/{id}`."
           },
+          "airbnbAccess": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AirbnbAccess"
+              }
+            ],
+            "nullable": true,
+            "description": "Airbnb conversations, on `GET /v1/conversations/{id}`: every account on the listing (owner and co-hosts) with its state, and `defaultAccount` \u2014 the one a send uses when `account` is not given. Pass any connected one as `account` on `POST /v1/conversations/{id}/messages` to send as it."
+          },
           "id": {
             "type": "string"
           },
@@ -4386,6 +4395,68 @@
                 "type": "number",
                 "description": "Share of the window's requests, 0-100.",
                 "example": 85
+              }
+            }
+          }
+        }
+      },
+      "AirbnbAccess": {
+        "type": "object",
+        "required": [
+          "defaultAccount",
+          "accounts"
+        ],
+        "properties": {
+          "defaultAccount": {
+            "type": "string",
+            "nullable": true,
+            "example": "airbnb:483175841",
+            "description": "The account that acts when none is named: the conversation's own account while connected, else the listing's owner, else a connected co-host. Null when none is connected."
+          },
+          "accounts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "account",
+                "name",
+                "role",
+                "state",
+                "disconnectedAt"
+              ],
+              "properties": {
+                "account": {
+                  "type": "string",
+                  "example": "airbnb:228981432",
+                  "description": "What `account` on a send takes."
+                },
+                "name": {
+                  "type": "string",
+                  "nullable": true,
+                  "example": "Team Co-Host"
+                },
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "owner",
+                    "cohost",
+                    "unknown"
+                  ]
+                },
+                "state": {
+                  "type": "string",
+                  "enum": [
+                    "connected",
+                    "disconnected",
+                    "never_connected"
+                  ],
+                  "description": "`connected` can act now; `disconnected` was connected to this workspace; `never_connected` is on the listing but was never connected here."
+                },
+                "disconnectedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "nullable": true
+                }
               }
             }
           }
@@ -10510,6 +10581,14 @@
             },
             "description": "Channels (Airbnb, Booking, VRBO, etc.) the listing is connected to."
           },
+          "airbnbAccess": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AirbnbAccess"
+              }
+            ],
+            "description": "Airbnb listings: every account on the listing (owner and co-hosts), whether each is connected, and which one acts by default. `defaultAccount: null` means no connected account can reach the listing \u2014 connect one of `accounts`."
+          },
           "amenities": {
             "type": "array",
             "items": {
@@ -14475,6 +14554,12 @@
             "type": "string",
             "example": "email",
             "description": "Force a channel. Omit to send on whichever channel the conversation already uses, which is the right default. One of `airbnb`, `booking`, `vrbo`, `sms`, `email`, `website` \u2014 except on a conversation a connected PMS relays (Guesty, Hostaway, \u2026), where the message is sent through the PMS and `channel` is passed to it: the PMS's own channel/module name (Guesty `airbnb2`, `bookingCom`, `email`, `sms`, \u2026) or one of Repull's names, which the PMS maps. A PMS that cannot choose a channel returns `422 pms_write_unsupported`; `GET /v1/connect/{provider}` \u2192 `capabilities.pms.conversations.channelSelect` says so beforehand."
+          },
+          "account": {
+            "type": "string",
+            "pattern": "^airbnb:\\d+$",
+            "example": "airbnb:483175841",
+            "description": "Airbnb conversations: send as exactly this connected account \u2014 the listing's owner or one of its co-hosts \u2014 e.g. your team co-host. Never swapped for another account: if it is disconnected or not on the listing, nothing is sent and the error says why. Omit it and the conversation's own account sends while it is connected, otherwise the listing's owner, otherwise a connected co-host. Connected accounts are on `GET /v1/connect`."
           },
           "attachments": {
             "type": "array",
@@ -18735,7 +18820,7 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "`listing_inactive` \u2014 the conversation belongs to an inactive listing, so nothing was sent. The error names the listing. `connection_reauth_required` \u2014 the channel account behind this conversation has no working credentials (`reconnectRequired: true`); nothing was sent and the text was not refused. Reconnect via `POST /v1/connect/{provider}`, then send again.",
+            "description": "`listing_inactive` \u2014 the conversation belongs to an inactive listing, so nothing was sent. The error names the listing. `connection_reauth_required` \u2014 no connected account can send on this conversation (`reconnectRequired: true`); nothing was sent and the text was not refused. On Airbnb the message names each account on the listing \u2014 owner and co-hosts \u2014 and its state (e.g. `Team Co-Host (228981432), co-host, was disconnected on 2026-09-30`). Connect one of them via `POST /v1/connect/{provider}`, or send as another connected account with `account`, then send again.",
             "content": {
               "application/json": {
                 "schema": {

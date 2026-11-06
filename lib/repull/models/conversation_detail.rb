@@ -19,6 +19,9 @@ module Repull
     # The connected account this conversation belongs to, the same block as the message webhooks. On the list and on `GET /v1/conversations/{id}`.
     attr_accessor :account
 
+    # Airbnb conversations, on `GET /v1/conversations/{id}`: every account on the listing (owner and co-hosts) with its state, and `defaultAccount` — the one a send uses when `account` is not given. Pass any connected one as `account` on `POST /v1/conversations/{id}/messages` to send as it.
+    attr_accessor :airbnb_access
+
     attr_accessor :id
 
     attr_accessor :platform
@@ -59,6 +62,7 @@ module Repull
     def self.attribute_map
       {
         :'account' => :'account',
+        :'airbnb_access' => :'airbnbAccess',
         :'id' => :'id',
         :'platform' => :'platform',
         :'external_thread_id' => :'externalThreadId',
@@ -92,6 +96,7 @@ module Repull
     def self.openapi_types
       {
         :'account' => :'RecordAccount',
+        :'airbnb_access' => :'AirbnbAccess',
         :'id' => :'String',
         :'platform' => :'String',
         :'external_thread_id' => :'String',
@@ -115,6 +120,7 @@ module Repull
     def self.openapi_nullable
       Set.new([
         :'account',
+        :'airbnb_access',
         :'platform',
         :'external_thread_id',
         :'guest_id',
@@ -153,6 +159,10 @@ module Repull
 
       if attributes.key?(:'account')
         self.account = attributes[:'account']
+      end
+
+      if attributes.key?(:'airbnb_access')
+        self.airbnb_access = attributes[:'airbnb_access']
       end
 
       if attributes.key?(:'id')
@@ -241,6 +251,7 @@ module Repull
       return true if self.equal?(o)
       self.class == o.class &&
           account == o.account &&
+          airbnb_access == o.airbnb_access &&
           id == o.id &&
           platform == o.platform &&
           external_thread_id == o.external_thread_id &&
@@ -268,7 +279,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [account, id, platform, external_thread_id, guest_id, listing_id, reservation_id, subject, last_message_at, last_message_preview, unread_count, status, created_at, updated_at, host, guest, capabilities].hash
+      [account, airbnb_access, id, platform, external_thread_id, guest_id, listing_id, reservation_id, subject, last_message_at, last_message_preview, unread_count, status, created_at, updated_at, host, guest, capabilities].hash
     end
 
     # Builds the object from hash
