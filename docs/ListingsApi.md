@@ -173,7 +173,7 @@ end
 
 Deactivate (exclude) a listing
 
-Deactivate a listing — sets it inactive and excludes it from Repull. This is a **soft** operation: the listing row is KEPT (never hard-deleted) and the upstream channel (Airbnb / Hospitable / Booking.com) is NEVER touched. Repull only mutates its own copy.  Equivalent to `PATCH /v1/listings/{id}` with `{ \"active\": false }`. This is the primary self-serve way for a free-tier customer to trim back under the plan-listings cap — `DELETE` is served even when the account is over the cap (a 402-locked account can still call it). To bring a listing back, use `PATCH` with `{ \"active\": true }`.  Idempotent: deactivating an already-inactive listing returns 200.  To deactivate many listings at once, use `POST /v1/listings/status` with `{ \"active\": false }`.
+Deactivate a listing — sets it inactive and excludes it from Repull. This is a **soft** operation: the listing row is KEPT (never hard-deleted) and the upstream channel (Airbnb / Hospitable / Booking.com) is NEVER touched. Repull only mutates its own copy.  Equivalent to `PATCH /v1/listings/{id}` with `{ \"active\": false }`. It is the self-serve way to choose which listings count toward your plan. To bring a listing back, use `PATCH` with `{ \"active\": true }`.  Idempotent: deactivating an already-inactive listing returns 200.  To deactivate many listings at once, use `POST /v1/listings/status` with `{ \"active\": false }`.
 
 ### Examples
 

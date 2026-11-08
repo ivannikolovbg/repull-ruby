@@ -15,6 +15,7 @@ Repull::BookingAvailabilityUpdateRequestUpdatesInner.openapi_one_of
 # =>
 # [
 #   :'BookingAvailabilityUpdate',
+#   :'BookingDerivedPricingUpdate',
 #   :'BookingPricingRateUpdate'
 # ]
 ```
@@ -44,6 +45,7 @@ Repull::BookingAvailabilityUpdateRequestUpdatesInner.build(data_that_doesnt_matc
 #### Return type
 
 - `BookingAvailabilityUpdate`
+- `BookingDerivedPricingUpdate`
 - `BookingPricingRateUpdate`
 - `nil` (if no type matches)
 

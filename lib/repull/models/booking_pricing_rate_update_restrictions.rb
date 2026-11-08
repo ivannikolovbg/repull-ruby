@@ -1,7 +1,7 @@
 =begin
 #Repull API
 
-#The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.  ## Designed for AI agents Every error response on this API includes machine-parseable fields so an LLM (Claude in MCP, Cursor, Cline, GPT, etc.) can self-recover without escalating to a human: - `error.code` — stable string identifier (e.g. `invalid_params`, `rate_limit_exceeded`) - `error.message` — human-readable cause - `error.fix` — exact recovery steps (e.g. \"Pass `check_in_after` as ISO 8601: `?check_in_after=2026-01-15`\") - `error.docs_url` — link to the canonical write-up at `https://repull.dev/docs/errors/{code}` - `error.request_id` — id to correlate with server-side logs - `error.field` / `error.value_received` / `error.valid_values` / `error.did_you_mean` — when the error is parameter-specific - `error.retry_after` — seconds to wait before retrying (rate-limit + transient upstream)  `Access-Control-Expose-Headers` lists `x-request-id` and the `X-RateLimit-*` family so browsers can read them on cross-origin responses.  ## Quick Start 1. Get an API key at https://repull.dev/dashboard 2. Connect a PMS: `POST /v1/connect/{provider}` 3. List properties: `GET /v1/properties` 4. Get reservations: `GET /v1/reservations`  ## Authentication All requests require a Bearer token: ``` Authorization: Bearer sk_live_YOUR_API_KEY ```  ## Request Correlation (X-Request-ID) Every response carries an `X-Request-ID` header, e.g. `X-Request-ID: req_01HXY...`. Include this id in support tickets and bug reports — we can trace the full request lifecycle (auth, rate limit, handler, downstream calls, log row) from a single id.  You may set the header on the inbound request to forward your own trace id; we will echo it back instead of generating a new one. Accepted format: `^[\\\\w.-]{1,128}$`.  The id is also embedded in error envelopes as `request_id` so server-side log diffs work even when the response headers are stripped by an intermediate proxy.  ## Rate Limits The public API enforces a per-API-key sliding-window rate limit on top of the per-tier monthly + daily-AI quotas.  **Default policy:** 600 requests per 60 seconds, per API key. Sliding window — there is no fixed-minute boundary you can burst across.  Every response includes:  | Header | Meaning | |---|---| | `X-RateLimit-Limit` | Requests permitted in the current window. | | `X-RateLimit-Remaining` | Requests left in the current window after this call. | | `X-RateLimit-Reset` | Unix epoch (seconds) when the next slot opens. | | `X-RateLimit-Policy` | Machine-readable policy descriptor, e.g. `600;w=60`. | | `Retry-After` | Seconds to wait before retrying. **Only present on 429 responses.** |  **On 429 (rate_limit_exceeded):** the response body matches the standard error envelope with `code: \"rate_limit_exceeded\"`, plus `limit`, `window_seconds`, `retry_after`, and `request_id` fields. SDKs MUST honor `Retry-After` and use exponential backoff with jitter on subsequent retries — never a tight loop.  Recommended backoff: ``` sleep_ms = (Retry-After * 1000) + random(0..250) ```  Monthly + daily-AI tier quotas (`free`, `starter`, `custom`) are enforced separately and also surface as 429s; they include `tier`, `scope`, and `resetsAt` fields.  ## Plan Limits (402 — `listings_limit_exceeded`) The Repull API also enforces a per-tier cap on **active listings**:  | Tier | Active listings cap | |---|---| | `free` | 3 | | `starter` | unlimited (10 included, then billed per listing) | | `custom` | unlimited |  When a customer's active-listing count is above their tier cap, the API returns **`402 Payment Required`** with `error.code = \"listings_limit_exceeded\"` on every route EXCEPT:  - `/v1/health` — uptime probes are never gated. - `/v1/usage/*` — so dashboards can render the over-cap state. - Any `DELETE` — so the customer can trim listings to get back under the cap without paying.  Unlike 429, 402 is NOT a \"wait and retry\" condition — `Retry-After` is not set. The only paths back to 200 are:   1. `DELETE` enough listings to come back under the cap, or   2. Upgrade at `https://repull.dev/dashboard/billing`. The server-side usage cache is 60s, so the first 200 after an upgrade may take up to a minute.  The envelope mirrors `rate_limit_exceeded` for SDK ergonomics: `tier`, `limit`, `active_listings`, `upgrade_url`, plus the standard `code` / `message` / `fix` / `docs_url` / `request_id`.
+#The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.  ## Designed for AI agents Every error response on this API includes machine-parseable fields so an LLM (Claude in MCP, Cursor, Cline, GPT, etc.) can self-recover without escalating to a human: - `error.code` — stable string identifier (e.g. `invalid_params`, `rate_limit_exceeded`) - `error.message` — human-readable cause - `error.fix` — exact recovery steps (e.g. \"Pass `check_in_after` as ISO 8601: `?check_in_after=2026-01-15`\") - `error.docs_url` — link to the canonical write-up at `https://repull.dev/docs/errors/{code}` - `error.request_id` — id to correlate with server-side logs - `error.field` / `error.value_received` / `error.valid_values` / `error.did_you_mean` — when the error is parameter-specific - `error.retry_after` — seconds to wait before retrying (rate-limit + transient upstream)  `Access-Control-Expose-Headers` lists `x-request-id` and the `X-RateLimit-*` family so browsers can read them on cross-origin responses.  ## Quick Start 1. Get an API key at https://repull.dev/dashboard 2. Connect a PMS: `POST /v1/connect/{provider}` 3. List properties: `GET /v1/properties` 4. Get reservations: `GET /v1/reservations`  ## Authentication All requests require a Bearer token: ``` Authorization: Bearer sk_live_YOUR_API_KEY ```  ## Request Correlation (X-Request-ID) Every response carries an `X-Request-ID` header, e.g. `X-Request-ID: req_01HXY...`. Include this id in support tickets and bug reports — we can trace the full request lifecycle (auth, rate limit, handler, downstream calls, log row) from a single id.  You may set the header on the inbound request to forward your own trace id; we will echo it back instead of generating a new one. Accepted format: `^[\\\\w.-]{1,128}$`.  The id is also embedded in error envelopes as `request_id` so server-side log diffs work even when the response headers are stripped by an intermediate proxy.  ## Rate Limits The public API enforces a per-API-key sliding-window rate limit on top of the per-tier monthly + daily-AI quotas.  **Default policy:** 600 requests per 60 seconds, per API key. Sliding window — there is no fixed-minute boundary you can burst across.  Every response includes:  | Header | Meaning | |---|---| | `X-RateLimit-Limit` | Requests permitted in the current window. | | `X-RateLimit-Remaining` | Requests left in the current window after this call. | | `X-RateLimit-Reset` | Unix epoch (seconds) when the next slot opens. | | `X-RateLimit-Policy` | Machine-readable policy descriptor, e.g. `600;w=60`. | | `Retry-After` | Seconds to wait before retrying. **Only present on 429 responses.** |  **On 429 (rate_limit_exceeded):** the response body matches the standard error envelope with `code: \"rate_limit_exceeded\"`, plus `limit`, `window_seconds`, `retry_after`, and `request_id` fields. SDKs MUST honor `Retry-After` and use exponential backoff with jitter on subsequent retries — never a tight loop.  Recommended backoff: ``` sleep_ms = (Retry-After * 1000) + random(0..250) ```  Monthly + daily-AI tier quotas (`free`, `starter`, `custom`) are enforced separately and also surface as 429s; they include `tier`, `scope`, and `resetsAt` fields.  ## Plan listing limits Each plan includes a number of **active listings**:  | Tier | Active listings | |---|---| | `free` | 3 | | `starter` | no cap: 10 included, then billed per listing | | `custom` | no cap |  Going over the plan never blocks your API calls. Listings beyond the plan are **held back**: they stay connected and keep syncing, but they are not served. A held-back listing answers `403 listing_inactive` with `reason: \"plan_limit\"`, and collection routes leave it out. Every JSON response then carries a `planNotice` and the `X-Repull-Listings-Held-Back` header, so you know there is more to see.  Choose which listings are active with `POST /v1/listings/status`, or upgrade at `https://repull.dev/dashboard/billing` to activate them all.  Only a call that would itself take you over the plan is refused, with **`402 listings_limit_exceeded`**: activating listings (`PATCH /v1/listings/{id}` with `{ \"active\": true }`, `POST /v1/listings/status`) or creating one (`POST /v1/listings`). Nothing else changes. The envelope carries the tier, the limit, the active count and an upgrade link next to the standard `code` / `message` / `fix` / `docs_url` / `request_id`.  If an account has more active listings than its plan (for example after a downgrade), calls are still served and `planNotice` says so (code \"listings_over_plan\").
 
 The version of the OpenAPI document: 1.0.0
 
@@ -16,10 +16,10 @@ require 'time'
 module Repull
   # Length-of-stay and arrival restrictions for the nights in this update. Omit a field to leave that restriction untouched — nothing you do not state is changed.  These are written on Booking.com's availability notification, which is the wire that carries a restriction when no inventory changes hands. Sending them alongside a price is supported: the prices and the restrictions are two writes, and the response reports each one separately (`price` and `restrictions`), so a half that lands is never reported as a failure and a half that is refused is never reported as applied.  Three restrictions are refused with `422 restriction_not_supported` naming the field: Booking.com's notification has no element for them, and dropping a restriction you stated would be worse than refusing it. Set those on the rate plan in the Booking.com Extranet.
   class BookingPricingRateUpdateRestrictions < ApiModelBase
-    # Minimum length of stay. Booking.com stores a 1-night minimum as no minimum at all, so `minStay: 1` reads back as `0` and is reported as applied.
+    # Stay-through minimum length of stay — every stay that covers these nights must be at least this long. `1`–`91`; `0` removes the minimum. Booking.com stores a 1-night minimum as no minimum at all, so `minStay: 1` reads back as `0` and is reported as applied. Above `91` returns `422 restriction_out_of_range` (Booking.com would store 91).
     attr_accessor :min_stay
 
-    # Maximum length of stay.
+    # Stay-through maximum length of stay — no stay covering these nights may be longer. `1`–`90`; `0` removes the maximum. Above `90` returns `422 restriction_out_of_range`: Booking.com acknowledges a larger value and then stores no maximum, so send `0` for \"no limit\".
     attr_accessor :max_stay
 
     # Closed-to-arrival — guests may not check in on these nights. `false` clears the flag; omit the field to leave it as it is.
@@ -28,10 +28,10 @@ module Repull
     # Closed-to-departure — guests may not check out on these nights. `false` clears the flag; omit the field to leave it as it is.
     attr_accessor :closed_to_departure
 
-    # Arrival-based minimum length of stay — applies to stays that START on these nights, rather than any stay covering them.
+    # Arrival-based minimum length of stay — applies to stays that START on these nights, rather than any stay covering them. `1`–`91`; `0` removes it. Above `91` returns `422 restriction_out_of_range`.
     attr_accessor :min_stay_arrival
 
-    # Arrival-based maximum length of stay.
+    # Arrival-based maximum length of stay — the longest stay that may START on these nights. `1`–`90`; `0` removes the maximum. Above `90` (for example `365`) returns `422 restriction_out_of_range`: Booking.com acknowledges it and then stores no maximum (`0`), so send `0` for \"no limit\".
     attr_accessor :max_stay_arrival
 
     # Refused. Booking.com's restriction notification has no element for an exact arrival-based stay length, so it cannot be written through the API; sending it returns `422 restriction_not_supported` naming `updates[N].restrictions.exactStayArrival`. Set it on the rate plan in the Booking.com Extranet.
@@ -156,6 +156,38 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
+      if !@min_stay.nil? && @min_stay > 91
+        invalid_properties.push('invalid value for "min_stay", must be smaller than or equal to 91.')
+      end
+
+      if !@min_stay.nil? && @min_stay < 0
+        invalid_properties.push('invalid value for "min_stay", must be greater than or equal to 0.')
+      end
+
+      if !@max_stay.nil? && @max_stay > 90
+        invalid_properties.push('invalid value for "max_stay", must be smaller than or equal to 90.')
+      end
+
+      if !@max_stay.nil? && @max_stay < 0
+        invalid_properties.push('invalid value for "max_stay", must be greater than or equal to 0.')
+      end
+
+      if !@min_stay_arrival.nil? && @min_stay_arrival > 91
+        invalid_properties.push('invalid value for "min_stay_arrival", must be smaller than or equal to 91.')
+      end
+
+      if !@min_stay_arrival.nil? && @min_stay_arrival < 0
+        invalid_properties.push('invalid value for "min_stay_arrival", must be greater than or equal to 0.')
+      end
+
+      if !@max_stay_arrival.nil? && @max_stay_arrival > 90
+        invalid_properties.push('invalid value for "max_stay_arrival", must be smaller than or equal to 90.')
+      end
+
+      if !@max_stay_arrival.nil? && @max_stay_arrival < 0
+        invalid_properties.push('invalid value for "max_stay_arrival", must be greater than or equal to 0.')
+      end
+
       invalid_properties
     end
 
@@ -163,7 +195,71 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
+      return false if !@min_stay.nil? && @min_stay > 91
+      return false if !@min_stay.nil? && @min_stay < 0
+      return false if !@max_stay.nil? && @max_stay > 90
+      return false if !@max_stay.nil? && @max_stay < 0
+      return false if !@min_stay_arrival.nil? && @min_stay_arrival > 91
+      return false if !@min_stay_arrival.nil? && @min_stay_arrival < 0
+      return false if !@max_stay_arrival.nil? && @max_stay_arrival > 90
+      return false if !@max_stay_arrival.nil? && @max_stay_arrival < 0
       true
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] min_stay Value to be assigned
+    def min_stay=(min_stay)
+      if !min_stay.nil? && min_stay > 91
+        fail ArgumentError, 'invalid value for "min_stay", must be smaller than or equal to 91.'
+      end
+
+      if !min_stay.nil? && min_stay < 0
+        fail ArgumentError, 'invalid value for "min_stay", must be greater than or equal to 0.'
+      end
+
+      @min_stay = min_stay
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] max_stay Value to be assigned
+    def max_stay=(max_stay)
+      if !max_stay.nil? && max_stay > 90
+        fail ArgumentError, 'invalid value for "max_stay", must be smaller than or equal to 90.'
+      end
+
+      if !max_stay.nil? && max_stay < 0
+        fail ArgumentError, 'invalid value for "max_stay", must be greater than or equal to 0.'
+      end
+
+      @max_stay = max_stay
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] min_stay_arrival Value to be assigned
+    def min_stay_arrival=(min_stay_arrival)
+      if !min_stay_arrival.nil? && min_stay_arrival > 91
+        fail ArgumentError, 'invalid value for "min_stay_arrival", must be smaller than or equal to 91.'
+      end
+
+      if !min_stay_arrival.nil? && min_stay_arrival < 0
+        fail ArgumentError, 'invalid value for "min_stay_arrival", must be greater than or equal to 0.'
+      end
+
+      @min_stay_arrival = min_stay_arrival
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] max_stay_arrival Value to be assigned
+    def max_stay_arrival=(max_stay_arrival)
+      if !max_stay_arrival.nil? && max_stay_arrival > 90
+        fail ArgumentError, 'invalid value for "max_stay_arrival", must be smaller than or equal to 90.'
+      end
+
+      if !max_stay_arrival.nil? && max_stay_arrival < 0
+        fail ArgumentError, 'invalid value for "max_stay_arrival", must be greater than or equal to 0.'
+      end
+
+      @max_stay_arrival = max_stay_arrival
     end
 
     # Checks equality by comparing each attribute.
