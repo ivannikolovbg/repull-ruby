@@ -26,7 +26,7 @@ instance = Repull::ReservationMessageReadPayload.new(
   listing_id: 23893,
   channel: airbnb,
   message_id: 1854462,
-  external_message_id: 33532605539,
+  external_message_id: 32877308873,
   read_at: null,
   reader: null
 )

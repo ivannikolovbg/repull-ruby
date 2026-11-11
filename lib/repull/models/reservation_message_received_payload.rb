@@ -1,7 +1,7 @@
 =begin
 #Repull API
 
-#The unified API for vacation rental tech. Connect to 50+ PMS platforms and 4 OTA channels through one REST API. Built-in AI operations for guest communication, pricing, and listing optimization.  ## Designed for AI agents Every error response on this API includes machine-parseable fields so an LLM (Claude in MCP, Cursor, Cline, GPT, etc.) can self-recover without escalating to a human: - `error.code` — stable string identifier (e.g. `invalid_params`, `rate_limit_exceeded`) - `error.message` — human-readable cause - `error.fix` — exact recovery steps (e.g. \"Pass `check_in_after` as ISO 8601: `?check_in_after=2026-01-15`\") - `error.docs_url` — link to the canonical write-up at `https://repull.dev/docs/errors/{code}` - `error.request_id` — id to correlate with server-side logs - `error.field` / `error.value_received` / `error.valid_values` / `error.did_you_mean` — when the error is parameter-specific - `error.retry_after` — seconds to wait before retrying (rate-limit + transient upstream)  `Access-Control-Expose-Headers` lists `x-request-id` and the `X-RateLimit-*` family so browsers can read them on cross-origin responses.  ## Quick Start 1. Get an API key at https://repull.dev/dashboard 2. Connect a PMS: `POST /v1/connect/{provider}` 3. List properties: `GET /v1/properties` 4. Get reservations: `GET /v1/reservations`  ## Authentication All requests require a Bearer token: ``` Authorization: Bearer sk_live_YOUR_API_KEY ```  ## Request Correlation (X-Request-ID) Every response carries an `X-Request-ID` header, e.g. `X-Request-ID: req_01HXY...`. Include this id in support tickets and bug reports — we can trace the full request lifecycle (auth, rate limit, handler, downstream calls, log row) from a single id.  You may set the header on the inbound request to forward your own trace id; we will echo it back instead of generating a new one. Accepted format: `^[\\\\w.-]{1,128}$`.  The id is also embedded in error envelopes as `request_id` so server-side log diffs work even when the response headers are stripped by an intermediate proxy.  ## Rate Limits The public API enforces a per-API-key sliding-window rate limit on top of the per-tier monthly + daily-AI quotas.  **Default policy:** 600 requests per 60 seconds, per API key. Sliding window — there is no fixed-minute boundary you can burst across.  Every response includes:  | Header | Meaning | |---|---| | `X-RateLimit-Limit` | Requests permitted in the current window. | | `X-RateLimit-Remaining` | Requests left in the current window after this call. | | `X-RateLimit-Reset` | Unix epoch (seconds) when the next slot opens. | | `X-RateLimit-Policy` | Machine-readable policy descriptor, e.g. `600;w=60`. | | `Retry-After` | Seconds to wait before retrying. **Only present on 429 responses.** |  **On 429 (rate_limit_exceeded):** the response body matches the standard error envelope with `code: \"rate_limit_exceeded\"`, plus `limit`, `window_seconds`, `retry_after`, and `request_id` fields. SDKs MUST honor `Retry-After` and use exponential backoff with jitter on subsequent retries — never a tight loop.  Recommended backoff: ``` sleep_ms = (Retry-After * 1000) + random(0..250) ```  Monthly + daily-AI tier quotas (`free`, `starter`, `custom`) are enforced separately and also surface as 429s; they include `tier`, `scope`, and `resetsAt` fields.  ## Plan listing limits Each plan includes a number of **active listings**:  | Tier | Active listings | |---|---| | `free` | 3 | | `starter` | no cap: 10 included, then billed per listing | | `custom` | no cap |  Going over the plan never blocks your API calls. Listings beyond the plan are **held back**: they stay connected and keep syncing, but they are not served. A held-back listing answers `403 listing_inactive` with `reason: \"plan_limit\"`, and collection routes leave it out. Every JSON response then carries a `planNotice` and the `X-Repull-Listings-Held-Back` header, so you know there is more to see.  Choose which listings are active with `POST /v1/listings/status`, or upgrade at `https://repull.dev/dashboard/billing` to activate them all.  Only a call that would itself take you over the plan is refused, with **`402 listings_limit_exceeded`**: activating listings (`PATCH /v1/listings/{id}` with `{ \"active\": true }`, `POST /v1/listings/status`) or creating one (`POST /v1/listings`). Nothing else changes. The envelope carries the tier, the limit, the active count and an upgrade link next to the standard `code` / `message` / `fix` / `docs_url` / `request_id`.  If an account has more active listings than its plan (for example after a downgrade), calls are still served and `planNotice` says so (code \"listings_over_plan\").
+#The unified API for vacation rental tech. Connect Airbnb, Booking.com, Vrbo and more channels, plus 15 PMS platforms, through one REST API.  ## Designed for AI agents Every error response on this API includes machine-parseable fields so an LLM (Claude in MCP, Cursor, Cline, GPT, etc.) can self-recover without escalating to a human: - `error.code` — stable string identifier (e.g. `invalid_params`, `rate_limit_exceeded`) - `error.message` — human-readable cause - `error.fix` — exact recovery steps (e.g. \"Pass `check_in_after` as ISO 8601: `?check_in_after=2026-01-15`\") - `error.docs_url` — link to the canonical write-up at `https://repull.dev/docs/errors/{code}` - `error.request_id` — id to correlate with server-side logs - `error.field` / `error.value_received` / `error.valid_values` / `error.did_you_mean` — when the error is parameter-specific - `error.retry_after` — seconds to wait before retrying (rate-limit + transient upstream)  `Access-Control-Expose-Headers` lists `x-request-id` and the `X-RateLimit-*` family so browsers can read them on cross-origin responses.  ## Quick Start 1. Get an API key at https://repull.dev/dashboard 2. Connect a PMS: `POST /v1/connect/{provider}` 3. List properties: `GET /v1/properties` 4. Get reservations: `GET /v1/reservations`  ## Authentication All requests require a Bearer token: ``` Authorization: Bearer sk_live_YOUR_API_KEY ```  ## Request Correlation (X-Request-ID) Every response carries an `X-Request-ID` header, e.g. `X-Request-ID: req_01HXY...`. Include this id in support tickets and bug reports — we can trace the full request lifecycle (auth, rate limit, handler, downstream calls, log row) from a single id.  You may set the header on the inbound request to forward your own trace id; we will echo it back instead of generating a new one. Accepted format: `^[\\\\w.-]{1,128}$`.  The id is also embedded in error envelopes as `request_id` so server-side log diffs work even when the response headers are stripped by an intermediate proxy.  ## Rate Limits The public API enforces a per-API-key sliding-window rate limit on top of the per-tier monthly + daily-AI quotas.  **Default policy:** 600 requests per 60 seconds, per API key. Sliding window — there is no fixed-minute boundary you can burst across.  Every response includes:  | Header | Meaning | |---|---| | `X-RateLimit-Limit` | Requests permitted in the current window. | | `X-RateLimit-Remaining` | Requests left in the current window after this call. | | `X-RateLimit-Reset` | Unix epoch (seconds) when the next slot opens. | | `X-RateLimit-Policy` | Machine-readable policy descriptor, e.g. `600;w=60`. | | `Retry-After` | Seconds to wait before retrying. **Only present on 429 responses.** |  **On 429 (rate_limit_exceeded):** the response body matches the standard error envelope with `code: \"rate_limit_exceeded\"`, plus `limit`, `window_seconds`, `retry_after`, and `request_id` fields. SDKs MUST honor `Retry-After` and use exponential backoff with jitter on subsequent retries — never a tight loop.  Recommended backoff: ``` sleep_ms = (Retry-After * 1000) + random(0..250) ```  Monthly + daily-AI tier quotas (`free`, `starter`, `custom`) are enforced separately and also surface as 429s; they include `tier`, `scope`, and `resetsAt` fields.  ## Plan listing limits Each plan includes a number of **active listings**:  | Tier | Active listings | |---|---| | `free` | 3 | | `starter` | no cap: 10 included, then billed per listing | | `custom` | no cap |  Going over the plan never blocks your API calls. Listings beyond the plan are **held back**: they stay connected and keep syncing, but they are not served. A held-back listing answers `403 listing_inactive` with `reason: \"plan_limit\"`, and collection routes leave it out. Every JSON response then carries a `planNotice` and the `X-Repull-Listings-Held-Back` header, so you know there is more to see.  Choose which listings are active with `POST /v1/listings/status`, or upgrade at `https://repull.dev/dashboard/billing` to activate them all.  Only a call that would itself take you over the plan is refused, with **`402 listings_limit_exceeded`**: activating listings (`PATCH /v1/listings/{id}` with `{ \"active\": true }`, `POST /v1/listings/status`) or creating one (`POST /v1/listings`). Nothing else changes. The envelope carries the tier, the limit, the active count and an upgrade link next to the standard `code` / `message` / `fix` / `docs_url` / `request_id`.  If an account has more active listings than its plan (for example after a downgrade), calls are still served and `planNotice` says so (code \"listings_over_plan\").
 
 The version of the OpenAPI document: 1.0.0
 
@@ -14,24 +14,68 @@ require 'date'
 require 'time'
 
 module Repull
-  # Payload for `reservation.message.received`. A new inbound message arrived on a reservation thread.
+  # Payload for `reservation.message.received`. A new inbound message arrived on a reservation thread: from the guest, a co-traveler, the booker, or Airbnb Support (`from.type: \"airbnb\"`). The whole message, the same as `GET /v1/conversations/{threadId}/messages` returns it, plus where it belongs. Dedupe on `externalMessageId` (or `messageId`).
   class ReservationMessageReceivedPayload < ApiModelBase
     # Booking.com only: the hotel (property) id of the conversation's listing. Absent on other channels. A Booking.com Extranet login can cover several hotels, so use this to route the message.
     attr_accessor :hotel_id
 
+    # The reservation the conversation belongs to. `null` for an inquiry, or a message that arrived before its booking was imported (`reservation.thread.assigned` fires when it is attached).
     attr_accessor :reservation_id
 
+    # The Repull conversation id: the numeric id, as a string. Pass it as `{id}` to `GET /v1/conversations/{id}` and `GET /v1/conversations/{id}/messages`.
     attr_accessor :thread_id
+
+    # The channel's own thread id (Airbnb thread id, Booking.com conversation id). Same as `externalThreadId` on `GET /v1/conversations/{id}`.
+    attr_accessor :external_thread_id
+
+    # The Repull listing the conversation is about.
+    attr_accessor :listing_id
+
+    # The channel the message came through: `airbnb`, `booking`, `vrbo`, …
+    attr_accessor :channel
+
+    # Repull message id, as `GET /v1/conversations/{id}/messages` returns it (`id`).
+    attr_accessor :message_id
+
+    # The channel's own message id. Stable across retries and backfill: dedupe on it.
+    attr_accessor :external_message_id
+
+    # The reservation's confirmation code on the channel. `null` when there is no reservation.
+    attr_accessor :confirmation_code
 
     attr_accessor :from
 
     # Empty when the guest sent only a file.
     attr_accessor :body
 
+    # When the message was sent on the channel.
     attr_accessor :sent_at
+
+    # Always `inbound` on this event.
+    attr_accessor :direction
+
+    # Sender role as stored, the same as `senderType` on `GET /v1/conversations/{id}/messages`.
+    attr_accessor :sender_type
+
+    attr_accessor :sender_name
+
+    attr_accessor :sender_avatar
+
+    # English translation, when one has been computed.
+    attr_accessor :translated_body
 
     # Files the guest sent (photos, videos, documents), same shape as `GET /v1/conversations/{id}/messages`. Empty array when there are none.
     attr_accessor :attachments
+
+    attr_accessor :is_automated
+
+    attr_accessor :ai_generated
+
+    # Stored delivery state. Usually `null` on inbound messages (`GET /v1/conversations/{id}/messages` shows them as `received`).
+    attr_accessor :status
+
+    # Orders two deliveries about the same message without parsing the body.
+    attr_accessor :revision
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
@@ -39,10 +83,25 @@ module Repull
         :'hotel_id' => :'hotelId',
         :'reservation_id' => :'reservationId',
         :'thread_id' => :'threadId',
+        :'external_thread_id' => :'externalThreadId',
+        :'listing_id' => :'listingId',
+        :'channel' => :'channel',
+        :'message_id' => :'messageId',
+        :'external_message_id' => :'externalMessageId',
+        :'confirmation_code' => :'confirmationCode',
         :'from' => :'from',
         :'body' => :'body',
         :'sent_at' => :'sentAt',
-        :'attachments' => :'attachments'
+        :'direction' => :'direction',
+        :'sender_type' => :'senderType',
+        :'sender_name' => :'senderName',
+        :'sender_avatar' => :'senderAvatar',
+        :'translated_body' => :'translatedBody',
+        :'attachments' => :'attachments',
+        :'is_automated' => :'isAutomated',
+        :'ai_generated' => :'aiGenerated',
+        :'status' => :'status',
+        :'revision' => :'revision'
       }
     end
 
@@ -62,10 +121,25 @@ module Repull
         :'hotel_id' => :'String',
         :'reservation_id' => :'Integer',
         :'thread_id' => :'String',
+        :'external_thread_id' => :'String',
+        :'listing_id' => :'Integer',
+        :'channel' => :'String',
+        :'message_id' => :'String',
+        :'external_message_id' => :'String',
+        :'confirmation_code' => :'String',
         :'from' => :'ReservationMessageReceivedPayloadFrom',
         :'body' => :'String',
         :'sent_at' => :'Time',
-        :'attachments' => :'Array<ConversationMessageAttachment>'
+        :'direction' => :'String',
+        :'sender_type' => :'String',
+        :'sender_name' => :'String',
+        :'sender_avatar' => :'String',
+        :'translated_body' => :'String',
+        :'attachments' => :'Array<ConversationMessageAttachment>',
+        :'is_automated' => :'Boolean',
+        :'ai_generated' => :'Boolean',
+        :'status' => :'String',
+        :'revision' => :'Time'
       }
     end
 
@@ -73,6 +147,17 @@ module Repull
     def self.openapi_nullable
       Set.new([
         :'hotel_id',
+        :'reservation_id',
+        :'external_thread_id',
+        :'listing_id',
+        :'external_message_id',
+        :'confirmation_code',
+        :'sender_type',
+        :'sender_name',
+        :'sender_avatar',
+        :'translated_body',
+        :'status',
+        :'revision'
       ])
     end
 
@@ -104,6 +189,30 @@ module Repull
         self.thread_id = attributes[:'thread_id']
       end
 
+      if attributes.key?(:'external_thread_id')
+        self.external_thread_id = attributes[:'external_thread_id']
+      end
+
+      if attributes.key?(:'listing_id')
+        self.listing_id = attributes[:'listing_id']
+      end
+
+      if attributes.key?(:'channel')
+        self.channel = attributes[:'channel']
+      end
+
+      if attributes.key?(:'message_id')
+        self.message_id = attributes[:'message_id']
+      end
+
+      if attributes.key?(:'external_message_id')
+        self.external_message_id = attributes[:'external_message_id']
+      end
+
+      if attributes.key?(:'confirmation_code')
+        self.confirmation_code = attributes[:'confirmation_code']
+      end
+
       if attributes.key?(:'from')
         self.from = attributes[:'from']
       end
@@ -116,10 +225,46 @@ module Repull
         self.sent_at = attributes[:'sent_at']
       end
 
+      if attributes.key?(:'direction')
+        self.direction = attributes[:'direction']
+      end
+
+      if attributes.key?(:'sender_type')
+        self.sender_type = attributes[:'sender_type']
+      end
+
+      if attributes.key?(:'sender_name')
+        self.sender_name = attributes[:'sender_name']
+      end
+
+      if attributes.key?(:'sender_avatar')
+        self.sender_avatar = attributes[:'sender_avatar']
+      end
+
+      if attributes.key?(:'translated_body')
+        self.translated_body = attributes[:'translated_body']
+      end
+
       if attributes.key?(:'attachments')
         if (value = attributes[:'attachments']).is_a?(Array)
           self.attachments = value
         end
+      end
+
+      if attributes.key?(:'is_automated')
+        self.is_automated = attributes[:'is_automated']
+      end
+
+      if attributes.key?(:'ai_generated')
+        self.ai_generated = attributes[:'ai_generated']
+      end
+
+      if attributes.key?(:'status')
+        self.status = attributes[:'status']
+      end
+
+      if attributes.key?(:'revision')
+        self.revision = attributes[:'revision']
       end
     end
 
@@ -146,10 +291,25 @@ module Repull
           hotel_id == o.hotel_id &&
           reservation_id == o.reservation_id &&
           thread_id == o.thread_id &&
+          external_thread_id == o.external_thread_id &&
+          listing_id == o.listing_id &&
+          channel == o.channel &&
+          message_id == o.message_id &&
+          external_message_id == o.external_message_id &&
+          confirmation_code == o.confirmation_code &&
           from == o.from &&
           body == o.body &&
           sent_at == o.sent_at &&
-          attachments == o.attachments
+          direction == o.direction &&
+          sender_type == o.sender_type &&
+          sender_name == o.sender_name &&
+          sender_avatar == o.sender_avatar &&
+          translated_body == o.translated_body &&
+          attachments == o.attachments &&
+          is_automated == o.is_automated &&
+          ai_generated == o.ai_generated &&
+          status == o.status &&
+          revision == o.revision
     end
 
     # @see the `==` method
@@ -161,7 +321,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [hotel_id, reservation_id, thread_id, from, body, sent_at, attachments].hash
+      [hotel_id, reservation_id, thread_id, external_thread_id, listing_id, channel, message_id, external_message_id, confirmation_code, from, body, sent_at, direction, sender_type, sender_name, sender_avatar, translated_body, attachments, is_automated, ai_generated, status, revision].hash
     end
 
     # Builds the object from hash
