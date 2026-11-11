@@ -1,0 +1,171 @@
+name: Spec refresh
+
+# Keeps this SDK in step with https://api.repull.dev/openapi.json.
+#
+# The API gains endpoints and schema fields almost daily from other repos, while
+# this repo can sit untouched for weeks, so a manual regen always loses and the
+# Spec freshness check goes red. Every hour this job:
+#
+#   1. pulls the live spec;
+#   2. if its shape changed (prose-only edits are ignored), regenerates the SDK
+#      with scripts/regen.sh, builds it, runs its tests, and commits the
+#      regenerated code to main;
+#   3. if openapi/v1.json changed since the last release tag and that tag is at
+#      least 24h old, bumps the patch version, tags vX.Y.Z and dispatches the
+#      Release workflow (a tag pushed with GITHUB_TOKEN does not trigger
+#      workflows on its own). So at most one release a day, batching changes.
+#
+# If the SDK does not build or pass tests on the new spec, nothing is committed:
+# the job fails and opens a `spec-refresh` issue (one at a time), which closes
+# itself on the next green run. That is real drift needing a code change.
+#
+# Run by hand: Actions -> Spec refresh -> Run workflow (force_regen regenerates
+# even when the spec shape is unchanged).
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+    inputs:
+      force_regen:
+        description: "Regenerate and verify even if the spec shape is unchanged"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  issues: write
+  actions: write
+
+concurrency:
+  group: spec-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GH_TOKEN: ${{ github.token }}
+      LIVE_SPEC: /tmp/repull-live-openapi.json
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Pull the live spec
+        run: python3 scripts/spec_sync.py fetch "$LIVE_SPEC"
+
+      - name: Detect change
+        id: diff
+        run: |
+          changed=$(python3 scripts/spec_sync.py changed "$LIVE_SPEC" openapi/v1.json --ignore-enums)
+          if [ "${{ inputs.force_regen }}" = "true" ]; then changed=true; fi
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
+          echo "Spec shape changed: $changed"
+
+      - uses: actions/setup-java@v4
+        if: steps.diff.outputs.changed == 'true'
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: actions/setup-node@v4
+        if: steps.diff.outputs.changed == 'true'
+        with:
+          node-version: "22.x"
+
+      - uses: ruby/setup-ruby@v1
+        if: steps.diff.outputs.changed == 'true'
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+
+      - name: Regenerate
+        id: regen
+        if: steps.diff.outputs.changed == 'true'
+        run: REPULL_SPEC_URL="file://$LIVE_SPEC" ./scripts/regen.sh
+
+      - name: Build and test
+        id: verify
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          gem build repull.gemspec
+          bundle exec ruby -Ilib -e "require 'repull'; puts Repull::VERSION"
+          bundle exec rspec
+
+      - name: Commit regenerated SDK
+        id: commit
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A -- openapi lib docs
+          if git diff --cached --quiet; then
+            echo "Regenerated SDK is identical to main; nothing to commit."
+            exit 0
+          fi
+          git commit -m "chore(spec): regenerate from the live API spec"
+          git pull --rebase --autostash origin main
+          git push origin HEAD:main
+          echo "pushed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Release (at most once a day)
+        id: release
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git pull --rebase --autostash origin main
+          git fetch --tags --force origin
+          last=$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -1)
+          if [ -z "$last" ]; then echo "No release tag yet; skipping."; exit 0; fi
+          if git diff --quiet "$last" HEAD -- openapi/v1.json; then
+            echo "No spec change since $last; nothing to release."
+            exit 0
+          fi
+          age=$(( $(date +%s) - $(git for-each-ref --format='%(creatordate:unix)' "refs/tags/$last") ))
+          if [ "$age" -lt 86400 ]; then
+            echo "$last is $((age / 3600))h old; batching spec changes until it is 24h old."
+            exit 0
+          fi
+          IFS=. read -r major minor patch <<< "${last#v}"
+          next="$major.$minor.$((patch + 1))"
+          echo "Releasing v$next (spec changed since $last)"
+          sed -i -E "s/VERSION = '[^']+'/VERSION = '$next'/" lib/repull/version.rb
+          git show "$last:openapi/v1.json" > "$RUNNER_TEMP/released.json"
+          python3 scripts/spec_sync.py changelog "$RUNNER_TEMP/released.json" openapi/v1.json "$next"
+          git add CHANGELOG.md lib/repull/version.rb
+          git commit -m "chore(release): v$next — regenerate from the live spec"
+          git tag -a "v$next" -m "v$next"
+          git push origin HEAD:main "v$next"
+          gh workflow run release.yml --ref "v$next"
+          echo "tag=v$next" >> "$GITHUB_OUTPUT"
+
+      - name: Re-run Spec freshness on main
+        if: steps.commit.outputs.pushed == 'true' || steps.release.outputs.tag != ''
+        run: gh workflow run spec-freshness.yml --ref main
+
+      - name: Close resolved spec-refresh issues
+        if: success() && steps.diff.outputs.changed == 'true'
+        run: |
+          for n in $(gh issue list --label spec-refresh --state open --json number -q '.[].number'); do
+            gh issue close "$n" --comment "Resolved: the SDK regenerated, built and passed its tests on the live spec in ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}."
+          done
+
+      - name: Open an issue when the new spec breaks the SDK
+        if: failure() && (steps.regen.outcome == 'failure' || steps.verify.outcome == 'failure')
+        run: |
+          if [ -n "$(gh issue list --label spec-refresh --state open --json number -q '.[0].number')" ]; then
+            echo "A spec-refresh issue is already open; not opening another."
+            exit 0
+          fi
+          gh label create spec-refresh --color B60205 --description "Automated spec refresh failed" 2>/dev/null || true
+          gh issue create --label spec-refresh \
+            --title "Spec refresh: the SDK no longer builds or passes tests on the live API spec" \
+            --body "The hourly spec refresh pulled https://api.repull.dev/openapi.json, regenerated the SDK with scripts/regen.sh, and the build or tests failed, so nothing was committed and the Spec freshness check stays red.
+
+          Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          This is real drift (a renamed or removed endpoint or type that hand-written code or tests depend on), not a snapshot bump. Fix the code, regenerate, and commit. This issue closes itself on the next green refresh."

@@ -18,6 +18,9 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SPEC_URL="${REPULL_SPEC_URL:-https://api.repull.dev/openapi.json}"
 SPEC_PATH="$ROOT/openapi/v1.json"
 GEN_OUT="$(mktemp -d)"
+# The gem version lives in lib/repull/version.rb (bumped by the spec-refresh
+# release step); regenerating must never reset it.
+GEM_VERSION="${GEM_VERSION:-$(sed -n "s/.*VERSION = '\([^']*\)'.*/\1/p" "$ROOT/lib/repull/version.rb")}"
 
 trap 'rm -rf "$GEN_OUT"' EXIT
 
@@ -73,7 +76,7 @@ npx --yes @openapitools/openapi-generator-cli@latest generate \
   -i "$SPEC_PATH" \
   -g ruby \
   -o "$GEN_OUT" \
-  --additional-properties=gemName=repull,moduleName=Repull,gemVersion=0.2.44
+  --additional-properties=gemName=repull,moduleName=Repull,gemVersion="$GEM_VERSION"
 
 echo "==> syncing lib/ + docs/"
 rm -rf "$ROOT/lib/repull" "$ROOT/lib/repull.rb" "$ROOT/docs"
