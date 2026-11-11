@@ -33,6 +33,12 @@ module Repull
     # How many reservations Booking.com returned for the property. Equal to `reservationsImported` unless some could not be attached to a listing — so `0` here means Booking.com had none. `null` when the sync could not run.
     attr_accessor :reservations_found
 
+    # Ids of the listings this call created from Booking.com rooms (`create: true`). They start without a calendar: Booking.com shows those rooms closed and nothing is sent to Booking.com for them until they have one. Give a listing a calendar by setting its prices and availability with `PUT /v1/availability/{propertyId}`, or by mapping the same home from Airbnb so its calendar is used. Rooms mapped to an existing listing are not listed: that listing's calendar is pushed as before.
+    attr_accessor :needs_calendar
+
+    # Plain-language explanation of `needsCalendar`, present only when it is non-empty.
+    attr_accessor :calendar_note
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
@@ -42,7 +48,9 @@ module Repull
         :'session_id' => :'sessionId',
         :'connection_id' => :'connectionId',
         :'reservations_imported' => :'reservationsImported',
-        :'reservations_found' => :'reservationsFound'
+        :'reservations_found' => :'reservationsFound',
+        :'needs_calendar' => :'needsCalendar',
+        :'calendar_note' => :'calendarNote'
       }
     end
 
@@ -65,7 +73,9 @@ module Repull
         :'session_id' => :'String',
         :'connection_id' => :'String',
         :'reservations_imported' => :'Integer',
-        :'reservations_found' => :'Integer'
+        :'reservations_found' => :'Integer',
+        :'needs_calendar' => :'Array<String>',
+        :'calendar_note' => :'String'
       }
     end
 
@@ -73,7 +83,7 @@ module Repull
     def self.openapi_nullable
       Set.new([
         :'reservations_imported',
-        :'reservations_found'
+        :'reservations_found',
       ])
     end
 
@@ -128,6 +138,18 @@ module Repull
       if attributes.key?(:'reservations_found')
         self.reservations_found = attributes[:'reservations_found']
       end
+
+      if attributes.key?(:'needs_calendar')
+        if (value = attributes[:'needs_calendar']).is_a?(Array)
+          self.needs_calendar = value
+        end
+      else
+        self.needs_calendar = nil
+      end
+
+      if attributes.key?(:'calendar_note')
+        self.calendar_note = attributes[:'calendar_note']
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -151,6 +173,10 @@ module Repull
         invalid_properties.push('invalid value for "connection_id", connection_id cannot be nil.')
       end
 
+      if @needs_calendar.nil?
+        invalid_properties.push('invalid value for "needs_calendar", needs_calendar cannot be nil.')
+      end
+
       invalid_properties
     end
 
@@ -162,6 +188,7 @@ module Repull
       return false if @mapped.nil?
       return false if @session_id.nil?
       return false if @connection_id.nil?
+      return false if @needs_calendar.nil?
       true
     end
 
@@ -205,6 +232,16 @@ module Repull
       @connection_id = connection_id
     end
 
+    # Custom attribute writer method with validation
+    # @param [Object] needs_calendar Value to be assigned
+    def needs_calendar=(needs_calendar)
+      if needs_calendar.nil?
+        fail ArgumentError, 'needs_calendar cannot be nil'
+      end
+
+      @needs_calendar = needs_calendar
+    end
+
     # Checks equality by comparing each attribute.
     # @param [Object] Object to be compared
     def ==(o)
@@ -216,7 +253,9 @@ module Repull
           session_id == o.session_id &&
           connection_id == o.connection_id &&
           reservations_imported == o.reservations_imported &&
-          reservations_found == o.reservations_found
+          reservations_found == o.reservations_found &&
+          needs_calendar == o.needs_calendar &&
+          calendar_note == o.calendar_note
     end
 
     # @see the `==` method
@@ -228,7 +267,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [success, mapped, unmapped, session_id, connection_id, reservations_imported, reservations_found].hash
+      [success, mapped, unmapped, session_id, connection_id, reservations_imported, reservations_found, needs_calendar, calendar_note].hash
     end
 
     # Builds the object from hash

@@ -23,6 +23,9 @@ module Repull
     # Booking.com property — required when the listing is on more than one.
     attr_accessor :hotel_id
 
+    # Vrbo account (`vrbo:13`) — required when the listing is linked on more than one.
+    attr_accessor :account_id
+
     class EnumAttributeValidator
       attr_reader :datatype
       attr_reader :allowable_values
@@ -50,7 +53,8 @@ module Repull
       {
         :'channel' => :'channel',
         :'markup_percent' => :'markupPercent',
-        :'hotel_id' => :'hotelId'
+        :'hotel_id' => :'hotelId',
+        :'account_id' => :'accountId'
       }
     end
 
@@ -69,7 +73,8 @@ module Repull
       {
         :'channel' => :'String',
         :'markup_percent' => :'Float',
-        :'hotel_id' => :'String'
+        :'hotel_id' => :'String',
+        :'account_id' => :'String'
       }
     end
 
@@ -111,6 +116,10 @@ module Repull
       if attributes.key?(:'hotel_id')
         self.hotel_id = attributes[:'hotel_id']
       end
+
+      if attributes.key?(:'account_id')
+        self.account_id = attributes[:'account_id']
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -138,7 +147,7 @@ module Repull
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
       return false if @channel.nil?
-      channel_validator = EnumAttributeValidator.new('String', ["airbnb", "booking"])
+      channel_validator = EnumAttributeValidator.new('String', ["airbnb", "booking", "vrbo"])
       return false unless channel_validator.valid?(@channel)
       return false if @markup_percent >= 100
       return false if @markup_percent < 0
@@ -148,7 +157,7 @@ module Repull
     # Custom attribute writer method checking allowed values (enum).
     # @param [Object] channel Object to be assigned
     def channel=(channel)
-      validator = EnumAttributeValidator.new('String', ["airbnb", "booking"])
+      validator = EnumAttributeValidator.new('String', ["airbnb", "booking", "vrbo"])
       unless validator.valid?(channel)
         fail ArgumentError, "invalid value for \"channel\", must be one of #{validator.allowable_values}."
       end
@@ -176,7 +185,8 @@ module Repull
       self.class == o.class &&
           channel == o.channel &&
           markup_percent == o.markup_percent &&
-          hotel_id == o.hotel_id
+          hotel_id == o.hotel_id &&
+          account_id == o.account_id
     end
 
     # @see the `==` method
@@ -188,7 +198,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [channel, markup_percent, hotel_id].hash
+      [channel, markup_percent, hotel_id, account_id].hash
     end
 
     # Builds the object from hash

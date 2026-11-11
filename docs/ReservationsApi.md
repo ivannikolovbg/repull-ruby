@@ -9,6 +9,7 @@ All URIs are relative to *https://api.repull.dev*
 | [**create_reservation**](ReservationsApi.md#create_reservation) | **POST** /v1/reservations | Create a reservation |
 | [**decline_reservation_request**](ReservationsApi.md#decline_reservation_request) | **POST** /v1/reservations/{id}/decline | Decline a booking request |
 | [**get_reservation**](ReservationsApi.md#get_reservation) | **GET** /v1/reservations/{id} | Get reservation details |
+| [**get_reservation_summary**](ReservationsApi.md#get_reservation_summary) | **GET** /v1/reservations/summary | Summarize reservations for a period |
 | [**list_reservations**](ReservationsApi.md#list_reservations) | **GET** /v1/reservations | List reservations |
 | [**quote_reservation**](ReservationsApi.md#quote_reservation) | **POST** /v1/reservations/quote | Quote a reservation in the PMS |
 | [**update_reservation**](ReservationsApi.md#update_reservation) | **PATCH** /v1/reservations/{id} | Update a reservation |
@@ -376,6 +377,91 @@ end
 ### Return type
 
 [**Reservation**](Reservation.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## get_reservation_summary
+
+> <GetReservationSummary200Response> get_reservation_summary(from, to, opts)
+
+Summarize reservations for a period
+
+Bookings, nights, revenue, payout, average nightly rate, occupancy and cancellations for a period, in one small response — optionally grouped by `month`, `listing` and/or `channel`. Use it for reporting instead of paging through `GET /v1/reservations`.  **Counting (`basis`):** `stay` (default) counts the nights that fall inside `from`–`to` and splits each reservation’s money across its nights, so a stay crossing the window or a month edge brings only its share. `check_in` and `booked` count whole reservations by their check-in or booking date.  **Pace (`as_of`):** keeps only what was on the books at the end of that day — booked by then and not yet cancelled. To compare the next three months with the same months last year like for like, ask for last year’s window with `as_of` set to today’s date one year ago.  Owner stays are reported apart and never count as revenue or occupancy. Pending requests are counted in `pending` only. Reservations on inactive listings are left out.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ReservationsApi.new
+from = Date.parse('Tue Nov 10 00:00:00 UTC 2026') # Date | First day of the period.
+to = Date.parse('Tue Feb 09 00:00:00 UTC 2027') # Date | Last day of the period (inclusive). At most 732 days after `from`.
+opts = {
+  account: 'airbnb:79730216', # String | Only the records of one connected account, as `provider:externalAccountId` — the pair from a webhook `account` block, `connect.session.completed`, or `GET /v1/connect/{provider}` → `accounts`. A record belongs to an account when it is on that account's listings and on its channel (a PMS account: came in through that PMS). An account with no listings returns an empty page.
+  basis: 'stay', # String | Which date puts a reservation in the period: the nights stayed (`stay`), the check-in date, or the booking date.
+  group_by: 'month,listing', # String | Up to two of `month`, `listing`, `channel`, comma-separated. Omit for totals only.
+  as_of: Date.parse('Mon Nov 10 00:00:00 UTC 2025'), # Date | Count only what was on the books at the end of this day. A reservation cancelled without a reported cancellation date counts as cancelled.
+  listing_id: 56, # Integer | One listing only.
+  platform: 'airbnb' # String | One channel only.
+}
+
+begin
+  # Summarize reservations for a period
+  result = api_instance.get_reservation_summary(from, to, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ReservationsApi->get_reservation_summary: #{e}"
+end
+```
+
+#### Using the get_reservation_summary_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<GetReservationSummary200Response>, Integer, Hash)> get_reservation_summary_with_http_info(from, to, opts)
+
+```ruby
+begin
+  # Summarize reservations for a period
+  data, status_code, headers = api_instance.get_reservation_summary_with_http_info(from, to, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <GetReservationSummary200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ReservationsApi->get_reservation_summary_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **from** | **Date** | First day of the period. |  |
+| **to** | **Date** | Last day of the period (inclusive). At most 732 days after &#x60;from&#x60;. |  |
+| **account** | **String** | Only the records of one connected account, as &#x60;provider:externalAccountId&#x60; — the pair from a webhook &#x60;account&#x60; block, &#x60;connect.session.completed&#x60;, or &#x60;GET /v1/connect/{provider}&#x60; → &#x60;accounts&#x60;. A record belongs to an account when it is on that account&#39;s listings and on its channel (a PMS account: came in through that PMS). An account with no listings returns an empty page. | [optional] |
+| **basis** | **String** | Which date puts a reservation in the period: the nights stayed (&#x60;stay&#x60;), the check-in date, or the booking date. | [optional][default to &#39;stay&#39;] |
+| **group_by** | **String** | Up to two of &#x60;month&#x60;, &#x60;listing&#x60;, &#x60;channel&#x60;, comma-separated. Omit for totals only. | [optional] |
+| **as_of** | **Date** | Count only what was on the books at the end of this day. A reservation cancelled without a reported cancellation date counts as cancelled. | [optional] |
+| **listing_id** | **Integer** | One listing only. | [optional] |
+| **platform** | **String** | One channel only. | [optional] |
+
+### Return type
+
+[**GetReservationSummary200Response**](GetReservationSummary200Response.md)
 
 ### Authorization
 

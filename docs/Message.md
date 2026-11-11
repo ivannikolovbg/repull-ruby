@@ -20,7 +20,9 @@
 | **ai_generated** | **Boolean** | &#x60;true&#x60; when the body was written by AI (autopilot, draft). | [optional] |
 | **sent_at** | **Time** |  | [optional] |
 | **delivered_at** | **Time** | When the message reached the channel. &#x60;null&#x60; while it is &#x60;sending&#x60; or when it &#x60;failed&#x60;. | [optional] |
-| **read_at** | **Time** |  | [optional] |
+| **read_at** | **Time** | Who read it depends on &#x60;direction&#x60;. **Outbound** (your message): when the guest first read it, from the channel&#39;s read receipts — Airbnb reports them; on other channels it stays &#x60;null&#x60;. Changes are sent as &#x60;reservation.message.read&#x60;. **Inbound** (the guest&#39;s message): when your team answered it or marked it handled. | [optional] |
+| **host_read_at** | **Time** | Inbound messages only: when the host or a co-host first read it on the channel, from the channel&#39;s read receipts (Airbnb reports them). &#x60;null&#x60; for your own messages, on other channels, and until your side has opened the conversation since it arrived. | [optional] |
+| **reactions** | [**Array&lt;MessageReaction&gt;**](MessageReaction.md) | Reactions on this message, oldest first. Airbnb reports them; empty on other channels. Added and removed reactions are sent as &#x60;reservation.message.reaction&#x60;. To react, &#x60;PATCH /v1/channels/airbnb/messaging/{threadId}/messages/{messageId}&#x60; with &#x60;action: \&quot;react\&quot;&#x60;. | [optional] |
 
 ## Example
 
@@ -44,7 +46,9 @@ instance = Repull::Message.new(
   ai_generated: null,
   sent_at: null,
   delivered_at: null,
-  read_at: null
+  read_at: null,
+  host_read_at: null,
+  reactions: null
 )
 ```
 

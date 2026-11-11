@@ -14,7 +14,7 @@ require 'date'
 require 'time'
 
 module Repull
-  # Payload for `reservation.message.updated`: a message was edited on the channel. `body` is the new text; `previousBody` what it replaced. Read receipts and reactions do not fire it.
+  # Payload for `reservation.message.updated`: a message was edited on the channel. `body` is the new text; `previousBody` what it replaced. Read receipts and reactions do not fire it: they have their own events, `reservation.message.read` and `reservation.message.reaction`.
   class ReservationMessageUpdatedPayload < ApiModelBase
     # Booking.com only: the hotel (property) id of the conversation's listing. Absent on other channels. A Booking.com Extranet login can cover several hotels, so use this to route the message.
     attr_accessor :hotel_id

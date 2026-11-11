@@ -21,7 +21,7 @@ module Repull
     # New message text. Required when `action` is `edit`.
     attr_accessor :message
 
-    # Reaction to add. Required when `action` is `react`.
+    # Reaction to add, e.g. `👍`. Required when `action` is `react`. At most 32 characters; Airbnb decides which reactions it accepts.
     attr_accessor :reaction
 
     class EnumAttributeValidator

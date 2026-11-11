@@ -394,6 +394,99 @@ module Repull
       return data, status_code, headers
     end
 
+    # Summarize reservations for a period
+    # Bookings, nights, revenue, payout, average nightly rate, occupancy and cancellations for a period, in one small response — optionally grouped by `month`, `listing` and/or `channel`. Use it for reporting instead of paging through `GET /v1/reservations`.  **Counting (`basis`):** `stay` (default) counts the nights that fall inside `from`–`to` and splits each reservation’s money across its nights, so a stay crossing the window or a month edge brings only its share. `check_in` and `booked` count whole reservations by their check-in or booking date.  **Pace (`as_of`):** keeps only what was on the books at the end of that day — booked by then and not yet cancelled. To compare the next three months with the same months last year like for like, ask for last year’s window with `as_of` set to today’s date one year ago.  Owner stays are reported apart and never count as revenue or occupancy. Pending requests are counted in `pending` only. Reservations on inactive listings are left out.
+    # @param from [Date] First day of the period.
+    # @param to [Date] Last day of the period (inclusive). At most 732 days after &#x60;from&#x60;.
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :account Only the records of one connected account, as &#x60;provider:externalAccountId&#x60; — the pair from a webhook &#x60;account&#x60; block, &#x60;connect.session.completed&#x60;, or &#x60;GET /v1/connect/{provider}&#x60; → &#x60;accounts&#x60;. A record belongs to an account when it is on that account&#39;s listings and on its channel (a PMS account: came in through that PMS). An account with no listings returns an empty page.
+    # @option opts [String] :basis Which date puts a reservation in the period: the nights stayed (&#x60;stay&#x60;), the check-in date, or the booking date. (default to 'stay')
+    # @option opts [String] :group_by Up to two of &#x60;month&#x60;, &#x60;listing&#x60;, &#x60;channel&#x60;, comma-separated. Omit for totals only.
+    # @option opts [Date] :as_of Count only what was on the books at the end of this day. A reservation cancelled without a reported cancellation date counts as cancelled.
+    # @option opts [Integer] :listing_id One listing only.
+    # @option opts [String] :platform One channel only.
+    # @return [GetReservationSummary200Response]
+    def get_reservation_summary(from, to, opts = {})
+      data, _status_code, _headers = get_reservation_summary_with_http_info(from, to, opts)
+      data
+    end
+
+    # Summarize reservations for a period
+    # Bookings, nights, revenue, payout, average nightly rate, occupancy and cancellations for a period, in one small response — optionally grouped by &#x60;month&#x60;, &#x60;listing&#x60; and/or &#x60;channel&#x60;. Use it for reporting instead of paging through &#x60;GET /v1/reservations&#x60;.  **Counting (&#x60;basis&#x60;):** &#x60;stay&#x60; (default) counts the nights that fall inside &#x60;from&#x60;–&#x60;to&#x60; and splits each reservation’s money across its nights, so a stay crossing the window or a month edge brings only its share. &#x60;check_in&#x60; and &#x60;booked&#x60; count whole reservations by their check-in or booking date.  **Pace (&#x60;as_of&#x60;):** keeps only what was on the books at the end of that day — booked by then and not yet cancelled. To compare the next three months with the same months last year like for like, ask for last year’s window with &#x60;as_of&#x60; set to today’s date one year ago.  Owner stays are reported apart and never count as revenue or occupancy. Pending requests are counted in &#x60;pending&#x60; only. Reservations on inactive listings are left out.
+    # @param from [Date] First day of the period.
+    # @param to [Date] Last day of the period (inclusive). At most 732 days after &#x60;from&#x60;.
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :account Only the records of one connected account, as &#x60;provider:externalAccountId&#x60; — the pair from a webhook &#x60;account&#x60; block, &#x60;connect.session.completed&#x60;, or &#x60;GET /v1/connect/{provider}&#x60; → &#x60;accounts&#x60;. A record belongs to an account when it is on that account&#39;s listings and on its channel (a PMS account: came in through that PMS). An account with no listings returns an empty page.
+    # @option opts [String] :basis Which date puts a reservation in the period: the nights stayed (&#x60;stay&#x60;), the check-in date, or the booking date. (default to 'stay')
+    # @option opts [String] :group_by Up to two of &#x60;month&#x60;, &#x60;listing&#x60;, &#x60;channel&#x60;, comma-separated. Omit for totals only.
+    # @option opts [Date] :as_of Count only what was on the books at the end of this day. A reservation cancelled without a reported cancellation date counts as cancelled.
+    # @option opts [Integer] :listing_id One listing only.
+    # @option opts [String] :platform One channel only.
+    # @return [Array<(GetReservationSummary200Response, Integer, Hash)>] GetReservationSummary200Response data, response status code and response headers
+    def get_reservation_summary_with_http_info(from, to, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ReservationsApi.get_reservation_summary ...'
+      end
+      # verify the required parameter 'from' is set
+      if @api_client.config.client_side_validation && from.nil?
+        fail ArgumentError, "Missing the required parameter 'from' when calling ReservationsApi.get_reservation_summary"
+      end
+      # verify the required parameter 'to' is set
+      if @api_client.config.client_side_validation && to.nil?
+        fail ArgumentError, "Missing the required parameter 'to' when calling ReservationsApi.get_reservation_summary"
+      end
+      allowable_values = ["stay", "check_in", "booked"]
+      if @api_client.config.client_side_validation && opts[:'basis'] && !allowable_values.include?(opts[:'basis'])
+        fail ArgumentError, "invalid value for \"basis\", must be one of #{allowable_values}"
+      end
+      # resource path
+      local_var_path = '/v1/reservations/summary'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+      query_params[:'from'] = from
+      query_params[:'to'] = to
+      query_params[:'account'] = opts[:'account'] if !opts[:'account'].nil?
+      query_params[:'basis'] = opts[:'basis'] if !opts[:'basis'].nil?
+      query_params[:'group_by'] = opts[:'group_by'] if !opts[:'group_by'].nil?
+      query_params[:'as_of'] = opts[:'as_of'] if !opts[:'as_of'].nil?
+      query_params[:'listing_id'] = opts[:'listing_id'] if !opts[:'listing_id'].nil?
+      query_params[:'platform'] = opts[:'platform'] if !opts[:'platform'].nil?
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'GetReservationSummary200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"ReservationsApi.get_reservation_summary",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ReservationsApi#get_reservation_summary\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # List reservations
     # Cursor-paginated list of reservations across all connected PMS platforms. Filter by platform, status, listing, or check-in date range.  **Pagination:** Walk pages with `?cursor=` — pass `pagination.nextCursor` from one response back as `?cursor=` on the next request. Stop when `pagination.hasMore` is `false`. `limit` defaults to 50, max 100; requesting more returns 422 (no silent truncation).  `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) — see the `offset` parameter below. Mutually exclusive with `cursor`. For deep pagination cursor remains O(1) per page; offset > 10000 returns 422 with a docs link.  **Incremental sync (only changes since last poll):** pass `?updated_since=<ISO8601>` to receive only reservations amended, cancelled, or created at or after that instant — no full re-walk. Each row carries `updatedAt`; the last row of the final page is your next watermark. Note that `updated_since` changes the page ordering to `updatedAt ASC, id ASC` (and the cursor with it) so mid-walk amendments cannot be skipped — see the parameter description for the full contract.  Reservations on inactive listings are left out (counts and cursors included); they keep syncing and reappear once the listing is activated. Filtering by an inactive listing (`listing_id`) returns `403 listing_inactive`.
     # @param [Hash] opts the optional parameters

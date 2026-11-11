@@ -7,6 +7,7 @@
 | **id** | **String** | Repull listing id. | [optional] |
 | **airbnb** | [**Array&lt;GetListingMarkups200ResponseAirbnbInner&gt;**](GetListingMarkups200ResponseAirbnbInner.md) |  | [optional] |
 | **booking** | [**Array&lt;GetListingMarkups200ResponseBookingInner&gt;**](GetListingMarkups200ResponseBookingInner.md) |  | [optional] |
+| **vrbo** | [**Array&lt;GetListingMarkups200ResponseVrboInner&gt;**](GetListingMarkups200ResponseVrboInner.md) |  | [optional] |
 
 ## Example
 
@@ -16,7 +17,8 @@ require 'repull'
 instance = Repull::GetListingMarkups200Response.new(
   id: null,
   airbnb: null,
-  booking: null
+  booking: null,
+  vrbo: null
 )
 ```
 

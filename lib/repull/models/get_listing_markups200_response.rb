@@ -22,12 +22,15 @@ module Repull
 
     attr_accessor :booking
 
+    attr_accessor :vrbo
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
         :'id' => :'id',
         :'airbnb' => :'airbnb',
-        :'booking' => :'booking'
+        :'booking' => :'booking',
+        :'vrbo' => :'vrbo'
       }
     end
 
@@ -46,7 +49,8 @@ module Repull
       {
         :'id' => :'String',
         :'airbnb' => :'Array<GetListingMarkups200ResponseAirbnbInner>',
-        :'booking' => :'Array<GetListingMarkups200ResponseBookingInner>'
+        :'booking' => :'Array<GetListingMarkups200ResponseBookingInner>',
+        :'vrbo' => :'Array<GetListingMarkups200ResponseVrboInner>'
       }
     end
 
@@ -87,6 +91,12 @@ module Repull
           self.booking = value
         end
       end
+
+      if attributes.key?(:'vrbo')
+        if (value = attributes[:'vrbo']).is_a?(Array)
+          self.vrbo = value
+        end
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -111,7 +121,8 @@ module Repull
       self.class == o.class &&
           id == o.id &&
           airbnb == o.airbnb &&
-          booking == o.booking
+          booking == o.booking &&
+          vrbo == o.vrbo
     end
 
     # @see the `==` method
@@ -123,7 +134,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, airbnb, booking].hash
+      [id, airbnb, booking, vrbo].hash
     end
 
     # Builds the object from hash

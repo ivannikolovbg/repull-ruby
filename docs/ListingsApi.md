@@ -13,11 +13,13 @@ All URIs are relative to *https://api.repull.dev*
 | [**get_listing_calendar_sync**](ListingsApi.md#get_listing_calendar_sync) | **GET** /v1/listings/{id}/calendar-sync | Calendar sync status per channel |
 | [**get_listing_markups**](ListingsApi.md#get_listing_markups) | **GET** /v1/listings/{id}/markups | Get a listing&#39;s channel markups |
 | [**get_listing_publish_status**](ListingsApi.md#get_listing_publish_status) | **GET** /v1/listings/{id}/publish-status | Per-channel publish status |
+| [**get_vrbo_publish_job**](ListingsApi.md#get_vrbo_publish_job) | **GET** /v1/listings/{id}/publish/vrbo | Progress of a Vrbo listing creation |
 | [**list_listing_photos**](ListingsApi.md#list_listing_photos) | **GET** /v1/listings/{id}/photos | List a listing&#39;s stored photos |
 | [**list_listing_units**](ListingsApi.md#list_listing_units) | **GET** /v1/listings/{id}/units | List a listing&#39;s units |
 | [**list_listings**](ListingsApi.md#list_listings) | **GET** /v1/listings | List listings |
 | [**publish_listing_to_airbnb**](ListingsApi.md#publish_listing_to_airbnb) | **POST** /v1/listings/{id}/publish/airbnb | Publish a listing to Airbnb |
 | [**publish_listing_to_booking**](ListingsApi.md#publish_listing_to_booking) | **POST** /v1/listings/{id}/publish/booking | Publish a listing to Booking.com |
+| [**publish_listing_to_vrbo**](ListingsApi.md#publish_listing_to_vrbo) | **POST** /v1/listings/{id}/publish/vrbo | Create a listing on Vrbo |
 | [**pull_listing_from_airbnb**](ListingsApi.md#pull_listing_from_airbnb) | **POST** /v1/listings/{id}/pull/airbnb | Refresh a listing from Airbnb |
 | [**set_listing_markup**](ListingsApi.md#set_listing_markup) | **PUT** /v1/listings/{id}/markups | Set a listing&#39;s markup on a channel |
 | [**set_listings_status**](ListingsApi.md#set_listings_status) | **POST** /v1/listings/status | Activate or deactivate listings in bulk |
@@ -530,7 +532,7 @@ end
 
 Get a listing's channel markups
 
-The markup each channel adds to this listing's price.  A listing's price on a channel is its own nightly price plus the channel's markup: a $200 night with a 35% Airbnb markup is sent to Airbnb as $270. The calendar keeps the listing's own price (`GET /v1/availability/{propertyId}` returns it); the markup is added only when a price is sent to the channel.  - **Airbnb** — one markup per listing. - **Booking.com** — one markup per **property**, shared by every listing priced through it (`listingIds` names them).  Returns `404 not_found` for a listing that does not exist or is not in this workspace, and `403 listing_inactive` for an inactive one.
+The markup each channel adds to this listing's price.  A listing's price on a channel is its own nightly price plus the channel's markup: a $200 night with a 35% Airbnb markup is sent to Airbnb as $270. The calendar keeps the listing's own price (`GET /v1/availability/{propertyId}` returns it); the markup is added only when a price is sent to the channel.  - **Airbnb** — one markup per listing. - **Booking.com** — one markup per **property**, shared by every listing priced through it (`listingIds` names them). - **Vrbo** — one markup per connected **Vrbo account**, shared by every listing linked on it (`listingIds` names them). Prices reach Vrbo through its calendar queue.  Returns `404 not_found` for a listing that does not exist or is not in this workspace, and `403 listing_inactive` for an inactive one.
 
 ### Examples
 
@@ -651,6 +653,77 @@ end
 ### Return type
 
 [**ListingPublishStatusResponse**](ListingPublishStatusResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## get_vrbo_publish_job
+
+> <GetVrboPublishJob200Response> get_vrbo_publish_job(id, job_id)
+
+Progress of a Vrbo listing creation
+
+Each step Vrbo has finished, Vrbo's reason when it failed, the new Vrbo listing number once published, and photos Vrbo's review refused. When Vrbo has published the listing, this read links the new unit to the listing with calendar sync on and queues the whole calendar — poll until `linked` is true. A job is remembered while it runs and for a while after; an unknown job is `404` (publish again to resume).
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ListingsApi.new
+id = 56 # Integer | Repull listing id
+job_id = 'job_id_example' # String | `job.jobId` from the POST.
+
+begin
+  # Progress of a Vrbo listing creation
+  result = api_instance.get_vrbo_publish_job(id, job_id)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ListingsApi->get_vrbo_publish_job: #{e}"
+end
+```
+
+#### Using the get_vrbo_publish_job_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<GetVrboPublishJob200Response>, Integer, Hash)> get_vrbo_publish_job_with_http_info(id, job_id)
+
+```ruby
+begin
+  # Progress of a Vrbo listing creation
+  data, status_code, headers = api_instance.get_vrbo_publish_job_with_http_info(id, job_id)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <GetVrboPublishJob200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ListingsApi->get_vrbo_publish_job_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **Integer** | Repull listing id |  |
+| **job_id** | **String** | &#x60;job.jobId&#x60; from the POST. |  |
+
+### Return type
+
+[**GetVrboPublishJob200Response**](GetVrboPublishJob200Response.md)
 
 ### Authorization
 
@@ -1035,6 +1108,79 @@ end
 - **Accept**: application/json
 
 
+## publish_listing_to_vrbo
+
+> <GetVrboPublishJob200Response> publish_listing_to_vrbo(id, opts)
+
+Create a listing on Vrbo
+
+Creates the listing on Vrbo in the host's connected Vrbo account, from the listing's content: title and description, property type, rooms and beds, amenities, photos, house rules (guests, minimum age, children, pets, smoking, events), check-in and check-out times, minimum stay, advance notice and booking window, the nightly price, cleaning, pet and extra-guest fees, the cancellation policy and the licence number. Vrbo's automatic new-listing discount is turned off so the listing sells at your prices.  **It is a job.** Vrbo's onboarding takes 5–15 minutes (photos go up one at a time), so this answers `202` with `job.jobId`. Poll `GET /v1/listings/{id}/publish/vrbo?jobId=` for each finished step. When Vrbo has published the listing, that read links the new Vrbo unit to the listing with calendar sync on and queues the whole calendar (prices, availability, minimum stay) to Vrbo: **keep polling until `linked` is true.**  **Which account.** A workspace with one Vrbo account needs nothing. With several, name it with `accountId` (`\"vrbo:13\"`, as the connection id). An account connected with messaging access is refused with `403 vrbo_messaging_access`.  **Missing content** (street address, city, photos, nightly price, description) is refused with `422 listing_incomplete` naming what is missing. A listing already linked to a Vrbo unit is `409 listing_already_on_vrbo`. A run that failed part-way leaves an unpublished Vrbo property: publishing again completes it instead of creating a second one.  This creates a Vrbo listing. Prices, availability and minimum stay on an existing one change through `PUT /v1/availability/{propertyId}`; other content of an existing Vrbo listing is edited on Vrbo.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ListingsApi.new
+id = 56 # Integer | Repull listing id
+opts = {
+  publish_listing_to_vrbo_request: Repull::PublishListingToVrboRequest.new # PublishListingToVrboRequest | 
+}
+
+begin
+  # Create a listing on Vrbo
+  result = api_instance.publish_listing_to_vrbo(id, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ListingsApi->publish_listing_to_vrbo: #{e}"
+end
+```
+
+#### Using the publish_listing_to_vrbo_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<GetVrboPublishJob200Response>, Integer, Hash)> publish_listing_to_vrbo_with_http_info(id, opts)
+
+```ruby
+begin
+  # Create a listing on Vrbo
+  data, status_code, headers = api_instance.publish_listing_to_vrbo_with_http_info(id, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <GetVrboPublishJob200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ListingsApi->publish_listing_to_vrbo_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **Integer** | Repull listing id |  |
+| **publish_listing_to_vrbo_request** | [**PublishListingToVrboRequest**](PublishListingToVrboRequest.md) |  | [optional] |
+
+### Return type
+
+[**GetVrboPublishJob200Response**](GetVrboPublishJob200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
 ## pull_listing_from_airbnb
 
 > <ListingPullResponse> pull_listing_from_airbnb(id, opts)
@@ -1114,7 +1260,7 @@ end
 
 Set a listing's markup on a channel
 
-Set the markup one channel adds to this listing's price. When the value changes, the affected listings' prices are re-sent to that channel straight away (`pricesResent`); nothing else is sent.  A listing's price on a channel is its own nightly price plus the channel's markup: a $200 night with a 35% Airbnb markup is sent to Airbnb as $270. The calendar keeps the listing's own price (`GET /v1/availability/{propertyId}` returns it); the markup is added only when a price is sent to the channel.  - **Airbnb** — one markup per listing. - **Booking.com** — one markup per **property**, shared by every listing priced through it (`listingIds` names them).  Returns `404 not_found` for a listing that does not exist or is not in this workspace, and `403 listing_inactive` for an inactive one.  On Booking.com the markup belongs to the property, so setting it reprices every listing on that property (`affectedListingIds`). A listing on more than one property must name one with `hotelId`; without it the request is refused with `409 ambiguous_booking_mapping` listing the candidates, rather than repricing a property it guessed.  `markupPercent` is a percentage — `15` for 15%. A value between 0 and 1 is refused as a probable fraction, with the number to send instead.
+Set the markup one channel adds to this listing's price. When the value changes, the affected listings' prices are re-sent to that channel straight away (`pricesResent`); nothing else is sent.  A listing's price on a channel is its own nightly price plus the channel's markup: a $200 night with a 35% Airbnb markup is sent to Airbnb as $270. The calendar keeps the listing's own price (`GET /v1/availability/{propertyId}` returns it); the markup is added only when a price is sent to the channel.  - **Airbnb** — one markup per listing. - **Booking.com** — one markup per **property**, shared by every listing priced through it (`listingIds` names them). - **Vrbo** — one markup per connected **Vrbo account**, shared by every listing linked on it (`listingIds` names them). Prices reach Vrbo through its calendar queue.  Returns `404 not_found` for a listing that does not exist or is not in this workspace, and `403 listing_inactive` for an inactive one.  On Booking.com the markup belongs to the property, so setting it reprices every listing on that property (`affectedListingIds`). A listing on more than one property must name one with `hotelId`; without it the request is refused with `409 ambiguous_booking_mapping` listing the candidates, rather than repricing a property it guessed.  On Vrbo the markup belongs to the connected Vrbo account, so setting it reprices every listing linked on that account (`affectedListingIds`). A listing linked on more than one account names one with `accountId`, else `409 ambiguous_vrbo_account`; a listing not linked to Vrbo is `409 listing_not_on_vrbo`.  `markupPercent` is a percentage — `15` for 15%. A value between 0 and 1 is refused as a probable fraction, with the number to send instead.
 
 ### Examples
 
@@ -1478,7 +1624,7 @@ end
 
 Update canonical listing content
 
-Write your PMS's canonical listing content — title, description, amenities, address, occupancy, and policies — into a Repull listing, making it the source of truth. This is the flagship \"the PMS owns listing content, Repull distributes it\" enabler.  **Listings managed in a connected PMS** (Guesty, Hostaway, …): the PMS owns their content, so title, descriptions, check-in/out times, capacity, amenities, house rules, address and added photos are written to the PMS first; Repull keeps only what it accepted (refused sections are in `deferred`, its per-section outcome in `pms`). A section that PMS cannot write returns `422 pms_write_unsupported` naming it when nothing was applied (or is listed in `deferred` when other sections were); `GET /v1/listings/{id}` → `capabilities.pms.listings` says which sections it takes. A PMS whose connector writes no listing content at all (Mews, Cloudbeds, Lodgify, …) keeps today's behaviour: the content is written to Repull only. Send photos with `photosMode: \"append\"` — replacing a PMS listing's photo set needs the PMS's own photo ids. A revoked PMS connection is `403 connection_reauth_required`.  **Partial update:** every field is optional. Only the fields you send are written; absent fields are left untouched. `amenities` is a FULL replacement of the amenity set (omit to leave untouched, send `[]` to clear).  **Multilingual:** send `locale` to say which language this copy is in (`it`, `pt-BR`, …). Canonical content is stored per locale, so each language keeps its own row instead of overwriting the English one. Omit it for English.  **Local write only — NOT a channel publish.** This mutates Repull's own copy of the content. It does NOT push to Airbnb / Booking.com; it marks the channels dirty so a later publish knows what changed. Distribution stays a separate explicit step.  **Photos are deferred:** a provided `photos` array is echoed back in the `deferred` field and NOT persisted (media ingestion is a follow-up).  Cross-tenant access (a listing that belongs to a different workspace) returns 404 — never 403. This endpoint is served even when the account is over the plan-listings cap, since editing content on a listing you already own never grows the portfolio.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+Write your PMS's canonical listing content — title, description, amenities, address, occupancy, and policies — into a Repull listing, making it the source of truth. This is the flagship \"the PMS owns listing content, Repull distributes it\" enabler.  **Listings managed in a connected PMS** (Guesty, Hostaway, …): the PMS owns their content, so title, descriptions, check-in/out times, capacity, amenities, house rules, address and added photos are written to the PMS first; Repull keeps only what it accepted (refused sections are in `deferred`, its per-section outcome in `pms`). A section that PMS cannot write returns `422 pms_write_unsupported` naming it when nothing was applied (or is listed in `deferred` when other sections were); `GET /v1/listings/{id}` → `capabilities.pms.listings` says which sections it takes. A PMS whose connector writes no listing content at all (Mews, Cloudbeds, Lodgify, …) keeps today's behaviour: the content is written to Repull only. Send photos with `photosMode: \"append\"` — replacing a PMS listing's photo set needs the PMS's own photo ids. A revoked PMS connection is `403 connection_reauth_required`.  **Partial update:** every field is optional. Only the fields you send are written; absent fields are left untouched. `amenities` is a FULL replacement of the amenity set (omit to leave untouched, send `[]` to clear).  **Multilingual:** send `locale` to say which language this copy is in (`it`, `pt-BR`, …). Canonical content is stored per locale, so each language keeps its own row instead of overwriting the English one. Omit it for English.  **Local write only — NOT a channel publish.** This mutates Repull's own copy of the content. It does NOT push to Airbnb / Booking.com; it marks the channels dirty so a later publish knows what changed. Distribution stays a separate explicit step.  **Photos:** `photos` is a list of hosted image URLs (or structured refs) saved to the listing in order: a full replacement by default, or added after the existing ones with `photosMode: \"append\"`. A publish sends them to the channels. An array with no valid http(s) URL is reported in `deferred` and the existing photos are left alone.  Cross-tenant access (a listing that belongs to a different workspace) returns 404 — never 403. This endpoint is served even when the account is over the plan-listings cap, since editing content on a listing you already own never grows the portfolio.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 

@@ -757,6 +757,12 @@
             "type": "string",
             "description": "Internal Repull listing ID this reservation is on."
           },
+          "listingName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Name of the listing this reservation is on, so a report or message can name it without a second lookup.",
+            "example": "Lakeside Cabin"
+          },
           "guestId": {
             "type": "string",
             "deprecated": true,
@@ -1556,7 +1562,61 @@
           "readAt": {
             "type": "string",
             "format": "date-time",
-            "nullable": true
+            "nullable": true,
+            "description": "Who read it depends on `direction`. **Outbound** (your message): when the guest first read it, from the channel's read receipts \u2014 Airbnb reports them; on other channels it stays `null`. Changes are sent as `reservation.message.read`. **Inbound** (the guest's message): when your team answered it or marked it handled."
+          },
+          "hostReadAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Inbound messages only: when the host or a co-host first read it on the channel, from the channel's read receipts (Airbnb reports them). `null` for your own messages, on other channels, and until your side has opened the conversation since it arrived."
+          },
+          "reactions": {
+            "type": "array",
+            "description": "Reactions on this message, oldest first. Airbnb reports them; empty on other channels. Added and removed reactions are sent as `reservation.message.reaction`. To react, `PATCH /v1/channels/airbnb/messaging/{threadId}/messages/{messageId}` with `action: \"react\"`.",
+            "items": {
+              "$ref": "#/components/schemas/MessageReaction"
+            }
+          }
+        }
+      },
+      "MessageReaction": {
+        "type": "object",
+        "description": "One reaction on a message.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The channel's id for this reaction.",
+            "example": "9e0b945a-b03d-4e28-ad48-5f7fc706a67f"
+          },
+          "emoji": {
+            "type": "string",
+            "example": "\u2764\ufe0f"
+          },
+          "by": {
+            "$ref": "#/components/schemas/MessageActor"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When it was added, as the channel reports it."
+          }
+        }
+      },
+      "MessageActor": {
+        "type": "object",
+        "description": "Who did something on a message.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "example": "guest",
+            "description": "`guest`, `cotraveler`, `booker`, `host` or `cohost`. `unknown` when the channel did not say."
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "example": "Maya"
           }
         }
       },
@@ -2893,6 +2953,8 @@
           "reservation.message.received",
           "reservation.message.sent",
           "reservation.message.updated",
+          "reservation.message.read",
+          "reservation.message.reaction",
           "reservation.alteration.created",
           "reservation.alteration.responded",
           "reservation.request.created",
@@ -3218,7 +3280,7 @@
       },
       "ReservationMessageUpdatedPayload": {
         "type": "object",
-        "description": "Payload for `reservation.message.updated`: a message was edited on the channel. `body` is the new text; `previousBody` what it replaced. Read receipts and reactions do not fire it.",
+        "description": "Payload for `reservation.message.updated`: a message was edited on the channel. `body` is the new text; `previousBody` what it replaced. Read receipts and reactions do not fire it: they have their own events, `reservation.message.read` and `reservation.message.reaction`.",
         "properties": {
           "hotelId": {
             "type": "string",
@@ -3281,6 +3343,117 @@
           },
           "direction": {
             "type": "string"
+          }
+        }
+      },
+      "ReservationMessageReadPayload": {
+        "type": "object",
+        "description": "Payload for `reservation.message.read`: the guest read the conversation up to and including `messageId`, a message from your side. Every earlier message in it was read by then too. Airbnb reports read receipts; other channels do not fire this event.",
+        "properties": {
+          "reservationId": {
+            "type": "integer",
+            "nullable": true,
+            "example": 235970
+          },
+          "threadId": {
+            "type": "string",
+            "example": "900301",
+            "description": "The conversation id (`GET /v1/conversations/{id}`)."
+          },
+          "externalThreadId": {
+            "type": "string",
+            "nullable": true,
+            "example": "2648057088"
+          },
+          "listingId": {
+            "type": "integer",
+            "nullable": true,
+            "example": 23893
+          },
+          "channel": {
+            "type": "string",
+            "example": "airbnb"
+          },
+          "messageId": {
+            "type": "string",
+            "example": "1854462",
+            "description": "The newest message the guest has read. Its `readAt` is now set."
+          },
+          "externalMessageId": {
+            "type": "string",
+            "nullable": true,
+            "example": "33532605539"
+          },
+          "readAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the guest read it, as the channel reports it."
+          },
+          "reader": {
+            "$ref": "#/components/schemas/MessageActor"
+          }
+        }
+      },
+      "ReservationMessageReactionPayload": {
+        "type": "object",
+        "description": "Payload for `reservation.message.reaction`: someone on the conversation added or removed a reaction. Airbnb reports reactions; other channels do not fire this event.",
+        "properties": {
+          "reservationId": {
+            "type": "integer",
+            "nullable": true,
+            "example": 235970
+          },
+          "threadId": {
+            "type": "string",
+            "example": "900301"
+          },
+          "externalThreadId": {
+            "type": "string",
+            "nullable": true,
+            "example": "2648057088"
+          },
+          "listingId": {
+            "type": "integer",
+            "nullable": true,
+            "example": 23893
+          },
+          "channel": {
+            "type": "string",
+            "example": "airbnb"
+          },
+          "messageId": {
+            "type": "string",
+            "example": "1854462",
+            "description": "The message reacted to."
+          },
+          "externalMessageId": {
+            "type": "string",
+            "nullable": true,
+            "example": "33532605539"
+          },
+          "action": {
+            "type": "string"
+          },
+          "reaction": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "9e0b945a-b03d-4e28-ad48-5f7fc706a67f"
+              },
+              "emoji": {
+                "type": "string",
+                "example": "\u2764\ufe0f"
+              },
+              "by": {
+                "$ref": "#/components/schemas/MessageActor"
+              },
+              "at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When it was added; for `removed`, when Repull saw it go."
+              }
+            }
           }
         }
       },
@@ -4035,7 +4208,7 @@
       },
       "AccountDisconnectedPayload": {
         "type": "object",
-        "description": "Payload for `account.disconnected`. A PMS or channel connection was revoked, expired, or rejected by the upstream provider.",
+        "description": "Payload for `account.disconnected`. A PMS or channel connection was revoked, expired, or rejected by the upstream provider. Sent for Airbnb, Booking.com Extranet logins, Vrbo logins and PMS connections (Hostaway, Guesty, Smoobu, Lodgify, Beds24, Hospitable, OwnerRez, iGMS, BookingSync, Track, Mews, Cloudbeds, Zeevou, RentalReady, CiiRUS, \u2026). A PMS connection is reported when the PMS refuses its credentials (API key revoked or invalid, 401/403, token refresh refused); timeouts, rate limits and 5xx errors are retried and never reported. Sent once per disconnect, not on every failed sync. When the connection works again \u2014 credentials fixed in the PMS, or reconnected \u2014 Repull re-imports the changes made while it was down and sends their `reservation.*` events, so nothing missed has to be fetched by hand.",
         "properties": {
           "workspaceId": {
             "type": "string",
@@ -4053,7 +4226,8 @@
           },
           "provider": {
             "type": "string",
-            "example": "airbnb"
+            "example": "airbnb",
+            "description": "Channel or PMS id: `airbnb`, `booking_extranet`, `vrbo`, or the PMS (`hostaway`, `guesty`, `smoobu`, \u2026)."
           },
           "disconnectedAt": {
             "type": "string",
@@ -4063,7 +4237,7 @@
           "reason": {
             "type": "string",
             "example": "refresh_token_rejected",
-            "description": "Why the connection was lost. `refresh_token_rejected` \u2014 upstream OAuth refresh endpoint returned a hard rejection. `manual_disconnect` \u2014 host/admin disconnected via the dashboard. `auth_expired` \u2014 credentials aged out without ever being used. `revoked_upstream` \u2014 provider notified us the user revoked access."
+            "description": "Why the connection was lost. `refresh_token_rejected` \u2014 upstream OAuth refresh endpoint returned a hard rejection. `manual_disconnect` \u2014 host/admin disconnected via the dashboard. `auth_expired` \u2014 the saved credentials stopped working: an Extranet or Vrbo login was signed out, or a PMS rejected its API key or token (401/403). `revoked_upstream` \u2014 provider notified us the user revoked access."
           },
           "listings": {
             "type": "array",
@@ -4726,6 +4900,78 @@
           },
           "data": {
             "$ref": "#/components/schemas/ReservationMessageUpdatedPayload"
+          }
+        }
+      },
+      "ReservationMessageReadEvent": {
+        "type": "object",
+        "required": [
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
+          "data"
+        ],
+        "properties": {
+          "event": {
+            "type": "string",
+            "description": "The event name. This field is `event`, not `type`."
+          },
+          "eventId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
+          },
+          "apiVersion": {
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this delivery was built."
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ReservationMessageReadPayload"
+          }
+        }
+      },
+      "ReservationMessageReactionEvent": {
+        "type": "object",
+        "required": [
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
+          "data"
+        ],
+        "properties": {
+          "event": {
+            "type": "string",
+            "description": "The event name. This field is `event`, not `type`."
+          },
+          "eventId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
+          },
+          "apiVersion": {
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this delivery was built."
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ReservationMessageReactionPayload"
           }
         }
       },
@@ -6342,6 +6588,12 @@
             "$ref": "#/components/schemas/ReservationMessageUpdatedEvent"
           },
           {
+            "$ref": "#/components/schemas/ReservationMessageReadEvent"
+          },
+          {
+            "$ref": "#/components/schemas/ReservationMessageReactionEvent"
+          },
+          {
             "$ref": "#/components/schemas/ReservationAlterationCreatedEvent"
           },
           {
@@ -6447,6 +6699,8 @@
             "reservation.message.received": "#/components/schemas/ReservationMessageReceivedEvent",
             "reservation.message.sent": "#/components/schemas/ReservationMessageSentEvent",
             "reservation.message.updated": "#/components/schemas/ReservationMessageUpdatedEvent",
+            "reservation.message.read": "#/components/schemas/ReservationMessageReadEvent",
+            "reservation.message.reaction": "#/components/schemas/ReservationMessageReactionEvent",
             "reservation.alteration.created": "#/components/schemas/ReservationAlterationCreatedEvent",
             "reservation.alteration.responded": "#/components/schemas/ReservationAlterationRespondedEvent",
             "reservation.request.created": "#/components/schemas/ReservationRequestCreatedEvent",
@@ -15393,13 +15647,25 @@
             "type": "integer",
             "nullable": true,
             "description": "How many reservations Booking.com returned for the property. Equal to `reservationsImported` unless some could not be attached to a listing \u2014 so `0` here means Booking.com had none. `null` when the sync could not run."
+          },
+          "needsCalendar": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Ids of the listings this call created from Booking.com rooms (`create: true`). They start without a calendar: Booking.com shows those rooms closed and nothing is sent to Booking.com for them until they have one. Give a listing a calendar by setting its prices and availability with `PUT /v1/availability/{propertyId}`, or by mapping the same home from Airbnb so its calendar is used. Rooms mapped to an existing listing are not listed: that listing's calendar is pushed as before."
+          },
+          "calendarNote": {
+            "type": "string",
+            "description": "Plain-language explanation of `needsCalendar`, present only when it is non-empty."
           }
         },
         "required": [
           "success",
           "mapped",
           "sessionId",
-          "connectionId"
+          "connectionId",
+          "needsCalendar"
         ]
       },
       "MapAirbnbListingRequest": {
@@ -24305,7 +24571,7 @@
       "patch": {
         "operationId": "update_airbnb_message",
         "summary": "Edit / react to / mark an Airbnb message",
-        "description": "Act on a single message in an Airbnb thread. **Write-side** \u2014 calls Airbnb upstream. The `action` discriminator selects the operation:\n\n- `edit` \u2014 replace message text (requires `message`).\n- `unsend` \u2014 retract the message.\n- `read` \u2014 mark the message as read.\n- `react` \u2014 add a reaction (requires `reaction`).\n\nRequires a connected Airbnb host, else `404 no_connection`.\n\nReturns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "description": "Act on a single message in an Airbnb thread. **Write-side** \u2014 calls Airbnb upstream. The `action` discriminator selects the operation:\n\n- `edit` \u2014 replace message text (requires `message`).\n- `unsend` \u2014 retract the message.\n- `read` \u2014 mark the message as read on Airbnb, as the host. Airbnb accepts it (it has been used in production); whether and when the guest sees it as read is up to Airbnb and is not confirmed yet. Your side's read state on each guest message is `hostReadAt` on `GET /v1/conversations/{id}/messages`.\n- `react` \u2014 add a reaction (requires `reaction`, e.g. `\"\ud83d\udc4d\"`). Airbnb decides which reactions it accepts: a refusal is `422 reaction_not_supported` naming the field, with Airbnb's reason. Removing a reaction is not available yet.\n\nReactions and read receipts from the guest's side arrive on each message (`reactions`, `readAt`) and as the `reservation.message.reaction` and `reservation.message.read` webhooks.\n\nRequires a connected Airbnb host, else `404 no_connection`.\n\nReturns `403 listing_inactive` when the listing this resolves to is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
         "tags": [
           "Airbnb"
         ],
@@ -24355,7 +24621,7 @@
                   },
                   "reaction": {
                     "type": "string",
-                    "description": "Reaction to add. Required when `action` is `react`."
+                    "description": "Reaction to add, e.g. `\ud83d\udc4d`. Required when `action` is `react`. At most 32 characters; Airbnb decides which reactions it accepts."
                   }
                 }
               }
@@ -26825,7 +27091,7 @@
       "put": {
         "operationId": "updateListingContent",
         "summary": "Update canonical listing content",
-        "description": "Write your PMS's canonical listing content \u2014 title, description, amenities, address, occupancy, and policies \u2014 into a Repull listing, making it the source of truth. This is the flagship \"the PMS owns listing content, Repull distributes it\" enabler.\n\n**Listings managed in a connected PMS** (Guesty, Hostaway, \u2026): the PMS owns their content, so title, descriptions, check-in/out times, capacity, amenities, house rules, address and added photos are written to the PMS first; Repull keeps only what it accepted (refused sections are in `deferred`, its per-section outcome in `pms`). A section that PMS cannot write returns `422 pms_write_unsupported` naming it when nothing was applied (or is listed in `deferred` when other sections were); `GET /v1/listings/{id}` \u2192 `capabilities.pms.listings` says which sections it takes. A PMS whose connector writes no listing content at all (Mews, Cloudbeds, Lodgify, \u2026) keeps today's behaviour: the content is written to Repull only. Send photos with `photosMode: \"append\"` \u2014 replacing a PMS listing's photo set needs the PMS's own photo ids. A revoked PMS connection is `403 connection_reauth_required`.\n\n**Partial update:** every field is optional. Only the fields you send are written; absent fields are left untouched. `amenities` is a FULL replacement of the amenity set (omit to leave untouched, send `[]` to clear).\n\n**Multilingual:** send `locale` to say which language this copy is in (`it`, `pt-BR`, \u2026). Canonical content is stored per locale, so each language keeps its own row instead of overwriting the English one. Omit it for English.\n\n**Local write only \u2014 NOT a channel publish.** This mutates Repull's own copy of the content. It does NOT push to Airbnb / Booking.com; it marks the channels dirty so a later publish knows what changed. Distribution stays a separate explicit step.\n\n**Photos are deferred:** a provided `photos` array is echoed back in the `deferred` field and NOT persisted (media ingestion is a follow-up).\n\nCross-tenant access (a listing that belongs to a different workspace) returns 404 \u2014 never 403. This endpoint is served even when the account is over the plan-listings cap, since editing content on a listing you already own never grows the portfolio.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "description": "Write your PMS's canonical listing content \u2014 title, description, amenities, address, occupancy, and policies \u2014 into a Repull listing, making it the source of truth. This is the flagship \"the PMS owns listing content, Repull distributes it\" enabler.\n\n**Listings managed in a connected PMS** (Guesty, Hostaway, \u2026): the PMS owns their content, so title, descriptions, check-in/out times, capacity, amenities, house rules, address and added photos are written to the PMS first; Repull keeps only what it accepted (refused sections are in `deferred`, its per-section outcome in `pms`). A section that PMS cannot write returns `422 pms_write_unsupported` naming it when nothing was applied (or is listed in `deferred` when other sections were); `GET /v1/listings/{id}` \u2192 `capabilities.pms.listings` says which sections it takes. A PMS whose connector writes no listing content at all (Mews, Cloudbeds, Lodgify, \u2026) keeps today's behaviour: the content is written to Repull only. Send photos with `photosMode: \"append\"` \u2014 replacing a PMS listing's photo set needs the PMS's own photo ids. A revoked PMS connection is `403 connection_reauth_required`.\n\n**Partial update:** every field is optional. Only the fields you send are written; absent fields are left untouched. `amenities` is a FULL replacement of the amenity set (omit to leave untouched, send `[]` to clear).\n\n**Multilingual:** send `locale` to say which language this copy is in (`it`, `pt-BR`, \u2026). Canonical content is stored per locale, so each language keeps its own row instead of overwriting the English one. Omit it for English.\n\n**Local write only \u2014 NOT a channel publish.** This mutates Repull's own copy of the content. It does NOT push to Airbnb / Booking.com; it marks the channels dirty so a later publish knows what changed. Distribution stays a separate explicit step.\n\n**Photos:** `photos` is a list of hosted image URLs (or structured refs) saved to the listing in order: a full replacement by default, or added after the existing ones with `photosMode: \"append\"`. A publish sends them to the channels. An array with no valid http(s) URL is reported in `deferred` and the existing photos are left alone.\n\nCross-tenant access (a listing that belongs to a different workspace) returns 404 \u2014 never 403. This endpoint is served even when the account is over the plan-listings cap, since editing content on a listing you already own never grows the portfolio.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
         "tags": [
           "Listings"
         ],
@@ -35980,7 +36246,7 @@
       "get": {
         "operationId": "get_listing_markups",
         "summary": "Get a listing's channel markups",
-        "description": "The markup each channel adds to this listing's price.\n\nA listing's price on a channel is its own nightly price plus the channel's markup: a $200 night with a 35% Airbnb markup is sent to Airbnb as $270. The calendar keeps the listing's own price (`GET /v1/availability/{propertyId}` returns it); the markup is added only when a price is sent to the channel.\n\n- **Airbnb** \u2014 one markup per listing.\n- **Booking.com** \u2014 one markup per **property**, shared by every listing priced through it (`listingIds` names them).\n\nReturns `404 not_found` for a listing that does not exist or is not in this workspace, and `403 listing_inactive` for an inactive one.",
+        "description": "The markup each channel adds to this listing's price.\n\nA listing's price on a channel is its own nightly price plus the channel's markup: a $200 night with a 35% Airbnb markup is sent to Airbnb as $270. The calendar keeps the listing's own price (`GET /v1/availability/{propertyId}` returns it); the markup is added only when a price is sent to the channel.\n\n- **Airbnb** \u2014 one markup per listing.\n- **Booking.com** \u2014 one markup per **property**, shared by every listing priced through it (`listingIds` names them).\n- **Vrbo** \u2014 one markup per connected **Vrbo account**, shared by every listing linked on it (`listingIds` names them). Prices reach Vrbo through its calendar queue.\n\nReturns `404 not_found` for a listing that does not exist or is not in this workspace, and `403 listing_inactive` for an inactive one.",
         "tags": [
           "Listings"
         ],
@@ -36049,6 +36315,35 @@
                           }
                         }
                       }
+                    },
+                    "vrbo": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "accountId": {
+                            "type": "string",
+                            "description": "The Vrbo account, as its connection id (`vrbo:13`)."
+                          },
+                          "vrboListingNumber": {
+                            "type": "string",
+                            "description": "The Vrbo listing number this listing is linked to."
+                          },
+                          "markupPercent": {
+                            "type": "number",
+                            "nullable": true,
+                            "description": "Percent added on Vrbo, for every listing linked on this account.",
+                            "example": 20
+                          },
+                          "listingIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "Listings in this workspace linked on this Vrbo account \u2014 all share this markup."
+                          }
+                        }
+                      }
                     }
                   }
                 }
@@ -36069,7 +36364,7 @@
       "put": {
         "operationId": "set_listing_markup",
         "summary": "Set a listing's markup on a channel",
-        "description": "Set the markup one channel adds to this listing's price. When the value changes, the affected listings' prices are re-sent to that channel straight away (`pricesResent`); nothing else is sent.\n\nA listing's price on a channel is its own nightly price plus the channel's markup: a $200 night with a 35% Airbnb markup is sent to Airbnb as $270. The calendar keeps the listing's own price (`GET /v1/availability/{propertyId}` returns it); the markup is added only when a price is sent to the channel.\n\n- **Airbnb** \u2014 one markup per listing.\n- **Booking.com** \u2014 one markup per **property**, shared by every listing priced through it (`listingIds` names them).\n\nReturns `404 not_found` for a listing that does not exist or is not in this workspace, and `403 listing_inactive` for an inactive one.\n\nOn Booking.com the markup belongs to the property, so setting it reprices every listing on that property (`affectedListingIds`). A listing on more than one property must name one with `hotelId`; without it the request is refused with `409 ambiguous_booking_mapping` listing the candidates, rather than repricing a property it guessed.\n\n`markupPercent` is a percentage \u2014 `15` for 15%. A value between 0 and 1 is refused as a probable fraction, with the number to send instead.",
+        "description": "Set the markup one channel adds to this listing's price. When the value changes, the affected listings' prices are re-sent to that channel straight away (`pricesResent`); nothing else is sent.\n\nA listing's price on a channel is its own nightly price plus the channel's markup: a $200 night with a 35% Airbnb markup is sent to Airbnb as $270. The calendar keeps the listing's own price (`GET /v1/availability/{propertyId}` returns it); the markup is added only when a price is sent to the channel.\n\n- **Airbnb** \u2014 one markup per listing.\n- **Booking.com** \u2014 one markup per **property**, shared by every listing priced through it (`listingIds` names them).\n- **Vrbo** \u2014 one markup per connected **Vrbo account**, shared by every listing linked on it (`listingIds` names them). Prices reach Vrbo through its calendar queue.\n\nReturns `404 not_found` for a listing that does not exist or is not in this workspace, and `403 listing_inactive` for an inactive one.\n\nOn Booking.com the markup belongs to the property, so setting it reprices every listing on that property (`affectedListingIds`). A listing on more than one property must name one with `hotelId`; without it the request is refused with `409 ambiguous_booking_mapping` listing the candidates, rather than repricing a property it guessed.\n\nOn Vrbo the markup belongs to the connected Vrbo account, so setting it reprices every listing linked on that account (`affectedListingIds`). A listing linked on more than one account names one with `accountId`, else `409 ambiguous_vrbo_account`; a listing not linked to Vrbo is `409 listing_not_on_vrbo`.\n\n`markupPercent` is a percentage \u2014 `15` for 15%. A value between 0 and 1 is refused as a probable fraction, with the number to send instead.",
         "tags": [
           "Listings"
         ],
@@ -36099,7 +36394,8 @@
                     "type": "string",
                     "enum": [
                       "airbnb",
-                      "booking"
+                      "booking",
+                      "vrbo"
                     ]
                   },
                   "markupPercent": {
@@ -36113,6 +36409,10 @@
                   "hotelId": {
                     "type": "string",
                     "description": "Booking.com property \u2014 required when the listing is on more than one."
+                  },
+                  "accountId": {
+                    "type": "string",
+                    "description": "Vrbo account (`vrbo:13`) \u2014 required when the listing is linked on more than one."
                   }
                 }
               },
@@ -36125,7 +36425,7 @@
         },
         "responses": {
           "200": {
-            "description": "Saved. `{ id, channel, markupPercent, changed, hotelId?, affectedListingIds, pricesResent }`."
+            "description": "Saved. `{ id, channel, markupPercent, changed, hotelId? | accountId?, affectedListingIds, pricesResent }`."
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
@@ -36137,7 +36437,7 @@
             "$ref": "#/components/responses/NotFound"
           },
           "409": {
-            "description": "`ambiguous_booking_mapping` \u2014 the listing is on several Booking.com properties; `valid_values` lists them."
+            "description": "`ambiguous_booking_mapping` \u2014 the listing is on several Booking.com properties; `valid_values` lists them. `ambiguous_vrbo_account` \u2014 the same for Vrbo accounts. `listing_not_on_vrbo` \u2014 `channel: \"vrbo\"` on a listing with no Vrbo unit linked."
           },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntity"
@@ -41672,6 +41972,747 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/v1/listings/{id}/publish/vrbo": {
+      "post": {
+        "operationId": "publishListingToVrbo",
+        "summary": "Create a listing on Vrbo",
+        "description": "Creates the listing on Vrbo in the host's connected Vrbo account, from the listing's content: title and description, property type, rooms and beds, amenities, photos, house rules (guests, minimum age, children, pets, smoking, events), check-in and check-out times, minimum stay, advance notice and booking window, the nightly price, cleaning, pet and extra-guest fees, the cancellation policy and the licence number. Vrbo's automatic new-listing discount is turned off so the listing sells at your prices.\n\n**It is a job.** Vrbo's onboarding takes 5\u201315 minutes (photos go up one at a time), so this answers `202` with `job.jobId`. Poll `GET /v1/listings/{id}/publish/vrbo?jobId=` for each finished step. When Vrbo has published the listing, that read links the new Vrbo unit to the listing with calendar sync on and queues the whole calendar (prices, availability, minimum stay) to Vrbo: **keep polling until `linked` is true.**\n\n**Which account.** A workspace with one Vrbo account needs nothing. With several, name it with `accountId` (`\"vrbo:13\"`, as the connection id). An account connected with messaging access is refused with `403 vrbo_messaging_access`.\n\n**Missing content** (street address, city, photos, nightly price, description) is refused with `422 listing_incomplete` naming what is missing. A listing already linked to a Vrbo unit is `409 listing_already_on_vrbo`. A run that failed part-way leaves an unpublished Vrbo property: publishing again completes it instead of creating a second one.\n\nThis creates a Vrbo listing. Prices, availability and minimum stay on an existing one change through `PUT /v1/availability/{propertyId}`; other content of an existing Vrbo listing is edited on Vrbo.",
+        "tags": [
+          "Listings"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Repull listing id",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "accountId": {
+                    "type": "string",
+                    "description": "The Vrbo account, as its connection id (`\"vrbo:13\"`) or the bare number. Needed only when the workspace has several."
+                  },
+                  "propertyId": {
+                    "type": "string",
+                    "description": "Finish this unpublished Vrbo property (from a failed run's `job.propertyId`) instead of starting a new one."
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Creation started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "listingId": {
+                      "type": "integer"
+                    },
+                    "channel": {
+                      "type": "string",
+                      "enum": [
+                        "vrbo"
+                      ]
+                    },
+                    "job": {
+                      "type": "object",
+                      "properties": {
+                        "jobId": {
+                          "type": "string",
+                          "description": "Pass to `GET /v1/listings/{id}/publish/vrbo?jobId=`."
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "running",
+                            "done",
+                            "failed"
+                          ]
+                        },
+                        "listingId": {
+                          "type": "integer"
+                        },
+                        "accountId": {
+                          "type": "integer",
+                          "description": "The Vrbo account (connection `vrbo:<accountId>`) the listing is created in."
+                        },
+                        "steps": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "Steps Vrbo has finished, in order: create, amenities, property type, rooms, photos, headline + description, house rules, rate, booking options, publish, fees, cancellation policy, \u2026"
+                        },
+                        "error": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "Vrbo's reason when `status` is `failed`."
+                        },
+                        "vrboListingNumber": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "The new Vrbo listing number, once Vrbo has published it."
+                        },
+                        "propertyId": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "The Vrbo property being built. Send it back as `propertyId` to finish a run that failed part-way."
+                        },
+                        "linked": {
+                          "type": "boolean",
+                          "description": "The new Vrbo unit is linked to the listing with calendar sync on, and the whole calendar has been queued to Vrbo."
+                        },
+                        "rejectedPhotos": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "photo": {
+                                "type": "integer",
+                                "nullable": true
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "description": "Photos Vrbo's review refused (position in the listing's order, and Vrbo's reason)."
+                        },
+                        "adjustments": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "POST only: where the Vrbo listing departs from the listing's content because of a Vrbo rule."
+                        },
+                        "resumedPropertyId": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "POST only: set when an unfinished Vrbo property of this listing is completed instead of starting a new one."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "description": "`listing_inactive`, or `vrbo_messaging_access`: the account is connected with messaging access.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "description": "`listing_already_on_vrbo`, `vrbo_not_connected`, or `ambiguous_vrbo_account` (name it with `accountId`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`listing_incomplete`: the listing lacks something Vrbo requires; `message` names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "`vrbo_error`: Vrbo did not complete the request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "getVrboPublishJob",
+        "summary": "Progress of a Vrbo listing creation",
+        "description": "Each step Vrbo has finished, Vrbo's reason when it failed, the new Vrbo listing number once published, and photos Vrbo's review refused. When Vrbo has published the listing, this read links the new unit to the listing with calendar sync on and queues the whole calendar \u2014 poll until `linked` is true. A job is remembered while it runs and for a while after; an unknown job is `404` (publish again to resume).",
+        "tags": [
+          "Listings"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Repull listing id",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "jobId",
+            "in": "query",
+            "required": true,
+            "description": "`job.jobId` from the POST.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Job state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "listingId": {
+                      "type": "integer"
+                    },
+                    "channel": {
+                      "type": "string",
+                      "enum": [
+                        "vrbo"
+                      ]
+                    },
+                    "job": {
+                      "type": "object",
+                      "properties": {
+                        "jobId": {
+                          "type": "string",
+                          "description": "Pass to `GET /v1/listings/{id}/publish/vrbo?jobId=`."
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "running",
+                            "done",
+                            "failed"
+                          ]
+                        },
+                        "listingId": {
+                          "type": "integer"
+                        },
+                        "accountId": {
+                          "type": "integer",
+                          "description": "The Vrbo account (connection `vrbo:<accountId>`) the listing is created in."
+                        },
+                        "steps": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "Steps Vrbo has finished, in order: create, amenities, property type, rooms, photos, headline + description, house rules, rate, booking options, publish, fees, cancellation policy, \u2026"
+                        },
+                        "error": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "Vrbo's reason when `status` is `failed`."
+                        },
+                        "vrboListingNumber": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "The new Vrbo listing number, once Vrbo has published it."
+                        },
+                        "propertyId": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "The Vrbo property being built. Send it back as `propertyId` to finish a run that failed part-way."
+                        },
+                        "linked": {
+                          "type": "boolean",
+                          "description": "The new Vrbo unit is linked to the listing with calendar sync on, and the whole calendar has been queued to Vrbo."
+                        },
+                        "rejectedPhotos": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "photo": {
+                                "type": "integer",
+                                "nullable": true
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "description": "Photos Vrbo's review refused (position in the listing's order, and Vrbo's reason)."
+                        },
+                        "adjustments": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "POST only: where the Vrbo listing departs from the listing's content because of a Vrbo rule."
+                        },
+                        "resumedPropertyId": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "POST only: set when an unfinished Vrbo property of this listing is completed instead of starting a new one."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "502": {
+            "description": "`vrbo_error`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/reservations/summary": {
+      "get": {
+        "operationId": "get_reservation_summary",
+        "summary": "Summarize reservations for a period",
+        "description": "Bookings, nights, revenue, payout, average nightly rate, occupancy and cancellations for a period, in one small response \u2014 optionally grouped by `month`, `listing` and/or `channel`. Use it for reporting instead of paging through `GET /v1/reservations`.\n\n**Counting (`basis`):** `stay` (default) counts the nights that fall inside `from`\u2013`to` and splits each reservation\u2019s money across its nights, so a stay crossing the window or a month edge brings only its share. `check_in` and `booked` count whole reservations by their check-in or booking date.\n\n**Pace (`as_of`):** keeps only what was on the books at the end of that day \u2014 booked by then and not yet cancelled. To compare the next three months with the same months last year like for like, ask for last year\u2019s window with `as_of` set to today\u2019s date one year ago.\n\nOwner stays are reported apart and never count as revenue or occupancy. Pending requests are counted in `pending` only. Reservations on inactive listings are left out.",
+        "tags": [
+          "Reservations"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Account"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-11-10"
+            },
+            "description": "First day of the period."
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2027-02-09"
+            },
+            "description": "Last day of the period (inclusive). At most 732 days after `from`."
+          },
+          {
+            "name": "basis",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "stay",
+                "check_in",
+                "booked"
+              ],
+              "default": "stay"
+            },
+            "description": "Which date puts a reservation in the period: the nights stayed (`stay`), the check-in date, or the booking date."
+          },
+          {
+            "name": "group_by",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "month,listing"
+            },
+            "description": "Up to two of `month`, `listing`, `channel`, comma-separated. Omit for totals only."
+          },
+          {
+            "name": "as_of",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2025-11-10"
+            },
+            "description": "Count only what was on the books at the end of this day. A reservation cancelled without a reported cancellation date counts as cancelled."
+          },
+          {
+            "name": "listing_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "One listing only."
+          },
+          {
+            "name": "platform",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "airbnb"
+            },
+            "description": "One channel only."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Totals for the period (one row per currency) and, when `group_by` is set, one row per group.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "from",
+                    "to",
+                    "basis",
+                    "groupBy",
+                    "asOf",
+                    "totals",
+                    "groups",
+                    "listingCount"
+                  ],
+                  "properties": {
+                    "from": {
+                      "type": "string",
+                      "format": "date",
+                      "example": "2026-11-10"
+                    },
+                    "to": {
+                      "type": "string",
+                      "format": "date",
+                      "example": "2027-02-09"
+                    },
+                    "basis": {
+                      "type": "string",
+                      "enum": [
+                        "stay",
+                        "check_in",
+                        "booked"
+                      ]
+                    },
+                    "groupBy": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "month",
+                          "listing",
+                          "channel"
+                        ]
+                      }
+                    },
+                    "asOf": {
+                      "type": "string",
+                      "format": "date",
+                      "nullable": true
+                    },
+                    "listingCount": {
+                      "type": "integer",
+                      "example": 19,
+                      "description": "Active listings covered (the occupancy denominator)."
+                    },
+                    "totals": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "currency",
+                          "reservations",
+                          "nights",
+                          "revenue",
+                          "payout",
+                          "cancelled",
+                          "pending",
+                          "ownerStays",
+                          "ownerNights"
+                        ],
+                        "properties": {
+                          "month": {
+                            "type": "string",
+                            "example": "2026-12",
+                            "description": "Present when grouped by `month` (YYYY-MM)."
+                          },
+                          "listingId": {
+                            "type": "string",
+                            "example": "4011",
+                            "description": "Present when grouped by `listing`."
+                          },
+                          "listingName": {
+                            "type": "string",
+                            "nullable": true,
+                            "example": "Lakeside Cabin",
+                            "description": "Present when grouped by `listing`."
+                          },
+                          "channel": {
+                            "type": "string",
+                            "example": "airbnb",
+                            "description": "Present when grouped by `channel`."
+                          },
+                          "currency": {
+                            "type": "string",
+                            "nullable": true,
+                            "example": "CAD",
+                            "description": "Money is never added across currencies: a period with two currencies has one row per currency."
+                          },
+                          "reservations": {
+                            "type": "integer",
+                            "example": 212,
+                            "description": "Guest stays with at least one night counted (owner stays are in `ownerStays`)."
+                          },
+                          "nights": {
+                            "type": "integer",
+                            "example": 1104,
+                            "description": "Guest nights counted."
+                          },
+                          "revenue": {
+                            "type": "number",
+                            "example": 18250.4,
+                            "description": "What guests paid (`financials.totalPrice`). With `basis=stay`, a stay that crosses the window or a month edge brings only the share of its nights inside."
+                          },
+                          "payout": {
+                            "type": "number",
+                            "example": 18250.4,
+                            "description": "What the host receives (`financials.host.revenue`), for reservations where it is known."
+                          },
+                          "reservationsWithPayout": {
+                            "type": "integer",
+                            "description": "How many reservations `payout` covers."
+                          },
+                          "averageNightlyRate": {
+                            "type": "number",
+                            "nullable": true,
+                            "example": 178.5,
+                            "description": "Accommodation per night (revenue per night when the accommodation subtotal is unknown)."
+                          },
+                          "averageStayNights": {
+                            "type": "number",
+                            "nullable": true,
+                            "example": 5.2
+                          },
+                          "averageLeadTimeDays": {
+                            "type": "number",
+                            "nullable": true,
+                            "example": 41,
+                            "description": "Days between booking and check-in."
+                          },
+                          "occupancy": {
+                            "type": "number",
+                            "nullable": true,
+                            "example": 0.6431,
+                            "description": "Guest nights / available nights, 0\u20131. Only with `basis=stay`, and not when grouped by `channel`. Blocked nights are not subtracted from availability."
+                          },
+                          "availableNights": {
+                            "type": "number",
+                            "nullable": true,
+                            "example": 1716,
+                            "description": "Active listings \u00d7 days in the period (one listing per row when grouped by `listing`)."
+                          },
+                          "cancelled": {
+                            "type": "integer",
+                            "example": 18
+                          },
+                          "cancelledRevenue": {
+                            "type": "number",
+                            "example": 18250.4
+                          },
+                          "pending": {
+                            "type": "integer",
+                            "example": 2,
+                            "description": "Requests awaiting an answer; not in revenue or nights."
+                          },
+                          "ownerStays": {
+                            "type": "integer",
+                            "example": 3
+                          },
+                          "ownerNights": {
+                            "type": "integer",
+                            "example": 12
+                          }
+                        }
+                      }
+                    },
+                    "groups": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "currency",
+                          "reservations",
+                          "nights",
+                          "revenue",
+                          "payout",
+                          "cancelled",
+                          "pending",
+                          "ownerStays",
+                          "ownerNights"
+                        ],
+                        "properties": {
+                          "month": {
+                            "type": "string",
+                            "example": "2026-12",
+                            "description": "Present when grouped by `month` (YYYY-MM)."
+                          },
+                          "listingId": {
+                            "type": "string",
+                            "example": "4011",
+                            "description": "Present when grouped by `listing`."
+                          },
+                          "listingName": {
+                            "type": "string",
+                            "nullable": true,
+                            "example": "Lakeside Cabin",
+                            "description": "Present when grouped by `listing`."
+                          },
+                          "channel": {
+                            "type": "string",
+                            "example": "airbnb",
+                            "description": "Present when grouped by `channel`."
+                          },
+                          "currency": {
+                            "type": "string",
+                            "nullable": true,
+                            "example": "CAD",
+                            "description": "Money is never added across currencies: a period with two currencies has one row per currency."
+                          },
+                          "reservations": {
+                            "type": "integer",
+                            "example": 212,
+                            "description": "Guest stays with at least one night counted (owner stays are in `ownerStays`)."
+                          },
+                          "nights": {
+                            "type": "integer",
+                            "example": 1104,
+                            "description": "Guest nights counted."
+                          },
+                          "revenue": {
+                            "type": "number",
+                            "example": 18250.4,
+                            "description": "What guests paid (`financials.totalPrice`). With `basis=stay`, a stay that crosses the window or a month edge brings only the share of its nights inside."
+                          },
+                          "payout": {
+                            "type": "number",
+                            "example": 18250.4,
+                            "description": "What the host receives (`financials.host.revenue`), for reservations where it is known."
+                          },
+                          "reservationsWithPayout": {
+                            "type": "integer",
+                            "description": "How many reservations `payout` covers."
+                          },
+                          "averageNightlyRate": {
+                            "type": "number",
+                            "nullable": true,
+                            "example": 178.5,
+                            "description": "Accommodation per night (revenue per night when the accommodation subtotal is unknown)."
+                          },
+                          "averageStayNights": {
+                            "type": "number",
+                            "nullable": true,
+                            "example": 5.2
+                          },
+                          "averageLeadTimeDays": {
+                            "type": "number",
+                            "nullable": true,
+                            "example": 41,
+                            "description": "Days between booking and check-in."
+                          },
+                          "occupancy": {
+                            "type": "number",
+                            "nullable": true,
+                            "example": 0.6431,
+                            "description": "Guest nights / available nights, 0\u20131. Only with `basis=stay`, and not when grouped by `channel`. Blocked nights are not subtracted from availability."
+                          },
+                          "availableNights": {
+                            "type": "number",
+                            "nullable": true,
+                            "example": 1716,
+                            "description": "Active listings \u00d7 days in the period (one listing per row when grouped by `listing`)."
+                          },
+                          "cancelled": {
+                            "type": "integer",
+                            "example": 18
+                          },
+                          "cancelledRevenue": {
+                            "type": "number",
+                            "example": 18250.4
+                          },
+                          "pending": {
+                            "type": "integer",
+                            "example": 2,
+                            "description": "Requests awaiting an answer; not in revenue or nights."
+                          },
+                          "ownerStays": {
+                            "type": "integer",
+                            "example": 3
+                          },
+                          "ownerNights": {
+                            "type": "integer",
+                            "example": 12
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         }
       }

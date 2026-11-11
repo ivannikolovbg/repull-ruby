@@ -11,6 +11,8 @@
 | **connection_id** | **String** |  |  |
 | **reservations_imported** | **Integer** | Reservations pulled from Booking.com once the rooms were mapped. Mapping triggers the same full property sync the dashboard&#39;s Sync button runs, because a reservation can only be resolved to a listing through a mapped room. &#x60;0&#x60; without a sync when no room was mapped. &#x60;null&#x60; means the sync could not be run — the connection and mapping are still good, and the property can be synced from the dashboard. | [optional] |
 | **reservations_found** | **Integer** | How many reservations Booking.com returned for the property. Equal to &#x60;reservationsImported&#x60; unless some could not be attached to a listing — so &#x60;0&#x60; here means Booking.com had none. &#x60;null&#x60; when the sync could not run. | [optional] |
+| **needs_calendar** | **Array&lt;String&gt;** | Ids of the listings this call created from Booking.com rooms (&#x60;create: true&#x60;). They start without a calendar: Booking.com shows those rooms closed and nothing is sent to Booking.com for them until they have one. Give a listing a calendar by setting its prices and availability with &#x60;PUT /v1/availability/{propertyId}&#x60;, or by mapping the same home from Airbnb so its calendar is used. Rooms mapped to an existing listing are not listed: that listing&#39;s calendar is pushed as before. |  |
+| **calendar_note** | **String** | Plain-language explanation of &#x60;needsCalendar&#x60;, present only when it is non-empty. | [optional] |
 
 ## Example
 
@@ -24,7 +26,9 @@ instance = Repull::MapConnectBookingRoomsResponse.new(
   session_id: null,
   connection_id: null,
   reservations_imported: null,
-  reservations_found: null
+  reservations_found: null,
+  needs_calendar: null,
+  calendar_note: null
 )
 ```
 

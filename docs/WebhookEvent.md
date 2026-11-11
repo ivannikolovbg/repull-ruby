@@ -42,6 +42,8 @@ Repull::WebhookEvent.openapi_one_of
 #   :'ReservationAlterationRespondedEvent',
 #   :'ReservationCancelledEvent',
 #   :'ReservationCreatedEvent',
+#   :'ReservationMessageReactionEvent',
+#   :'ReservationMessageReadEvent',
 #   :'ReservationMessageReceivedEvent',
 #   :'ReservationMessageSentEvent',
 #   :'ReservationMessageUpdatedEvent',
@@ -108,6 +110,8 @@ Repull::WebhookEvent.openapi_discriminator_mapping
 #   :'reservation.alteration.responded' => :'ReservationAlterationRespondedEvent',
 #   :'reservation.cancelled' => :'ReservationCancelledEvent',
 #   :'reservation.created' => :'ReservationCreatedEvent',
+#   :'reservation.message.reaction' => :'ReservationMessageReactionEvent',
+#   :'reservation.message.read' => :'ReservationMessageReadEvent',
 #   :'reservation.message.received' => :'ReservationMessageReceivedEvent',
 #   :'reservation.message.sent' => :'ReservationMessageSentEvent',
 #   :'reservation.message.updated' => :'ReservationMessageUpdatedEvent',
@@ -173,6 +177,8 @@ Repull::WebhookEvent.build(data_that_doesnt_match)
 - `ReservationAlterationRespondedEvent`
 - `ReservationCancelledEvent`
 - `ReservationCreatedEvent`
+- `ReservationMessageReactionEvent`
+- `ReservationMessageReadEvent`
 - `ReservationMessageReceivedEvent`
 - `ReservationMessageSentEvent`
 - `ReservationMessageUpdatedEvent`

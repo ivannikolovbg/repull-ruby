@@ -7,9 +7,9 @@
 | **workspace_id** | **String** |  | [optional] |
 | **account_id** | **String** |  | [optional] |
 | **connection_id** | **String** | Stable connection identifier — alias of accountId for this event variant. | [optional] |
-| **provider** | **String** |  | [optional] |
+| **provider** | **String** | Channel or PMS id: &#x60;airbnb&#x60;, &#x60;booking_extranet&#x60;, &#x60;vrbo&#x60;, or the PMS (&#x60;hostaway&#x60;, &#x60;guesty&#x60;, &#x60;smoobu&#x60;, …). | [optional] |
 | **disconnected_at** | **Time** |  | [optional] |
-| **reason** | **String** | Why the connection was lost. &#x60;refresh_token_rejected&#x60; — upstream OAuth refresh endpoint returned a hard rejection. &#x60;manual_disconnect&#x60; — host/admin disconnected via the dashboard. &#x60;auth_expired&#x60; — credentials aged out without ever being used. &#x60;revoked_upstream&#x60; — provider notified us the user revoked access. | [optional] |
+| **reason** | **String** | Why the connection was lost. &#x60;refresh_token_rejected&#x60; — upstream OAuth refresh endpoint returned a hard rejection. &#x60;manual_disconnect&#x60; — host/admin disconnected via the dashboard. &#x60;auth_expired&#x60; — the saved credentials stopped working: an Extranet or Vrbo login was signed out, or a PMS rejected its API key or token (401/403). &#x60;revoked_upstream&#x60; — provider notified us the user revoked access. | [optional] |
 | **listings** | [**Array&lt;AccountDisconnectedPayloadListingsInner&gt;**](AccountDisconnectedPayloadListingsInner.md) | The listings this account holds in your workspace — the ones that stop syncing until it is reconnected. Identity only; inactive listings included. Matches &#x60;channels[].account&#x60; on &#x60;GET /v1/listings&#x60;. Empty when the account has no listings here. | [optional] |
 
 ## Example

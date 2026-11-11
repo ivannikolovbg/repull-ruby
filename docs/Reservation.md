@@ -7,6 +7,7 @@
 | **account** | [**RecordAccount**](RecordAccount.md) | The connected account this reservation belongs to. List endpoint. | [optional] |
 | **id** | **String** | Internal Repull reservation ID |  |
 | **listing_id** | **String** | Internal Repull listing ID this reservation is on. |  |
+| **listing_name** | **String** | Name of the listing this reservation is on, so a report or message can name it without a second lookup. | [optional] |
 | **guest_id** | **String** | DEPRECATED — use &#x60;primaryGuest.id&#x60;. Internal Repull guest ID. Kept populated for back-compat. | [optional] |
 | **check_in** | **Date** |  |  |
 | **check_out** | **Date** |  |  |
@@ -46,6 +47,7 @@ instance = Repull::Reservation.new(
   account: null,
   id: null,
   listing_id: null,
+  listing_name: Lakeside Cabin,
   guest_id: null,
   check_in: Wed Apr 15 00:00:00 UTC 2026,
   check_out: Mon Apr 20 00:00:00 UTC 2026,

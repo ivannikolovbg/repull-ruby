@@ -25,6 +25,9 @@ module Repull
     # Internal Repull listing ID this reservation is on.
     attr_accessor :listing_id
 
+    # Name of the listing this reservation is on, so a report or message can name it without a second lookup.
+    attr_accessor :listing_name
+
     # DEPRECATED — use `primaryGuest.id`. Internal Repull guest ID. Kept populated for back-compat.
     attr_accessor :guest_id
 
@@ -115,6 +118,7 @@ module Repull
         :'account' => :'account',
         :'id' => :'id',
         :'listing_id' => :'listingId',
+        :'listing_name' => :'listingName',
         :'guest_id' => :'guestId',
         :'check_in' => :'checkIn',
         :'check_out' => :'checkOut',
@@ -163,6 +167,7 @@ module Repull
         :'account' => :'RecordAccount',
         :'id' => :'String',
         :'listing_id' => :'String',
+        :'listing_name' => :'String',
         :'guest_id' => :'String',
         :'check_in' => :'Date',
         :'check_out' => :'Date',
@@ -199,6 +204,7 @@ module Repull
     def self.openapi_nullable
       Set.new([
         :'account',
+        :'listing_name',
         :'check_in_time',
         :'check_out_time',
         :'guest_notes',
@@ -245,6 +251,10 @@ module Repull
         self.listing_id = attributes[:'listing_id']
       else
         self.listing_id = nil
+      end
+
+      if attributes.key?(:'listing_name')
+        self.listing_name = attributes[:'listing_name']
       end
 
       if attributes.key?(:'guest_id')
@@ -523,6 +533,7 @@ module Repull
           account == o.account &&
           id == o.id &&
           listing_id == o.listing_id &&
+          listing_name == o.listing_name &&
           guest_id == o.guest_id &&
           check_in == o.check_in &&
           check_out == o.check_out &&
@@ -563,7 +574,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [account, id, listing_id, guest_id, check_in, check_out, check_in_time, check_out_time, guest_notes, conversation_id, external_thread_id, inquiry_id, status, status_detail, pending_reason, respond_by, source, platform, confirmation_code, unit, pms_reservation_id, access_codes, primary_guest, occupancy, financials, total_price, currency, guest_details, created_at, updated_at, booked_at, guest_name].hash
+      [account, id, listing_id, listing_name, guest_id, check_in, check_out, check_in_time, check_out_time, guest_notes, conversation_id, external_thread_id, inquiry_id, status, status_detail, pending_reason, respond_by, source, platform, confirmation_code, unit, pms_reservation_id, access_codes, primary_guest, occupancy, financials, total_price, currency, guest_details, created_at, updated_at, booked_at, guest_name].hash
     end
 
     # Builds the object from hash

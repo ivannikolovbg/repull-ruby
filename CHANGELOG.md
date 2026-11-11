@@ -2,6 +2,12 @@
 
 All notable changes to the `repull` gem are documented here.
 
+## 0.2.43 — 2026-11-11
+
+- New: `GET /v1/reservations/summary` (`get_reservation_summary`) — bookings, nights, revenue, payout, average nightly rate, occupancy and cancellations for a period, optionally grouped by `month`, `listing` and/or `channel`. `as_of` gives a like-for-like pace comparison with last year.
+- Reservation `listing_name`: the listing's name next to its id, on list, get and reservation webhooks.
+- Regenerated from the live spec (also picks up the latest listing, markup and message changes).
+
 ## 0.2.42 — 2026-11-08
 
 - Booking.com: `PUT /v1/channels/booking/availability` with `type: "derived-pricing"` now has a typed item, `BookingDerivedPricingUpdate`: `roomId`, `rateId`, `leadingOccupancy` and `occupancies[]` (`BookingOccupancyRule`: `persons`, `additional` or `percentage`, `round`). The response is `BookingDerivedPricingWriteResponse`, with the rules read back from Booking.com. A restriction-only `availability` write returns `BookingRestrictionWriteResponse`, which includes a read-back.

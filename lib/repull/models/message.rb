@@ -59,7 +59,14 @@ module Repull
     # When the message reached the channel. `null` while it is `sending` or when it `failed`.
     attr_accessor :delivered_at
 
+    # Who read it depends on `direction`. **Outbound** (your message): when the guest first read it, from the channel's read receipts — Airbnb reports them; on other channels it stays `null`. Changes are sent as `reservation.message.read`. **Inbound** (the guest's message): when your team answered it or marked it handled.
     attr_accessor :read_at
+
+    # Inbound messages only: when the host or a co-host first read it on the channel, from the channel's read receipts (Airbnb reports them). `null` for your own messages, on other channels, and until your side has opened the conversation since it arrived.
+    attr_accessor :host_read_at
+
+    # Reactions on this message, oldest first. Airbnb reports them; empty on other channels. Added and removed reactions are sent as `reservation.message.reaction`. To react, `PATCH /v1/channels/airbnb/messaging/{threadId}/messages/{messageId}` with `action: \"react\"`.
+    attr_accessor :reactions
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
@@ -80,7 +87,9 @@ module Repull
         :'ai_generated' => :'aiGenerated',
         :'sent_at' => :'sentAt',
         :'delivered_at' => :'deliveredAt',
-        :'read_at' => :'readAt'
+        :'read_at' => :'readAt',
+        :'host_read_at' => :'hostReadAt',
+        :'reactions' => :'reactions'
       }
     end
 
@@ -113,7 +122,9 @@ module Repull
         :'ai_generated' => :'Boolean',
         :'sent_at' => :'Time',
         :'delivered_at' => :'Time',
-        :'read_at' => :'Time'
+        :'read_at' => :'Time',
+        :'host_read_at' => :'Time',
+        :'reactions' => :'Array<MessageReaction>'
       }
     end
 
@@ -127,7 +138,8 @@ module Repull
         :'channel',
         :'translated_body',
         :'delivered_at',
-        :'read_at'
+        :'read_at',
+        :'host_read_at',
       ])
     end
 
@@ -216,6 +228,16 @@ module Repull
       if attributes.key?(:'read_at')
         self.read_at = attributes[:'read_at']
       end
+
+      if attributes.key?(:'host_read_at')
+        self.host_read_at = attributes[:'host_read_at']
+      end
+
+      if attributes.key?(:'reactions')
+        if (value = attributes[:'reactions']).is_a?(Array)
+          self.reactions = value
+        end
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -254,7 +276,9 @@ module Repull
           ai_generated == o.ai_generated &&
           sent_at == o.sent_at &&
           delivered_at == o.delivered_at &&
-          read_at == o.read_at
+          read_at == o.read_at &&
+          host_read_at == o.host_read_at &&
+          reactions == o.reactions
     end
 
     # @see the `==` method
@@ -266,7 +290,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, external_message_id, direction, status, status_reason, sender_type, sender_name, sender_avatar, channel, body, translated_body, attachments, is_automated, ai_generated, sent_at, delivered_at, read_at].hash
+      [id, external_message_id, direction, status, status_reason, sender_type, sender_name, sender_avatar, channel, body, translated_body, attachments, is_automated, ai_generated, sent_at, delivered_at, read_at, host_read_at, reactions].hash
     end
 
     # Builds the object from hash
