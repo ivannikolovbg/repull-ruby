@@ -22,6 +22,14 @@
 | **airbnb_listing_id** | **String** | Airbnb&#39;s own id for that listing, so the host can find it in Airbnb. Present on &#x60;code: \&quot;listing_not_api_connected\&quot;&#x60; (HTTP 403). | [optional] |
 | **sync_category** | **String** | The listing&#39;s current Airbnb API sync category — why the write was refused. Present on &#x60;code: \&quot;listing_not_api_connected\&quot;&#x60; (HTTP 403). | [optional] |
 | **retry_after** | **Integer** | Seconds the client should wait before retrying. Mirrors the &#x60;Retry-After&#x60; HTTP header. Present on rate-limit responses and on transient upstream failures that are safe to retry. | [optional] |
+| **tier** | **String** | The plan the request was counted against. Present on quota refusals (&#x60;rate_limit_exceeded&#x60;, &#x60;daily_limit_exceeded&#x60;, &#x60;credits_exhausted&#x60;). | [optional] |
+| **scope** | **String** | Which limit refused the request: &#x60;monthly&#x60; (the plan&#39;s request quota), &#x60;daily&#x60; (the daily loop guard), the daily AI quota, or &#x60;per_api_key&#x60; (the per-minute limiter: wait &#x60;Retry-After&#x60;, nothing else). | [optional] |
+| **limit** | **Integer** | The limit that was reached. Present on quota refusals. | [optional] |
+| **used** | **Integer** | How much of &#x60;limit&#x60; is used. Present on quota refusals. | [optional] |
+| **resets_at** | **Time** | When the refused quota resets. Present on quota refusals. | [optional] |
+| **projected_monthly_requests** | **Integer** | This month&#39;s requests extrapolated to the whole month — the usage &#x60;upgrade&#x60; was sized for. Present with &#x60;upgrade&#x60;. | [optional] |
+| **upgrade** | [**ErrorErrorUpgrade**](ErrorErrorUpgrade.md) |  | [optional] |
+| **credits** | [**ErrorErrorCredits**](ErrorErrorCredits.md) |  | [optional] |
 | **support** | [**ErrorErrorSupport**](ErrorErrorSupport.md) |  | [optional] |
 
 ## Example
@@ -48,6 +56,14 @@ instance = Repull::ErrorError.new(
   airbnb_listing_id: 22616426,
   sync_category: none,
   retry_after: 60,
+  tier: free,
+  scope: monthly,
+  limit: 1000,
+  used: 1000,
+  resets_at: 2026-12-01T00:00Z,
+  projected_monthly_requests: 2858,
+  upgrade: null,
+  credits: null,
   support: null
 )
 ```
