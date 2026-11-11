@@ -11,8 +11,8 @@ Gem::Specification.new do |s|
   s.authors     = ['Ivan Nikolov']
   s.email       = ['hello@repull.dev']
   s.homepage    = 'https://github.com/ivannikolovbg/repull-ruby'
-  s.summary     = 'Ruby SDK for Repull'
-  s.description = 'Ruby SDK for the Repull API — the unified API for vacation-rental tech. Connect to 50+ PMS platforms and OTA channels (Airbnb, Booking.com, VRBO, Plumguide) through one REST API. Generated from OpenAPI.'
+  s.summary     = 'Ruby SDK for Repull — one API for Airbnb, Booking.com, Vrbo and 15 PMS platforms'
+  s.description = 'Ruby SDK for the Repull API — one API for vacation-rental tech. Connect Airbnb, Booking.com, Vrbo and more channels, plus 15 PMS platforms, through one REST API. Generated from OpenAPI.'
   s.license     = 'MIT'
   s.required_ruby_version = '>= 2.7'
   s.metadata = {
