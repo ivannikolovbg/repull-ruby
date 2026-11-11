@@ -4,6 +4,9 @@ on:
   push:
     tags:
       - 'v*.*.*'
+  # The spec-refresh workflow tags with GITHUB_TOKEN, which does not trigger
+  # push workflows, so it dispatches this workflow on the new tag instead.
+  workflow_dispatch:
 
 jobs:
   publish:
