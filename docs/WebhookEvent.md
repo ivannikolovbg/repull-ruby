@@ -24,6 +24,7 @@ Repull::WebhookEvent.openapi_one_of
 #   :'BookingUnacknowledgedEvent',
 #   :'ChannelDegradedEvent',
 #   :'ChannelSyncFailedEvent',
+#   :'ConnectSessionAbandonedEvent',
 #   :'ConnectSessionCompletedEvent',
 #   :'InquiryCreatedEvent',
 #   :'InquiryUpdatedEvent',
@@ -92,6 +93,7 @@ Repull::WebhookEvent.openapi_discriminator_mapping
 #   :'booking.unacknowledged' => :'BookingUnacknowledgedEvent',
 #   :'channel.degraded' => :'ChannelDegradedEvent',
 #   :'channel.sync.failed' => :'ChannelSyncFailedEvent',
+#   :'connect.session.abandoned' => :'ConnectSessionAbandonedEvent',
 #   :'connect.session.completed' => :'ConnectSessionCompletedEvent',
 #   :'inquiry.created' => :'InquiryCreatedEvent',
 #   :'inquiry.updated' => :'InquiryUpdatedEvent',
@@ -159,6 +161,7 @@ Repull::WebhookEvent.build(data_that_doesnt_match)
 - `BookingUnacknowledgedEvent`
 - `ChannelDegradedEvent`
 - `ChannelSyncFailedEvent`
+- `ConnectSessionAbandonedEvent`
 - `ConnectSessionCompletedEvent`
 - `InquiryCreatedEvent`
 - `InquiryUpdatedEvent`

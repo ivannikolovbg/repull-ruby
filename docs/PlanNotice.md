@@ -11,6 +11,9 @@
 | **message** | **String** |  |  |
 | **fix** | **String** |  |  |
 | **billing_url** | **String** |  |  |
+| **starter_listings** | **Integer** | On a free plan: the listings Starter would serve and bill, active plus held back, across the plan&#39;s workspaces. | [optional] |
+| **starter_monthly_price** | **Float** | Starter&#39;s monthly price in USD for &#x60;starterListings&#x60; — exactly what checkout charges. Present up to 100 listings; above that the message says how to ask for a plan. | [optional] |
+| **checkout_url** | **String** | Opens Starter checkout at &#x60;starterMonthlyPrice&#x60;. Present up to 100 listings. | [optional] |
 
 ## Example
 
@@ -22,9 +25,12 @@ instance = Repull::PlanNotice.new(
   active_listing_count: 12,
   listings_held_back: 40,
   active_listing_limit: 3,
-  message: 40 more connected listings are held inactive because your plan allows 3 active listings. They stay connected and keep syncing.,
+  message: 40 more connected listings are held inactive because your plan allows 3 active listings. They stay connected and keep syncing. Starter serves all 43 for $264 a month: https://repull.dev/dashboard/billing?upgrade&#x3D;starter,
   fix: null,
-  billing_url: https://repull.dev/dashboard/billing
+  billing_url: https://repull.dev/dashboard/billing,
+  starter_listings: 43,
+  starter_monthly_price: 264,
+  checkout_url: https://repull.dev/dashboard/billing?upgrade&#x3D;starter
 )
 ```
 
