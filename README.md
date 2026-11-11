@@ -1,6 +1,6 @@
 # Repull Ruby SDK
 
-Ruby SDK for [Repull](https://repull.dev) — one API for vacation-rental tech: Airbnb, Booking.com, Vrbo and more channels, plus 15 PMS platforms, behind one key, with white-label Connect for linking your users' accounts. Generated from [api.repull.dev/openapi.json](https://api.repull.dev/openapi.json).
+Ruby SDK for [Repull](https://repull.dev) — one API for vacation-rental tech: Airbnb, Booking.com, Vrbo and more channels, plus 14 PMS platforms, behind one key, with white-label Connect for linking your users' accounts. Generated from [api.repull.dev/openapi.json](https://api.repull.dev/openapi.json).
 
 ## Install
 
