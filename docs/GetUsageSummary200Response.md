@@ -17,6 +17,7 @@
 | **totals** | [**GetUsageSummary200ResponseTotals**](GetUsageSummary200ResponseTotals.md) |  | [optional] |
 | **range** | **String** |  | [optional] |
 | **plan_notice** | [**PlanNotice**](PlanNotice.md) |  | [optional] |
+| **billing_notice** | [**BillingNotice**](BillingNotice.md) |  | [optional] |
 
 ## Example
 
@@ -36,7 +37,8 @@ instance = Repull::GetUsageSummary200Response.new(
   status_distribution: null,
   totals: null,
   range: null,
-  plan_notice: null
+  plan_notice: null,
+  billing_notice: null
 )
 ```
 
