@@ -7,7 +7,7 @@
 | **job_id** | **String** | Pass to &#x60;GET /v1/listings/{id}/publish/vrbo?jobId&#x3D;&#x60;. | [optional] |
 | **status** | **String** |  | [optional] |
 | **listing_id** | **Integer** |  | [optional] |
-| **account_id** | **Integer** | The Vrbo account (connection &#x60;vrbo:&lt;accountId&gt;&#x60;) the listing is created in. | [optional] |
+| **account_id** | **String** | The Vrbo account the listing is created in, as its handle &#x60;vrbo:{Vrbo account id}&#x60;. &#x60;null&#x60; until Vrbo&#39;s account id is captured for the sign-in. | [optional] |
 | **steps** | **Array&lt;String&gt;** | Steps Vrbo has finished, in order: create, amenities, property type, rooms, photos, headline + description, house rules, rate, booking options, publish, fees, cancellation policy, … | [optional] |
 | **error** | **String** | Vrbo&#39;s reason when &#x60;status&#x60; is &#x60;failed&#x60;. | [optional] |
 | **vrbo_listing_number** | **String** | The new Vrbo listing number, once Vrbo has published it. | [optional] |

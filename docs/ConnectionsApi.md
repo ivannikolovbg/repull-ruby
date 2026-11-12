@@ -31,7 +31,7 @@ Repull.configure do |config|
 end
 
 api_instance = Repull::ConnectionsApi.new
-id = 'id_example' # String | Connection handle `{channel}:{externalAccountId}`, e.g. `vrbo:12` or `booking_extranet:36`.
+id = 'id_example' # String | Connection handle `{channel}:{externalAccountId}`, where `externalAccountId` is the platform's own account id: `booking_extranet:20123456` (the Booking.com account id) or `vrbo:7001234` (the Vrbo account id). The old forms with our login id (`booking_extranet:88`, `vrbo:46`) still resolve until 2027-02-12 and are never returned.
 apply_connection_mappings_request = Repull::ApplyConnectionMappingsRequest.new({mappings: [Repull::ApplyConnectionMappingsRequestMappingsInner.new({unit_id: 'unit_id_example'})]}) # ApplyConnectionMappingsRequest | 
 
 begin
@@ -65,7 +65,7 @@ end
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **id** | **String** | Connection handle &#x60;{channel}:{externalAccountId}&#x60;, e.g. &#x60;vrbo:12&#x60; or &#x60;booking_extranet:36&#x60;. |  |
+| **id** | **String** | Connection handle &#x60;{channel}:{externalAccountId}&#x60;, where &#x60;externalAccountId&#x60; is the platform&#39;s own account id: &#x60;booking_extranet:20123456&#x60; (the Booking.com account id) or &#x60;vrbo:7001234&#x60; (the Vrbo account id). The old forms with our login id (&#x60;booking_extranet:88&#x60;, &#x60;vrbo:46&#x60;) still resolve until 2027-02-12 and are never returned. |  |
 | **apply_connection_mappings_request** | [**ApplyConnectionMappingsRequest**](ApplyConnectionMappingsRequest.md) |  |  |
 
 ### Return type
@@ -102,7 +102,7 @@ Repull.configure do |config|
 end
 
 api_instance = Repull::ConnectionsApi.new
-id = 'id_example' # String | Connection handle `{channel}:{externalAccountId}`, e.g. `vrbo:12` or `booking_extranet:36`.
+id = 'id_example' # String | Connection handle `{channel}:{externalAccountId}`, where `externalAccountId` is the platform's own account id: `booking_extranet:20123456` (the Booking.com account id) or `vrbo:7001234` (the Vrbo account id). The old forms with our login id (`booking_extranet:88`, `vrbo:46`) still resolve until 2027-02-12 and are never returned.
 opts = {
   auto_map_connection_units_request: Repull::AutoMapConnectionUnitsRequest.new # AutoMapConnectionUnitsRequest | 
 }
@@ -138,7 +138,7 @@ end
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **id** | **String** | Connection handle &#x60;{channel}:{externalAccountId}&#x60;, e.g. &#x60;vrbo:12&#x60; or &#x60;booking_extranet:36&#x60;. |  |
+| **id** | **String** | Connection handle &#x60;{channel}:{externalAccountId}&#x60;, where &#x60;externalAccountId&#x60; is the platform&#39;s own account id: &#x60;booking_extranet:20123456&#x60; (the Booking.com account id) or &#x60;vrbo:7001234&#x60; (the Vrbo account id). The old forms with our login id (&#x60;booking_extranet:88&#x60;, &#x60;vrbo:46&#x60;) still resolve until 2027-02-12 and are never returned. |  |
 | **auto_map_connection_units_request** | [**AutoMapConnectionUnitsRequest**](AutoMapConnectionUnitsRequest.md) |  | [optional] |
 
 ### Return type
@@ -175,7 +175,7 @@ Repull.configure do |config|
 end
 
 api_instance = Repull::ConnectionsApi.new
-id = 'id_example' # String | Connection handle `{provider}:{externalAccountId}`, e.g. `booking_extranet:36`, `vrbo:12`, `airbnb:1234567`, `hostaway:27434` — the `provider` and `externalAccountId` of a connection on `GET /v1/connect`, or the account of an `account.*` webhook.
+id = 'id_example' # String | Connection handle `{provider}:{externalAccountId}`, e.g. `booking_extranet:20123456`, `vrbo:7001234`, `airbnb:1234567`, `hostaway:27434` (`externalAccountId` is always the platform's own account id; the old Extranet / Vrbo login-id forms resolve until 2027-02-12) — the `provider` and `externalAccountId` of a connection on `GET /v1/connect`, or the account of an `account.*` webhook.
 opts = {
   limit: 56, # Integer | How many runs to return, newest first.
   session_id: 'session_id_example' # String | The Connect session ID (capability token).
@@ -212,7 +212,7 @@ end
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **id** | **String** | Connection handle &#x60;{provider}:{externalAccountId}&#x60;, e.g. &#x60;booking_extranet:36&#x60;, &#x60;vrbo:12&#x60;, &#x60;airbnb:1234567&#x60;, &#x60;hostaway:27434&#x60; — the &#x60;provider&#x60; and &#x60;externalAccountId&#x60; of a connection on &#x60;GET /v1/connect&#x60;, or the account of an &#x60;account.*&#x60; webhook. |  |
+| **id** | **String** | Connection handle &#x60;{provider}:{externalAccountId}&#x60;, e.g. &#x60;booking_extranet:20123456&#x60;, &#x60;vrbo:7001234&#x60;, &#x60;airbnb:1234567&#x60;, &#x60;hostaway:27434&#x60; (&#x60;externalAccountId&#x60; is always the platform&#39;s own account id; the old Extranet / Vrbo login-id forms resolve until 2027-02-12) — the &#x60;provider&#x60; and &#x60;externalAccountId&#x60; of a connection on &#x60;GET /v1/connect&#x60;, or the account of an &#x60;account.*&#x60; webhook. |  |
 | **limit** | **Integer** | How many runs to return, newest first. | [optional][default to 20] |
 | **session_id** | **String** | The Connect session ID (capability token). | [optional] |
 
@@ -250,7 +250,7 @@ Repull.configure do |config|
 end
 
 api_instance = Repull::ConnectionsApi.new
-id = 'id_example' # String | Connection handle `{channel}:{externalAccountId}`, e.g. `vrbo:12` or `booking_extranet:36`.
+id = 'id_example' # String | Connection handle `{channel}:{externalAccountId}`, where `externalAccountId` is the platform's own account id: `booking_extranet:20123456` (the Booking.com account id) or `vrbo:7001234` (the Vrbo account id). The old forms with our login id (`booking_extranet:88`, `vrbo:46`) still resolve until 2027-02-12 and are never returned.
 opts = {
   session_id: 'session_id_example' # String | The Connect session ID (capability token).
 }
@@ -286,7 +286,7 @@ end
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **id** | **String** | Connection handle &#x60;{channel}:{externalAccountId}&#x60;, e.g. &#x60;vrbo:12&#x60; or &#x60;booking_extranet:36&#x60;. |  |
+| **id** | **String** | Connection handle &#x60;{channel}:{externalAccountId}&#x60;, where &#x60;externalAccountId&#x60; is the platform&#39;s own account id: &#x60;booking_extranet:20123456&#x60; (the Booking.com account id) or &#x60;vrbo:7001234&#x60; (the Vrbo account id). The old forms with our login id (&#x60;booking_extranet:88&#x60;, &#x60;vrbo:46&#x60;) still resolve until 2027-02-12 and are never returned. |  |
 | **session_id** | **String** | The Connect session ID (capability token). | [optional] |
 
 ### Return type
@@ -323,7 +323,7 @@ Repull.configure do |config|
 end
 
 api_instance = Repull::ConnectionsApi.new
-id = 'id_example' # String | Connection handle `{channel}:{externalAccountId}`.
+id = 'id_example' # String | Connection handle `{channel}:{externalAccountId}`, where `externalAccountId` is the platform's own account id: `booking_extranet:20123456` (the Booking.com account id) or `vrbo:7001234` (the Vrbo account id). The old forms with our login id (`booking_extranet:88`, `vrbo:46`) still resolve until 2027-02-12 and are never returned.
 opts = {
   q: 'q_example', # String | Text to match (name, city or listing id).
   limit: 56, # Integer | 
@@ -361,7 +361,7 @@ end
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **id** | **String** | Connection handle &#x60;{channel}:{externalAccountId}&#x60;. |  |
+| **id** | **String** | Connection handle &#x60;{channel}:{externalAccountId}&#x60;, where &#x60;externalAccountId&#x60; is the platform&#39;s own account id: &#x60;booking_extranet:20123456&#x60; (the Booking.com account id) or &#x60;vrbo:7001234&#x60; (the Vrbo account id). The old forms with our login id (&#x60;booking_extranet:88&#x60;, &#x60;vrbo:46&#x60;) still resolve until 2027-02-12 and are never returned. |  |
 | **q** | **String** | Text to match (name, city or listing id). | [optional] |
 | **limit** | **Integer** |  | [optional][default to 20] |
 | **session_id** | **String** |  | [optional] |

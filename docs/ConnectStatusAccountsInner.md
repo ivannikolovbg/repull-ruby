@@ -4,7 +4,8 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **external_account_id** | **String** | Airbnb host ID, as a string (it can exceed 2^53). | [optional] |
+| **external_account_id** | **String** | Airbnb: the host id, as a string (it can exceed 2^53). Vrbo: Vrbo&#39;s own account id; &#x60;null&#x60; until it is captured at sign-in. | [optional] |
+| **connection_id** | **String** | Our connection record (&#x60;X-Account-Id&#x60;). Airbnb: the workspace&#39;s Airbnb connection. Vrbo: the workspace&#39;s Vrbo connection, &#x60;null&#x60; when it has none. | [optional] |
 | **name** | **String** |  | [optional] |
 | **picture_url** | **String** |  | [optional] |
 | **status** | **String** |  | [optional] |
@@ -21,6 +22,7 @@ require 'repull'
 
 instance = Repull::ConnectStatusAccountsInner.new(
   external_account_id: 79730216,
+  connection_id: 135,
   name: Casey,
   picture_url: null,
   status: active,

@@ -19,6 +19,7 @@ Repull::WebhookEvent.openapi_one_of
 #   :'AccountImportCompletedEvent',
 #   :'AccountImportFailedEvent',
 #   :'AccountImportStartedEvent',
+#   :'AccountUnitsAddedEvent',
 #   :'AiOperationCompletedEvent',
 #   :'AiOperationFailedEvent',
 #   :'BookingUnacknowledgedEvent',
@@ -88,6 +89,7 @@ Repull::WebhookEvent.openapi_discriminator_mapping
 #   :'account.import.completed' => :'AccountImportCompletedEvent',
 #   :'account.import.failed' => :'AccountImportFailedEvent',
 #   :'account.import.started' => :'AccountImportStartedEvent',
+#   :'account.units.added' => :'AccountUnitsAddedEvent',
 #   :'ai.operation.completed' => :'AiOperationCompletedEvent',
 #   :'ai.operation.failed' => :'AiOperationFailedEvent',
 #   :'booking.unacknowledged' => :'BookingUnacknowledgedEvent',
@@ -156,6 +158,7 @@ Repull::WebhookEvent.build(data_that_doesnt_match)
 - `AccountImportCompletedEvent`
 - `AccountImportFailedEvent`
 - `AccountImportStartedEvent`
+- `AccountUnitsAddedEvent`
 - `AiOperationCompletedEvent`
 - `AiOperationFailedEvent`
 - `BookingUnacknowledgedEvent`

@@ -4,7 +4,7 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **account_id** | **String** | The Vrbo account, as its connection id (&#x60;vrbo:13&#x60;). | [optional] |
+| **account_id** | **String** | The Vrbo account, as its handle &#x60;vrbo:{Vrbo account id}&#x60;. &#x60;null&#x60; until Vrbo&#39;s account id is captured for the sign-in. | [optional] |
 | **vrbo_listing_number** | **String** | The Vrbo listing number this listing is linked to. | [optional] |
 | **markup_percent** | **Float** | Percent added on Vrbo, for every listing linked on this account. | [optional] |
 | **listing_ids** | **Array&lt;String&gt;** | Listings in this workspace linked on this Vrbo account — all share this markup. | [optional] |

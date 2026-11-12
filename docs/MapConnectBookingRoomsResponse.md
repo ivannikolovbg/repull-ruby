@@ -13,6 +13,8 @@
 | **reservations_found** | **Integer** | How many reservations Booking.com returned for the property. Equal to &#x60;reservationsImported&#x60; unless some could not be attached to a listing — so &#x60;0&#x60; here means Booking.com had none. &#x60;null&#x60; when the sync could not run. | [optional] |
 | **needs_calendar** | **Array&lt;String&gt;** | Ids of the listings this call created from Booking.com rooms (&#x60;create: true&#x60;). They start without a calendar: Booking.com shows those rooms closed and nothing is sent to Booking.com for them until they have one. Give a listing a calendar by setting its prices and availability with &#x60;PUT /v1/availability/{propertyId}&#x60;, or by mapping the same home from Airbnb so its calendar is used. Rooms mapped to an existing listing are not listed: that listing&#39;s calendar is pushed as before. |  |
 | **calendar_note** | **String** | Plain-language explanation of &#x60;needsCalendar&#x60;, present only when it is non-empty. | [optional] |
+| **property_status** | [**MapConnectBookingRoomsResponsePropertyStatus**](MapConnectBookingRoomsResponsePropertyStatus.md) |  | [optional] |
+| **property_note** | **String** | &#x60;propertyStatus.message&#x60;, present only when the property is not open. | [optional] |
 
 ## Example
 
@@ -28,7 +30,9 @@ instance = Repull::MapConnectBookingRoomsResponse.new(
   reservations_imported: null,
   reservations_found: null,
   needs_calendar: null,
-  calendar_note: null
+  calendar_note: null,
+  property_status: null,
+  property_note: null
 )
 ```
 

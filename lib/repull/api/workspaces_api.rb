@@ -1,7 +1,7 @@
 =begin
 #Repull API
 
-#The unified API for vacation rental tech. Connect Airbnb, Booking.com, Vrbo and more channels, plus 14 PMS platforms, through one REST API.  ## Designed for AI agents Every error response on this API includes machine-parseable fields so an LLM (Claude in MCP, Cursor, Cline, GPT, etc.) can self-recover without escalating to a human: - `error.code` — stable string identifier (e.g. `invalid_params`, `rate_limit_exceeded`) - `error.message` — human-readable cause - `error.fix` — exact recovery steps (e.g. \"Pass `check_in_after` as ISO 8601: `?check_in_after=2026-01-15`\") - `error.docs_url` — link to the canonical write-up at `https://repull.dev/docs/errors/{code}` - `error.request_id` — id to correlate with server-side logs - `error.field` / `error.value_received` / `error.valid_values` / `error.did_you_mean` — when the error is parameter-specific - `error.retry_after` — seconds to wait before retrying (rate-limit + transient upstream)  `Access-Control-Expose-Headers` lists `x-request-id` and the `X-RateLimit-*` family so browsers can read them on cross-origin responses.  ## Quick Start 1. Get an API key at https://repull.dev/dashboard 2. Connect a PMS: `POST /v1/connect/{provider}` 3. List properties: `GET /v1/properties` 4. Get reservations: `GET /v1/reservations`  ## Authentication All requests require a Bearer token: ``` Authorization: Bearer sk_live_YOUR_API_KEY ```  ## Request Correlation (X-Request-ID) Every response carries an `X-Request-ID` header, e.g. `X-Request-ID: req_01HXY...`. Include this id in support tickets and bug reports — we can trace the full request lifecycle (auth, rate limit, handler, downstream calls, log row) from a single id.  You may set the header on the inbound request to forward your own trace id; we will echo it back instead of generating a new one. Accepted format: `^[\\\\w.-]{1,128}$`.  The id is also embedded in error envelopes as `request_id` so server-side log diffs work even when the response headers are stripped by an intermediate proxy.  ## Rate Limits The public API enforces a per-API-key sliding-window rate limit on top of the per-tier monthly + daily-AI quotas.  **Default policy:** 600 requests per 60 seconds, per API key. Sliding window — there is no fixed-minute boundary you can burst across.  Every response includes:  | Header | Meaning | |---|---| | `X-RateLimit-Limit` | Requests permitted in the current window. | | `X-RateLimit-Remaining` | Requests left in the current window after this call. | | `X-RateLimit-Reset` | Unix epoch (seconds) when the next slot opens. | | `X-RateLimit-Policy` | Machine-readable policy descriptor, e.g. `600;w=60`. | | `Retry-After` | Seconds to wait before retrying. **Only present on 429 responses.** |  **On 429 (rate_limit_exceeded):** the response body matches the standard error envelope with `code: \"rate_limit_exceeded\"`, plus `limit`, `window_seconds`, `retry_after`, and `request_id` fields. SDKs MUST honor `Retry-After` and use exponential backoff with jitter on subsequent retries — never a tight loop.  Recommended backoff: ``` sleep_ms = (Retry-After * 1000) + random(0..250) ```  Monthly + daily-AI tier quotas (`free`, `starter`, `custom`) are enforced separately and also surface as 429s; they include `tier`, `scope`, `limit`, `used` and `resets_at` fields.  **The way past a request quota.** The monthly quota refusal (`429 rate_limit_exceeded` with `scope: \"monthly\"`), `402 credits_exhausted` and `429 daily_limit_exceeded` also carry `upgrade` (the cheapest plan that covers your usage: its exact monthly price for your listings, its request quotas and a `checkout_url` that opens checkout for that price; `plan: \"custom\"` with a `contact_email` when no self-serve plan covers it), `credits` (pay-as-you-go: `usd_per_1000_requests`, `top_up_url`, your `balance_usd`), `resets_at` and `projected_monthly_requests`. The per-minute 429 (`scope: \"per_api_key\"`) carries none of these: wait `Retry-After`.  ## Plan listing limits Each plan includes a number of **active listings**:  | Tier | Active listings | |---|---| | `free` | 3 | | `starter` | no cap: 10 included, then billed per listing | | `custom` | no cap |  Going over the plan never blocks your API calls. Listings beyond the plan are **held back**: they stay connected and keep syncing, but they are not served. A held-back listing answers `403 listing_inactive` with `reason: \"plan_limit\"`, and collection routes leave it out. Every JSON response then carries a `planNotice` and the `X-Repull-Listings-Held-Back` header, so you know there is more to see.  Choose which listings are active with `POST /v1/listings/status`, or upgrade at `https://repull.dev/dashboard/billing` to activate them all.  Only a call that would itself take you over the plan is refused, with **`402 listings_limit_exceeded`**: activating listings (`PATCH /v1/listings/{id}` with `{ \"active\": true }`, `POST /v1/listings/status`) or creating one (`POST /v1/listings`). Nothing else changes. The envelope carries the tier, the limit, the active count and an upgrade link next to the standard `code` / `message` / `fix` / `docs_url` / `request_id`.  If an account has more active listings than its plan (for example after a downgrade), calls are still served and `planNotice` says so (code \"listings_over_plan\").
+#The unified API for vacation rental tech. Connect Airbnb, Booking.com, Vrbo and more channels, plus 14 PMS platforms, through one REST API.  ## Designed for AI agents Every error response on this API includes machine-parseable fields so an LLM (Claude in MCP, Cursor, Cline, GPT, etc.) can self-recover without escalating to a human: - `error.code` — stable string identifier (e.g. `invalid_params`, `rate_limit_exceeded`) - `error.message` — human-readable cause - `error.fix` — exact recovery steps (e.g. \"Pass `check_in_after` as ISO 8601: `?check_in_after=2026-01-15`\") - `error.docs_url` — link to the canonical write-up at `https://repull.dev/docs/errors/{code}` - `error.request_id` — id to correlate with server-side logs - `error.field` / `error.value_received` / `error.valid_values` / `error.did_you_mean` — when the error is parameter-specific - `error.retry_after` — seconds to wait before retrying (rate-limit + transient upstream)  `Access-Control-Expose-Headers` lists `x-request-id` and the `X-RateLimit-*` family so browsers can read them on cross-origin responses.  ## Quick Start 1. Get an API key at https://repull.dev/dashboard 2. Connect a PMS: `POST /v1/connect/{provider}` 3. List properties: `GET /v1/properties` 4. Get reservations: `GET /v1/reservations`  ## Authentication All requests require a Bearer token: ``` Authorization: Bearer sk_live_YOUR_API_KEY ```  ## Request Correlation (X-Request-ID) Every response carries an `X-Request-ID` header, e.g. `X-Request-ID: req_01HXY...`. Include this id in support tickets and bug reports — we can trace the full request lifecycle (auth, rate limit, handler, downstream calls, log row) from a single id.  You may set the header on the inbound request to forward your own trace id; we will echo it back instead of generating a new one. Accepted format: `^[\\\\w.-]{1,128}$`.  The id is also embedded in error envelopes as `request_id` so server-side log diffs work even when the response headers are stripped by an intermediate proxy.  ## Rate Limits The public API enforces a per-API-key sliding-window rate limit on top of the per-tier monthly + daily-AI quotas.  **Default policy:** 600 requests per 60 seconds, per API key. Sliding window — there is no fixed-minute boundary you can burst across.  Every response includes:  | Header | Meaning | |---|---| | `X-RateLimit-Limit` | Requests permitted in the current window. | | `X-RateLimit-Remaining` | Requests left in the current window after this call. | | `X-RateLimit-Reset` | Unix epoch (seconds) when the next slot opens. | | `X-RateLimit-Policy` | Machine-readable policy descriptor, e.g. `600;w=60`. | | `Retry-After` | Seconds to wait before retrying. **Only present on 429 responses.** |  **On 429 (rate_limit_exceeded):** the response body matches the standard error envelope with `code: \"rate_limit_exceeded\"`, plus `limit`, `window_seconds`, `retry_after`, and `request_id` fields. SDKs MUST honor `Retry-After` and use exponential backoff with jitter on subsequent retries — never a tight loop.  Recommended backoff: ``` sleep_ms = (Retry-After * 1000) + random(0..250) ```  Monthly + daily-AI tier quotas (`free`, `starter`, `custom`) are enforced separately and also surface as 429s; they include `tier`, `scope`, `limit`, `used` and `resets_at` fields.  **The way past a request quota.** The monthly quota refusal (`429 rate_limit_exceeded` with `scope: \"monthly\"`), `402 credits_exhausted` and `429 daily_limit_exceeded` also carry `upgrade` (the cheapest plan that covers your usage: its exact monthly price for your listings, its request quotas and a `checkout_url` that opens checkout for that price; `plan: \"custom\"` with a `contact_email` when no self-serve plan covers it), `credits` (pay-as-you-go: `usd_per_1000_requests`, `top_up_url`, your `balance_usd`), `resets_at` and `projected_monthly_requests`. The per-minute 429 (`scope: \"per_api_key\"`) carries none of these: wait `Retry-After`.  ## Plan listing limits Each plan includes a number of **active listings**:  | Tier | Active listings | |---|---| | `free` | 3 | | `starter` | no cap: 10 included, then billed per listing | | `custom` | no cap |  Going over the plan never blocks your API calls. Listings beyond the plan are **held back**: they stay connected and keep syncing, but they are not served. A held-back listing answers `403 listing_inactive` with `reason: \"plan_limit\"`, and collection routes leave it out. Every JSON response then carries a `planNotice` and the `X-Repull-Listings-Held-Back` header, so you know there is more to see.  Choose which listings are active with `POST /v1/listings/status`. Upgrading at `https://repull.dev/dashboard/billing` lifts the cap but does not switch held-back listings on: you choose which to activate afterwards, with the same call or from the dashboard, and each one you switch on is billed from then.  Only a call that would itself take you over the plan is refused, with **`402 listings_limit_exceeded`**: activating listings (`PATCH /v1/listings/{id}` with `{ \"active\": true }`, `POST /v1/listings/status`) or creating one (`POST /v1/listings`). Nothing else changes. The envelope carries the tier, the limit, the active count and an upgrade link next to the standard `code` / `message` / `fix` / `docs_url` / `request_id`.  If an account has more active listings than its plan (for example after a downgrade), calls are still served and `planNotice` says so (code \"listings_over_plan\").
 
 The version of the OpenAPI document: 1.0.0
 
@@ -19,6 +19,69 @@ module Repull
     def initialize(api_client = ApiClient.default)
       @api_client = api_client
     end
+    # Deactivate a workspace
+    # Offboard one of your customers. Disconnects every account still connected in the sub-workspace (Airbnb hosts, Booking.com properties, Vrbo sign-ins, PMSs), deactivates its listings so they stop counting toward your plan, and marks the workspace inactive. Nothing is deleted: its listings, reservations and conversations are kept, and it stays in `GET /v1/workspaces` with `active: false` and `deactivatedAt`. Nothing is changed on the channels themselves. Calling it again is safe. Undo it with `POST /v1/workspaces/{workspaceId}/reactivate`. Workspace names don't have to be unique; the `workspaceId` (or your own `externalRef`) identifies a workspace.
+    # @param workspace_id [String] A &#x60;workspaceId&#x60; from &#x60;GET /v1/workspaces&#x60;.
+    # @param [Hash] opts the optional parameters
+    # @return [DeactivateWorkspace200Response]
+    def deactivate_workspace(workspace_id, opts = {})
+      data, _status_code, _headers = deactivate_workspace_with_http_info(workspace_id, opts)
+      data
+    end
+
+    # Deactivate a workspace
+    # Offboard one of your customers. Disconnects every account still connected in the sub-workspace (Airbnb hosts, Booking.com properties, Vrbo sign-ins, PMSs), deactivates its listings so they stop counting toward your plan, and marks the workspace inactive. Nothing is deleted: its listings, reservations and conversations are kept, and it stays in &#x60;GET /v1/workspaces&#x60; with &#x60;active: false&#x60; and &#x60;deactivatedAt&#x60;. Nothing is changed on the channels themselves. Calling it again is safe. Undo it with &#x60;POST /v1/workspaces/{workspaceId}/reactivate&#x60;. Workspace names don&#39;t have to be unique; the &#x60;workspaceId&#x60; (or your own &#x60;externalRef&#x60;) identifies a workspace.
+    # @param workspace_id [String] A &#x60;workspaceId&#x60; from &#x60;GET /v1/workspaces&#x60;.
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(DeactivateWorkspace200Response, Integer, Hash)>] DeactivateWorkspace200Response data, response status code and response headers
+    def deactivate_workspace_with_http_info(workspace_id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: WorkspacesApi.deactivate_workspace ...'
+      end
+      # verify the required parameter 'workspace_id' is set
+      if @api_client.config.client_side_validation && workspace_id.nil?
+        fail ArgumentError, "Missing the required parameter 'workspace_id' when calling WorkspacesApi.deactivate_workspace"
+      end
+      # resource path
+      local_var_path = '/v1/workspaces/{workspaceId}/deactivate'.sub('{workspaceId}', CGI.escape(workspace_id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'DeactivateWorkspace200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"WorkspacesApi.deactivate_workspace",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: WorkspacesApi#deactivate_workspace\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # List workspaces
     # Every sub-workspace your workspace has opened, newest first: one per customer of yours, created by `POST /v1/connect` with `workspace` (or by Repull Migrate). Read or write a workspace's data by sending its `workspaceId` as `X-Workspace-Id`. Its webhook events arrive on your own webhook endpoints, tagged with `workspaceId`. Page with `pagination.nextCursor`.
     # @param [Hash] opts the optional parameters
@@ -89,6 +152,69 @@ module Repull
       data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: WorkspacesApi#list_workspaces\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Reactivate a workspace
+    # Undo `POST /v1/workspaces/{workspaceId}/deactivate`. The workspace is active again and the listings the deactivation switched off are switched back on; listings that were already inactive before it stay inactive. Reactivated listings count toward your plan again, so a reactivation that would exceed your plan's listing cap is refused with `402 listings_limit_exceeded` and nothing changes. Accounts stay disconnected: have your customer reconnect each one through Connect (`POST /v1/connect` with `X-Workspace-Id` set to this workspace). Calling it on an active workspace changes nothing.
+    # @param workspace_id [String] A &#x60;workspaceId&#x60; from &#x60;GET /v1/workspaces&#x60;.
+    # @param [Hash] opts the optional parameters
+    # @return [ReactivateWorkspace200Response]
+    def reactivate_workspace(workspace_id, opts = {})
+      data, _status_code, _headers = reactivate_workspace_with_http_info(workspace_id, opts)
+      data
+    end
+
+    # Reactivate a workspace
+    # Undo &#x60;POST /v1/workspaces/{workspaceId}/deactivate&#x60;. The workspace is active again and the listings the deactivation switched off are switched back on; listings that were already inactive before it stay inactive. Reactivated listings count toward your plan again, so a reactivation that would exceed your plan&#39;s listing cap is refused with &#x60;402 listings_limit_exceeded&#x60; and nothing changes. Accounts stay disconnected: have your customer reconnect each one through Connect (&#x60;POST /v1/connect&#x60; with &#x60;X-Workspace-Id&#x60; set to this workspace). Calling it on an active workspace changes nothing.
+    # @param workspace_id [String] A &#x60;workspaceId&#x60; from &#x60;GET /v1/workspaces&#x60;.
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(ReactivateWorkspace200Response, Integer, Hash)>] ReactivateWorkspace200Response data, response status code and response headers
+    def reactivate_workspace_with_http_info(workspace_id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: WorkspacesApi.reactivate_workspace ...'
+      end
+      # verify the required parameter 'workspace_id' is set
+      if @api_client.config.client_side_validation && workspace_id.nil?
+        fail ArgumentError, "Missing the required parameter 'workspace_id' when calling WorkspacesApi.reactivate_workspace"
+      end
+      # resource path
+      local_var_path = '/v1/workspaces/{workspaceId}/reactivate'.sub('{workspaceId}', CGI.escape(workspace_id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'ReactivateWorkspace200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"WorkspacesApi.reactivate_workspace",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: WorkspacesApi#reactivate_workspace\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end

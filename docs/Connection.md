@@ -7,7 +7,7 @@
 | **id** | **String** |  | [optional] |
 | **provider** | **String** |  | [optional] |
 | **status** | **String** | &#x60;active&#x60; — connected and working. &#x60;pending&#x60; — still settling. &#x60;needs_permissions&#x60; — connected but the host must grant more access before it works (see &#x60;action&#x60;/&#x60;fixUrl&#x60;). An &#x60;active&#x60; connection can also carry an &#x60;action&#x60; (e.g. a Smoobu legacy API key that must be replaced with a key + secret before October 31, 2026). &#x60;error&#x60; — the last operation failed. &#x60;disconnected&#x60; — revoked or superseded. | [optional] |
-| **external_account_id** | **String** |  | [optional] |
+| **external_account_id** | **String** | The platform&#39;s own account id: Airbnb host id; Booking.com hotel id (&#x60;booking&#x60;); the Booking.com account id behind the Extranet login (&#x60;booking_extranet&#x60;); Vrbo&#39;s account id (&#x60;vrbo&#x60;); the PMS&#39;s own account or company id. &#x60;null&#x60; when the platform id is not known yet (a Vrbo sign-in before its account id is captured, a PMS that does not expose one); never a Repull id. Use &#x60;id&#x60; for our record. | [optional] |
 | **created_at** | **Time** |  | [optional] |
 | **host** | [**ConnectHost**](ConnectHost.md) | Host metadata for the linked account. Currently populated for Airbnb only; null for other providers. | [optional] |
 | **action** | [**ConnectionAction**](ConnectionAction.md) | Set when the host must do something before the connection works (e.g. grant the invited Booking.com Extranet user full access). &#x60;null&#x60; when no action is pending. | [optional] |
@@ -23,7 +23,7 @@ instance = Repull::Connection.new(
   id: null,
   provider: hostaway,
   status: active,
-  external_account_id: null,
+  external_account_id: 20123456,
   created_at: null,
   host: null,
   action: null,
