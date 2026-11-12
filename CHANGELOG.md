@@ -2,6 +2,12 @@
 
 All notable changes to the `repull` gem are documented here.
 
+## 0.2.46 — 2026-11-12
+
+- New: `POST /v1/workspaces/{workspaceId}/deactivate`
+- New: `POST /v1/workspaces/{workspaceId}/reactivate`
+- Regenerated from the live spec (automated spec refresh).
+
 ## 0.2.45 — 2026-11-12
 
 - Regenerated from the live spec (automated spec refresh).
