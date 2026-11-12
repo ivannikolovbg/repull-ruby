@@ -25,13 +25,17 @@ module Repull
     # Channels whose token has expired — these need reconnecting, not retrying.
     attr_accessor :auth_errors
 
+    # One entry per listing per connected channel: which channel took the write and which refused it.
+    attr_accessor :channels
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
         :'attempted' => :'attempted',
         :'succeeded' => :'succeeded',
         :'failed' => :'failed',
-        :'auth_errors' => :'authErrors'
+        :'auth_errors' => :'authErrors',
+        :'channels' => :'channels'
       }
     end
 
@@ -51,7 +55,8 @@ module Repull
         :'attempted' => :'Integer',
         :'succeeded' => :'Integer',
         :'failed' => :'Integer',
-        :'auth_errors' => :'Integer'
+        :'auth_errors' => :'Integer',
+        :'channels' => :'Array<AvailabilityWriteResultSyncedChannelsInner>'
       }
     end
 
@@ -92,6 +97,12 @@ module Repull
       if attributes.key?(:'auth_errors')
         self.auth_errors = attributes[:'auth_errors']
       end
+
+      if attributes.key?(:'channels')
+        if (value = attributes[:'channels']).is_a?(Array)
+          self.channels = value
+        end
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -117,7 +128,8 @@ module Repull
           attempted == o.attempted &&
           succeeded == o.succeeded &&
           failed == o.failed &&
-          auth_errors == o.auth_errors
+          auth_errors == o.auth_errors &&
+          channels == o.channels
     end
 
     # @see the `==` method
@@ -129,7 +141,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [attempted, succeeded, failed, auth_errors].hash
+      [attempted, succeeded, failed, auth_errors, channels].hash
     end
 
     # Builds the object from hash

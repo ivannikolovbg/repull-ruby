@@ -24,7 +24,14 @@ module Repull
 
     attr_accessor :min_nights
 
+    # Maximum stay for an arrival on these dates. Sent to Airbnb and Booking.com. Vrbo has no per-date maximum stay, so it is not sent there.
     attr_accessor :max_nights
+
+    # No check-in on these dates (`true`), or check-in allowed again (`false`). Sent to Airbnb, Booking.com and Vrbo. Leaving it out keeps the current value.
+    attr_accessor :closed_to_arrival
+
+    # No check-out on these dates (`true`), or check-out allowed again (`false`). Sent to Airbnb, Booking.com and Vrbo. Leaving it out keeps the current value.
+    attr_accessor :closed_to_departure
 
     # Rooms to sell on these dates, for a listing that sells several identical rooms (`unitCount` > 1, e.g. a Booking.com room type). Up to the listing's `unitCount`. Refused with `409 managed_by_pms` on a hotel PMS room type (Cloudbeds, Mews) — its PMS owns the room count.
     attr_accessor :available_units
@@ -36,6 +43,8 @@ module Repull
         :'price' => :'price',
         :'min_nights' => :'minNights',
         :'max_nights' => :'maxNights',
+        :'closed_to_arrival' => :'closedToArrival',
+        :'closed_to_departure' => :'closedToDeparture',
         :'available_units' => :'availableUnits'
       }
     end
@@ -57,6 +66,8 @@ module Repull
         :'price' => :'Float',
         :'min_nights' => :'Integer',
         :'max_nights' => :'Integer',
+        :'closed_to_arrival' => :'Boolean',
+        :'closed_to_departure' => :'Boolean',
         :'available_units' => :'Integer'
       }
     end
@@ -97,6 +108,14 @@ module Repull
 
       if attributes.key?(:'max_nights')
         self.max_nights = attributes[:'max_nights']
+      end
+
+      if attributes.key?(:'closed_to_arrival')
+        self.closed_to_arrival = attributes[:'closed_to_arrival']
+      end
+
+      if attributes.key?(:'closed_to_departure')
+        self.closed_to_departure = attributes[:'closed_to_departure']
       end
 
       if attributes.key?(:'available_units')
@@ -185,6 +204,8 @@ module Repull
           price == o.price &&
           min_nights == o.min_nights &&
           max_nights == o.max_nights &&
+          closed_to_arrival == o.closed_to_arrival &&
+          closed_to_departure == o.closed_to_departure &&
           available_units == o.available_units
     end
 
@@ -197,7 +218,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [available, price, min_nights, max_nights, available_units].hash
+      [available, price, min_nights, max_nights, closed_to_arrival, closed_to_departure, available_units].hash
     end
 
     # Builds the object from hash

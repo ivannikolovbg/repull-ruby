@@ -14896,7 +14896,16 @@
           },
           "maxNights": {
             "type": "integer",
-            "minimum": 1
+            "minimum": 1,
+            "description": "Maximum stay for an arrival on these dates. Sent to Airbnb and Booking.com. Vrbo has no per-date maximum stay, so it is not sent there."
+          },
+          "closedToArrival": {
+            "type": "boolean",
+            "description": "No check-in on these dates (`true`), or check-in allowed again (`false`). Sent to Airbnb, Booking.com and Vrbo. Leaving it out keeps the current value."
+          },
+          "closedToDeparture": {
+            "type": "boolean",
+            "description": "No check-out on these dates (`true`), or check-out allowed again (`false`). Sent to Airbnb, Booking.com and Vrbo. Leaving it out keeps the current value."
           },
           "availableUnits": {
             "type": "integer",
@@ -16043,6 +16052,45 @@
               "authErrors": {
                 "type": "integer",
                 "description": "Channels whose token has expired \u2014 these need reconnecting, not retrying."
+              },
+              "channels": {
+                "type": "array",
+                "description": "One entry per listing per connected channel: which channel took the write and which refused it.",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "listingId": {
+                      "type": "string"
+                    },
+                    "channel": {
+                      "type": "string",
+                      "example": "booking",
+                      "description": "`airbnb`, `booking`, `vrbo`, or another connected channel."
+                    },
+                    "channelListingId": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "The channel's own id for the listing or room."
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "accepted",
+                        "queued",
+                        "failed"
+                      ],
+                      "description": "`accepted`: the channel took the write in this request. `queued` (Vrbo): sent within minutes and read back; `GET /v1/listings/{id}/calendar-sync` shows the outcome. `failed`: the channel refused it; see `error`."
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "authError": {
+                      "type": "boolean",
+                      "description": "True when the channel's authorization has expired: reconnect, don't retry."
+                    }
+                  }
+                }
               }
             }
           },
@@ -18337,7 +18385,7 @@
       "get": {
         "operationId": "get_availability",
         "summary": "Get property availability",
-        "description": "Channel-agnostic day-by-day availability calendar for a property over a date window. Returns a thin per-date shape \u2014 `{ date, available, price, minNights, availableUnits }` \u2014 projected from the property calendar. `availableUnits` is 1 or 0 for a single home, and the units left for a listing with units (a Mews or Cloudbeds room type, a Guesty multi-unit listing). On such a listing each day also carries `units: [{ id, available }]` \u2014 which unit is free that night, with the ids of the listing's `units[]` and a reservation's `unit`.\n\nThe `from` and `to` query params are **required** (ISO `YYYY-MM-DD`, inclusive) \u2014 omitting or malforming either returns 422. The window is capped at 366 days; longer ranges are truncated to the first 366 days.\n\n**`days` contains only the dates we actually hold calendar data for.** Requested dates with no calendar row are listed in `coverage.missingDates` \u2014 their availability is unknown. Never treat a missing date as bookable: this endpoint deliberately does not synthesise availability, because a fabricated open date can be double-booked. A property with no calendar still returns a real 200 (`days: []`, every date in `coverage.missingDates`), never a 404 \u2014 404 means the property id does not exist or belongs to a different workspace.\n\nThis endpoint is read-only, and the projected per-date shape carries **availability, units left, price, and min-nights only** \u2014 it does NOT expose max-stay, closed-to-arrival (CTA), closed-to-departure (CTD), or the dedicated stop-sell flag. To read or write that full restriction set on Booking.com use the channel routes: `GET`/`PUT /v1/channels/booking/availability` (with the room + rate ids from `GET /v1/channels/booking/properties/{id}/rooms`). To **write** calendar values use `PUT /v1/availability/{propertyId}` (or `PATCH /v1/availability/batch`), which updates the property calendar and pushes to its connected channels; channel-only settings stay on the channel routes.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "description": "Channel-agnostic day-by-day availability calendar for a property over a date window. Returns a thin per-date shape \u2014 `{ date, available, price, minNights, availableUnits }` \u2014 projected from the property calendar. `availableUnits` is 1 or 0 for a single home, and the units left for a listing with units (a Mews or Cloudbeds room type, a Guesty multi-unit listing). On such a listing each day also carries `units: [{ id, available }]` \u2014 which unit is free that night, with the ids of the listing's `units[]` and a reservation's `unit`.\n\nThe `from` and `to` query params are **required** (ISO `YYYY-MM-DD`, inclusive) \u2014 omitting or malforming either returns 422. The window is capped at 366 days; longer ranges are truncated to the first 366 days.\n\n**`days` contains only the dates we actually hold calendar data for.** Requested dates with no calendar row are listed in `coverage.missingDates` \u2014 their availability is unknown. Never treat a missing date as bookable: this endpoint deliberately does not synthesise availability, because a fabricated open date can be double-booked. A property with no calendar still returns a real 200 (`days: []`, every date in `coverage.missingDates`), never a 404 \u2014 404 means the property id does not exist or belongs to a different workspace.\n\nThis endpoint is read-only, and the projected per-date shape carries **availability, units left, price, and min-nights only** \u2014 it does NOT expose max-stay, closed-to-arrival (CTA), closed-to-departure (CTD), or the dedicated stop-sell flag. To read or write that full restriction set on Booking.com use the channel routes: `GET`/`PUT /v1/channels/booking/availability` (with the room + rate ids from `GET /v1/channels/booking/properties/{id}/rooms`). To **write** calendar values \u2014 price, availability, minimum and maximum stay, closed to arrival and closed to departure \u2014 use `PUT /v1/availability/{propertyId}` (or `PATCH /v1/availability/batch`), which updates the property calendar and pushes to its connected channels; channel-only settings stay on the channel routes.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
         "tags": [
           "Availability"
         ],
@@ -18397,7 +18445,7 @@
       "put": {
         "operationId": "updateAvailability",
         "summary": "Set prices, block or unblock dates",
-        "description": "Writes the calendar for one property AND pushes to every connected channel in the same step. A write that only changed our copy would leave the OTA calendars stale and eventually double-book a guest.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
+        "description": "Writes the calendar for one property AND pushes to every connected channel in the same step. A write that only changed our copy would leave the OTA calendars stale and eventually double-book a guest.\n\nThe fields apply to every date in `dates`; to give nights different values, send one request per group of nights. `closedToArrival` and `closedToDeparture` reach Airbnb, Booking.com and Vrbo. `maxNights` reaches Airbnb and Booking.com; Vrbo has no per-date maximum stay.\n\nReturns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.",
         "tags": [
           "Availability"
         ],
