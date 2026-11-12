@@ -33,10 +33,13 @@ module Repull
 
     attr_accessor :created_at
 
+    # What the connection may do: `read_only`, `messaging` or `full_access` (see `ConnectionAccessType` for the meaning per provider). Airbnb: the tier of the host in `externalAccountId`; each host's own is on `accounts[].accessType`. Absent when `connected` is false and on `GET /v1/connect/vrbo-login` (per account there); `null` when unknown.
+    attr_accessor :access_type
+
     # Host metadata, populated for Airbnb when the host row exists. Null for other providers (per-provider enrichment is incremental).
     attr_accessor :host
 
-    # Airbnb: every Airbnb account this workspace has connected, including ones since disconnected. Pass `externalAccountId` as `accountId` to `DELETE /v1/connect/airbnb` to disconnect one account. Vrbo (`GET /v1/connect/vrbo-login`): every signed-in Vrbo account, each with `accessType` and `import` (a `VrboImportStatus`), plus a top-level `dataFreshness`. `externalAccountId` is the platform's own id (Airbnb host id, Vrbo account id; `null` for a Vrbo sign-in whose account id is not captured yet) and `connectionId` our connection record.
+    # Airbnb: every Airbnb account this workspace has connected, including ones since disconnected, each with its own `accessType`. Pass `externalAccountId` as `accountId` to `DELETE /v1/connect/airbnb` to disconnect one account. Vrbo (`GET /v1/connect/vrbo-login`): every signed-in Vrbo account, each with `accessType` and `import` (a `VrboImportStatus`), plus a top-level `dataFreshness`. `externalAccountId` is the platform's own id (Airbnb host id, Vrbo account id; `null` for a Vrbo sign-in whose account id is not captured yet) and `connectionId` our connection record.
     attr_accessor :accounts
 
     # PMS connections only: what the app may change in the PMS. Change it with `PATCH /v1/connect/{provider}/write-policy`.
@@ -53,6 +56,28 @@ module Repull
     # Smoobu only: durable link to the hosted Smoobu form where the host pastes a new API key + secret. Submitting it updates this same connection (`id` unchanged). Present only when `action.required` is true.
     attr_accessor :fix_url
 
+    class EnumAttributeValidator
+      attr_reader :datatype
+      attr_reader :allowable_values
+
+      def initialize(datatype, allowable_values)
+        @allowable_values = allowable_values.map do |value|
+          case datatype.to_s
+          when /Integer/i
+            value.to_i
+          when /Float/i
+            value.to_f
+          else
+            value
+          end
+        end
+      end
+
+      def valid?(value)
+        !value || allowable_values.include?(value)
+      end
+    end
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
@@ -63,6 +88,7 @@ module Repull
         :'status' => :'status',
         :'external_account_id' => :'externalAccountId',
         :'created_at' => :'createdAt',
+        :'access_type' => :'accessType',
         :'host' => :'host',
         :'accounts' => :'accounts',
         :'write_policy' => :'writePolicy',
@@ -93,6 +119,7 @@ module Repull
         :'status' => :'String',
         :'external_account_id' => :'String',
         :'created_at' => :'Time',
+        :'access_type' => :'ConnectionAccessType',
         :'host' => :'ConnectHost',
         :'accounts' => :'Array<ConnectStatusAccountsInner>',
         :'write_policy' => :'PmsWritePolicy',
@@ -107,6 +134,7 @@ module Repull
     def self.openapi_nullable
       Set.new([
         :'external_account_id',
+        :'access_type',
         :'host',
         :'action',
         :'fix_url'
@@ -155,6 +183,10 @@ module Repull
 
       if attributes.key?(:'created_at')
         self.created_at = attributes[:'created_at']
+      end
+
+      if attributes.key?(:'access_type')
+        self.access_type = attributes[:'access_type']
       end
 
       if attributes.key?(:'host')
@@ -215,6 +247,7 @@ module Repull
           status == o.status &&
           external_account_id == o.external_account_id &&
           created_at == o.created_at &&
+          access_type == o.access_type &&
           host == o.host &&
           accounts == o.accounts &&
           write_policy == o.write_policy &&
@@ -233,7 +266,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [connected, provider, id, connection_id, status, external_account_id, created_at, host, accounts, write_policy, capabilities, data_freshness, action, fix_url].hash
+      [connected, provider, id, connection_id, status, external_account_id, created_at, access_type, host, accounts, write_policy, capabilities, data_freshness, action, fix_url].hash
     end
 
     # Builds the object from hash

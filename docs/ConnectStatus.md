@@ -11,8 +11,9 @@
 | **status** | **String** |  | [optional] |
 | **external_account_id** | **String** | The platform&#39;s own account id: Airbnb host id; Booking.com hotel id (&#x60;booking&#x60;); the Booking.com account id behind the Extranet login (&#x60;booking_extranet&#x60;); Vrbo&#39;s account id (&#x60;vrbo&#x60;); the PMS&#39;s own account or company id. &#x60;null&#x60; when the platform id is not known yet (a Vrbo sign-in before its account id is captured, a PMS that does not expose one); never a Repull id. | [optional] |
 | **created_at** | **Time** |  | [optional] |
+| **access_type** | [**ConnectionAccessType**](ConnectionAccessType.md) | What the connection may do: &#x60;read_only&#x60;, &#x60;messaging&#x60; or &#x60;full_access&#x60; (see &#x60;ConnectionAccessType&#x60; for the meaning per provider). Airbnb: the tier of the host in &#x60;externalAccountId&#x60;; each host&#39;s own is on &#x60;accounts[].accessType&#x60;. Absent when &#x60;connected&#x60; is false and on &#x60;GET /v1/connect/vrbo-login&#x60; (per account there); &#x60;null&#x60; when unknown. | [optional] |
 | **host** | [**ConnectHost**](ConnectHost.md) | Host metadata, populated for Airbnb when the host row exists. Null for other providers (per-provider enrichment is incremental). | [optional] |
-| **accounts** | [**Array&lt;ConnectStatusAccountsInner&gt;**](ConnectStatusAccountsInner.md) | Airbnb: every Airbnb account this workspace has connected, including ones since disconnected. Pass &#x60;externalAccountId&#x60; as &#x60;accountId&#x60; to &#x60;DELETE /v1/connect/airbnb&#x60; to disconnect one account. Vrbo (&#x60;GET /v1/connect/vrbo-login&#x60;): every signed-in Vrbo account, each with &#x60;accessType&#x60; and &#x60;import&#x60; (a &#x60;VrboImportStatus&#x60;), plus a top-level &#x60;dataFreshness&#x60;. &#x60;externalAccountId&#x60; is the platform&#39;s own id (Airbnb host id, Vrbo account id; &#x60;null&#x60; for a Vrbo sign-in whose account id is not captured yet) and &#x60;connectionId&#x60; our connection record. | [optional] |
+| **accounts** | [**Array&lt;ConnectStatusAccountsInner&gt;**](ConnectStatusAccountsInner.md) | Airbnb: every Airbnb account this workspace has connected, including ones since disconnected, each with its own &#x60;accessType&#x60;. Pass &#x60;externalAccountId&#x60; as &#x60;accountId&#x60; to &#x60;DELETE /v1/connect/airbnb&#x60; to disconnect one account. Vrbo (&#x60;GET /v1/connect/vrbo-login&#x60;): every signed-in Vrbo account, each with &#x60;accessType&#x60; and &#x60;import&#x60; (a &#x60;VrboImportStatus&#x60;), plus a top-level &#x60;dataFreshness&#x60;. &#x60;externalAccountId&#x60; is the platform&#39;s own id (Airbnb host id, Vrbo account id; &#x60;null&#x60; for a Vrbo sign-in whose account id is not captured yet) and &#x60;connectionId&#x60; our connection record. | [optional] |
 | **write_policy** | [**PmsWritePolicy**](PmsWritePolicy.md) | PMS connections only: what the app may change in the PMS. Change it with &#x60;PATCH /v1/connect/{provider}/write-policy&#x60;. | [optional] |
 | **capabilities** | [**ConnectStatusCapabilities**](ConnectStatusCapabilities.md) |  | [optional] |
 | **data_freshness** | **Object** | Vrbo only: the same freshness envelope the Airbnb read endpoints return, per account and in aggregate. Its reason is never_synced until a mapping is confirmed and importing while upcoming bookings come in. | [optional] |
@@ -32,6 +33,7 @@ instance = Repull::ConnectStatus.new(
   status: active,
   external_account_id: 10000001,
   created_at: null,
+  access_type: null,
   host: null,
   accounts: null,
   write_policy: null,

@@ -25,6 +25,9 @@ module Repull
     # The platform's own account id: Airbnb host id; Booking.com hotel id (`booking`); the Booking.com account id behind the Extranet login (`booking_extranet`); Vrbo's account id (`vrbo`); the PMS's own account or company id. `null` when the platform id is not known yet (a Vrbo sign-in before its account id is captured, a PMS that does not expose one); never a Repull id. Use `id` for our record.
     attr_accessor :external_account_id
 
+    # What this connection may do: `read_only`, `messaging` or `full_access` (see `ConnectionAccessType` for the meaning per provider). Airbnb: the tier of the host in `externalAccountId`. `null` when unknown.
+    attr_accessor :access_type
+
     attr_accessor :created_at
 
     # Host metadata for the linked account. Currently populated for Airbnb only; null for other providers.
@@ -39,6 +42,28 @@ module Repull
     # The account's latest import — `status: running` while the first sync (or a later one) is going, then `completed` or `failed`. `null` when no import has been recorded. The same run is announced by the `account.import.*` webhooks; the history is on `GET /v1/connections/{id}/imports`.
     attr_accessor :import
 
+    class EnumAttributeValidator
+      attr_reader :datatype
+      attr_reader :allowable_values
+
+      def initialize(datatype, allowable_values)
+        @allowable_values = allowable_values.map do |value|
+          case datatype.to_s
+          when /Integer/i
+            value.to_i
+          when /Float/i
+            value.to_f
+          else
+            value
+          end
+        end
+      end
+
+      def valid?(value)
+        !value || allowable_values.include?(value)
+      end
+    end
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
@@ -46,6 +71,7 @@ module Repull
         :'provider' => :'provider',
         :'status' => :'status',
         :'external_account_id' => :'externalAccountId',
+        :'access_type' => :'accessType',
         :'created_at' => :'createdAt',
         :'host' => :'host',
         :'action' => :'action',
@@ -71,6 +97,7 @@ module Repull
         :'provider' => :'String',
         :'status' => :'String',
         :'external_account_id' => :'String',
+        :'access_type' => :'ConnectionAccessType',
         :'created_at' => :'Time',
         :'host' => :'ConnectHost',
         :'action' => :'ConnectionAction',
@@ -83,6 +110,7 @@ module Repull
     def self.openapi_nullable
       Set.new([
         :'external_account_id',
+        :'access_type',
         :'host',
         :'action',
         :'fix_url',
@@ -120,6 +148,10 @@ module Repull
 
       if attributes.key?(:'external_account_id')
         self.external_account_id = attributes[:'external_account_id']
+      end
+
+      if attributes.key?(:'access_type')
+        self.access_type = attributes[:'access_type']
       end
 
       if attributes.key?(:'created_at')
@@ -167,6 +199,7 @@ module Repull
           provider == o.provider &&
           status == o.status &&
           external_account_id == o.external_account_id &&
+          access_type == o.access_type &&
           created_at == o.created_at &&
           host == o.host &&
           action == o.action &&
@@ -183,7 +216,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, provider, status, external_account_id, created_at, host, action, fix_url, import].hash
+      [id, provider, status, external_account_id, access_type, created_at, host, action, fix_url, import].hash
     end
 
     # Builds the object from hash

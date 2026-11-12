@@ -33,7 +33,7 @@ module Repull
     # Vrbo only: the account email.
     attr_accessor :email
 
-    # Vrbo only.
+    # What this account may do. Airbnb: the tier the host's token was granted with (`read_only`, `messaging`, `full_access`). Vrbo: `messaging` (bookings and messages, no calendar push) or `full_access` (also pushes prices and availability). `null` when unknown.
     attr_accessor :access_type
 
     # Vrbo only. The address the host can add on Vrbo as a secondary email (with message and reservation notifications on) so new bookings, inquiries and messages arrive within a minute instead of at the scheduled check. Ask every host to add it: notifications are how Vrbo updates reach Repull, the scheduled check is the backup. Hosted Connect shows it on its mapping screen; show it in your own app when you create sessions with `mapping: \"api\"`.
@@ -100,7 +100,7 @@ module Repull
         :'status' => :'String',
         :'connected' => :'Boolean',
         :'email' => :'String',
-        :'access_type' => :'String',
+        :'access_type' => :'ConnectionAccessType',
         :'notification_email' => :'String',
         :'import' => :'VrboImportStatus'
       }
@@ -190,19 +190,7 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
-      access_type_validator = EnumAttributeValidator.new('String', ["messaging", "full_access"])
-      return false unless access_type_validator.valid?(@access_type)
       true
-    end
-
-    # Custom attribute writer method checking allowed values (enum).
-    # @param [Object] access_type Object to be assigned
-    def access_type=(access_type)
-      validator = EnumAttributeValidator.new('String', ["messaging", "full_access"])
-      unless validator.valid?(access_type)
-        fail ArgumentError, "invalid value for \"access_type\", must be one of #{validator.allowable_values}."
-      end
-      @access_type = access_type
     end
 
     # Checks equality by comparing each attribute.

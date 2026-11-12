@@ -11,7 +11,7 @@
 | **status** | **String** |  | [optional] |
 | **connected** | **Boolean** | True while the account is active and its authorization is usable. | [optional] |
 | **email** | **String** | Vrbo only: the account email. | [optional] |
-| **access_type** | **String** | Vrbo only. | [optional] |
+| **access_type** | [**ConnectionAccessType**](ConnectionAccessType.md) | What this account may do. Airbnb: the tier the host&#39;s token was granted with (&#x60;read_only&#x60;, &#x60;messaging&#x60;, &#x60;full_access&#x60;). Vrbo: &#x60;messaging&#x60; (bookings and messages, no calendar push) or &#x60;full_access&#x60; (also pushes prices and availability). &#x60;null&#x60; when unknown. | [optional] |
 | **notification_email** | **String** | Vrbo only. The address the host can add on Vrbo as a secondary email (with message and reservation notifications on) so new bookings, inquiries and messages arrive within a minute instead of at the scheduled check. Ask every host to add it: notifications are how Vrbo updates reach Repull, the scheduled check is the backup. Hosted Connect shows it on its mapping screen; show it in your own app when you create sessions with &#x60;mapping: \&quot;api\&quot;&#x60;. | [optional] |
 | **import** | [**VrboImportStatus**](VrboImportStatus.md) | Vrbo only: where the account import stands. | [optional] |
 

@@ -1283,7 +1283,8 @@
           "lastMessageAt": {
             "type": "string",
             "format": "date-time",
-            "nullable": true
+            "nullable": true,
+            "description": "The conversation's newest activity: the time of its newest message (after an import, the newest imported message's own time, not the import time), or of a later change to the conversation. `GET /v1/conversations` sorts on it by default."
           },
           "lastMessagePreview": {
             "type": "string",
@@ -1303,7 +1304,8 @@
           },
           "updatedAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "When the conversation record last changed; the watermark for `updated_since`."
           }
         }
       },
@@ -1800,6 +1802,15 @@
             "description": "The platform's own account id: Airbnb host id; Booking.com hotel id (`booking`); the Booking.com account id behind the Extranet login (`booking_extranet`); Vrbo's account id (`vrbo`); the PMS's own account or company id. `null` when the platform id is not known yet (a Vrbo sign-in before its account id is captured, a PMS that does not expose one); never a Repull id. Use `id` for our record.",
             "example": "20123456"
           },
+          "accessType": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConnectionAccessType"
+              }
+            ],
+            "description": "What this connection may do: `read_only`, `messaging` or `full_access` (see `ConnectionAccessType` for the meaning per provider). Airbnb: the tier of the host in `externalAccountId`. `null` when unknown."
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -1838,6 +1849,16 @@
             "description": "The account's latest import \u2014 `status: running` while the first sync (or a later one) is going, then `completed` or `failed`. `null` when no import has been recorded. The same run is announced by the `account.import.*` webhooks; the history is on `GET /v1/connections/{id}/imports`."
           }
         }
+      },
+      "ConnectionAccessType": {
+        "type": "string",
+        "enum": [
+          "read_only",
+          "messaging",
+          "full_access"
+        ],
+        "description": "What the connection may do on the platform, read from what we store. `null` when we do not know (e.g. an OTA we do not grade, or an Airbnb token from before the tiers existed). `read_only`: reads only, never writes. Airbnb: the read-only OAuth tier (no replies to guests, no writes). PMS: every `writePolicy` switch is off. `messaging`: reads reservations and messages and replies to guests; never writes prices or availability. Airbnb: the messaging OAuth tier (\"Messaging & reviews\": messages and review replies, no property management). Vrbo: bookings and messages, no calendar push. Booking.com Extranet (`booking_extranet`): always \u2014 it reads reservations, messages and reviews and replies, and never writes rates or availability. `full_access`: reads and writes, including prices and availability. Airbnb: the full OAuth tier. Vrbo: also pushes prices and availability. Booking.com (`booking`, the official connection): always. PMS: at least one `writePolicy` switch is on (`writePolicy` on `GET /v1/connect/{provider}` says which). Airbnb's tier is set when the host connects (`accessType` on `POST /v1/connect`); reconnect to change it.",
+        "example": "messaging"
       },
       "ConnectionAction": {
         "type": "object",
@@ -2476,6 +2497,15 @@
             "type": "string",
             "format": "date-time"
           },
+          "accessType": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConnectionAccessType"
+              }
+            ],
+            "description": "What the connection may do: `read_only`, `messaging` or `full_access` (see `ConnectionAccessType` for the meaning per provider). Airbnb: the tier of the host in `externalAccountId`; each host's own is on `accounts[].accessType`. Absent when `connected` is false and on `GET /v1/connect/vrbo-login` (per account there); `null` when unknown."
+          },
           "host": {
             "nullable": true,
             "allOf": [
@@ -2487,7 +2517,7 @@
           },
           "accounts": {
             "type": "array",
-            "description": "Airbnb: every Airbnb account this workspace has connected, including ones since disconnected. Pass `externalAccountId` as `accountId` to `DELETE /v1/connect/airbnb` to disconnect one account. Vrbo (`GET /v1/connect/vrbo-login`): every signed-in Vrbo account, each with `accessType` and `import` (a `VrboImportStatus`), plus a top-level `dataFreshness`. `externalAccountId` is the platform's own id (Airbnb host id, Vrbo account id; `null` for a Vrbo sign-in whose account id is not captured yet) and `connectionId` our connection record.",
+            "description": "Airbnb: every Airbnb account this workspace has connected, including ones since disconnected, each with its own `accessType`. Pass `externalAccountId` as `accountId` to `DELETE /v1/connect/airbnb` to disconnect one account. Vrbo (`GET /v1/connect/vrbo-login`): every signed-in Vrbo account, each with `accessType` and `import` (a `VrboImportStatus`), plus a top-level `dataFreshness`. `externalAccountId` is the platform's own id (Airbnb host id, Vrbo account id; `null` for a Vrbo sign-in whose account id is not captured yet) and `connectionId` our connection record.",
             "items": {
               "type": "object",
               "properties": {
@@ -2528,13 +2558,13 @@
                   "description": "Vrbo only: the account email."
                 },
                 "accessType": {
-                  "type": "string",
                   "nullable": true,
-                  "enum": [
-                    "messaging",
-                    "full_access"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ConnectionAccessType"
+                    }
                   ],
-                  "description": "Vrbo only."
+                  "description": "What this account may do. Airbnb: the tier the host's token was granted with (`read_only`, `messaging`, `full_access`). Vrbo: `messaging` (bookings and messages, no calendar push) or `full_access` (also pushes prices and availability). `null` when unknown."
                 },
                 "notificationEmail": {
                   "type": "string",
@@ -19660,7 +19690,7 @@
       "get": {
         "operationId": "listConversations",
         "summary": "List conversations",
-        "description": "Cursor-paginated list of message threads owned by the workspace. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request.\n\n`?offset=` is also accepted as a first-class alias for shallow paging (0..10000) \u2014 see the `offset` parameter below. Mutually exclusive with `cursor`.\n\nFilters: `platform` (`airbnb`|`booking`|`vrbo`|`website`|`email`), `status` (`open`|`archived` \u2014 `archived` is a stable no-op until the bit lands on `message_threads`).\n\n**Inactive listings:** conversations that belong to an inactive listing (by the thread's listing or its reservation's listing) are left out of the page and of `pagination.total`. Inactive listings keep syncing; activate the listing to use it here.\n\n**Order:** newest conversation first (by when the conversation started), unless you pass `updated_since`.\n\n**Incremental sync (`?updated_since=<ISO8601>`):** only conversations with activity (a new message or another change) at or after that instant, ordered oldest change first (`updatedAt ASC`). Walk every page with `cursor`, keeping `updated_since` on each request; the last row's `updatedAt` is your next watermark. A cursor from one kind of walk is refused on the other.",
+        "description": "Cursor-paginated list of message threads owned by the workspace. Use `pagination.nextCursor` from one response as the `cursor` query param of the next request.\n\n`?offset=` is also accepted as a first-class alias for shallow paging (0..10000) \u2014 see the `offset` parameter below. Mutually exclusive with `cursor`.\n\nFilters: `platform` (`airbnb`|`booking`|`vrbo`|`website`|`email`), `status` (`open`|`archived` \u2014 `archived` is a stable no-op until the bit lands on `message_threads`).\n\n**Inactive listings:** conversations that belong to an inactive listing (by the thread's listing or its reservation's listing) are left out of the page and of `pagination.total`. Inactive listings keep syncing; activate the listing to use it here.\n\n**Order:** most recent activity first (`lastMessageAt` descending) by default (`order=recent`). `lastMessageAt` is the conversation's newest activity: the time of its newest message (after an import, the newest imported message's own time, not the import time), or of a later change to the conversation.\n\n**Full sync \u2014 use `order=created`:** a recent-order walk is a live view: a conversation that gets a new message while you page moves to the front, behind your walk, and that walk does not return it (the next walk or an `updated_since` poll will). To walk every conversation exactly once, pass `order=created` \u2014 newest conversation first (by when it started), stable for the whole walk. A cursor keeps the order its walk started in: cursors issued before recency ordering continue in creation order, and a recent-order cursor is refused with `order=created`.\n\n**Incremental sync (`?updated_since=<ISO8601>`):** only conversations whose record changed (a new message or another change) at or after that instant, ordered oldest change first (`updatedAt ASC`); `order` does not apply. Walk every page with `cursor`, keeping `updated_since` on each request; the last row's `updatedAt` is your next watermark. A cursor from one kind of walk is refused on the other.",
         "tags": [
           "Conversations"
         ],
@@ -19715,8 +19745,21 @@
               "type": "string",
               "format": "date-time"
             },
-            "description": "ISO 8601 instant. Only conversations with activity at or after it, oldest change first. Keep it on every page of the walk; use the last row's `updatedAt` as the next value.",
+            "description": "ISO 8601 instant. Only conversations whose record changed at or after it, oldest change first. Keep it on every page of the walk; use the last row's `updatedAt` as the next value.",
             "example": "2026-10-09T18:00:00Z"
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "recent",
+                "created"
+              ],
+              "default": "recent"
+            },
+            "description": "`recent` (default): most recent activity first \u2014 for an inbox or \"what changed lately\". A conversation that gets a new message while you page moves to the front, behind your walk, so a walk can miss it. `created`: newest conversation first, stable for the whole walk \u2014 use it to sync every conversation exactly once. Ignored with `updated_since` (always oldest change first). Keep the same value on every page of a walk."
           },
           {
             "name": "status",
@@ -20560,7 +20603,7 @@
       "get": {
         "operationId": "list_connections",
         "summary": "List PMS/OTA connections",
-        "description": "Returns every PMS and OTA connection in the workspace, each with its `status`.\n\n**Account ids.** `externalAccountId` is the platform's own account id (Airbnb host id, Booking.com hotel id, the Booking.com account id behind an Extranet login, the PMS account id; `null` when the platform does not give us one) and `id` is our connection record, the `X-Account-Id`.\n\n**One entry per Booking.com Extranet login.** Each Booking.com account that invites the Repull user connects as its own login, with its own `externalAccountId` \u2014 the Booking.com account id (handle `booking_extranet:{externalAccountId}`). A new login adds an entry next to the existing ones and never replaces them; the entries share the workspace's Extranet `id`, and each login's listings, reservations, conversations and reviews stay under its own account (filter them with `?account=booking_extranet:{externalAccountId}`).\n\n**Spot connections that need attention.** A connection whose `status` is not `active` may need the host to do something before it works \u2014 most commonly a Booking.com Extranet connection where the invited user was granted only partial access (`status: \"needs_permissions\"`). A Smoobu connection still on a legacy single API key carries `action.reason: \"reauth_required\"` while its `status` is `active`: Smoobu stops accepting those keys on October 31, 2026, and `fixUrl` opens the form for a new API key + secret (the connection id stays the same). These connections carry two extra fields:\n\n- `action` \u2014 `{ required: true, reason, message }`. `reason` is a stable machine code (e.g. `needs_permissions`); `message` is a host-facing one-liner describing what to do.\n- `fixUrl` \u2014 a durable link that reopens the hosted Connect flow **bound to that account, on the fix screen** (e.g. \"grant full access\" + a Re-check button). It is safe to store and show in your own dashboard.\n\n**Self-serve repair:** when `action.required` is true, surface a \"Fix\" button that opens `fixUrl` in a new tab (or embed it). The host resolves the issue (e.g. grants the user full access in Booking.com) and clicks Re-check; the import finishes on its own and the connection flips back to `active` \u2014 no re-invite, no support ticket. Poll this endpoint (or read it after the host returns) to confirm `action` has cleared.",
+        "description": "Returns every PMS and OTA connection in the workspace, each with its `status`.\n\n**Account ids.** `externalAccountId` is the platform's own account id (Airbnb host id, Booking.com hotel id, the Booking.com account id behind an Extranet login, the PMS account id; `null` when the platform does not give us one) and `id` is our connection record, the `X-Account-Id`.\n\n**Access level.** Every connection carries `accessType`: `read_only`, `messaging` or `full_access`, or `null` when unknown. Airbnb: the tier the host's token was granted with. Vrbo: bookings and messages only (`messaging`) or with the calendar push (`full_access`). Booking.com: always `full_access`. Booking.com Extranet: always `messaging` (reads reservations, messages and reviews and replies; never writes rates or availability). PMS: `read_only` when every write-policy switch is off, else `full_access`. See the `ConnectionAccessType` schema.\n\n**One entry per Booking.com Extranet login.** Each Booking.com account that invites the Repull user connects as its own login, with its own `externalAccountId` \u2014 the Booking.com account id (handle `booking_extranet:{externalAccountId}`). A new login adds an entry next to the existing ones and never replaces them; the entries share the workspace's Extranet `id`, and each login's listings, reservations, conversations and reviews stay under its own account (filter them with `?account=booking_extranet:{externalAccountId}`).\n\n**Spot connections that need attention.** A connection whose `status` is not `active` may need the host to do something before it works \u2014 most commonly a Booking.com Extranet connection where the invited user was granted only partial access (`status: \"needs_permissions\"`). A Smoobu connection still on a legacy single API key carries `action.reason: \"reauth_required\"` while its `status` is `active`: Smoobu stops accepting those keys on October 31, 2026, and `fixUrl` opens the form for a new API key + secret (the connection id stays the same). These connections carry two extra fields:\n\n- `action` \u2014 `{ required: true, reason, message }`. `reason` is a stable machine code (e.g. `needs_permissions`); `message` is a host-facing one-liner describing what to do.\n- `fixUrl` \u2014 a durable link that reopens the hosted Connect flow **bound to that account, on the fix screen** (e.g. \"grant full access\" + a Re-check button). It is safe to store and show in your own dashboard.\n\n**Self-serve repair:** when `action.required` is true, surface a \"Fix\" button that opens `fixUrl` in a new tab (or embed it). The host resolves the issue (e.g. grants the user full access in Booking.com) and clicks Re-check; the import finishes on its own and the connection flips back to `active` \u2014 no re-invite, no support ticket. Poll this endpoint (or read it after the host returns) to confirm `action` has cleared.",
         "tags": [
           "Connect"
         ],
@@ -20833,7 +20876,7 @@
       "get": {
         "operationId": "get_connect_status",
         "summary": "Get connection status",
-        "description": "Returns the current connection status for a provider, including host metadata (display name + avatar) for Airbnb so clients can render an account-level confirmation UI.",
+        "description": "Returns the current connection status for a provider, including host metadata (display name + avatar) for Airbnb so clients can render an account-level confirmation UI.\n\n**Access level.** `accessType` says what the connection may do: `read_only`, `messaging` or `full_access` (`null` when unknown). Airbnb reports it per host on `accounts[]` (the tier each host's token was granted with) and at the top level for the host in `externalAccountId`; Vrbo (`vrbo-login`) per account; Booking.com is always `full_access`, the Booking.com Extranet always `messaging`; a PMS is `read_only` when every `writePolicy` switch is off, else `full_access`. See the `ConnectionAccessType` schema for the meaning per provider.",
         "tags": [
           "Connect"
         ],

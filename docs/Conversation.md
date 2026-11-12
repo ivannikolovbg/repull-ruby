@@ -13,12 +13,12 @@
 | **listing_id** | **String** |  | [optional] |
 | **reservation_id** | **String** |  | [optional] |
 | **subject** | **String** | Thread subject (email/website channels) or null when not applicable. | [optional] |
-| **last_message_at** | **Time** |  | [optional] |
+| **last_message_at** | **Time** | The conversation&#39;s newest activity: the time of its newest message (after an import, the newest imported message&#39;s own time, not the import time), or of a later change to the conversation. &#x60;GET /v1/conversations&#x60; sorts on it by default. | [optional] |
 | **last_message_preview** | **String** | Short preview of the most recent message body for list-UI rendering. | [optional] |
 | **unread_count** | **Integer** |  | [optional] |
 | **status** | **String** | &#x60;archived&#x60; is reserved for a future bit on &#x60;message_threads&#x60; — currently always &#x60;open&#x60;. | [optional] |
 | **created_at** | **Time** |  | [optional] |
-| **updated_at** | **Time** |  | [optional] |
+| **updated_at** | **Time** | When the conversation record last changed; the watermark for &#x60;updated_since&#x60;. | [optional] |
 
 ## Example
 

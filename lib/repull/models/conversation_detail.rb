@@ -38,6 +38,7 @@ module Repull
     # Thread subject (email/website channels) or null when not applicable.
     attr_accessor :subject
 
+    # The conversation's newest activity: the time of its newest message (after an import, the newest imported message's own time, not the import time), or of a later change to the conversation. `GET /v1/conversations` sorts on it by default.
     attr_accessor :last_message_at
 
     # Short preview of the most recent message body for list-UI rendering.
@@ -50,6 +51,7 @@ module Repull
 
     attr_accessor :created_at
 
+    # When the conversation record last changed; the watermark for `updated_since`.
     attr_accessor :updated_at
 
     attr_accessor :host
