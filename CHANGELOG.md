@@ -2,6 +2,10 @@
 
 All notable changes to the `repull` gem are documented here.
 
+## 0.2.45 — 2026-11-12
+
+- Regenerated from the live spec (automated spec refresh).
+
 ## 0.2.44 — 2026-11-11
 
 - Message webhooks (`reservation.message.received`, `reservation.message.sent`, `reservation.message.updated`) now type every field they deliver: `externalThreadId`, `listingId`, `channel`, `messageId`, `externalMessageId`, `confirmationCode`, `direction`, `senderType`, `senderName`, `senderAvatar`, `translatedBody`, `isAutomated`, `aiGenerated`, `status` and `revision`. `threadId` is the numeric conversation id as a string (the old example showed `thr_…`); `reservationId` can be null.
