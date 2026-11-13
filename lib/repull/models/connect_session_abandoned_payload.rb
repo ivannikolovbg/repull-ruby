@@ -33,8 +33,14 @@ module Repull
     # The last error the user hit on the Connect page, e.g. `invalid_credentials`, `awaiting_designation`.
     attr_accessor :last_error_code
 
-    # Booking.com: the Hotel ID the user entered while waiting for the Extranet approval.
+    # Booking.com: the Hotel ID the user entered while waiting for the Extranet approval. Booking.com Extranet in `awaiting_room_mapping`: the Booking.com account id of the connected login.
     attr_accessor :external_account_id
+
+    # Booking.com Extranet in `awaiting_room_mapping`: the connection record of the connected login (the `X-Account-Id`). Absent otherwise.
+    attr_accessor :connection_id
+
+    # Booking.com Extranet in `awaiting_room_mapping`: a durable link that reopens Connect on the room-mapping step for this login. Send the host there to finish. `null` when there is nothing to resume.
+    attr_accessor :fix_url
 
     # What to tell the user, in plain English.
     attr_accessor :next_step
@@ -53,6 +59,8 @@ module Repull
         :'reason' => :'reason',
         :'last_error_code' => :'lastErrorCode',
         :'external_account_id' => :'externalAccountId',
+        :'connection_id' => :'connectionId',
+        :'fix_url' => :'fixUrl',
         :'next_step' => :'nextStep',
         :'created_at' => :'createdAt',
         :'last_activity_at' => :'lastActivityAt'
@@ -79,6 +87,8 @@ module Repull
         :'reason' => :'String',
         :'last_error_code' => :'String',
         :'external_account_id' => :'String',
+        :'connection_id' => :'String',
+        :'fix_url' => :'String',
         :'next_step' => :'String',
         :'created_at' => :'Time',
         :'last_activity_at' => :'Time'
@@ -92,6 +102,8 @@ module Repull
         :'provider',
         :'last_error_code',
         :'external_account_id',
+        :'connection_id',
+        :'fix_url',
       ])
     end
 
@@ -139,6 +151,14 @@ module Repull
         self.external_account_id = attributes[:'external_account_id']
       end
 
+      if attributes.key?(:'connection_id')
+        self.connection_id = attributes[:'connection_id']
+      end
+
+      if attributes.key?(:'fix_url')
+        self.fix_url = attributes[:'fix_url']
+      end
+
       if attributes.key?(:'next_step')
         self.next_step = attributes[:'next_step']
       end
@@ -179,6 +199,8 @@ module Repull
           reason == o.reason &&
           last_error_code == o.last_error_code &&
           external_account_id == o.external_account_id &&
+          connection_id == o.connection_id &&
+          fix_url == o.fix_url &&
           next_step == o.next_step &&
           created_at == o.created_at &&
           last_activity_at == o.last_activity_at
@@ -193,7 +215,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [session_id, state, provider, status, reason, last_error_code, external_account_id, next_step, created_at, last_activity_at].hash
+      [session_id, state, provider, status, reason, last_error_code, external_account_id, connection_id, fix_url, next_step, created_at, last_activity_at].hash
     end
 
     # Builds the object from hash
