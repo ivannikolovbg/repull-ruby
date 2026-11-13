@@ -14,10 +14,13 @@ require 'date'
 require 'time'
 
 module Repull
-  # Take this listing's Booking.com property off sale, or put it back.
+  # Take this listing's Booking.com property off sale or put it back (`unlist` / `relist`), or open or close the property itself on Booking.com (`open` / `close`).
   class BookingPropertyActionRequest < ApiModelBase
-    # `unlist` closes the room's availability across the whole forward window, so the property stops selling. `relist` re-syncs the real calendar: dates that are genuinely blocked (a reservation, an owner stay) stay blocked, and only the closure `unlist` wrote lifts. They are not mirror images, and that is deliberate.
+    # `unlist` closes the room's availability across the whole forward window, so the property stops selling. `relist` re-syncs the real calendar: dates that are genuinely blocked (a reservation, an owner stay) stay blocked, and only the closure `unlist` wrote lifts. They are not mirror images, and that is deliberate.  `open` runs Booking.com's readiness check and opens the property only if it passes — on a property that is not ready it changes nothing and answers `422 booking_rejected` with Booking.com's reasons in `blockers`. It opens a property Booking.com has in a build stage (`XML: Being built`, `XML: Ready to open`) or closed. `close` closes the property on Booking.com with `reason`.
     attr_accessor :action
+
+    # `close` only: the reason Booking.com records for closing the property. Default `PROPERTY_NOT_AVAILABLE`.
+    attr_accessor :reason
 
     # Booking.com property to act on, for a listing mapped to more than one. Without it the request is refused with `409 ambiguous_booking_mapping` and nothing is written. `?hotel_id=` means the same thing; the body wins if you send both.
     attr_accessor :hotel_id
@@ -26,6 +29,7 @@ module Repull
     def self.attribute_map
       {
         :'action' => :'action',
+        :'reason' => :'reason',
         :'hotel_id' => :'hotelId'
       }
     end
@@ -44,6 +48,7 @@ module Repull
     def self.openapi_types
       {
         :'action' => :'String',
+        :'reason' => :'String',
         :'hotel_id' => :'String'
       }
     end
@@ -74,6 +79,10 @@ module Repull
         self.action = attributes[:'action']
       else
         self.action = nil
+      end
+
+      if attributes.key?(:'reason')
+        self.reason = attributes[:'reason']
       end
 
       if attributes.key?(:'hotel_id')
@@ -117,6 +126,7 @@ module Repull
       return true if self.equal?(o)
       self.class == o.class &&
           action == o.action &&
+          reason == o.reason &&
           hotel_id == o.hotel_id
     end
 
@@ -129,7 +139,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [action, hotel_id].hash
+      [action, reason, hotel_id].hash
     end
 
     # Builds the object from hash

@@ -21,11 +21,15 @@ module Repull
     # The resulting active state after the toggle.
     attr_accessor :active
 
+    # Only when activating: what happened to the Booking.com properties this listing is mapped to. Activating a listing opens its Booking.com property if Booking.com still has it in a build stage. Empty when the listing has no Booking.com property.
+    attr_accessor :booking_properties
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
         :'id' => :'id',
-        :'active' => :'active'
+        :'active' => :'active',
+        :'booking_properties' => :'bookingProperties'
       }
     end
 
@@ -43,7 +47,8 @@ module Repull
     def self.openapi_types
       {
         :'id' => :'String',
-        :'active' => :'Boolean'
+        :'active' => :'Boolean',
+        :'booking_properties' => :'Array<BookingPropertyOpenResult>'
       }
     end
 
@@ -76,6 +81,12 @@ module Repull
       if attributes.key?(:'active')
         self.active = attributes[:'active']
       end
+
+      if attributes.key?(:'booking_properties')
+        if (value = attributes[:'booking_properties']).is_a?(Array)
+          self.booking_properties = value
+        end
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -99,7 +110,8 @@ module Repull
       return true if self.equal?(o)
       self.class == o.class &&
           id == o.id &&
-          active == o.active
+          active == o.active &&
+          booking_properties == o.booking_properties
     end
 
     # @see the `==` method
@@ -111,7 +123,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, active].hash
+      [id, active, booking_properties].hash
     end
 
     # Builds the object from hash

@@ -21,13 +21,22 @@ module Repull
 
     attr_accessor :action
 
+    # `open` / `close` only: the property's state on Booking.com after the call.
+    attr_accessor :property_status
+
+    # `open` / `close` only: false when the property was already in that state, so nothing was sent.
+    attr_accessor :changed
+
+    # `open` / `close` only: Booking.com's status for the property before the call, e.g. `XML: Ready to open`.
+    attr_accessor :booking_status
+
     # The Booking.com property that was acted on. Always read it back — a listing can be mapped to several, and this states which one changed.
     attr_accessor :hotel_id
 
     # Booking.com's own room id the availability write addressed.
     attr_accessor :room_booking_id
 
-    # Whether the property is now on sale. **This is the state of the property on Booking.com, not of the listing in Repull** — `active` (what Repull bills and serves) is untouched by both actions and is deliberately not echoed here so the two can never be read as one field.
+    # `unlist` / `relist` only. Whether the property is now on sale. **This is the state of the property on Booking.com, not of the listing in Repull** — `active` (what Repull bills and serves) is untouched by both actions and is deliberately not echoed here so the two can never be read as one field.
     attr_accessor :selling
 
     # Attribute mapping from ruby-style variable name to JSON key.
@@ -36,6 +45,9 @@ module Repull
         :'listing_id' => :'listingId',
         :'channel' => :'channel',
         :'action' => :'action',
+        :'property_status' => :'propertyStatus',
+        :'changed' => :'changed',
+        :'booking_status' => :'bookingStatus',
         :'hotel_id' => :'hotelId',
         :'room_booking_id' => :'roomBookingId',
         :'selling' => :'selling'
@@ -58,6 +70,9 @@ module Repull
         :'listing_id' => :'String',
         :'channel' => :'String',
         :'action' => :'String',
+        :'property_status' => :'String',
+        :'changed' => :'Boolean',
+        :'booking_status' => :'String',
         :'hotel_id' => :'String',
         :'room_booking_id' => :'String',
         :'selling' => :'Boolean'
@@ -67,6 +82,7 @@ module Repull
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'booking_status',
         :'room_booking_id',
       ])
     end
@@ -105,6 +121,18 @@ module Repull
         self.action = nil
       end
 
+      if attributes.key?(:'property_status')
+        self.property_status = attributes[:'property_status']
+      end
+
+      if attributes.key?(:'changed')
+        self.changed = attributes[:'changed']
+      end
+
+      if attributes.key?(:'booking_status')
+        self.booking_status = attributes[:'booking_status']
+      end
+
       if attributes.key?(:'hotel_id')
         self.hotel_id = attributes[:'hotel_id']
       else
@@ -117,8 +145,6 @@ module Repull
 
       if attributes.key?(:'selling')
         self.selling = attributes[:'selling']
-      else
-        self.selling = nil
       end
     end
 
@@ -143,10 +169,6 @@ module Repull
         invalid_properties.push('invalid value for "hotel_id", hotel_id cannot be nil.')
       end
 
-      if @selling.nil?
-        invalid_properties.push('invalid value for "selling", selling cannot be nil.')
-      end
-
       invalid_properties
     end
 
@@ -158,7 +180,6 @@ module Repull
       return false if @channel.nil?
       return false if @action.nil?
       return false if @hotel_id.nil?
-      return false if @selling.nil?
       true
     end
 
@@ -202,16 +223,6 @@ module Repull
       @hotel_id = hotel_id
     end
 
-    # Custom attribute writer method with validation
-    # @param [Object] selling Value to be assigned
-    def selling=(selling)
-      if selling.nil?
-        fail ArgumentError, 'selling cannot be nil'
-      end
-
-      @selling = selling
-    end
-
     # Checks equality by comparing each attribute.
     # @param [Object] Object to be compared
     def ==(o)
@@ -220,6 +231,9 @@ module Repull
           listing_id == o.listing_id &&
           channel == o.channel &&
           action == o.action &&
+          property_status == o.property_status &&
+          changed == o.changed &&
+          booking_status == o.booking_status &&
           hotel_id == o.hotel_id &&
           room_booking_id == o.room_booking_id &&
           selling == o.selling
@@ -234,7 +248,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [listing_id, channel, action, hotel_id, room_booking_id, selling].hash
+      [listing_id, channel, action, property_status, changed, booking_status, hotel_id, room_booking_id, selling].hash
     end
 
     # Builds the object from hash

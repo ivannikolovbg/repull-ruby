@@ -18,7 +18,7 @@ module Repull
   class MapConnectBookingRoomsResponsePropertyStatus < ApiModelBase
     attr_accessor :property_id
 
-    # `opened`: it was being built and is now open. `not_needed`: it was already past that stage. `blocked`: Booking.com will not open it yet — see `blockers`. `status_unknown`: its status could not be read. `failed`: Booking.com did not answer the open request.
+    # `opened`: it was being built and is now open. `not_needed`: it was already past that stage. `blocked`: Booking.com will not open it yet — see `blockers`. `status_unknown`: its status could not be read. `failed`: Booking.com did not answer the open request. `listing_inactive`: a listing mapped to the property is inactive, so it was not opened — activate it when it is ready and Repull opens the property. `no_listing`: no listing is mapped to it.
     attr_accessor :outcome
 
     # Booking.com's status for the property before this step, e.g. `XML: Being built`.
@@ -143,7 +143,7 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
-      outcome_validator = EnumAttributeValidator.new('String', ["opened", "blocked", "not_needed", "status_unknown", "failed"])
+      outcome_validator = EnumAttributeValidator.new('String', ["opened", "blocked", "not_needed", "status_unknown", "failed", "listing_inactive", "no_listing"])
       return false unless outcome_validator.valid?(@outcome)
       true
     end
@@ -151,7 +151,7 @@ module Repull
     # Custom attribute writer method checking allowed values (enum).
     # @param [Object] outcome Object to be assigned
     def outcome=(outcome)
-      validator = EnumAttributeValidator.new('String', ["opened", "blocked", "not_needed", "status_unknown", "failed"])
+      validator = EnumAttributeValidator.new('String', ["opened", "blocked", "not_needed", "status_unknown", "failed", "listing_inactive", "no_listing"])
       unless validator.valid?(outcome)
         fail ArgumentError, "invalid value for \"outcome\", must be one of #{validator.allowable_values}."
       end

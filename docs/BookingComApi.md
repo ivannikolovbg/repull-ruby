@@ -5,7 +5,7 @@ All URIs are relative to *https://api.repull.dev*
 | Method | HTTP request | Description |
 | ------ | ------------ | ----------- |
 | [**acknowledge_booking_reservations**](BookingComApi.md#acknowledge_booking_reservations) | **POST** /v1/channels/booking/reservations | Acknowledge Booking.com reservations |
-| [**booking_property_action**](BookingComApi.md#booking_property_action) | **POST** /v1/channels/booking/properties/{id} | Take a property off sale / put it back (unlist/relist) |
+| [**booking_property_action**](BookingComApi.md#booking_property_action) | **POST** /v1/channels/booking/properties/{id} | Take a property off sale / put it back, or open / close it (unlist/relist/open/close) |
 | [**booking_setup**](BookingComApi.md#booking_setup) | **POST** /v1/channels/booking/setup | Booking.com property setup actions |
 | [**create_booking_webhook**](BookingComApi.md#create_booking_webhook) | **POST** /v1/channels/booking/webhooks | Subscribe to a Booking.com notification |
 | [**delete_booking_webhook**](BookingComApi.md#delete_booking_webhook) | **DELETE** /v1/channels/booking/webhooks | Unsubscribe from a Booking.com notification |
@@ -102,9 +102,9 @@ nil (empty response body)
 
 > <BookingPropertyActionResponse> booking_property_action(id, booking_property_action_request, opts)
 
-Take a property off sale / put it back (unlist/relist)
+Take a property off sale / put it back, or open / close it (unlist/relist/open/close)
 
-Stop this listing's Booking.com property being sold, or start it again. `id` is a **Repull listing id**, not a Booking.com hotel id, as on the GET.  **Booking.com has no unlist, so this is an availability write.** Airbnb has a real deactivate; Booking.com does not. `unlist` closes the mapped room across the whole forward window, so the property stops selling. `relist` is not its mirror image: it re-syncs the true calendar, so dates that are genuinely blocked (a reservation, an owner stay) stay blocked and only the closure `unlist` wrote lifts. Re-opening everything would sell dates that are not for sale.  **Which property gets closed.** A listing can be mapped to more than one Booking.com property — the same unit re-listed under a new property keeps its old mapping, and workspaces routinely sit on five or six. With exactly one, send nothing. With several, name one with `hotelId` (or `?hotel_id=`); omit it and the request is refused with **`409 ambiguous_booking_mapping`** listing the candidates, and nothing is written. That refusal matters more here than on a publish: writing content into the wrong property is recoverable, closing the wrong property's availability takes real inventory off sale while the property you meant keeps selling. Naming a property this listing is not mapped to is a `404` that names the ones it is.  **This does not change the listing in Repull.** `active` — what Repull bills and serves — is untouched by both actions and is deliberately not echoed in the response, so the two ideas can never be read as one field. To take a listing off the market on every channel at once, use `POST /v1/listings/{id}/offline`.  Any other action returns a structured `422` naming the ones that are supported. To push content use `POST /v1/listings/{id}/publish/booking`; to map rooms use `POST /v1/connect/booking/map-rooms`.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
+Stop this listing's Booking.com property being sold, or start it again. `id` is a **Repull listing id**, not a Booking.com hotel id, as on the GET.  **Booking.com has no unlist, so this is an availability write.** Airbnb has a real deactivate; Booking.com does not. `unlist` closes the mapped room across the whole forward window, so the property stops selling. `relist` is not its mirror image: it re-syncs the true calendar, so dates that are genuinely blocked (a reservation, an owner stay) stay blocked and only the closure `unlist` wrote lifts. Re-opening everything would sell dates that are not for sale.  **Which property gets closed.** A listing can be mapped to more than one Booking.com property — the same unit re-listed under a new property keeps its old mapping, and workspaces routinely sit on five or six. With exactly one, send nothing. With several, name one with `hotelId` (or `?hotel_id=`); omit it and the request is refused with **`409 ambiguous_booking_mapping`** listing the candidates, and nothing is written. That refusal matters more here than on a publish: writing content into the wrong property is recoverable, closing the wrong property's availability takes real inventory off sale while the property you meant keeps selling. Naming a property this listing is not mapped to is a `404` that names the ones it is.  **This does not change the listing in Repull.** `active` — what Repull bills and serves — is untouched by both actions and is deliberately not echoed in the response, so the two ideas can never be read as one field. To take a listing off the market on every channel at once, use `POST /v1/listings/{id}/offline`.  **Opening and closing the property on Booking.com.** `open` runs Booking.com's readiness check and, only if it passes, opens the property. On a property that is not ready it changes nothing and answers **`422 booking_rejected`** with Booking.com's own reasons in `blockers` (for example \"Room 1554900501 does not have kitchen or kitchenette\"), so it is safe to ask. It opens a property Booking.com has in a build stage (`XML: Being built`, `XML: Ready to open`) or closed; an open property answers `changed: false`. `close` closes the property on Booking.com, with an optional `reason` (default `PROPERTY_NOT_AVAILABLE`). An inactive listing cannot be opened (`403 listing_inactive`), and neither can a property another inactive listing shares.  **When Repull opens a property by itself.** Repull opens a Booking.com property automatically only while every listing mapped to it is active. Keep a listing that is not ready inactive and its property is never opened; activate it and Repull opens the property, provided Booking.com's own readiness check passes. Activate with `POST /v1/listings/status` (or `PATCH /v1/listings/{id}`); its response has a `bookingProperties` entry per property saying whether it opened. Deactivating never closes a property that is already open — use `close` for that.  Any other action returns a structured `422` naming the ones that are supported. To push content use `POST /v1/listings/{id}/publish/booking`; to map rooms use `POST /v1/connect/booking/map-rooms`.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
 
 ### Examples
 
@@ -126,7 +126,7 @@ opts = {
 }
 
 begin
-  # Take a property off sale / put it back (unlist/relist)
+  # Take a property off sale / put it back, or open / close it (unlist/relist/open/close)
   result = api_instance.booking_property_action(id, booking_property_action_request, opts)
   p result
 rescue Repull::ApiError => e
@@ -142,7 +142,7 @@ This returns an Array which contains the response data, status code and headers.
 
 ```ruby
 begin
-  # Take a property off sale / put it back (unlist/relist)
+  # Take a property off sale / put it back, or open / close it (unlist/relist/open/close)
   data, status_code, headers = api_instance.booking_property_action_with_http_info(id, booking_property_action_request, opts)
   p status_code # => 2xx
   p headers # => { ... }

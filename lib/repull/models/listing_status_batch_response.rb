@@ -24,12 +24,16 @@ module Repull
     # Listing ids that were already in the requested state, in request order.
     attr_accessor :unchanged
 
+    # Only when `active` is true: one entry per Booking.com property the listings in the request are mapped to, saying whether it was opened. Every listing in the request counts, including those in `unchanged`, so sending `active: true` again retries an open Booking.com refused. Empty when none of the listings has a Booking.com property.
+    attr_accessor :booking_properties
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
         :'active' => :'active',
         :'updated' => :'updated',
-        :'unchanged' => :'unchanged'
+        :'unchanged' => :'unchanged',
+        :'booking_properties' => :'bookingProperties'
       }
     end
 
@@ -48,7 +52,8 @@ module Repull
       {
         :'active' => :'Boolean',
         :'updated' => :'Array<String>',
-        :'unchanged' => :'Array<String>'
+        :'unchanged' => :'Array<String>',
+        :'booking_properties' => :'Array<BookingPropertyOpenResult>'
       }
     end
 
@@ -94,6 +99,12 @@ module Repull
         end
       else
         self.unchanged = nil
+      end
+
+      if attributes.key?(:'booking_properties')
+        if (value = attributes[:'booking_properties']).is_a?(Array)
+          self.booking_properties = value
+        end
       end
     end
 
@@ -164,7 +175,8 @@ module Repull
       self.class == o.class &&
           active == o.active &&
           updated == o.updated &&
-          unchanged == o.unchanged
+          unchanged == o.unchanged &&
+          booking_properties == o.booking_properties
     end
 
     # @see the `==` method
@@ -176,7 +188,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [active, updated, unchanged].hash
+      [active, updated, unchanged, booking_properties].hash
     end
 
     # Builds the object from hash
