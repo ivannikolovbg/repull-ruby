@@ -385,5 +385,75 @@ module Repull
       end
       return data, status_code, headers
     end
+
+    # Import a connection's new listings now
+    # Re-reads the connected account's listings and their calendars (pricing and availability) now. A property added on Airbnb since the last import comes in as a new listing; existing listings are refreshed. Nothing else is re-imported: no reservations, conversations, reviews or payouts.  The same import runs on its own once a day for every connected Airbnb account, and when the host reconnects. Call this when you know a property was just added and do not want to wait.  New listings obey your plan's active-listing limit: past it, and when the property is unlisted on Airbnb, they arrive inactive. Existing listings keep their status.  The import runs in the background (`202`). It is recorded like any other import (trigger `resync`, one `listings` stage): follow it on `GET /v1/connections/{id}/imports` or wait for `account.import.completed`, then read the new listings with `GET /v1/listings`.  Airbnb connections only for now. Returns `409 conflict` while a listings import of the account is already running, and `409 connection_reauth_required` when the account is disconnected.
+    # @param id [String] Airbnb connection handle &#x60;airbnb:{hostId}&#x60; — the &#x60;provider&#x60; and &#x60;externalAccountId&#x60; of an Airbnb connection on &#x60;GET /v1/connect&#x60;, or the account of an &#x60;account.*&#x60; webhook.
+    # @param [Hash] opts the optional parameters
+    # @option opts [StartConnectionImportRequest] :start_connection_import_request 
+    # @return [StartConnectionImport202Response]
+    def start_connection_import(id, opts = {})
+      data, _status_code, _headers = start_connection_import_with_http_info(id, opts)
+      data
+    end
+
+    # Import a connection&#39;s new listings now
+    # Re-reads the connected account&#39;s listings and their calendars (pricing and availability) now. A property added on Airbnb since the last import comes in as a new listing; existing listings are refreshed. Nothing else is re-imported: no reservations, conversations, reviews or payouts.  The same import runs on its own once a day for every connected Airbnb account, and when the host reconnects. Call this when you know a property was just added and do not want to wait.  New listings obey your plan&#39;s active-listing limit: past it, and when the property is unlisted on Airbnb, they arrive inactive. Existing listings keep their status.  The import runs in the background (&#x60;202&#x60;). It is recorded like any other import (trigger &#x60;resync&#x60;, one &#x60;listings&#x60; stage): follow it on &#x60;GET /v1/connections/{id}/imports&#x60; or wait for &#x60;account.import.completed&#x60;, then read the new listings with &#x60;GET /v1/listings&#x60;.  Airbnb connections only for now. Returns &#x60;409 conflict&#x60; while a listings import of the account is already running, and &#x60;409 connection_reauth_required&#x60; when the account is disconnected.
+    # @param id [String] Airbnb connection handle &#x60;airbnb:{hostId}&#x60; — the &#x60;provider&#x60; and &#x60;externalAccountId&#x60; of an Airbnb connection on &#x60;GET /v1/connect&#x60;, or the account of an &#x60;account.*&#x60; webhook.
+    # @param [Hash] opts the optional parameters
+    # @option opts [StartConnectionImportRequest] :start_connection_import_request 
+    # @return [Array<(StartConnectionImport202Response, Integer, Hash)>] StartConnectionImport202Response data, response status code and response headers
+    def start_connection_import_with_http_info(id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ConnectionsApi.start_connection_import ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling ConnectionsApi.start_connection_import"
+      end
+      # resource path
+      local_var_path = '/v1/connections/{id}/imports'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(opts[:'start_connection_import_request'])
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'StartConnectionImport202Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"ConnectionsApi.start_connection_import",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ConnectionsApi#start_connection_import\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
   end
 end

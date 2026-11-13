@@ -9,6 +9,7 @@ All URIs are relative to *https://api.repull.dev*
 | [**list_connection_imports**](ConnectionsApi.md#list_connection_imports) | **GET** /v1/connections/{id}/imports | List a connection&#39;s imports |
 | [**list_connection_units**](ConnectionsApi.md#list_connection_units) | **GET** /v1/connections/{id}/units | List a connection&#39;s mappable units |
 | [**search_connection_listing_options**](ConnectionsApi.md#search_connection_listing_options) | **GET** /v1/connections/{id}/listing-options | Search listings a unit can be mapped to |
+| [**start_connection_import**](ConnectionsApi.md#start_connection_import) | **POST** /v1/connections/{id}/imports | Import a connection&#39;s new listings now |
 
 
 ## apply_connection_mappings
@@ -377,5 +378,78 @@ end
 ### HTTP request headers
 
 - **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## start_connection_import
+
+> <StartConnectionImport202Response> start_connection_import(id, opts)
+
+Import a connection's new listings now
+
+Re-reads the connected account's listings and their calendars (pricing and availability) now. A property added on Airbnb since the last import comes in as a new listing; existing listings are refreshed. Nothing else is re-imported: no reservations, conversations, reviews or payouts.  The same import runs on its own once a day for every connected Airbnb account, and when the host reconnects. Call this when you know a property was just added and do not want to wait.  New listings obey your plan's active-listing limit: past it, and when the property is unlisted on Airbnb, they arrive inactive. Existing listings keep their status.  The import runs in the background (`202`). It is recorded like any other import (trigger `resync`, one `listings` stage): follow it on `GET /v1/connections/{id}/imports` or wait for `account.import.completed`, then read the new listings with `GET /v1/listings`.  Airbnb connections only for now. Returns `409 conflict` while a listings import of the account is already running, and `409 connection_reauth_required` when the account is disconnected.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ConnectionsApi.new
+id = 'id_example' # String | Airbnb connection handle `airbnb:{hostId}` — the `provider` and `externalAccountId` of an Airbnb connection on `GET /v1/connect`, or the account of an `account.*` webhook.
+opts = {
+  start_connection_import_request: Repull::StartConnectionImportRequest.new # StartConnectionImportRequest | 
+}
+
+begin
+  # Import a connection's new listings now
+  result = api_instance.start_connection_import(id, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectionsApi->start_connection_import: #{e}"
+end
+```
+
+#### Using the start_connection_import_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<StartConnectionImport202Response>, Integer, Hash)> start_connection_import_with_http_info(id, opts)
+
+```ruby
+begin
+  # Import a connection's new listings now
+  data, status_code, headers = api_instance.start_connection_import_with_http_info(id, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <StartConnectionImport202Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectionsApi->start_connection_import_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Airbnb connection handle &#x60;airbnb:{hostId}&#x60; — the &#x60;provider&#x60; and &#x60;externalAccountId&#x60; of an Airbnb connection on &#x60;GET /v1/connect&#x60;, or the account of an &#x60;account.*&#x60; webhook. |  |
+| **start_connection_import_request** | [**StartConnectionImportRequest**](StartConnectionImportRequest.md) |  | [optional] |
+
+### Return type
+
+[**StartConnectionImport202Response**](StartConnectionImport202Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
 - **Accept**: application/json
 
