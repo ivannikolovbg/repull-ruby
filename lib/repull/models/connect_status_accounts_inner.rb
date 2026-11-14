@@ -15,7 +15,7 @@ require 'time'
 
 module Repull
   class ConnectStatusAccountsInner < ApiModelBase
-    # Airbnb: the host id, as a string (it can exceed 2^53). Vrbo: Vrbo's own account id; `null` until it is captured at sign-in.
+    # Airbnb: the host id, as a string (it can exceed 2^53). Booking.com: the hotel id. Vrbo: Vrbo's own account id; `null` until it is captured at sign-in. Extranet: the Booking.com account id. PMS: the PMS account id.
     attr_accessor :external_account_id
 
     # Our connection record (`X-Account-Id`). Airbnb: the workspace's Airbnb connection. Vrbo: the workspace's Vrbo connection, `null` when it has none.
@@ -35,6 +35,12 @@ module Repull
 
     # What this account may do. Airbnb: the tier the host's token was granted with (`read_only`, `messaging`, `full_access`). Vrbo: `messaging` (bookings and messages, no calendar push) or `full_access` (also pushes prices and availability). `null` when unknown.
     attr_accessor :access_type
+
+    # Booking.com: `{ required, reason: \"needs_mapping\", message }` while a room of this hotel is matched to no listing (nothing syncs for that room). Null when nothing is needed.
+    attr_accessor :action
+
+    # Booking.com: a link that opens room mapping for this hotel (no new Connect session needed). Send the host to it when `action` is set.
+    attr_accessor :fix_url
 
     # Vrbo only. The address the host can add on Vrbo as a secondary email (with message and reservation notifications on) so new bookings, inquiries and messages arrive within a minute instead of at the scheduled check. Ask every host to add it: notifications are how Vrbo updates reach Repull, the scheduled check is the backup. Hosted Connect shows it on its mapping screen; show it in your own app when you create sessions with `mapping: \"api\"`.
     attr_accessor :notification_email
@@ -75,6 +81,8 @@ module Repull
         :'connected' => :'connected',
         :'email' => :'email',
         :'access_type' => :'accessType',
+        :'action' => :'action',
+        :'fix_url' => :'fixUrl',
         :'notification_email' => :'notificationEmail',
         :'import' => :'import'
       }
@@ -101,6 +109,8 @@ module Repull
         :'connected' => :'Boolean',
         :'email' => :'String',
         :'access_type' => :'ConnectionAccessType',
+        :'action' => :'Object',
+        :'fix_url' => :'String',
         :'notification_email' => :'String',
         :'import' => :'VrboImportStatus'
       }
@@ -116,6 +126,8 @@ module Repull
         :'status',
         :'email',
         :'access_type',
+        :'action',
+        :'fix_url',
         :'notification_email',
         :'import'
       ])
@@ -169,6 +181,14 @@ module Repull
         self.access_type = attributes[:'access_type']
       end
 
+      if attributes.key?(:'action')
+        self.action = attributes[:'action']
+      end
+
+      if attributes.key?(:'fix_url')
+        self.fix_url = attributes[:'fix_url']
+      end
+
       if attributes.key?(:'notification_email')
         self.notification_email = attributes[:'notification_email']
       end
@@ -206,6 +226,8 @@ module Repull
           connected == o.connected &&
           email == o.email &&
           access_type == o.access_type &&
+          action == o.action &&
+          fix_url == o.fix_url &&
           notification_email == o.notification_email &&
           import == o.import
     end
@@ -219,7 +241,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [external_account_id, connection_id, name, picture_url, status, connected, email, access_type, notification_email, import].hash
+      [external_account_id, connection_id, name, picture_url, status, connected, email, access_type, action, fix_url, notification_email, import].hash
     end
 
     # Builds the object from hash

@@ -18,14 +18,22 @@ module Repull
     # Connect session id from `POST /v1/connect/vrbo`.
     attr_accessor :session_id
 
-    # Activation handshake — Repull mints the Basic-Auth pair the host pastes into Vrbo Partner Central.
-    attr_accessor :credentials
+    # The host's Vrbo advertiser id. Repull mints the Basic-Auth pair for it, which the host pastes into Vrbo Partner Central.
+    attr_accessor :advertiser_external_id
+
+    # Optional. Vrbo Partner Central sets this itself.
+    attr_accessor :endpoint_url
+
+    # Replace the advertiser's existing password and return the new one. The old password stops working.
+    attr_accessor :rotate
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
         :'session_id' => :'sessionId',
-        :'credentials' => :'credentials'
+        :'advertiser_external_id' => :'advertiserExternalId',
+        :'endpoint_url' => :'endpointUrl',
+        :'rotate' => :'rotate'
       }
     end
 
@@ -43,7 +51,9 @@ module Repull
     def self.openapi_types
       {
         :'session_id' => :'String',
-        :'credentials' => :'Hash<String, Object>'
+        :'advertiser_external_id' => :'String',
+        :'endpoint_url' => :'String',
+        :'rotate' => :'Boolean'
       }
     end
 
@@ -73,12 +83,18 @@ module Repull
         self.session_id = attributes[:'session_id']
       end
 
-      if attributes.key?(:'credentials')
-        if (value = attributes[:'credentials']).is_a?(Hash)
-          self.credentials = value
-        end
+      if attributes.key?(:'advertiser_external_id')
+        self.advertiser_external_id = attributes[:'advertiser_external_id']
       else
-        self.credentials = nil
+        self.advertiser_external_id = nil
+      end
+
+      if attributes.key?(:'endpoint_url')
+        self.endpoint_url = attributes[:'endpoint_url']
+      end
+
+      if attributes.key?(:'rotate')
+        self.rotate = attributes[:'rotate']
       end
     end
 
@@ -87,8 +103,13 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
-      if @credentials.nil?
-        invalid_properties.push('invalid value for "credentials", credentials cannot be nil.')
+      if @advertiser_external_id.nil?
+        invalid_properties.push('invalid value for "advertiser_external_id", advertiser_external_id cannot be nil.')
+      end
+
+      pattern = Regexp.new(/^[A-Za-z0-9_-]{1,255}$/)
+      if @advertiser_external_id !~ pattern
+        invalid_properties.push("invalid value for \"advertiser_external_id\", must conform to the pattern #{pattern}.")
       end
 
       invalid_properties
@@ -98,18 +119,24 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
-      return false if @credentials.nil?
+      return false if @advertiser_external_id.nil?
+      return false if @advertiser_external_id !~ Regexp.new(/^[A-Za-z0-9_-]{1,255}$/)
       true
     end
 
     # Custom attribute writer method with validation
-    # @param [Object] credentials Value to be assigned
-    def credentials=(credentials)
-      if credentials.nil?
-        fail ArgumentError, 'credentials cannot be nil'
+    # @param [Object] advertiser_external_id Value to be assigned
+    def advertiser_external_id=(advertiser_external_id)
+      if advertiser_external_id.nil?
+        fail ArgumentError, 'advertiser_external_id cannot be nil'
       end
 
-      @credentials = credentials
+      pattern = Regexp.new(/^[A-Za-z0-9_-]{1,255}$/)
+      if advertiser_external_id !~ pattern
+        fail ArgumentError, "invalid value for \"advertiser_external_id\", must conform to the pattern #{pattern}."
+      end
+
+      @advertiser_external_id = advertiser_external_id
     end
 
     # Checks equality by comparing each attribute.
@@ -118,7 +145,9 @@ module Repull
       return true if self.equal?(o)
       self.class == o.class &&
           session_id == o.session_id &&
-          credentials == o.credentials
+          advertiser_external_id == o.advertiser_external_id &&
+          endpoint_url == o.endpoint_url &&
+          rotate == o.rotate
     end
 
     # @see the `==` method
@@ -130,7 +159,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [session_id, credentials].hash
+      [session_id, advertiser_external_id, endpoint_url, rotate].hash
     end
 
     # Builds the object from hash

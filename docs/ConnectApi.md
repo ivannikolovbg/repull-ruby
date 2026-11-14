@@ -2277,7 +2277,7 @@ end
 
 Submit Vrbo credentials for a Connect session
 
-Completes a credentials-pattern connection for Vrbo. Activation handshake — Repull mints the Basic-Auth pair the host pastes into Vrbo Partner Central.  The credentials are validated against Vrbo before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.  No API key required when called with a `sessionId` — the session is the capability token.
+Completes a credentials-pattern connection for Vrbo. Activation handshake — Repull mints the Basic-Auth pair the host pastes into Vrbo Partner Central.  The credentials are validated against Vrbo before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.  No API key required when called with a `sessionId` — the session is the capability token.  **Lost the password?** It is returned once. Send the same request with `\"rotate\": true` to replace it and get the new one back; the old password stops working, so paste the new one into Vrbo. Without `rotate`, a second request for the same advertiser returns `409 credentials_already_provisioned`.
 
 ### Examples
 
@@ -2291,7 +2291,7 @@ Repull.configure do |config|
 end
 
 api_instance = Repull::ConnectApi.new
-submit_vrbo_credentials_request = Repull::SubmitVrboCredentialsRequest.new({credentials: { key: 3.56}}) # SubmitVrboCredentialsRequest | 
+submit_vrbo_credentials_request = Repull::SubmitVrboCredentialsRequest.new({advertiser_external_id: 'advertiser_external_id_example'}) # SubmitVrboCredentialsRequest | 
 
 begin
   # Submit Vrbo credentials for a Connect session
@@ -2481,7 +2481,7 @@ No authorization required
 
 Sign in with a Vrbo host account
 
-`action: login` checks the email and password and answers in seconds: `connected`, `otp_required` (Vrbo sent a code to `destination`) or `failed` with a `reason` (`bad_credentials`, `blocked`, …). `action: otp` submits the code; a refused code comes back as `otp_required` with `reason: bad_code`.  Signing in imports nothing. `accessType` (`full_access` or `messaging`, when the session did not lock it) is the host's choice of whether mapped listings push the calendar. The import starts when the mapping is confirmed.  Called by the hosted Connect page. No API key — the session ID is the capability token.
+`action: login` checks the email and password and answers in seconds: `connected`, `otp_required` (Vrbo sent a code to `destination`) or `failed` with a `reason` (`bad_credentials`, `blocked`, …). `action: otp` submits the code; a refused code comes back as `otp_required` with `reason: bad_code`. `action: resend` (with `accountId`) signs in again with the details already given, so Vrbo sends a new code.  Signing in imports nothing. `accessType` (`full_access` or `messaging`, when the session did not lock it) is the host's choice of whether mapped listings push the calendar. The import starts when the mapping is confirmed.  Called by the hosted Connect page. No API key — the session ID is the capability token.
 
 ### Examples
 

@@ -1831,13 +1831,13 @@
                 "$ref": "#/components/schemas/ConnectionAction"
               }
             ],
-            "description": "Set when the host must do something before the connection works (e.g. grant the invited Booking.com Extranet user full access). `null` when no action is pending."
+            "description": "Set when the host must do something before the connection works (e.g. grant the invited Booking.com Extranet user full access), or has units still to map (`reason: needs_mapping` \u2014 Booking.com Extranet rooms, Vrbo units; `required` is false when only some Vrbo units are left). `null` when no action is pending."
           },
           "fixUrl": {
             "type": "string",
             "format": "uri",
             "nullable": true,
-            "description": "Durable link that reopens the hosted Connect flow bound to this account on the fix screen \u2014 send the host here to resolve `action`. Present only when `action.required` is true; `null` otherwise."
+            "description": "Durable link that reopens the hosted Connect flow bound to this account on the fix screen \u2014 send the host here to resolve `action`. For `needs_mapping` it opens the unit mapping directly (no new sign-in). Present whenever `action` is set; `null` otherwise."
           },
           "import": {
             "allOf": [
@@ -2517,14 +2517,14 @@
           },
           "accounts": {
             "type": "array",
-            "description": "Airbnb: every Airbnb account this workspace has connected, including ones since disconnected, each with its own `accessType`. Pass `externalAccountId` as `accountId` to `DELETE /v1/connect/airbnb` to disconnect one account. Vrbo (`GET /v1/connect/vrbo-login`): every signed-in Vrbo account, each with `accessType` and `import` (a `VrboImportStatus`), plus a top-level `dataFreshness`. `externalAccountId` is the platform's own id (Airbnb host id, Vrbo account id; `null` for a Vrbo sign-in whose account id is not captured yet) and `connectionId` our connection record.",
+            "description": "One entry per connected account, for every provider: Airbnb, every host account connected (including ones since disconnected), each with its own `accessType`; Booking.com, every hotel (`externalAccountId` is the hotel id); Vrbo, every sign-in; Booking.com Extranet, every hotel login; a PMS, its one account. Pass `externalAccountId` as `accountId` to `DELETE /v1/connect/{provider}` to disconnect one. The top-level fields describe one record and stay for existing integrations; show `accounts[]` to list what is connected. Vrbo sign-ins also carry `accessType` and `import` (a `VrboImportStatus`), with a top-level `dataFreshness` on `GET /v1/connect/vrbo-login`.",
             "items": {
               "type": "object",
               "properties": {
                 "externalAccountId": {
                   "type": "string",
                   "nullable": true,
-                  "description": "Airbnb: the host id, as a string (it can exceed 2^53). Vrbo: Vrbo's own account id; `null` until it is captured at sign-in.",
+                  "description": "Airbnb: the host id, as a string (it can exceed 2^53). Booking.com: the hotel id. Vrbo: Vrbo's own account id; `null` until it is captured at sign-in. Extranet: the Booking.com account id. PMS: the PMS account id.",
                   "example": "79730216"
                 },
                 "connectionId": {
@@ -2565,6 +2565,16 @@
                     }
                   ],
                   "description": "What this account may do. Airbnb: the tier the host's token was granted with (`read_only`, `messaging`, `full_access`). Vrbo: `messaging` (bookings and messages, no calendar push) or `full_access` (also pushes prices and availability). `null` when unknown."
+                },
+                "action": {
+                  "type": "object",
+                  "nullable": true,
+                  "description": "Booking.com: `{ required, reason: \"needs_mapping\", message }` while a room of this hotel is matched to no listing (nothing syncs for that room). Null when nothing is needed."
+                },
+                "fixUrl": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Booking.com: a link that opens room mapping for this hotel (no new Connect session needed). Send the host to it when `action` is set."
                 },
                 "notificationEmail": {
                   "type": "string",
@@ -21878,7 +21888,7 @@
       "post": {
         "operationId": "submitVrboCredentials",
         "summary": "Submit Vrbo credentials for a Connect session",
-        "description": "Completes a credentials-pattern connection for Vrbo. Activation handshake \u2014 Repull mints the Basic-Auth pair the host pastes into Vrbo Partner Central.\n\nThe credentials are validated against Vrbo before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.\n\nNo API key required when called with a `sessionId` \u2014 the session is the capability token.",
+        "description": "Completes a credentials-pattern connection for Vrbo. Activation handshake \u2014 Repull mints the Basic-Auth pair the host pastes into Vrbo Partner Central.\n\nThe credentials are validated against Vrbo before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.\n\nNo API key required when called with a `sessionId` \u2014 the session is the capability token.\n\n**Lost the password?** It is returned once. Send the same request with `\"rotate\": true` to replace it and get the new one back; the old password stops working, so paste the new one into Vrbo. Without `rotate`, a second request for the same advertiser returns `409 credentials_already_provisioned`.",
         "tags": [
           "Connect"
         ],
@@ -21893,14 +21903,22 @@
                     "type": "string",
                     "description": "Connect session id from `POST /v1/connect/vrbo`."
                   },
-                  "credentials": {
-                    "type": "object",
-                    "additionalProperties": true,
-                    "description": "Activation handshake \u2014 Repull mints the Basic-Auth pair the host pastes into Vrbo Partner Central."
+                  "advertiserExternalId": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{1,255}$",
+                    "description": "The host's Vrbo advertiser id. Repull mints the Basic-Auth pair for it, which the host pastes into Vrbo Partner Central."
+                  },
+                  "endpointUrl": {
+                    "type": "string",
+                    "description": "Optional. Vrbo Partner Central sets this itself."
+                  },
+                  "rotate": {
+                    "type": "boolean",
+                    "description": "Replace the advertiser's existing password and return the new one. The old password stops working."
                   }
                 },
                 "required": [
-                  "credentials"
+                  "advertiserExternalId"
                 ]
               }
             }
@@ -39175,7 +39193,7 @@
       "post": {
         "operationId": "vrboLogin",
         "summary": "Sign in with a Vrbo host account",
-        "description": "`action: login` checks the email and password and answers in seconds: `connected`, `otp_required` (Vrbo sent a code to `destination`) or `failed` with a `reason` (`bad_credentials`, `blocked`, \u2026). `action: otp` submits the code; a refused code comes back as `otp_required` with `reason: bad_code`.\n\nSigning in imports nothing. `accessType` (`full_access` or `messaging`, when the session did not lock it) is the host's choice of whether mapped listings push the calendar. The import starts when the mapping is confirmed.\n\nCalled by the hosted Connect page. No API key \u2014 the session ID is the capability token.",
+        "description": "`action: login` checks the email and password and answers in seconds: `connected`, `otp_required` (Vrbo sent a code to `destination`) or `failed` with a `reason` (`bad_credentials`, `blocked`, \u2026). `action: otp` submits the code; a refused code comes back as `otp_required` with `reason: bad_code`. `action: resend` (with `accountId`) signs in again with the details already given, so Vrbo sends a new code.\n\nSigning in imports nothing. `accessType` (`full_access` or `messaging`, when the session did not lock it) is the host's choice of whether mapped listings push the calendar. The import starts when the mapping is confirmed.\n\nCalled by the hosted Connect page. No API key \u2014 the session ID is the capability token.",
         "tags": [
           "Connect"
         ],
@@ -39198,7 +39216,8 @@
                     "type": "string",
                     "enum": [
                       "login",
-                      "otp"
+                      "otp",
+                      "resend"
                     ]
                   },
                   "email": {

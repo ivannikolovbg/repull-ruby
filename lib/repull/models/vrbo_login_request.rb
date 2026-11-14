@@ -164,7 +164,7 @@ module Repull
       warn '[DEPRECATED] the `valid?` method is obsolete'
       return false if @session_id.nil?
       return false if @action.nil?
-      action_validator = EnumAttributeValidator.new('String', ["login", "otp"])
+      action_validator = EnumAttributeValidator.new('String', ["login", "otp", "resend"])
       return false unless action_validator.valid?(@action)
       access_type_validator = EnumAttributeValidator.new('String', ["full_access", "messaging"])
       return false unless access_type_validator.valid?(@access_type)
@@ -184,7 +184,7 @@ module Repull
     # Custom attribute writer method checking allowed values (enum).
     # @param [Object] action Object to be assigned
     def action=(action)
-      validator = EnumAttributeValidator.new('String', ["login", "otp"])
+      validator = EnumAttributeValidator.new('String', ["login", "otp", "resend"])
       unless validator.valid?(action)
         fail ArgumentError, "invalid value for \"action\", must be one of #{validator.allowable_values}."
       end
