@@ -42,6 +42,9 @@ module Repull
     # Booking.com: a link that opens room mapping for this hotel (no new Connect session needed). Send the host to it when `action` is set.
     attr_accessor :fix_url
 
+    # Vrbo only. When Vrbo's first notification reached `notificationEmail`, i.e. the host added it with notifications on. `null` until then.
+    attr_accessor :notification_received_at
+
     # Vrbo only. The address the host can add on Vrbo as a secondary email (with message and reservation notifications on) so new bookings, inquiries and messages arrive within a minute instead of at the scheduled check. Ask every host to add it: notifications are how Vrbo updates reach Repull, the scheduled check is the backup. Hosted Connect shows it on its mapping screen; show it in your own app when you create sessions with `mapping: \"api\"`.
     attr_accessor :notification_email
 
@@ -83,6 +86,7 @@ module Repull
         :'access_type' => :'accessType',
         :'action' => :'action',
         :'fix_url' => :'fixUrl',
+        :'notification_received_at' => :'notificationReceivedAt',
         :'notification_email' => :'notificationEmail',
         :'import' => :'import'
       }
@@ -111,6 +115,7 @@ module Repull
         :'access_type' => :'ConnectionAccessType',
         :'action' => :'Object',
         :'fix_url' => :'String',
+        :'notification_received_at' => :'Time',
         :'notification_email' => :'String',
         :'import' => :'VrboImportStatus'
       }
@@ -128,6 +133,7 @@ module Repull
         :'access_type',
         :'action',
         :'fix_url',
+        :'notification_received_at',
         :'notification_email',
         :'import'
       ])
@@ -189,6 +195,10 @@ module Repull
         self.fix_url = attributes[:'fix_url']
       end
 
+      if attributes.key?(:'notification_received_at')
+        self.notification_received_at = attributes[:'notification_received_at']
+      end
+
       if attributes.key?(:'notification_email')
         self.notification_email = attributes[:'notification_email']
       end
@@ -228,6 +238,7 @@ module Repull
           access_type == o.access_type &&
           action == o.action &&
           fix_url == o.fix_url &&
+          notification_received_at == o.notification_received_at &&
           notification_email == o.notification_email &&
           import == o.import
     end
@@ -241,7 +252,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [external_account_id, connection_id, name, picture_url, status, connected, email, access_type, action, fix_url, notification_email, import].hash
+      [external_account_id, connection_id, name, picture_url, status, connected, email, access_type, action, fix_url, notification_received_at, notification_email, import].hash
     end
 
     # Builds the object from hash

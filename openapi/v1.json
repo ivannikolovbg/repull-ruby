@@ -2576,6 +2576,12 @@
                   "nullable": true,
                   "description": "Booking.com: a link that opens room mapping for this hotel (no new Connect session needed). Send the host to it when `action` is set."
                 },
+                "notificationReceivedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "nullable": true,
+                  "description": "Vrbo only. When Vrbo's first notification reached `notificationEmail`, i.e. the host added it with notifications on. `null` until then."
+                },
                 "notificationEmail": {
                   "type": "string",
                   "nullable": true,
