@@ -2,6 +2,10 @@
 
 All notable changes to the `repull` gem are documented here.
 
+## 0.2.48 — 2026-11-15
+
+- Regenerated from the live spec (automated spec refresh).
+
 ## 0.2.47 — 2026-11-13
 
 - New: `POST /v1/connections/{id}/imports`
