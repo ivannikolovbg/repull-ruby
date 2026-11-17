@@ -27,6 +27,7 @@
 | **unit** | [**ReservationUnit**](ReservationUnit.md) |  | [optional] |
 | **pms_reservation_id** | **String** | The PMS&#39;s own id for this reservation (for example Guesty&#39;s reservation &#x60;_id&#x60;), so you can look it up in the PMS. &#x60;null&#x60; when the reservation did not come from a PMS. | [optional] |
 | **access_codes** | [**Array&lt;ReservationAccessCode&gt;**](ReservationAccessCode.md) | Door codes for the stay from the PMS&#39;s lock manager (today: Guesty Locks Manager), refreshed about every 30 minutes for stays checking in within 14 days that have not checked out. &#x60;null&#x60; when the reservation&#39;s codes are not read from a PMS. &#x60;[]&#x60; when they are and there is none yet, and for a cancelled stay. | [optional] |
+| **suggested_door_code** | **String** | Airbnb reservations only, when Airbnb sends it: the door code Airbnb suggests — the last 4 digits of the booker&#39;s verified phone number, or random digits when there is none. Use it instead of deriving a code from the guest&#39;s phone, which Airbnb no longer shares. Omitted on every other reservation. | [optional] |
 | **primary_guest** | [**ReservationPrimaryGuest**](ReservationPrimaryGuest.md) | Inline guest summary. May be undefined for owner-blocks / pre-arrival rows. | [optional] |
 | **occupancy** | [**ReservationOccupancy**](ReservationOccupancy.md) | Normalized guest counts. May be undefined when the source channel did not provide counts. | [optional] |
 | **financials** | [**ReservationFinancials**](ReservationFinancials.md) | Normalized money block. Always populated for paid reservations. | [optional] |
@@ -67,6 +68,7 @@ instance = Repull::Reservation.new(
   unit: null,
   pms_reservation_id: 6a0374cd5eeb88f1381f9ac1,
   access_codes: null,
+  suggested_door_code: 5446,
   primary_guest: null,
   occupancy: null,
   financials: null,

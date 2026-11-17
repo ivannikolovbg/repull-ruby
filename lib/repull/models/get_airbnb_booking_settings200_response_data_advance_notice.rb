@@ -16,11 +16,14 @@ require 'time'
 module Repull
   # How much notice a booking needs.
   class GetAirbnbBookingSettings200ResponseDataAdvanceNotice < ApiModelBase
-    # Whole hours of notice. `0` allows same-day bookings.
+    # Airbnb's advance notice: 0-24, 48, 72 or 168. Airbnb counts it back from 11:59 PM on the check-in day, in the listing's time zone, so 0-23 is a same-day cutoff: `0` = same-day bookings until midnight, `1` = until 11 PM, `3` = until 9 PM. `24` and above = no same-day bookings.
     attr_accessor :hours
 
-    # Derived: `hours === 0`.
+    # Derived: `hours < 24`.
     attr_accessor :same_day_bookings_allowed
+
+    # Derived: the last time a same-day booking is accepted, `HH:mm` in the listing's time (`00:00` = midnight). `null` when same-day bookings are off.
+    attr_accessor :same_day_cutoff
 
     # Whether a guest may still REQUEST to book inside the notice window.
     attr_accessor :allow_request_to_book
@@ -30,6 +33,7 @@ module Repull
       {
         :'hours' => :'hours',
         :'same_day_bookings_allowed' => :'sameDayBookingsAllowed',
+        :'same_day_cutoff' => :'sameDayCutoff',
         :'allow_request_to_book' => :'allowRequestToBook'
       }
     end
@@ -49,6 +53,7 @@ module Repull
       {
         :'hours' => :'Integer',
         :'same_day_bookings_allowed' => :'Boolean',
+        :'same_day_cutoff' => :'String',
         :'allow_request_to_book' => :'Boolean'
       }
     end
@@ -58,6 +63,7 @@ module Repull
       Set.new([
         :'hours',
         :'same_day_bookings_allowed',
+        :'same_day_cutoff',
         :'allow_request_to_book'
       ])
     end
@@ -84,6 +90,10 @@ module Repull
 
       if attributes.key?(:'same_day_bookings_allowed')
         self.same_day_bookings_allowed = attributes[:'same_day_bookings_allowed']
+      end
+
+      if attributes.key?(:'same_day_cutoff')
+        self.same_day_cutoff = attributes[:'same_day_cutoff']
       end
 
       if attributes.key?(:'allow_request_to_book')
@@ -113,6 +123,7 @@ module Repull
       self.class == o.class &&
           hours == o.hours &&
           same_day_bookings_allowed == o.same_day_bookings_allowed &&
+          same_day_cutoff == o.same_day_cutoff &&
           allow_request_to_book == o.allow_request_to_book
     end
 
@@ -125,7 +136,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [hours, same_day_bookings_allowed, allow_request_to_book].hash
+      [hours, same_day_bookings_allowed, same_day_cutoff, allow_request_to_book].hash
     end
 
     # Builds the object from hash

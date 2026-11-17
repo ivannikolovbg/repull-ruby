@@ -26,11 +26,39 @@ module Repull
     # Primary email contact (or first non-primary if no primary set).
     attr_accessor :email
 
-    # Primary phone contact (or first non-primary if no primary set).
+    # Primary phone contact (or first non-primary if no primary set). For an Airbnb stay this may be an Airbnb relay number — check `phoneType`.
     attr_accessor :phone
+
+    # Present whenever `phone` is. `airbnb_relay` when `phone` is a temporary Airbnb relay number (SMS only, expires 48h after checkout, shared across hosts, never a guest identifier); `guest` otherwise.
+    attr_accessor :phone_type
+
+    # Only next to an Airbnb relay number: when it stops working (checkout + 48 hours). `null` when Airbnb did not give the checkout time with its offset. A cancelled reservation's relay number stops working at cancellation, whatever this says.
+    attr_accessor :phone_expires_at
 
     # Guest's preferred language (BCP-47 / ISO 639-1).
     attr_accessor :language
+
+    class EnumAttributeValidator
+      attr_reader :datatype
+      attr_reader :allowable_values
+
+      def initialize(datatype, allowable_values)
+        @allowable_values = allowable_values.map do |value|
+          case datatype.to_s
+          when /Integer/i
+            value.to_i
+          when /Float/i
+            value.to_f
+          else
+            value
+          end
+        end
+      end
+
+      def valid?(value)
+        !value || allowable_values.include?(value)
+      end
+    end
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
@@ -40,6 +68,8 @@ module Repull
         :'last_name' => :'lastName',
         :'email' => :'email',
         :'phone' => :'phone',
+        :'phone_type' => :'phoneType',
+        :'phone_expires_at' => :'phoneExpiresAt',
         :'language' => :'language'
       }
     end
@@ -62,6 +92,8 @@ module Repull
         :'last_name' => :'String',
         :'email' => :'String',
         :'phone' => :'String',
+        :'phone_type' => :'GuestPhoneType',
+        :'phone_expires_at' => :'Time',
         :'language' => :'String'
       }
     end
@@ -73,6 +105,7 @@ module Repull
         :'last_name',
         :'email',
         :'phone',
+        :'phone_expires_at',
         :'language'
       ])
     end
@@ -113,6 +146,14 @@ module Repull
         self.phone = attributes[:'phone']
       end
 
+      if attributes.key?(:'phone_type')
+        self.phone_type = attributes[:'phone_type']
+      end
+
+      if attributes.key?(:'phone_expires_at')
+        self.phone_expires_at = attributes[:'phone_expires_at']
+      end
+
       if attributes.key?(:'language')
         self.language = attributes[:'language']
       end
@@ -143,6 +184,8 @@ module Repull
           last_name == o.last_name &&
           email == o.email &&
           phone == o.phone &&
+          phone_type == o.phone_type &&
+          phone_expires_at == o.phone_expires_at &&
           language == o.language
     end
 
@@ -155,7 +198,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, first_name, last_name, email, phone, language].hash
+      [id, first_name, last_name, email, phone, phone_type, phone_expires_at, language].hash
     end
 
     # Builds the object from hash

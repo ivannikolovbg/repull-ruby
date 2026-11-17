@@ -82,6 +82,9 @@ module Repull
     # Door codes for the stay from the PMS's lock manager (today: Guesty Locks Manager), refreshed about every 30 minutes for stays checking in within 14 days that have not checked out. `null` when the reservation's codes are not read from a PMS. `[]` when they are and there is none yet, and for a cancelled stay.
     attr_accessor :access_codes
 
+    # Airbnb reservations only, when Airbnb sends it: the door code Airbnb suggests — the last 4 digits of the booker's verified phone number, or random digits when there is none. Use it instead of deriving a code from the guest's phone, which Airbnb no longer shares. Omitted on every other reservation.
+    attr_accessor :suggested_door_code
+
     # Inline guest summary. May be undefined for owner-blocks / pre-arrival rows.
     attr_accessor :primary_guest
 
@@ -138,6 +141,7 @@ module Repull
         :'unit' => :'unit',
         :'pms_reservation_id' => :'pmsReservationId',
         :'access_codes' => :'accessCodes',
+        :'suggested_door_code' => :'suggestedDoorCode',
         :'primary_guest' => :'primaryGuest',
         :'occupancy' => :'occupancy',
         :'financials' => :'financials',
@@ -187,6 +191,7 @@ module Repull
         :'unit' => :'ReservationUnit',
         :'pms_reservation_id' => :'String',
         :'access_codes' => :'Array<ReservationAccessCode>',
+        :'suggested_door_code' => :'String',
         :'primary_guest' => :'ReservationPrimaryGuest',
         :'occupancy' => :'ReservationOccupancy',
         :'financials' => :'ReservationFinancials',
@@ -341,6 +346,10 @@ module Repull
         if (value = attributes[:'access_codes']).is_a?(Array)
           self.access_codes = value
         end
+      end
+
+      if attributes.key?(:'suggested_door_code')
+        self.suggested_door_code = attributes[:'suggested_door_code']
       end
 
       if attributes.key?(:'primary_guest')
@@ -553,6 +562,7 @@ module Repull
           unit == o.unit &&
           pms_reservation_id == o.pms_reservation_id &&
           access_codes == o.access_codes &&
+          suggested_door_code == o.suggested_door_code &&
           primary_guest == o.primary_guest &&
           occupancy == o.occupancy &&
           financials == o.financials &&
@@ -574,7 +584,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [account, id, listing_id, listing_name, guest_id, check_in, check_out, check_in_time, check_out_time, guest_notes, conversation_id, external_thread_id, inquiry_id, status, status_detail, pending_reason, respond_by, source, platform, confirmation_code, unit, pms_reservation_id, access_codes, primary_guest, occupancy, financials, total_price, currency, guest_details, created_at, updated_at, booked_at, guest_name].hash
+      [account, id, listing_id, listing_name, guest_id, check_in, check_out, check_in_time, check_out_time, guest_notes, conversation_id, external_thread_id, inquiry_id, status, status_detail, pending_reason, respond_by, source, platform, confirmation_code, unit, pms_reservation_id, access_codes, suggested_door_code, primary_guest, occupancy, financials, total_price, currency, guest_details, created_at, updated_at, booked_at, guest_name].hash
     end
 
     # Builds the object from hash

@@ -10,7 +10,8 @@
 | **avatar_url** | **String** |  | [optional] |
 | **language** | **String** | Guest&#39;s preferred language (ISO 639-1). | [optional] |
 | **country** | **String** | Guest country (from profile metadata or address). | [optional] |
-| **phone** | **String** | Primary phone contact (or first non-primary if no primary set). | [optional] |
+| **phone** | **String** | Primary phone contact (or first non-primary if no primary set). May be an Airbnb relay number — check &#x60;phoneType&#x60;. | [optional] |
+| **phone_type** | [**GuestPhoneType**](GuestPhoneType.md) | &#x60;airbnb_relay&#x60; when &#x60;phone&#x60; is a temporary Airbnb relay number (SMS only, expires 48h after checkout, shared across hosts, never a guest identifier); &#x60;guest&#x60; otherwise; &#x60;null&#x60; when there is no phone. | [optional] |
 | **email** | **String** | Primary email contact. | [optional] |
 | **total_reservations** | **Integer** | Lifetime reservation count. | [optional] |
 | **total_revenue** | **String** | Decimal-as-string to preserve precision across mixed-currency totals. | [optional] |
@@ -31,6 +32,7 @@ instance = Repull::Guest.new(
   language: null,
   country: null,
   phone: null,
+  phone_type: null,
   email: null,
   total_reservations: null,
   total_revenue: 14250.00,

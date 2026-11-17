@@ -14,16 +14,43 @@ require 'date'
 require 'time'
 
 module Repull
-  # Send `hours`, `allowRequestToBook`, or both. The half you omit keeps the value Airbnb currently holds.
+  # Send `hours` (or `sameDayCutoff`), `allowRequestToBook`, or both. The half you omit keeps the value Airbnb currently holds. `hours` and `sameDayCutoff` are the same setting: send one.
   class UpdateAirbnbBookingSettingsRequestAdvanceNotice < ApiModelBase
+    # Counted back from 11:59 PM on the check-in day (listing time): `0` = same-day bookings until midnight, `1` = until 11 PM, `24` = no same-day bookings.
     attr_accessor :hours
 
+    # The last time a same-day booking is accepted, whole hours in the listing's time (`23:00` = 11 PM, `00:00` = midnight). Converted to `hours` (`23:00` = 1).
+    attr_accessor :same_day_cutoff
+
     attr_accessor :allow_request_to_book
+
+    class EnumAttributeValidator
+      attr_reader :datatype
+      attr_reader :allowable_values
+
+      def initialize(datatype, allowable_values)
+        @allowable_values = allowable_values.map do |value|
+          case datatype.to_s
+          when /Integer/i
+            value.to_i
+          when /Float/i
+            value.to_f
+          else
+            value
+          end
+        end
+      end
+
+      def valid?(value)
+        !value || allowable_values.include?(value)
+      end
+    end
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
         :'hours' => :'hours',
+        :'same_day_cutoff' => :'sameDayCutoff',
         :'allow_request_to_book' => :'allowRequestToBook'
       }
     end
@@ -42,6 +69,7 @@ module Repull
     def self.openapi_types
       {
         :'hours' => :'Integer',
+        :'same_day_cutoff' => :'String',
         :'allow_request_to_book' => :'Boolean'
       }
     end
@@ -50,6 +78,7 @@ module Repull
     def self.openapi_nullable
       Set.new([
         :'hours',
+        :'same_day_cutoff',
         :'allow_request_to_book'
       ])
     end
@@ -74,6 +103,10 @@ module Repull
         self.hours = attributes[:'hours']
       end
 
+      if attributes.key?(:'same_day_cutoff')
+        self.same_day_cutoff = attributes[:'same_day_cutoff']
+      end
+
       if attributes.key?(:'allow_request_to_book')
         self.allow_request_to_book = attributes[:'allow_request_to_book']
       end
@@ -84,12 +117,9 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
-      if !@hours.nil? && @hours > 168
-        invalid_properties.push('invalid value for "hours", must be smaller than or equal to 168.')
-      end
-
-      if !@hours.nil? && @hours < 0
-        invalid_properties.push('invalid value for "hours", must be greater than or equal to 0.')
+      pattern = Regexp.new(/^([01][0-9]|2[0-3]):00$/)
+      if !@same_day_cutoff.nil? && @same_day_cutoff !~ pattern
+        invalid_properties.push("invalid value for \"same_day_cutoff\", must conform to the pattern #{pattern}.")
       end
 
       invalid_properties
@@ -99,23 +129,31 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
-      return false if !@hours.nil? && @hours > 168
-      return false if !@hours.nil? && @hours < 0
+      hours_validator = EnumAttributeValidator.new('Integer', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 48, 72, 168])
+      return false unless hours_validator.valid?(@hours)
+      return false if !@same_day_cutoff.nil? && @same_day_cutoff !~ Regexp.new(/^([01][0-9]|2[0-3]):00$/)
       true
     end
 
-    # Custom attribute writer method with validation
-    # @param [Object] hours Value to be assigned
+    # Custom attribute writer method checking allowed values (enum).
+    # @param [Object] hours Object to be assigned
     def hours=(hours)
-      if !hours.nil? && hours > 168
-        fail ArgumentError, 'invalid value for "hours", must be smaller than or equal to 168.'
+      validator = EnumAttributeValidator.new('Integer', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 48, 72, 168])
+      unless validator.valid?(hours)
+        fail ArgumentError, "invalid value for \"hours\", must be one of #{validator.allowable_values}."
       end
-
-      if !hours.nil? && hours < 0
-        fail ArgumentError, 'invalid value for "hours", must be greater than or equal to 0.'
-      end
-
       @hours = hours
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] same_day_cutoff Value to be assigned
+    def same_day_cutoff=(same_day_cutoff)
+      pattern = Regexp.new(/^([01][0-9]|2[0-3]):00$/)
+      if !same_day_cutoff.nil? && same_day_cutoff !~ pattern
+        fail ArgumentError, "invalid value for \"same_day_cutoff\", must conform to the pattern #{pattern}."
+      end
+
+      @same_day_cutoff = same_day_cutoff
     end
 
     # Checks equality by comparing each attribute.
@@ -124,6 +162,7 @@ module Repull
       return true if self.equal?(o)
       self.class == o.class &&
           hours == o.hours &&
+          same_day_cutoff == o.same_day_cutoff &&
           allow_request_to_book == o.allow_request_to_book
     end
 
@@ -136,7 +175,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [hours, allow_request_to_book].hash
+      [hours, same_day_cutoff, allow_request_to_book].hash
     end
 
     # Builds the object from hash

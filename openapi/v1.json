@@ -530,6 +530,15 @@
           }
         }
       },
+      "GuestPhoneType": {
+        "type": "string",
+        "enum": [
+          "airbnb_relay",
+          "guest"
+        ],
+        "description": "Whether `phone` is the guest's own number or an Airbnb relay number. Since late October 2026 Airbnb never shares a guest's real phone number. For an Airbnb stay where the listing, host and guest are all in the same country and that country is the US or Canada, Airbnb gives a temporary relay number instead (`airbnb_relay`); every other Airbnb stay has no phone at all. A relay number forwards SMS only (no MMS, RCS or images; about 1,000 characters including Airbnb's prefix, not split). It stops working 48 hours after checkout or when the reservation is cancelled, and it can change during the stay without a reservation webhook (re-read the reservation for the current one). The same relay number is used for other guests of other hosts, so never use it to identify or match a guest. Texting from a number Airbnb does not know: the first message must be the reservation's confirmation code (for example `HM12345678`); text from the host's Airbnb contact number for automatic delivery. `guest` means the number as the channel or the host recorded it.",
+        "example": "airbnb_relay"
+      },
       "ReservationPrimaryGuest": {
         "type": "object",
         "description": "Inline guest summary resolved by JOIN-ing the `guests` table. Populated for every reservation that has a linked guest row; OMITTED entirely (not null) for owner-blocks / pre-arrival rows / partial-sync gaps. Always optional-chain in SDK consumers.",
@@ -555,7 +564,22 @@
           "phone": {
             "type": "string",
             "nullable": true,
-            "description": "Primary phone contact (or first non-primary if no primary set)."
+            "description": "Primary phone contact (or first non-primary if no primary set). For an Airbnb stay this may be an Airbnb relay number \u2014 check `phoneType`."
+          },
+          "phoneType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuestPhoneType"
+              }
+            ],
+            "description": "Present whenever `phone` is. `airbnb_relay` when `phone` is a temporary Airbnb relay number (SMS only, expires 48h after checkout, shared across hosts, never a guest identifier); `guest` otherwise."
+          },
+          "phoneExpiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Only next to an Airbnb relay number: when it stops working (checkout + 48 hours). `null` when Airbnb did not give the checkout time with its offset. A cancelled reservation's relay number stops working at cancellation, whatever this says.",
+            "example": "2026-11-22T16:00:00.000Z"
           },
           "language": {
             "type": "string",
@@ -883,6 +907,11 @@
             },
             "description": "Door codes for the stay from the PMS's lock manager (today: Guesty Locks Manager), refreshed about every 30 minutes for stays checking in within 14 days that have not checked out. `null` when the reservation's codes are not read from a PMS. `[]` when they are and there is none yet, and for a cancelled stay."
           },
+          "suggestedDoorCode": {
+            "type": "string",
+            "description": "Airbnb reservations only, when Airbnb sends it: the door code Airbnb suggests \u2014 the last 4 digits of the booker's verified phone number, or random digits when there is none. Use it instead of deriving a code from the guest's phone, which Airbnb no longer shares. Omitted on every other reservation.",
+            "example": "5446"
+          },
           "primaryGuest": {
             "allOf": [
               {
@@ -993,7 +1022,16 @@
           "phone": {
             "type": "string",
             "nullable": true,
-            "description": "Primary phone contact (or first non-primary if no primary set)."
+            "description": "Primary phone contact (or first non-primary if no primary set). May be an Airbnb relay number \u2014 check `phoneType`."
+          },
+          "phoneType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuestPhoneType"
+              }
+            ],
+            "nullable": true,
+            "description": "`airbnb_relay` when `phone` is a temporary Airbnb relay number (SMS only, expires 48h after checkout, shared across hosts, never a guest identifier); `guest` otherwise; `null` when there is no phone."
           },
           "email": {
             "type": "string",
@@ -1049,6 +1087,14 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "phoneType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuestPhoneType"
+              }
+            ],
+            "description": "Phone contacts only: `airbnb_relay` when this is a temporary Airbnb relay number (SMS only, expires 48h after checkout, shared across hosts, never a guest identifier); `guest` otherwise."
           }
         }
       },
@@ -1146,7 +1192,17 @@
           },
           "phone": {
             "type": "string",
-            "nullable": true
+            "nullable": true,
+            "description": "Primary phone contact. May be an Airbnb relay number \u2014 check `phoneType`."
+          },
+          "phoneType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuestPhoneType"
+              }
+            ],
+            "nullable": true,
+            "description": "`airbnb_relay` when `phone` is a temporary Airbnb relay number; `guest` otherwise; `null` when there is no phone."
           },
           "email": {
             "type": "string",
@@ -32250,7 +32306,7 @@
       "get": {
         "operationId": "get_airbnb_booking_settings",
         "summary": "Get Airbnb booking settings",
-        "description": "Read how an Airbnb listing takes bookings and what happens when a guest cancels: booking mode, Instant Book state, the good-track-record requirement, check-in/check-out times, advance notice, preparation time, booking window, the short-stay and long-stay cancellation policies, and the non-refundable option.\n\n**This is Repull's stored copy, not a live call to Airbnb.** Values come from the local Airbnb mirror that the sync workers fill, so the response always carries `dataFreshness` \u2014 check `dataFreshness.stale` (and `dataFreshness.accounts[]` when the workspace has several Airbnb accounts) before treating a value as current.\n\n**Not exposed by Airbnb.** The pre-reservation message and automatic stay extension have no field on Airbnb's `booking_settings` resource, so neither can be read or written here; set the pre-reservation message in the Airbnb host dashboard, and handle extensions through `/v1/channels/airbnb/alterations`. Airbnb also expresses the same-day cutoff only as whole hours of advance notice, so `advanceNotice.hours` is as precise as the cutoff gets.\n\nReturns `404` when the listing has no Airbnb connection in this workspace, and `403 listing_inactive` when the listing is inactive \u2014 an inactive listing keeps syncing but cannot be read or changed through the API until it is activated.",
+        "description": "Read how an Airbnb listing takes bookings and what happens when a guest cancels: booking mode, Instant Book state, the good-track-record requirement, check-in/check-out times, advance notice, preparation time, booking window, the short-stay and long-stay cancellation policies, and the non-refundable option.\n\n**This is Repull's stored copy, not a live call to Airbnb.** Values come from the local Airbnb mirror that the sync workers fill, so the response always carries `dataFreshness` \u2014 check `dataFreshness.stale` (and `dataFreshness.accounts[]` when the workspace has several Airbnb accounts) before treating a value as current.\n\n**Not exposed by Airbnb.** The pre-reservation message and automatic stay extension have no field on Airbnb's `booking_settings` resource, so neither can be read or written here; set the pre-reservation message in the Airbnb host dashboard, and handle extensions through `/v1/channels/airbnb/alterations`. The same-day cutoff is Airbnb's advance-notice hours counted back from 11:59 PM on the check-in day: read it as `advanceNotice.sameDayCutoff` (e.g. `23:00`) or `advanceNotice.hours` (e.g. `1`), and write either one.\n\nReturns `404` when the listing has no Airbnb connection in this workspace, and `403 listing_inactive` when the listing is inactive \u2014 an inactive listing keeps syncing but cannot be read or changed through the API until it is activated.",
         "tags": [
           "Airbnb"
         ],
@@ -32372,12 +32428,18 @@
                             "hours": {
                               "type": "integer",
                               "nullable": true,
-                              "description": "Whole hours of notice. `0` allows same-day bookings."
+                              "description": "Airbnb's advance notice: 0-24, 48, 72 or 168. Airbnb counts it back from 11:59 PM on the check-in day, in the listing's time zone, so 0-23 is a same-day cutoff: `0` = same-day bookings until midnight, `1` = until 11 PM, `3` = until 9 PM. `24` and above = no same-day bookings."
                             },
                             "sameDayBookingsAllowed": {
                               "type": "boolean",
                               "nullable": true,
-                              "description": "Derived: `hours === 0`."
+                              "description": "Derived: `hours < 24`."
+                            },
+                            "sameDayCutoff": {
+                              "type": "string",
+                              "nullable": true,
+                              "example": "23:00",
+                              "description": "Derived: the last time a same-day booking is accepted, `HH:mm` in the listing's time (`00:00` = midnight). `null` when same-day bookings are off."
                             },
                             "allowRequestToBook": {
                               "type": "boolean",
@@ -32631,13 +32693,49 @@
                   "advanceNotice": {
                     "type": "object",
                     "additionalProperties": false,
-                    "description": "Send `hours`, `allowRequestToBook`, or both. The half you omit keeps the value Airbnb currently holds.",
+                    "description": "Send `hours` (or `sameDayCutoff`), `allowRequestToBook`, or both. The half you omit keeps the value Airbnb currently holds. `hours` and `sameDayCutoff` are the same setting: send one.",
                     "properties": {
                       "hours": {
                         "type": "integer",
                         "nullable": true,
-                        "minimum": 0,
-                        "maximum": 168
+                        "enum": [
+                          0,
+                          1,
+                          2,
+                          3,
+                          4,
+                          5,
+                          6,
+                          7,
+                          8,
+                          9,
+                          10,
+                          11,
+                          12,
+                          13,
+                          14,
+                          15,
+                          16,
+                          17,
+                          18,
+                          19,
+                          20,
+                          21,
+                          22,
+                          23,
+                          24,
+                          48,
+                          72,
+                          168
+                        ],
+                        "description": "Counted back from 11:59 PM on the check-in day (listing time): `0` = same-day bookings until midnight, `1` = until 11 PM, `24` = no same-day bookings."
+                      },
+                      "sameDayCutoff": {
+                        "type": "string",
+                        "nullable": true,
+                        "pattern": "^([01][0-9]|2[0-3]):00$",
+                        "example": "23:00",
+                        "description": "The last time a same-day booking is accepted, whole hours in the listing's time (`23:00` = 11 PM, `00:00` = midnight). Converted to `hours` (`23:00` = 1)."
                       },
                       "allowRequestToBook": {
                         "type": "boolean",
@@ -32805,12 +32903,18 @@
                                 "hours": {
                                   "type": "integer",
                                   "nullable": true,
-                                  "description": "Whole hours of notice. `0` allows same-day bookings."
+                                  "description": "Airbnb's advance notice: 0-24, 48, 72 or 168. Airbnb counts it back from 11:59 PM on the check-in day, in the listing's time zone, so 0-23 is a same-day cutoff: `0` = same-day bookings until midnight, `1` = until 11 PM, `3` = until 9 PM. `24` and above = no same-day bookings."
                                 },
                                 "sameDayBookingsAllowed": {
                                   "type": "boolean",
                                   "nullable": true,
-                                  "description": "Derived: `hours === 0`."
+                                  "description": "Derived: `hours < 24`."
+                                },
+                                "sameDayCutoff": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "example": "23:00",
+                                  "description": "Derived: the last time a same-day booking is accepted, `HH:mm` in the listing's time (`00:00` = midnight). `null` when same-day bookings are off."
                                 },
                                 "allowRequestToBook": {
                                   "type": "boolean",

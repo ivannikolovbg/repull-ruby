@@ -28,7 +28,11 @@ module Repull
 
     attr_accessor :country
 
+    # Primary phone contact. May be an Airbnb relay number — check `phoneType`.
     attr_accessor :phone
+
+    # `airbnb_relay` when `phone` is a temporary Airbnb relay number; `guest` otherwise; `null` when there is no phone.
+    attr_accessor :phone_type
 
     attr_accessor :email
 
@@ -58,6 +62,28 @@ module Repull
 
     attr_accessor :reservations_summary
 
+    class EnumAttributeValidator
+      attr_reader :datatype
+      attr_reader :allowable_values
+
+      def initialize(datatype, allowable_values)
+        @allowable_values = allowable_values.map do |value|
+          case datatype.to_s
+          when /Integer/i
+            value.to_i
+          when /Float/i
+            value.to_f
+          else
+            value
+          end
+        end
+      end
+
+      def valid?(value)
+        !value || allowable_values.include?(value)
+      end
+    end
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
@@ -68,6 +94,7 @@ module Repull
         :'language' => :'language',
         :'country' => :'country',
         :'phone' => :'phone',
+        :'phone_type' => :'phoneType',
         :'email' => :'email',
         :'total_reservations' => :'totalReservations',
         :'total_revenue' => :'totalRevenue',
@@ -104,6 +131,7 @@ module Repull
         :'language' => :'String',
         :'country' => :'String',
         :'phone' => :'String',
+        :'phone_type' => :'GuestPhoneType',
         :'email' => :'String',
         :'total_reservations' => :'Integer',
         :'total_revenue' => :'String',
@@ -127,6 +155,7 @@ module Repull
         :'language',
         :'country',
         :'phone',
+        :'phone_type',
         :'email',
         :'currency',
         :'blacklisted_reason',
@@ -178,6 +207,10 @@ module Repull
 
       if attributes.key?(:'phone')
         self.phone = attributes[:'phone']
+      end
+
+      if attributes.key?(:'phone_type')
+        self.phone_type = attributes[:'phone_type']
       end
 
       if attributes.key?(:'email')
@@ -266,6 +299,7 @@ module Repull
           language == o.language &&
           country == o.country &&
           phone == o.phone &&
+          phone_type == o.phone_type &&
           email == o.email &&
           total_reservations == o.total_reservations &&
           total_revenue == o.total_revenue &&
@@ -290,7 +324,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, display_name, display_name_long, avatar_url, language, country, phone, email, total_reservations, total_revenue, currency, is_blacklisted, blacklisted_reason, risk_level, verification_level, created_at, contacts, flags, notes, reservations_summary].hash
+      [id, display_name, display_name_long, avatar_url, language, country, phone, phone_type, email, total_reservations, total_revenue, currency, is_blacklisted, blacklisted_reason, risk_level, verification_level, created_at, contacts, flags, notes, reservations_summary].hash
     end
 
     # Builds the object from hash

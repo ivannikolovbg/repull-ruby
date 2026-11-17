@@ -27,6 +27,31 @@ module Repull
 
     attr_accessor :last_used
 
+    # Phone contacts only: `airbnb_relay` when this is a temporary Airbnb relay number (SMS only, expires 48h after checkout, shared across hosts, never a guest identifier); `guest` otherwise.
+    attr_accessor :phone_type
+
+    class EnumAttributeValidator
+      attr_reader :datatype
+      attr_reader :allowable_values
+
+      def initialize(datatype, allowable_values)
+        @allowable_values = allowable_values.map do |value|
+          case datatype.to_s
+          when /Integer/i
+            value.to_i
+          when /Float/i
+            value.to_f
+          else
+            value
+          end
+        end
+      end
+
+      def valid?(value)
+        !value || allowable_values.include?(value)
+      end
+    end
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
@@ -34,7 +59,8 @@ module Repull
         :'value' => :'value',
         :'verified' => :'verified',
         :'is_primary' => :'isPrimary',
-        :'last_used' => :'lastUsed'
+        :'last_used' => :'lastUsed',
+        :'phone_type' => :'phoneType'
       }
     end
 
@@ -55,14 +81,15 @@ module Repull
         :'value' => :'String',
         :'verified' => :'Boolean',
         :'is_primary' => :'Boolean',
-        :'last_used' => :'Time'
+        :'last_used' => :'Time',
+        :'phone_type' => :'GuestPhoneType'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
-        :'last_used'
+        :'last_used',
       ])
     end
 
@@ -101,6 +128,10 @@ module Repull
       if attributes.key?(:'last_used')
         self.last_used = attributes[:'last_used']
       end
+
+      if attributes.key?(:'phone_type')
+        self.phone_type = attributes[:'phone_type']
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -127,7 +158,8 @@ module Repull
           value == o.value &&
           verified == o.verified &&
           is_primary == o.is_primary &&
-          last_used == o.last_used
+          last_used == o.last_used &&
+          phone_type == o.phone_type
     end
 
     # @see the `==` method
@@ -139,7 +171,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [type, value, verified, is_primary, last_used].hash
+      [type, value, verified, is_primary, last_used, phone_type].hash
     end
 
     # Builds the object from hash
