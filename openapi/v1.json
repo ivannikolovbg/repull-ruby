@@ -1558,12 +1558,12 @@
           },
           "status": {
             "type": "string",
-            "description": "Delivery state. Inbound messages are `received`. An outbound message is `sending` while it is queued to the channel, `sent` once the channel accepted it, or `failed`. Only `sent` (or `received`) means the guest can see it."
+            "description": "Delivery state. Inbound messages are `received`. An outbound message is `sending` while it is handed to the channel, `queued` when the channel was busy and Repull is still delivering it in the background (Vrbo), `sent` once the channel accepted it, or `failed`. Only `sent` (or `received`) means the guest can see it. A change from `queued` is sent as `conversation.message.status_changed`."
           },
           "statusReason": {
             "type": "string",
             "nullable": true,
-            "description": "Why a message is still `sending` or `failed`, in plain words. `null` otherwise."
+            "description": "Why a message is still `sending` or `queued`, or why it `failed`, in plain words. `null` otherwise."
           },
           "senderType": {
             "type": "string",
@@ -2636,7 +2636,16 @@
                   "type": "string",
                   "format": "date-time",
                   "nullable": true,
-                  "description": "Vrbo only. When Vrbo's first notification reached `notificationEmail`, i.e. the host added it with notifications on. `null` until then."
+                  "deprecated": true,
+                  "description": "Deprecated: use `notifications`. Vrbo only. When Vrbo's FIRST notification reached `notificationEmail`; it stays set even if notifications later stop. `null` until then."
+                },
+                "notifications": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/VrboNotifications"
+                    }
+                  ],
+                  "description": "Vrbo only. Whether Vrbo's notification emails reach Repull now (`state`), when the last one did, and the address to add. When `state` is `missing`, ask the host to add `address` on Vrbo; `account.notifications_missing` is sent when that happens."
                 },
                 "calendar": {
                   "nullable": true,
@@ -3083,6 +3092,7 @@
           "reservation.updated",
           "reservation.cancelled",
           "reservation.message.received",
+          "conversation.message.status_changed",
           "reservation.message.sent",
           "reservation.message.updated",
           "reservation.message.read",
@@ -3111,6 +3121,7 @@
           "account.import.failed",
           "account.units.added",
           "account.calendar_access_changed",
+          "account.notifications_missing",
           "review.created",
           "review.responded",
           "ai.operation.completed",
@@ -6563,6 +6574,180 @@
         },
         "description": "Another tool (such as a PMS) started or stopped managing a Vrbo account's calendar. Started: calendar sync is now off for every unit of the account. Stopped: nothing is switched back on; turn it on with `POST /v1/connections/{id}/mappings` (`calendarSync: true`)."
       },
+      "VrboNotifications": {
+        "type": "object",
+        "description": "Whether Vrbo's notification emails for this account reach Repull. Each one brings a new guest message or booking in within about a minute; without them Repull relies on its scheduled check, which is slower.",
+        "required": [
+          "state",
+          "lastReceivedAt",
+          "address"
+        ],
+        "properties": {
+          "state": {
+            "type": "string",
+            "description": "`active`: notifications arrive for this account's guest messages. `missing`: Repull found new guest messages and no notification came for them \u2014 ask the host to add `address` on Vrbo (or turn its notifications back on). `unknown`: no guest messages yet to judge by."
+          },
+          "lastReceivedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the last Vrbo notification reached `address`. `null` when none ever has."
+          },
+          "address": {
+            "type": "string",
+            "nullable": true,
+            "example": "in+vrbo-1234-321@repull.dev",
+            "description": "The address the host adds on Vrbo as a secondary email, with message and reservation notifications on."
+          }
+        }
+      },
+      "ConversationMessageStatusChangedPayload": {
+        "type": "object",
+        "required": [
+          "conversationId",
+          "messageId",
+          "status",
+          "statusReason"
+        ],
+        "description": "Payload for `conversation.message.status_changed`: a message you sent changed delivery status after the send call returned \u2014 a Vrbo reply accepted as `queued` (`202`) was delivered (`sent`) or gave up (`failed`).",
+        "properties": {
+          "conversationId": {
+            "type": "string",
+            "example": "549555",
+            "description": "The conversation (`GET /v1/conversations/{id}`)."
+          },
+          "messageId": {
+            "type": "string",
+            "example": "1861207",
+            "description": "The message, as `id` on the send response and on `GET /v1/conversations/{id}/messages`."
+          },
+          "status": {
+            "type": "string",
+            "description": "The new delivery status."
+          },
+          "statusReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why it `failed`, in plain words. `null` when `sent`."
+          }
+        }
+      },
+      "ConversationMessageStatusChangedEvent": {
+        "type": "object",
+        "required": [
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
+          "data"
+        ],
+        "properties": {
+          "event": {
+            "type": "string",
+            "description": "The event name. This field is `event`, not `type`."
+          },
+          "eventId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
+          },
+          "apiVersion": {
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this delivery was built."
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ConversationMessageStatusChangedPayload"
+          }
+        },
+        "description": "A message you sent was delivered or gave up after the send call returned. Update the message you show from `status` and `statusReason`."
+      },
+      "AccountNotificationsMissingPayload": {
+        "type": "object",
+        "required": [
+          "workspaceId",
+          "provider",
+          "accountId",
+          "connectionId",
+          "notifications",
+          "detectedAt"
+        ],
+        "description": "Payload for `account.notifications_missing`: a Vrbo account had new guest messages and no notification email arrived for them.",
+        "properties": {
+          "workspaceId": {
+            "type": "integer"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "accountId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Vrbo's account number (`accounts[].externalAccountId` on `GET /v1/connect/vrbo-login`)."
+          },
+          "connectionId": {
+            "type": "integer",
+            "nullable": true,
+            "description": "The workspace's Vrbo connection record."
+          },
+          "notifications": {
+            "$ref": "#/components/schemas/VrboNotifications"
+          },
+          "detectedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "docsUrl": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://repull.dev/docs/channels/vrbo/notifications"
+          }
+        }
+      },
+      "AccountNotificationsMissingEvent": {
+        "type": "object",
+        "required": [
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
+          "data"
+        ],
+        "properties": {
+          "event": {
+            "type": "string",
+            "description": "The event name. This field is `event`, not `type`."
+          },
+          "eventId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
+          },
+          "apiVersion": {
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this delivery was built."
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
+          },
+          "data": {
+            "$ref": "#/components/schemas/AccountNotificationsMissingPayload"
+          }
+        },
+        "description": "A Vrbo account's notification emails are not arriving. Ask the host to add `data.notifications.address` on Vrbo as a secondary email with message and reservation notifications on."
+      },
       "AccountUnitsAddedEvent": {
         "type": "object",
         "required": [
@@ -7296,6 +7481,9 @@
             "$ref": "#/components/schemas/ReservationMessageReceivedEvent"
           },
           {
+            "$ref": "#/components/schemas/ConversationMessageStatusChangedEvent"
+          },
+          {
             "$ref": "#/components/schemas/ReservationMessageSentEvent"
           },
           {
@@ -7380,6 +7568,9 @@
             "$ref": "#/components/schemas/AccountCalendarAccessChangedEvent"
           },
           {
+            "$ref": "#/components/schemas/AccountNotificationsMissingEvent"
+          },
+          {
             "$ref": "#/components/schemas/ReviewCreatedEvent"
           },
           {
@@ -7420,6 +7611,7 @@
             "reservation.updated": "#/components/schemas/ReservationUpdatedEvent",
             "reservation.cancelled": "#/components/schemas/ReservationCancelledEvent",
             "reservation.message.received": "#/components/schemas/ReservationMessageReceivedEvent",
+            "conversation.message.status_changed": "#/components/schemas/ConversationMessageStatusChangedEvent",
             "reservation.message.sent": "#/components/schemas/ReservationMessageSentEvent",
             "reservation.message.updated": "#/components/schemas/ReservationMessageUpdatedEvent",
             "reservation.message.read": "#/components/schemas/ReservationMessageReadEvent",
@@ -7448,6 +7640,7 @@
             "account.import.failed": "#/components/schemas/AccountImportFailedEvent",
             "account.units.added": "#/components/schemas/AccountUnitsAddedEvent",
             "account.calendar_access_changed": "#/components/schemas/AccountCalendarAccessChangedEvent",
+            "account.notifications_missing": "#/components/schemas/AccountNotificationsMissingEvent",
             "review.created": "#/components/schemas/ReviewCreatedEvent",
             "review.responded": "#/components/schemas/ReviewRespondedEvent",
             "ai.operation.completed": "#/components/schemas/AiOperationCompletedEvent",
@@ -16196,7 +16389,8 @@
           },
           "status": {
             "type": "string",
-            "example": "sent"
+            "example": "sent",
+            "description": "`sent`: delivered. `queued` (with HTTP `202`): recorded, and still being delivered in the background because the channel was busy (Vrbo) \u2014 do not resend; the outcome arrives as the message's `status` on `GET /v1/conversations/{id}/messages` and as `conversation.message.status_changed`."
           },
           "direction": {
             "type": "string"
@@ -20389,7 +20583,7 @@
       "post": {
         "operationId": "send_conversation_message",
         "summary": "Send a message to the guest",
-        "description": "Sends a message to the guest on this conversation and records it in the thread.\n\nOmit `channel` and the message goes out on whichever channel the conversation already uses (Airbnb, Booking.com, VRBO, SMS, email or the direct-booking site) \u2014 that is the right default. Pass `channel` only to force a specific one.\n\nThe message is attributed to the API: it is recorded with `aiGenerated` false so an API send is never counted as an automated reply.\n\n### Airbnb rewrites links \u2014 check `contentRewritten`\n\nAirbnb rejects guest messages containing a link, an email address or a phone number, and names the offending text. When that happens the offending fragment is stripped and the remainder is re-sent once, which means **the guest receives a message that is not the one you wrote**. Reporting that as a plain success would be a lie, so every response carries `contentRewritten`; when it is `true`, `deliveredContent` is the text that actually reached the guest. Check it before assuming your message went out verbatim.\n\nWhen the text cannot be salvaged (the link is most of the message) nothing is delivered and the call returns `422 message_not_sent` with the channel's verbatim refusal in `statusReason`. `message_not_sent` only ever means the channel refused: a fault on Repull's side (a dropped database connection, a timeout) is `503 internal_error` with `sent: false` when nothing was delivered \u2014 retry it unchanged with the same `Idempotency-Key`.\n\nSend `Idempotency-Key` \u2014 without it, retrying after a network timeout sends the guest the same message twice.\n\n### Attachments\n\nSend files with `attachments: [{ url, contentType?, filename? }]` \u2014 public `https://` URLs, up to 5 per request, 10 MB each. `message` may be omitted when there are attachments (except on Booking.com). Repull downloads each file, reads its real type from the bytes, keeps a durable copy and delivers it through the channel's own file flow. **Every file is checked before anything is sent**: if one is unreachable, too large or of a type the channel refuses, the call returns 422 naming the file (`index`) and the guest receives nothing.\n\n| Channel | Accepted types | Text | How it arrives |\n|---|---|---|---|\n| Airbnb | JPEG, PNG, GIF, WebP (converted to JPEG), MP4, QuickTime | optional | each file as its own message, then the text as a separate message |\n| Booking.com | JPEG, PNG | **required** | one message carrying the text and every file |\n| VRBO, SMS, email, direct-booking site chat | \u2014 | \u2014 | `422 attachments_not_supported`, nothing sent |\n\nAirbnb does not allow files in pre-booking (inquiry) conversations; that refusal comes back as `422 message_not_sent`. Because Airbnb delivers files one message at a time, a later file can be refused after earlier ones arrived \u2014 that returns `422 message_partially_sent` with `parts` saying exactly which messages reached the guest; resend only the rest.\n\nThe response's `attachments` lists each file's durable `url`, and `parts` lists every channel message the send produced. Read-back (`GET /v1/conversations/{id}/messages`) shows the same files in each message's `attachments`.\n\n**Inactive listings:** a conversation that belongs to an inactive listing returns `403 listing_inactive` and no message is sent. Activate the listing first.",
+        "description": "Sends a message to the guest on this conversation and records it in the thread.\n\nOmit `channel` and the message goes out on whichever channel the conversation already uses (Airbnb, Booking.com, VRBO, SMS, email or the direct-booking site) \u2014 that is the right default. Pass `channel` only to force a specific one.\n\nThe message is attributed to the API: it is recorded with `aiGenerated` false so an API send is never counted as an automated reply.\n\n### Airbnb rewrites links \u2014 check `contentRewritten`\n\nAirbnb rejects guest messages containing a link, an email address or a phone number, and names the offending text. When that happens the offending fragment is stripped and the remainder is re-sent once, which means **the guest receives a message that is not the one you wrote**. Reporting that as a plain success would be a lie, so every response carries `contentRewritten`; when it is `true`, `deliveredContent` is the text that actually reached the guest. Check it before assuming your message went out verbatim.\n\nWhen the text cannot be salvaged (the link is most of the message) nothing is delivered and the call returns `422 message_not_sent` with the channel's verbatim refusal in `statusReason`. `message_not_sent` only ever means the channel refused: a fault on Repull's side (a dropped database connection, a timeout) is `503 internal_error` with `sent: false` when nothing was delivered \u2014 retry it unchanged with the same `Idempotency-Key`.\n\nSend `Idempotency-Key` \u2014 without it, retrying after a network timeout sends the guest the same message twice.\n\n### Vrbo: `202` while Vrbo is busy\n\nA Vrbo reply is delivered in the call when Vrbo takes it (about 20 seconds at most) and returns `200` with `status: \"sent\"`. When Vrbo is busy, the reply is recorded and delivered in the background: the call returns **`202` with `status: \"queued\"`** and the message `id`. Do not send it again \u2014 a retry with the same `Idempotency-Key` returns the same `202`. The outcome arrives as the message's `status` on `GET /v1/conversations/{id}/messages` (`sent`, or `failed` with `statusReason`) and as the `conversation.message.status_changed` webhook.\n\n### Attachments\n\nSend files with `attachments: [{ url, contentType?, filename? }]` \u2014 public `https://` URLs, up to 5 per request, 10 MB each. `message` may be omitted when there are attachments (except on Booking.com). Repull downloads each file, reads its real type from the bytes, keeps a durable copy and delivers it through the channel's own file flow. **Every file is checked before anything is sent**: if one is unreachable, too large or of a type the channel refuses, the call returns 422 naming the file (`index`) and the guest receives nothing.\n\n| Channel | Accepted types | Text | How it arrives |\n|---|---|---|---|\n| Airbnb | JPEG, PNG, GIF, WebP (converted to JPEG), MP4, QuickTime | optional | each file as its own message, then the text as a separate message |\n| Booking.com | JPEG, PNG | **required** | one message carrying the text and every file |\n| VRBO, SMS, email, direct-booking site chat | \u2014 | \u2014 | `422 attachments_not_supported`, nothing sent |\n\nAirbnb does not allow files in pre-booking (inquiry) conversations; that refusal comes back as `422 message_not_sent`. Because Airbnb delivers files one message at a time, a later file can be refused after earlier ones arrived \u2014 that returns `422 message_partially_sent` with `parts` saying exactly which messages reached the guest; resend only the rest.\n\nThe response's `attachments` lists each file's durable `url`, and `parts` lists every channel message the send produced. Read-back (`GET /v1/conversations/{id}/messages`) shows the same files in each message's `attachments`.\n\n**Inactive listings:** a conversation that belongs to an inactive listing returns `403 listing_inactive` and no message is sent. Activate the listing first.",
         "tags": [
           "Conversations"
         ],
@@ -20500,6 +20694,34 @@
                           "error": null
                         }
                       ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Accepted, not yet delivered (Vrbo, while Vrbo is busy): the message is recorded with `status: \"queued\"` and delivered in the background. Do not resend \u2014 the same `Idempotency-Key` replays this `202`. Follow the outcome on `GET /v1/conversations/{id}/messages` (`status` becomes `sent`, or `failed` with `statusReason`) or the `conversation.message.status_changed` webhook.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SendMessageResponse"
+                },
+                "examples": {
+                  "vrboQueued": {
+                    "summary": "Vrbo was busy: recorded and delivered in the background",
+                    "value": {
+                      "id": "1861207",
+                      "conversationId": "549555",
+                      "externalMessageId": null,
+                      "channel": "vrbo",
+                      "status": "queued",
+                      "direction": "outbound",
+                      "contentRewritten": false,
+                      "submittedContent": "Hi Ximena, the gate code is 4821.",
+                      "deliveredContent": null,
+                      "statusReason": "Vrbo is busy right now; the reply will be delivered in the background.",
+                      "attachments": []
                     }
                   }
                 }
@@ -20738,7 +20960,7 @@
             }
           },
           "503": {
-            "description": "A temporary fault on Repull's side \u2014 never a verdict on the message. `internal_error`: the send failed inside Repull (a dropped database connection, a timeout) before the channel refused anything. `sent` says whether the message reached the channel: with `messageId: null` and `sent: false` nothing was delivered or recorded, and retrying the same request with the same `Idempotency-Key` after `retry_after` seconds sends it once. With a `messageId`, check that message in `GET /v1/conversations/{id}/messages` before resending. `attachment_storage_failed`: a file could not be stored for delivery; nothing was sent, retry the same way. A 503 is never stored against the `Idempotency-Key`, so the retry runs for real. Do not edit the text: it was not refused.",
+            "description": "A temporary fault on Repull's side \u2014 never a verdict on the message. `internal_error`: the send failed inside Repull (a dropped database connection, a timeout) before the channel refused anything. With `sent: null` Repull did not get the result in time and the message may still be delivered: check `GET /v1/conversations/{id}/messages` before resending. `sent` says whether the message reached the channel: with `messageId: null` and `sent: false` nothing was delivered or recorded, and retrying the same request with the same `Idempotency-Key` after `retry_after` seconds sends it once. With a `messageId`, check that message in `GET /v1/conversations/{id}/messages` before resending. `attachment_storage_failed`: a file could not be stored for delivery; nothing was sent, retry the same way. A 503 is never stored against the `Idempotency-Key`, so the retry runs for real. Do not edit the text: it was not refused.",
             "content": {
               "application/json": {
                 "schema": {

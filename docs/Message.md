@@ -7,8 +7,8 @@
 | **id** | **String** |  | [optional] |
 | **external_message_id** | **String** | ID assigned by the source channel (Airbnb message id, Booking message id, etc.). Stable across syncs. | [optional] |
 | **direction** | **String** |  | [optional] |
-| **status** | **String** | Delivery state. Inbound messages are &#x60;received&#x60;. An outbound message is &#x60;sending&#x60; while it is queued to the channel, &#x60;sent&#x60; once the channel accepted it, or &#x60;failed&#x60;. Only &#x60;sent&#x60; (or &#x60;received&#x60;) means the guest can see it. | [optional] |
-| **status_reason** | **String** | Why a message is still &#x60;sending&#x60; or &#x60;failed&#x60;, in plain words. &#x60;null&#x60; otherwise. | [optional] |
+| **status** | **String** | Delivery state. Inbound messages are &#x60;received&#x60;. An outbound message is &#x60;sending&#x60; while it is handed to the channel, &#x60;queued&#x60; when the channel was busy and Repull is still delivering it in the background (Vrbo), &#x60;sent&#x60; once the channel accepted it, or &#x60;failed&#x60;. Only &#x60;sent&#x60; (or &#x60;received&#x60;) means the guest can see it. A change from &#x60;queued&#x60; is sent as &#x60;conversation.message.status_changed&#x60;. | [optional] |
+| **status_reason** | **String** | Why a message is still &#x60;sending&#x60; or &#x60;queued&#x60;, or why it &#x60;failed&#x60;, in plain words. &#x60;null&#x60; otherwise. | [optional] |
 | **sender_type** | **String** | Free-form sender role from the channel (e.g. &#x60;guest&#x60;, &#x60;host&#x60;, &#x60;system&#x60;, &#x60;airbnb&#x60;). Use &#x60;direction&#x60; for binary inbound/outbound logic. | [optional] |
 | **sender_name** | **String** |  | [optional] |
 | **sender_avatar** | **String** |  | [optional] |

@@ -23,10 +23,10 @@ module Repull
 
     attr_accessor :direction
 
-    # Delivery state. Inbound messages are `received`. An outbound message is `sending` while it is queued to the channel, `sent` once the channel accepted it, or `failed`. Only `sent` (or `received`) means the guest can see it.
+    # Delivery state. Inbound messages are `received`. An outbound message is `sending` while it is handed to the channel, `queued` when the channel was busy and Repull is still delivering it in the background (Vrbo), `sent` once the channel accepted it, or `failed`. Only `sent` (or `received`) means the guest can see it. A change from `queued` is sent as `conversation.message.status_changed`.
     attr_accessor :status
 
-    # Why a message is still `sending` or `failed`, in plain words. `null` otherwise.
+    # Why a message is still `sending` or `queued`, or why it `failed`, in plain words. `null` otherwise.
     attr_accessor :status_reason
 
     # Free-form sender role from the channel (e.g. `guest`, `host`, `system`, `airbnb`). Use `direction` for binary inbound/outbound logic.

@@ -14,7 +14,8 @@
 | **access_type** | [**ConnectionAccessType**](ConnectionAccessType.md) | What this account may do. Airbnb: the tier the host&#39;s token was granted with (&#x60;read_only&#x60;, &#x60;messaging&#x60;, &#x60;full_access&#x60;). Vrbo: &#x60;messaging&#x60; (bookings and messages, no calendar push) or &#x60;full_access&#x60; (also pushes prices and availability). &#x60;null&#x60; when unknown. | [optional] |
 | **action** | **Object** | Booking.com: &#x60;{ required, reason: \&quot;needs_mapping\&quot;, message }&#x60; while a room of this hotel is matched to no listing (nothing syncs for that room). Null when nothing is needed. | [optional] |
 | **fix_url** | **String** | Booking.com: a link that opens room mapping for this hotel (no new Connect session needed). Send the host to it when &#x60;action&#x60; is set. | [optional] |
-| **notification_received_at** | **Time** | Vrbo only. When Vrbo&#39;s first notification reached &#x60;notificationEmail&#x60;, i.e. the host added it with notifications on. &#x60;null&#x60; until then. | [optional] |
+| **notification_received_at** | **Time** | Deprecated: use &#x60;notifications&#x60;. Vrbo only. When Vrbo&#39;s FIRST notification reached &#x60;notificationEmail&#x60;; it stays set even if notifications later stop. &#x60;null&#x60; until then. | [optional] |
+| **notifications** | [**VrboNotifications**](VrboNotifications.md) | Vrbo only. Whether Vrbo&#39;s notification emails reach Repull now (&#x60;state&#x60;), when the last one did, and the address to add. When &#x60;state&#x60; is &#x60;missing&#x60;, ask the host to add &#x60;address&#x60; on Vrbo; &#x60;account.notifications_missing&#x60; is sent when that happens. | [optional] |
 | **calendar** | [**VrboCalendarAccess**](VrboCalendarAccess.md) | Vrbo only. Whether another tool (such as a PMS) manages this account&#39;s calendar; while &#x60;calendar.managedBy&#x60; is set, calendar sync is off for all its units. | [optional] |
 | **notification_email** | **String** | Vrbo only. The address the host can add on Vrbo as a secondary email (with message and reservation notifications on) so new bookings, inquiries and messages arrive within a minute instead of at the scheduled check. Ask every host to add it: notifications are how Vrbo updates reach Repull, the scheduled check is the backup. Hosted Connect shows it on its mapping screen; show it in your own app when you create sessions with &#x60;mapping: \&quot;api\&quot;&#x60;. | [optional] |
 | **import** | [**VrboImportStatus**](VrboImportStatus.md) | Vrbo only: where the account import stands. | [optional] |
@@ -36,6 +37,7 @@ instance = Repull::ConnectStatusAccountsInner.new(
   action: null,
   fix_url: null,
   notification_received_at: null,
+  notifications: null,
   calendar: null,
   notification_email: null,
   import: null

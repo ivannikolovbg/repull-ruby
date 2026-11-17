@@ -8,7 +8,7 @@
 | **conversation_id** | **Integer** |  | [optional] |
 | **external_message_id** | **String** | The channel&#39;s own message id, when it returns one. | [optional] |
 | **channel** | **String** | The channel the message actually went out on. | [optional] |
-| **status** | **String** |  | [optional] |
+| **status** | **String** | &#x60;sent&#x60;: delivered. &#x60;queued&#x60; (with HTTP &#x60;202&#x60;): recorded, and still being delivered in the background because the channel was busy (Vrbo) — do not resend; the outcome arrives as the message&#39;s &#x60;status&#x60; on &#x60;GET /v1/conversations/{id}/messages&#x60; and as &#x60;conversation.message.status_changed&#x60;. | [optional] |
 | **direction** | **String** |  | [optional] |
 | **content_rewritten** | **Boolean** | TRUE when the channel altered the text before delivery — today that means Airbnb stripped a link, an email address or a phone number and the remainder was re-sent. When true, the guest did NOT receive &#x60;submittedContent&#x60;; they received &#x60;deliveredContent&#x60;. | [optional] |
 | **submitted_content** | **String** | The text you sent. | [optional] |

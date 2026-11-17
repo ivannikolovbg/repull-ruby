@@ -26,6 +26,7 @@ module Repull
     # The channel the message actually went out on.
     attr_accessor :channel
 
+    # `sent`: delivered. `queued` (with HTTP `202`): recorded, and still being delivered in the background because the channel was busy (Vrbo) — do not resend; the outcome arrives as the message's `status` on `GET /v1/conversations/{id}/messages` and as `conversation.message.status_changed`.
     attr_accessor :status
 
     attr_accessor :direction

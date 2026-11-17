@@ -20,6 +20,7 @@ Repull::WebhookEvent.openapi_one_of
 #   :'AccountImportCompletedEvent',
 #   :'AccountImportFailedEvent',
 #   :'AccountImportStartedEvent',
+#   :'AccountNotificationsMissingEvent',
 #   :'AccountUnitsAddedEvent',
 #   :'AiOperationCompletedEvent',
 #   :'AiOperationFailedEvent',
@@ -28,6 +29,7 @@ Repull::WebhookEvent.openapi_one_of
 #   :'ChannelSyncFailedEvent',
 #   :'ConnectSessionAbandonedEvent',
 #   :'ConnectSessionCompletedEvent',
+#   :'ConversationMessageStatusChangedEvent',
 #   :'InquiryCreatedEvent',
 #   :'InquiryUpdatedEvent',
 #   :'ListingCreatedEvent',
@@ -91,6 +93,7 @@ Repull::WebhookEvent.openapi_discriminator_mapping
 #   :'account.import.completed' => :'AccountImportCompletedEvent',
 #   :'account.import.failed' => :'AccountImportFailedEvent',
 #   :'account.import.started' => :'AccountImportStartedEvent',
+#   :'account.notifications_missing' => :'AccountNotificationsMissingEvent',
 #   :'account.units.added' => :'AccountUnitsAddedEvent',
 #   :'ai.operation.completed' => :'AiOperationCompletedEvent',
 #   :'ai.operation.failed' => :'AiOperationFailedEvent',
@@ -99,6 +102,7 @@ Repull::WebhookEvent.openapi_discriminator_mapping
 #   :'channel.sync.failed' => :'ChannelSyncFailedEvent',
 #   :'connect.session.abandoned' => :'ConnectSessionAbandonedEvent',
 #   :'connect.session.completed' => :'ConnectSessionCompletedEvent',
+#   :'conversation.message.status_changed' => :'ConversationMessageStatusChangedEvent',
 #   :'inquiry.created' => :'InquiryCreatedEvent',
 #   :'inquiry.updated' => :'InquiryUpdatedEvent',
 #   :'listing.created' => :'ListingCreatedEvent',
@@ -161,6 +165,7 @@ Repull::WebhookEvent.build(data_that_doesnt_match)
 - `AccountImportCompletedEvent`
 - `AccountImportFailedEvent`
 - `AccountImportStartedEvent`
+- `AccountNotificationsMissingEvent`
 - `AccountUnitsAddedEvent`
 - `AiOperationCompletedEvent`
 - `AiOperationFailedEvent`
@@ -169,6 +174,7 @@ Repull::WebhookEvent.build(data_that_doesnt_match)
 - `ChannelSyncFailedEvent`
 - `ConnectSessionAbandonedEvent`
 - `ConnectSessionCompletedEvent`
+- `ConversationMessageStatusChangedEvent`
 - `InquiryCreatedEvent`
 - `InquiryUpdatedEvent`
 - `ListingCreatedEvent`
