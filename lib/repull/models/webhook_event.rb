@@ -20,6 +20,7 @@ module Repull
       # List of class defined in oneOf (OpenAPI v3)
       def openapi_one_of
         [
+          :'AccountCalendarAccessChangedEvent',
           :'AccountCreatedEvent',
           :'AccountDisconnectedEvent',
           :'AccountImportCompletedEvent',
@@ -73,6 +74,7 @@ module Repull
       # Discriminator's mapping (OpenAPI v3)
       def openapi_discriminator_mapping
         {
+          :'account.calendar_access_changed' => :'AccountCalendarAccessChangedEvent',
           :'account.created' => :'AccountCreatedEvent',
           :'account.disconnected' => :'AccountDisconnectedEvent',
           :'account.import.completed' => :'AccountImportCompletedEvent',

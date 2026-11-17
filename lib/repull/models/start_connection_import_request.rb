@@ -15,7 +15,7 @@ require 'time'
 
 module Repull
   class StartConnectionImportRequest < ApiModelBase
-    # What to import. `listings` = the account's listings and their calendars (pricing and availability). The only scope; the full import runs when an account is connected.
+    # What to import. `listings` = the account's listings. New listings come in with their calendar (pricing and availability); on a full-access connection, calendars of listings already in Repull are not re-read. The only scope; the full import runs when an account is connected.
     attr_accessor :scope
 
     class EnumAttributeValidator

@@ -15,6 +15,7 @@
 | **action** | **Object** | Booking.com: &#x60;{ required, reason: \&quot;needs_mapping\&quot;, message }&#x60; while a room of this hotel is matched to no listing (nothing syncs for that room). Null when nothing is needed. | [optional] |
 | **fix_url** | **String** | Booking.com: a link that opens room mapping for this hotel (no new Connect session needed). Send the host to it when &#x60;action&#x60; is set. | [optional] |
 | **notification_received_at** | **Time** | Vrbo only. When Vrbo&#39;s first notification reached &#x60;notificationEmail&#x60;, i.e. the host added it with notifications on. &#x60;null&#x60; until then. | [optional] |
+| **calendar** | [**VrboCalendarAccess**](VrboCalendarAccess.md) | Vrbo only. Whether another tool (such as a PMS) manages this account&#39;s calendar; while &#x60;calendar.managedBy&#x60; is set, calendar sync is off for all its units. | [optional] |
 | **notification_email** | **String** | Vrbo only. The address the host can add on Vrbo as a secondary email (with message and reservation notifications on) so new bookings, inquiries and messages arrive within a minute instead of at the scheduled check. Ask every host to add it: notifications are how Vrbo updates reach Repull, the scheduled check is the backup. Hosted Connect shows it on its mapping screen; show it in your own app when you create sessions with &#x60;mapping: \&quot;api\&quot;&#x60;. | [optional] |
 | **import** | [**VrboImportStatus**](VrboImportStatus.md) | Vrbo only: where the account import stands. | [optional] |
 
@@ -35,6 +36,7 @@ instance = Repull::ConnectStatusAccountsInner.new(
   action: null,
   fix_url: null,
   notification_received_at: null,
+  calendar: null,
   notification_email: null,
   import: null
 )

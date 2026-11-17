@@ -9,7 +9,7 @@
 | **grain** | **String** |  | [optional] |
 | **current_listing_id** | **Integer** |  | [optional] |
 | **suggested_listing_id** | **Integer** |  | [optional] |
-| **meta** | **Object** | Channel details that identify the unit. Booking.com Extranet: &#x60;hotel&#x60; (property name), &#x60;hotelId&#x60; (Booking.com property ID), &#x60;roomId&#x60; (Booking.com room ID), &#x60;city&#x60;. Vrbo: &#x60;headline&#x60;, &#x60;address&#x60;, &#x60;vrboStatus&#x60;; the Vrbo listing ID is &#x60;unit_id&#x60;. | [optional] |
+| **meta** | **Object** | Channel details that identify the unit. Booking.com Extranet: &#x60;hotel&#x60; (property name), &#x60;hotelId&#x60; (Booking.com property ID), &#x60;roomId&#x60; (Booking.com room ID), &#x60;city&#x60;. Vrbo: &#x60;headline&#x60;, &#x60;address&#x60;, &#x60;vrboStatus&#x60;, &#x60;calendarSync&#x60; (whether the unit&#39;s prices and availability are pushed to Vrbo) and, while Vrbo says another tool manages the account&#39;s calendar, &#x60;calendarSyncBlocked: \&quot;calendar_managed_elsewhere\&quot;&#x60;; the Vrbo listing ID is &#x60;unit_id&#x60;. | [optional] |
 
 ## Example
 

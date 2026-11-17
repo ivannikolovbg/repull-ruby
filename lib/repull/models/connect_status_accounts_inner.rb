@@ -45,6 +45,9 @@ module Repull
     # Vrbo only. When Vrbo's first notification reached `notificationEmail`, i.e. the host added it with notifications on. `null` until then.
     attr_accessor :notification_received_at
 
+    # Vrbo only. Whether another tool (such as a PMS) manages this account's calendar; while `calendar.managedBy` is set, calendar sync is off for all its units.
+    attr_accessor :calendar
+
     # Vrbo only. The address the host can add on Vrbo as a secondary email (with message and reservation notifications on) so new bookings, inquiries and messages arrive within a minute instead of at the scheduled check. Ask every host to add it: notifications are how Vrbo updates reach Repull, the scheduled check is the backup. Hosted Connect shows it on its mapping screen; show it in your own app when you create sessions with `mapping: \"api\"`.
     attr_accessor :notification_email
 
@@ -87,6 +90,7 @@ module Repull
         :'action' => :'action',
         :'fix_url' => :'fixUrl',
         :'notification_received_at' => :'notificationReceivedAt',
+        :'calendar' => :'calendar',
         :'notification_email' => :'notificationEmail',
         :'import' => :'import'
       }
@@ -116,6 +120,7 @@ module Repull
         :'action' => :'Object',
         :'fix_url' => :'String',
         :'notification_received_at' => :'Time',
+        :'calendar' => :'VrboCalendarAccess',
         :'notification_email' => :'String',
         :'import' => :'VrboImportStatus'
       }
@@ -134,6 +139,7 @@ module Repull
         :'action',
         :'fix_url',
         :'notification_received_at',
+        :'calendar',
         :'notification_email',
         :'import'
       ])
@@ -199,6 +205,10 @@ module Repull
         self.notification_received_at = attributes[:'notification_received_at']
       end
 
+      if attributes.key?(:'calendar')
+        self.calendar = attributes[:'calendar']
+      end
+
       if attributes.key?(:'notification_email')
         self.notification_email = attributes[:'notification_email']
       end
@@ -239,6 +249,7 @@ module Repull
           action == o.action &&
           fix_url == o.fix_url &&
           notification_received_at == o.notification_received_at &&
+          calendar == o.calendar &&
           notification_email == o.notification_email &&
           import == o.import
     end
@@ -252,7 +263,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [external_account_id, connection_id, name, picture_url, status, connected, email, access_type, action, fix_url, notification_received_at, notification_email, import].hash
+      [external_account_id, connection_id, name, picture_url, status, connected, email, access_type, action, fix_url, notification_received_at, calendar, notification_email, import].hash
     end
 
     # Builds the object from hash

@@ -24,6 +24,8 @@ module Repull
     # Vrbo only. Ask the host to add this address on Vrbo as a secondary email, with message and reservation notifications on. It is how new bookings, inquiries and guest messages reach Repull within a minute; without it they arrive at the next scheduled check. Hosted Connect asks for it on its mapping screen, so show it in your own flow when you map with `mapping: \"api\"`.
     attr_accessor :notification_email
 
+    attr_accessor :calendar
+
     attr_accessor :units
 
     attr_accessor :listing_options
@@ -62,6 +64,7 @@ module Repull
         :'channel' => :'channel',
         :'status' => :'status',
         :'notification_email' => :'notification_email',
+        :'calendar' => :'calendar',
         :'units' => :'units',
         :'listing_options' => :'listing_options',
         :'missing_capabilities' => :'missing_capabilities',
@@ -86,6 +89,7 @@ module Repull
         :'channel' => :'String',
         :'status' => :'String',
         :'notification_email' => :'String',
+        :'calendar' => :'VrboCalendarAccess',
         :'units' => :'Array<ListConnectionUnits200ResponseUnitsInner>',
         :'listing_options' => :'Array<ListConnectionUnits200ResponseListingOptionsInner>',
         :'missing_capabilities' => :'Array<String>',
@@ -130,6 +134,10 @@ module Repull
 
       if attributes.key?(:'notification_email')
         self.notification_email = attributes[:'notification_email']
+      end
+
+      if attributes.key?(:'calendar')
+        self.calendar = attributes[:'calendar']
       end
 
       if attributes.key?(:'units')
@@ -191,6 +199,7 @@ module Repull
           channel == o.channel &&
           status == o.status &&
           notification_email == o.notification_email &&
+          calendar == o.calendar &&
           units == o.units &&
           listing_options == o.listing_options &&
           missing_capabilities == o.missing_capabilities &&
@@ -206,7 +215,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [connection_id, channel, status, notification_email, units, listing_options, missing_capabilities, listing_options_total].hash
+      [connection_id, channel, status, notification_email, calendar, units, listing_options, missing_capabilities, listing_options_total].hash
     end
 
     # Builds the object from hash

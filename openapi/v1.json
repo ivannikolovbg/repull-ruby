@@ -2582,6 +2582,15 @@
                   "nullable": true,
                   "description": "Vrbo only. When Vrbo's first notification reached `notificationEmail`, i.e. the host added it with notifications on. `null` until then."
                 },
+                "calendar": {
+                  "nullable": true,
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/VrboCalendarAccess"
+                    }
+                  ],
+                  "description": "Vrbo only. Whether another tool (such as a PMS) manages this account's calendar; while `calendar.managedBy` is set, calendar sync is off for all its units."
+                },
                 "notificationEmail": {
                   "type": "string",
                   "nullable": true,
@@ -3045,6 +3054,7 @@
           "account.import.completed",
           "account.import.failed",
           "account.units.added",
+          "account.calendar_access_changed",
           "review.created",
           "review.responded",
           "ai.operation.completed",
@@ -6390,6 +6400,113 @@
           }
         }
       },
+      "VrboCalendarAccess": {
+        "type": "object",
+        "required": [
+          "managedBy",
+          "detectedAt",
+          "checkedAt",
+          "docsUrl"
+        ],
+        "description": "Whether another tool manages a Vrbo account's calendar. Vrbo reports it per account; Repull asks when the account connects and once a day. While `managedBy` is set, Vrbo refuses price and availability changes from anyone else, so calendar sync is off for every unit of the account and turning it on returns `409 calendar_managed_elsewhere`. Bookings and messages keep working.",
+        "properties": {
+          "managedBy": {
+            "type": "string",
+            "nullable": true,
+            "description": "`integrated_software`: Vrbo says connected software (such as a PMS) manages the calendar. `null`: Repull may manage it."
+          },
+          "detectedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When `managedBy` was first seen. `null` when not managed."
+          },
+          "checkedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When Vrbo was last asked. `null` until the first check."
+          },
+          "docsUrl": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://repull.dev/docs/channels/vrbo/calendar-managed-elsewhere"
+          }
+        }
+      },
+      "AccountCalendarAccessChangedPayload": {
+        "type": "object",
+        "required": [
+          "workspaceId",
+          "provider",
+          "accountId",
+          "connectionId",
+          "calendar",
+          "changedAt"
+        ],
+        "properties": {
+          "workspaceId": {
+            "type": "integer"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "accountId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Vrbo's account number (`accounts[].externalAccountId` on `GET /v1/connect/vrbo-login`)."
+          },
+          "connectionId": {
+            "type": "integer",
+            "nullable": true,
+            "description": "The workspace's Vrbo connection record."
+          },
+          "calendar": {
+            "$ref": "#/components/schemas/VrboCalendarAccess"
+          },
+          "changedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AccountCalendarAccessChangedEvent": {
+        "type": "object",
+        "required": [
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
+          "data"
+        ],
+        "properties": {
+          "event": {
+            "type": "string",
+            "description": "The event name. This field is `event`, not `type`."
+          },
+          "eventId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
+          },
+          "apiVersion": {
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this delivery was built."
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
+          },
+          "data": {
+            "$ref": "#/components/schemas/AccountCalendarAccessChangedPayload"
+          }
+        },
+        "description": "Another tool (such as a PMS) started or stopped managing a Vrbo account's calendar. Started: calendar sync is now off for every unit of the account. Stopped: nothing is switched back on; turn it on with `POST /v1/connections/{id}/mappings` (`calendarSync: true`)."
+      },
       "AccountUnitsAddedEvent": {
         "type": "object",
         "required": [
@@ -7204,6 +7321,9 @@
             "$ref": "#/components/schemas/AccountUnitsAddedEvent"
           },
           {
+            "$ref": "#/components/schemas/AccountCalendarAccessChangedEvent"
+          },
+          {
             "$ref": "#/components/schemas/ReviewCreatedEvent"
           },
           {
@@ -7271,6 +7391,7 @@
             "account.import.completed": "#/components/schemas/AccountImportCompletedEvent",
             "account.import.failed": "#/components/schemas/AccountImportFailedEvent",
             "account.units.added": "#/components/schemas/AccountUnitsAddedEvent",
+            "account.calendar_access_changed": "#/components/schemas/AccountCalendarAccessChangedEvent",
             "review.created": "#/components/schemas/ReviewCreatedEvent",
             "review.responded": "#/components/schemas/ReviewRespondedEvent",
             "ai.operation.completed": "#/components/schemas/AiOperationCompletedEvent",
@@ -38804,6 +38925,18 @@
                             ],
                             "description": "`in_sync` \u2014 no future night has a problem; `problems` \u2014 see `problems`; `off` \u2014 calendar sync is off for this channel."
                           },
+                          "offReason": {
+                            "type": "string",
+                            "enum": [
+                              "calendar_managed_elsewhere"
+                            ],
+                            "description": "Vrbo only, when Repull turned calendar sync off: Vrbo says another tool (such as a PMS) manages the account's calendar. Absent when the host turned it off."
+                          },
+                          "docsUrl": {
+                            "type": "string",
+                            "format": "uri",
+                            "description": "Explains `offReason` and how to turn calendar sync back on."
+                          },
                           "lastSyncAt": {
                             "type": "string",
                             "format": "date-time",
@@ -39376,7 +39509,7 @@
                         },
                         "calendarSync": {
                           "type": "boolean",
-                          "description": "Vrbo: push this listing's prices and availability to Vrbo. Omit to follow the connection's access type (`messaging` = off, `full_access` = on). A new listing (`create`) always follows the access type. Other channels ignore it."
+                          "description": "Vrbo: push this listing's prices and availability to Vrbo. Omit to follow the connection's access type (`messaging` = off, `full_access` = on). A new listing (`create`) always follows the access type. Other channels ignore it. `true` returns `409 calendar_managed_elsewhere` while Vrbo says another tool (such as a PMS) manages the account's calendar (`calendar.managedBy` on `GET /v1/connect/vrbo-login`); see https://repull.dev/docs/channels/vrbo/calendar-managed-elsewhere."
                         }
                       }
                     }
@@ -39425,6 +39558,16 @@
                       }
                     }
                   }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`calendar_managed_elsewhere` (Vrbo): `calendarSync: true` was sent while Vrbo says another tool (such as a PMS) manages the account's calendar. Nothing was applied. `units` lists the units that asked for it; `docs_url` explains how to change it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -39573,6 +39716,9 @@
                       "nullable": true,
                       "description": "Vrbo only. Ask the host to add this address on Vrbo as a secondary email, with message and reservation notifications on. It is how new bookings, inquiries and guest messages reach Repull within a minute; without it they arrive at the next scheduled check. Hosted Connect asks for it on its mapping screen, so show it in your own flow when you map with `mapping: \"api\"`."
                     },
+                    "calendar": {
+                      "$ref": "#/components/schemas/VrboCalendarAccess"
+                    },
                     "units": {
                       "type": "array",
                       "items": {
@@ -39597,7 +39743,7 @@
                           },
                           "meta": {
                             "type": "object",
-                            "description": "Channel details that identify the unit. Booking.com Extranet: `hotel` (property name), `hotelId` (Booking.com property ID), `roomId` (Booking.com room ID), `city`. Vrbo: `headline`, `address`, `vrboStatus`; the Vrbo listing ID is `unit_id`."
+                            "description": "Channel details that identify the unit. Booking.com Extranet: `hotel` (property name), `hotelId` (Booking.com property ID), `roomId` (Booking.com room ID), `city`. Vrbo: `headline`, `address`, `vrboStatus`, `calendarSync` (whether the unit's prices and availability are pushed to Vrbo) and, while Vrbo says another tool manages the account's calendar, `calendarSyncBlocked: \"calendar_managed_elsewhere\"`; the Vrbo listing ID is `unit_id`."
                           }
                         }
                       }
@@ -41544,7 +41690,7 @@
       "post": {
         "operationId": "startConnectionImport",
         "summary": "Refresh a connection's listings",
-        "description": "Refresh listings: picks up listings you've added on Airbnb since you connected. Re-reads the connected account's listings and their calendars (pricing and availability) now; a new property comes in as a new listing and existing listings are refreshed. Nothing else is re-imported: no reservations, conversations, reviews or payouts.\n\nThe same import runs on its own once a day for every connected Airbnb account, and when the host reconnects. Call this when you know a property was just added and do not want to wait.\n\nNew listings obey your plan's active-listing limit: past it, and when the property is unlisted on Airbnb, they arrive inactive. Existing listings keep their status.\n\nThe import runs in the background (`202`). It is recorded like any other import (trigger `resync`, one `listings` stage): follow it on `GET /v1/connections/{id}/imports` or wait for `account.import.completed`, then read the new listings with `GET /v1/listings`.\n\nAirbnb connections only for now. Returns `409 conflict` while a listings import of the account is already running, and `409 connection_reauth_required` when the account is disconnected.",
+        "description": "Refresh listings: picks up listings you've added on Airbnb since you connected. Re-reads the connected account's listings now: a new property comes in as a new listing, together with its calendar (pricing and availability), and existing listings are refreshed. On a full-access connection Repull is the source of your calendars, so the calendars of listings already in Repull are not re-read from Airbnb; on read-only and messaging connections they are. Nothing else is re-imported: no reservations, conversations, reviews or payouts.\n\nThe same import runs on its own once a day for every connected Airbnb account, and when the host reconnects. Call this when you know a property was just added and do not want to wait.\n\nNew listings obey your plan's active-listing limit: past it, and when the property is unlisted on Airbnb, they arrive inactive. Existing listings keep their status.\n\nThe import runs in the background (`202`). It is recorded like any other import (trigger `resync`, one `listings` stage): follow it on `GET /v1/connections/{id}/imports` or wait for `account.import.completed`, then read the new listings with `GET /v1/listings`.\n\nAirbnb connections only for now. Returns `409 conflict` while a listings import of the account is already running, and `409 connection_reauth_required` when the account is disconnected.",
         "tags": [
           "Connections"
         ],
@@ -41572,7 +41718,7 @@
                       "listings"
                     ],
                     "default": "listings",
-                    "description": "What to import. `listings` = the account's listings and their calendars (pricing and availability). The only scope; the full import runs when an account is connected."
+                    "description": "What to import. `listings` = the account's listings. New listings come in with their calendar (pricing and availability); on a full-access connection, calendars of listings already in Repull are not re-read. The only scope; the full import runs when an account is connected."
                   }
                 }
               }

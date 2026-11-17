@@ -14,6 +14,7 @@ require 'repull'
 Repull::WebhookEvent.openapi_one_of
 # =>
 # [
+#   :'AccountCalendarAccessChangedEvent',
 #   :'AccountCreatedEvent',
 #   :'AccountDisconnectedEvent',
 #   :'AccountImportCompletedEvent',
@@ -84,6 +85,7 @@ require 'repull'
 Repull::WebhookEvent.openapi_discriminator_mapping
 # =>
 # {
+#   :'account.calendar_access_changed' => :'AccountCalendarAccessChangedEvent',
 #   :'account.created' => :'AccountCreatedEvent',
 #   :'account.disconnected' => :'AccountDisconnectedEvent',
 #   :'account.import.completed' => :'AccountImportCompletedEvent',
@@ -139,7 +141,7 @@ Find the appropriate object from the `openapi_one_of` list and casts the data in
 require 'repull'
 
 Repull::WebhookEvent.build(data)
-# => #<AccountCreatedEvent:0x00007fdd4aab02a0>
+# => #<AccountCalendarAccessChangedEvent:0x00007fdd4aab02a0>
 
 Repull::WebhookEvent.build(data_that_doesnt_match)
 # => nil
@@ -153,6 +155,7 @@ Repull::WebhookEvent.build(data_that_doesnt_match)
 
 #### Return type
 
+- `AccountCalendarAccessChangedEvent`
 - `AccountCreatedEvent`
 - `AccountDisconnectedEvent`
 - `AccountImportCompletedEvent`

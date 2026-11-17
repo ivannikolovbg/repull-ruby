@@ -26,6 +26,12 @@ module Repull
     # `in_sync` — no future night has a problem; `problems` — see `problems`; `off` — calendar sync is off for this channel.
     attr_accessor :status
 
+    # Vrbo only, when Repull turned calendar sync off: Vrbo says another tool (such as a PMS) manages the account's calendar. Absent when the host turned it off.
+    attr_accessor :off_reason
+
+    # Explains `offReason` and how to turn calendar sync back on.
+    attr_accessor :docs_url
+
     # When a push last wrote to this listing's calendar.
     attr_accessor :last_sync_at
 
@@ -64,6 +70,8 @@ module Repull
         :'platform_id' => :'platformId',
         :'sync_enabled' => :'syncEnabled',
         :'status' => :'status',
+        :'off_reason' => :'offReason',
+        :'docs_url' => :'docsUrl',
         :'last_sync_at' => :'lastSyncAt',
         :'nights_with_problems' => :'nightsWithProblems',
         :'problems' => :'problems',
@@ -88,6 +96,8 @@ module Repull
         :'platform_id' => :'String',
         :'sync_enabled' => :'Boolean',
         :'status' => :'String',
+        :'off_reason' => :'String',
+        :'docs_url' => :'String',
         :'last_sync_at' => :'Time',
         :'nights_with_problems' => :'Integer',
         :'problems' => :'Array<GetListingCalendarSync200ResponseChannelsInnerProblemsInner>',
@@ -141,6 +151,14 @@ module Repull
         self.status = attributes[:'status']
       else
         self.status = nil
+      end
+
+      if attributes.key?(:'off_reason')
+        self.off_reason = attributes[:'off_reason']
+      end
+
+      if attributes.key?(:'docs_url')
+        self.docs_url = attributes[:'docs_url']
       end
 
       if attributes.key?(:'last_sync_at')
@@ -205,6 +223,8 @@ module Repull
       return false if @status.nil?
       status_validator = EnumAttributeValidator.new('String', ["in_sync", "problems", "off"])
       return false unless status_validator.valid?(@status)
+      off_reason_validator = EnumAttributeValidator.new('String', ["calendar_managed_elsewhere"])
+      return false unless off_reason_validator.valid?(@off_reason)
       return false if @nights_with_problems.nil?
       return false if @problems.nil?
       true
@@ -240,6 +260,16 @@ module Repull
       @status = status
     end
 
+    # Custom attribute writer method checking allowed values (enum).
+    # @param [Object] off_reason Object to be assigned
+    def off_reason=(off_reason)
+      validator = EnumAttributeValidator.new('String', ["calendar_managed_elsewhere"])
+      unless validator.valid?(off_reason)
+        fail ArgumentError, "invalid value for \"off_reason\", must be one of #{validator.allowable_values}."
+      end
+      @off_reason = off_reason
+    end
+
     # Custom attribute writer method with validation
     # @param [Object] nights_with_problems Value to be assigned
     def nights_with_problems=(nights_with_problems)
@@ -269,6 +299,8 @@ module Repull
           platform_id == o.platform_id &&
           sync_enabled == o.sync_enabled &&
           status == o.status &&
+          off_reason == o.off_reason &&
+          docs_url == o.docs_url &&
           last_sync_at == o.last_sync_at &&
           nights_with_problems == o.nights_with_problems &&
           problems == o.problems &&
@@ -284,7 +316,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [channel, platform_id, sync_enabled, status, last_sync_at, nights_with_problems, problems, queue].hash
+      [channel, platform_id, sync_enabled, status, off_reason, docs_url, last_sync_at, nights_with_problems, problems, queue].hash
     end
 
     # Builds the object from hash
