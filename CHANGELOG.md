@@ -2,6 +2,10 @@
 
 All notable changes to the `repull` gem are documented here.
 
+## 0.2.50 — 2026-11-17
+
+- Regenerated from the live spec (automated spec refresh).
+
 ## 0.2.49 — 2026-11-16
 
 - Regenerated from the live spec (automated spec refresh).
