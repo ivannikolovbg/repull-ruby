@@ -16,6 +16,7 @@
 | **ip_address** | **String** |  | [optional] |
 | **user_agent** | **String** |  | [optional] |
 | **error_code** | **String** |  | [optional] |
+| **dashboard_surface** | **String** | The repull.dev dashboard page this call was run from (&#x60;keys&#x60;, &#x60;playground&#x60;, &#x60;quickstart&#x60;, &#x60;connect&#x60;, &#x60;settings/connect&#x60;), or null for a call your own code made. Dashboard calls don&#39;t count toward your plan&#39;s request quota. | [optional] |
 | **created_at** | **Time** |  | [optional] |
 
 ## Example
@@ -36,6 +37,7 @@ instance = Repull::GetUsageLogs200ResponseDataInner.new(
   ip_address: null,
   user_agent: null,
   error_code: null,
+  dashboard_surface: null,
   created_at: null
 )
 ```

@@ -31448,6 +31448,11 @@
                             "type": "string",
                             "nullable": true
                           },
+                          "dashboardSurface": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "The repull.dev dashboard page this call was run from (`keys`, `playground`, `quickstart`, `connect`, `settings/connect`), or null for a call your own code made. Dashboard calls don't count toward your plan's request quota."
+                          },
                           "createdAt": {
                             "type": "string",
                             "format": "date-time"

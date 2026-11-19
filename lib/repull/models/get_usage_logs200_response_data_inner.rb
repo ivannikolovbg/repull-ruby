@@ -39,6 +39,9 @@ module Repull
 
     attr_accessor :error_code
 
+    # The repull.dev dashboard page this call was run from (`keys`, `playground`, `quickstart`, `connect`, `settings/connect`), or null for a call your own code made. Dashboard calls don't count toward your plan's request quota.
+    attr_accessor :dashboard_surface
+
     attr_accessor :created_at
 
     # Attribute mapping from ruby-style variable name to JSON key.
@@ -56,6 +59,7 @@ module Repull
         :'ip_address' => :'ipAddress',
         :'user_agent' => :'userAgent',
         :'error_code' => :'errorCode',
+        :'dashboard_surface' => :'dashboardSurface',
         :'created_at' => :'createdAt'
       }
     end
@@ -85,6 +89,7 @@ module Repull
         :'ip_address' => :'String',
         :'user_agent' => :'String',
         :'error_code' => :'String',
+        :'dashboard_surface' => :'String',
         :'created_at' => :'Time'
       }
     end
@@ -101,6 +106,7 @@ module Repull
         :'ip_address',
         :'user_agent',
         :'error_code',
+        :'dashboard_surface',
       ])
     end
 
@@ -168,6 +174,10 @@ module Repull
         self.error_code = attributes[:'error_code']
       end
 
+      if attributes.key?(:'dashboard_surface')
+        self.dashboard_surface = attributes[:'dashboard_surface']
+      end
+
       if attributes.key?(:'created_at')
         self.created_at = attributes[:'created_at']
       end
@@ -205,6 +215,7 @@ module Repull
           ip_address == o.ip_address &&
           user_agent == o.user_agent &&
           error_code == o.error_code &&
+          dashboard_surface == o.dashboard_surface &&
           created_at == o.created_at
     end
 
@@ -217,7 +228,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, request_id, method, path, operation_id, status_code, latency_ms, request_bytes, response_bytes, ip_address, user_agent, error_code, created_at].hash
+      [id, request_id, method, path, operation_id, status_code, latency_ms, request_bytes, response_bytes, ip_address, user_agent, error_code, dashboard_surface, created_at].hash
     end
 
     # Builds the object from hash
