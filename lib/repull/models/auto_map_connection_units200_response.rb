@@ -49,7 +49,7 @@ module Repull
         :'connection_id' => :'String',
         :'channel' => :'String',
         :'applied' => :'Boolean',
-        :'results' => :'Array<ApplyConnectionMappings200ResponseResultsInner>'
+        :'results' => :'Array<AutoMapConnectionUnits200ResponseResultsInner>'
       }
     end
 

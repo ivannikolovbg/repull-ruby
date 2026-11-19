@@ -25,6 +25,9 @@ module Repull
 
     attr_accessor :error
 
+    # Vrbo, for a mapped unit: the listing's Repull iCal backup feed (`GET /v1/listings/{id}/ical`). With calendar sync on, Repull imports it into the Vrbo unit by itself (Vrbo → Calendar → Import calendar, named \"Repull\") and removes other tools' imported feeds; `listing.ical_feed_changed` reports it. Only if that fails does the host add it by hand.
+    attr_accessor :ical_feed_url
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
@@ -32,7 +35,8 @@ module Repull
         :'listing_id' => :'listing_id',
         :'created' => :'created',
         :'ok' => :'ok',
-        :'error' => :'error'
+        :'error' => :'error',
+        :'ical_feed_url' => :'ical_feed_url'
       }
     end
 
@@ -53,7 +57,8 @@ module Repull
         :'listing_id' => :'Integer',
         :'created' => :'Boolean',
         :'ok' => :'Boolean',
-        :'error' => :'String'
+        :'error' => :'String',
+        :'ical_feed_url' => :'String'
       }
     end
 
@@ -99,6 +104,10 @@ module Repull
       if attributes.key?(:'error')
         self.error = attributes[:'error']
       end
+
+      if attributes.key?(:'ical_feed_url')
+        self.ical_feed_url = attributes[:'ical_feed_url']
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -125,7 +134,8 @@ module Repull
           listing_id == o.listing_id &&
           created == o.created &&
           ok == o.ok &&
-          error == o.error
+          error == o.error &&
+          ical_feed_url == o.ical_feed_url
     end
 
     # @see the `==` method
@@ -137,7 +147,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [unit_id, listing_id, created, ok, error].hash
+      [unit_id, listing_id, created, ok, error, ical_feed_url].hash
     end
 
     # Builds the object from hash

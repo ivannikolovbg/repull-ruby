@@ -500,6 +500,69 @@ module Repull
       return data, status_code, headers
     end
 
+    # Repull iCal backup feed
+    # The listing's Repull iCal backup feed: an iCal calendar named \"Repull\" with the listing's bookings and blocks as all-day events, at an unguessable address on `api.repull.dev` (created on first request, one per listing). Channels that import iCal close those nights from it on their own schedule — availability only, never prices.  **Vrbo:** Repull imports this feed into every calendar-synced Vrbo unit by itself, as a backup for the direct calendar push, and removes other tools' imported feeds while Repull is the unit's master calendar. `vrbo` says, per unit, whether Vrbo imports it (as last checked, once a day). When `status` is `failed`, ask the host to add `url` in Vrbo → Calendar → Import calendar, named \"Repull\". Changes arrive as `listing.ical_feed_changed`.  The address is a credential: anyone with it can read the listing's booked dates (no guest details). Returns `403 listing_inactive` for an inactive listing.
+    # @param id [Integer] Repull listing id.
+    # @param [Hash] opts the optional parameters
+    # @return [GetListingIcal200Response]
+    def get_listing_ical(id, opts = {})
+      data, _status_code, _headers = get_listing_ical_with_http_info(id, opts)
+      data
+    end
+
+    # Repull iCal backup feed
+    # The listing&#39;s Repull iCal backup feed: an iCal calendar named \&quot;Repull\&quot; with the listing&#39;s bookings and blocks as all-day events, at an unguessable address on &#x60;api.repull.dev&#x60; (created on first request, one per listing). Channels that import iCal close those nights from it on their own schedule — availability only, never prices.  **Vrbo:** Repull imports this feed into every calendar-synced Vrbo unit by itself, as a backup for the direct calendar push, and removes other tools&#39; imported feeds while Repull is the unit&#39;s master calendar. &#x60;vrbo&#x60; says, per unit, whether Vrbo imports it (as last checked, once a day). When &#x60;status&#x60; is &#x60;failed&#x60;, ask the host to add &#x60;url&#x60; in Vrbo → Calendar → Import calendar, named \&quot;Repull\&quot;. Changes arrive as &#x60;listing.ical_feed_changed&#x60;.  The address is a credential: anyone with it can read the listing&#39;s booked dates (no guest details). Returns &#x60;403 listing_inactive&#x60; for an inactive listing.
+    # @param id [Integer] Repull listing id.
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(GetListingIcal200Response, Integer, Hash)>] GetListingIcal200Response data, response status code and response headers
+    def get_listing_ical_with_http_info(id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ListingsApi.get_listing_ical ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling ListingsApi.get_listing_ical"
+      end
+      # resource path
+      local_var_path = '/v1/listings/{id}/ical'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'GetListingIcal200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"ListingsApi.get_listing_ical",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ListingsApi#get_listing_ical\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # Get a listing's channel markups
     # The markup each channel adds to this listing's price.  A listing's price on a channel is its own nightly price plus the channel's markup: a $200 night with a 35% Airbnb markup is sent to Airbnb as $270. The calendar keeps the listing's own price (`GET /v1/availability/{propertyId}` returns it); the markup is added only when a price is sent to the channel.  - **Airbnb** — one markup per listing. - **Booking.com** — one markup per **property**, shared by every listing priced through it (`listingIds` names them). - **Vrbo** — one markup per connected **Vrbo account**, shared by every listing linked on it (`listingIds` names them). Prices reach Vrbo through its calendar queue.  Returns `404 not_found` for a listing that does not exist or is not in this workspace, and `403 listing_inactive` for an inactive one.
     # @param id [String] Repull listing id.

@@ -34,6 +34,7 @@ Repull::WebhookEvent.openapi_one_of
 #   :'InquiryUpdatedEvent',
 #   :'ListingCreatedEvent',
 #   :'ListingDeletedEvent',
+#   :'ListingIcalFeedChangedEvent',
 #   :'ListingReactivatedEvent',
 #   :'ListingSuspendedEvent',
 #   :'ListingUpdatedEvent',
@@ -107,6 +108,7 @@ Repull::WebhookEvent.openapi_discriminator_mapping
 #   :'inquiry.updated' => :'InquiryUpdatedEvent',
 #   :'listing.created' => :'ListingCreatedEvent',
 #   :'listing.deleted' => :'ListingDeletedEvent',
+#   :'listing.ical_feed_changed' => :'ListingIcalFeedChangedEvent',
 #   :'listing.reactivated' => :'ListingReactivatedEvent',
 #   :'listing.suspended' => :'ListingSuspendedEvent',
 #   :'listing.updated' => :'ListingUpdatedEvent',
@@ -179,6 +181,7 @@ Repull::WebhookEvent.build(data_that_doesnt_match)
 - `InquiryUpdatedEvent`
 - `ListingCreatedEvent`
 - `ListingDeletedEvent`
+- `ListingIcalFeedChangedEvent`
 - `ListingReactivatedEvent`
 - `ListingSuspendedEvent`
 - `ListingUpdatedEvent`

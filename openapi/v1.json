@@ -3112,6 +3112,7 @@
           "listing.deleted",
           "listing.suspended",
           "listing.reactivated",
+          "listing.ical_feed_changed",
           "account.created",
           "connect.session.completed",
           "connect.session.abandoned",
@@ -6058,6 +6059,112 @@
           }
         }
       },
+      "ListingIcalFeedChangedPayload": {
+        "type": "object",
+        "description": "Payload for `listing.ical_feed_changed`: Repull changed a Vrbo unit's imported calendars, or could not. Repull imports the listing's Repull iCal backup feed into every calendar-synced Vrbo unit, and removes other tools' imported feeds while Repull is the unit's master calendar.",
+        "required": [
+          "object",
+          "provider",
+          "action",
+          "feed",
+          "repullFeedUrl",
+          "trigger",
+          "occurredAt"
+        ],
+        "properties": {
+          "object": {
+            "$ref": "#/components/schemas/ListingWebhookObject"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string",
+            "description": "`repull_feed_added`: the Repull feed is now imported (`reason: \"repull_feed_missing\"` when it had been removed on Vrbo and was put back). `repull_feed_add_failed`: Vrbo did not take it \u2014 ask the host to add `repullFeedUrl` in Vrbo \u2192 Calendar \u2192 Import calendar, named \"Repull\"; nothing else is changed on the unit until it is there. `other_feed_removed`: another tool's imported calendar (`feed`) was removed. `other_feed_remove_failed`: removing it failed \u2014 ask the host to remove it in Vrbo \u2192 Calendar \u2192 Import calendar. Repull also emails the workspace owner when an action failed."
+          },
+          "feed": {
+            "type": "object",
+            "description": "The imported calendar acted on, as Vrbo shows it.",
+            "properties": {
+              "name": {
+                "type": "string",
+                "nullable": true,
+                "example": "Other PMS 12B"
+              },
+              "url": {
+                "type": "string",
+                "nullable": true,
+                "example": "https://pms.example.com/ical/12b.ics"
+              }
+            }
+          },
+          "repullFeedUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "The listing's Repull iCal backup feed (`GET /v1/listings/{id}/ical`)."
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why Repull acted."
+          },
+          "trigger": {
+            "type": "string",
+            "description": "`calendar_sync_enabled`: calendar sync was just switched on for the unit. `drift_check`: the daily Vrbo calendar check."
+          },
+          "error": {
+            "type": "string",
+            "nullable": true,
+            "description": "Vrbo's answer, on a failed action."
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "docsUrl": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://repull.dev/docs/channels/vrbo/ical-backup"
+          }
+        }
+      },
+      "ListingIcalFeedChangedEvent": {
+        "type": "object",
+        "required": [
+          "event",
+          "eventId",
+          "apiVersion",
+          "timestamp",
+          "data"
+        ],
+        "properties": {
+          "event": {
+            "type": "string",
+            "description": "The event name. This field is `event`, not `type`."
+          },
+          "eventId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Stable across every delivery and replay of this logical event \u2014 dedupe on it."
+          },
+          "apiVersion": {
+            "type": "string",
+            "example": "2026-04"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this delivery was built."
+          },
+          "account": {
+            "$ref": "#/components/schemas/WebhookEventAccount"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ListingIcalFeedChangedPayload"
+          }
+        },
+        "description": "Repull added its iCal backup feed to a Vrbo unit, removed another tool's imported feed, or could not. On a `*_failed` action, show the host what to change on Vrbo."
+      },
       "ListingSuspendedEvent": {
         "type": "object",
         "required": [
@@ -7541,6 +7648,9 @@
             "$ref": "#/components/schemas/ListingReactivatedEvent"
           },
           {
+            "$ref": "#/components/schemas/ListingIcalFeedChangedEvent"
+          },
+          {
             "$ref": "#/components/schemas/AccountCreatedEvent"
           },
           {
@@ -7631,6 +7741,7 @@
             "listing.deleted": "#/components/schemas/ListingDeletedEvent",
             "listing.suspended": "#/components/schemas/ListingSuspendedEvent",
             "listing.reactivated": "#/components/schemas/ListingReactivatedEvent",
+            "listing.ical_feed_changed": "#/components/schemas/ListingIcalFeedChangedEvent",
             "account.created": "#/components/schemas/AccountCreatedEvent",
             "connect.session.completed": "#/components/schemas/ConnectSessionCompletedEvent",
             "connect.session.abandoned": "#/components/schemas/ConnectSessionAbandonedEvent",
@@ -39884,6 +39995,12 @@
                           },
                           "error": {
                             "type": "string"
+                          },
+                          "ical_feed_url": {
+                            "type": "string",
+                            "format": "uri",
+                            "description": "Vrbo, for a mapped unit: the listing's Repull iCal backup feed (`GET /v1/listings/{id}/ical`). With calendar sync on, Repull imports it into the Vrbo unit by itself (Vrbo \u2192 Calendar \u2192 Import calendar, named \"Repull\") and removes other tools' imported feeds; `listing.ical_feed_changed` reports it. Only if that fails does the host add it by hand.",
+                            "example": "https://api.repull.dev/ical/4f9c2d7e1a8b3c6d5e0f9a2b7c4d1e8f3a6b9c2d5e8f1a4b7c0d3e6f9a2b5c8d.ics"
                           }
                         }
                       }
@@ -40074,7 +40191,7 @@
                           },
                           "meta": {
                             "type": "object",
-                            "description": "Channel details that identify the unit. Booking.com Extranet: `hotel` (property name), `hotelId` (Booking.com property ID), `roomId` (Booking.com room ID), `city`. Vrbo: `headline`, `address`, `vrboStatus`, `calendarSync` (whether the unit's prices and availability are pushed to Vrbo) and, while Vrbo says another tool manages the account's calendar, `calendarSyncBlocked: \"calendar_managed_elsewhere\"`; the Vrbo listing ID is `unit_id`."
+                            "description": "Channel details that identify the unit. Booking.com Extranet: `hotel` (property name), `hotelId` (Booking.com property ID), `roomId` (Booking.com room ID), `city`. Vrbo: `headline`, `address`, `vrboStatus`, `calendarSync` (whether the unit's prices and availability are pushed to Vrbo) and, while Vrbo says another tool manages the account's calendar, `calendarSyncBlocked: \"calendar_managed_elsewhere\"`, and for a mapped unit `icalBackup`: `{ feedUrl, status, otherFeeds }` \u2014 the listing's Repull iCal backup feed and whether Vrbo imports it (`status` as on `GET /v1/listings/{id}/ical`: `imported`, `pending`, `failed`, `not_imported`, `off`; Repull adds it itself, so only on `failed` does the host add `feedUrl` in Vrbo \u2192 Calendar \u2192 Import calendar, named \"Repull\"); the Vrbo listing ID is `unit_id`."
                           }
                         }
                       }
@@ -44439,6 +44556,146 @@
           },
           "500": {
             "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/listings/{id}/ical": {
+      "get": {
+        "operationId": "get_listing_ical",
+        "summary": "Repull iCal backup feed",
+        "description": "The listing's Repull iCal backup feed: an iCal calendar named \"Repull\" with the listing's bookings and blocks as all-day events, at an unguessable address on `api.repull.dev` (created on first request, one per listing). Channels that import iCal close those nights from it on their own schedule \u2014 availability only, never prices.\n\n**Vrbo:** Repull imports this feed into every calendar-synced Vrbo unit by itself, as a backup for the direct calendar push, and removes other tools' imported feeds while Repull is the unit's master calendar. `vrbo` says, per unit, whether Vrbo imports it (as last checked, once a day). When `status` is `failed`, ask the host to add `url` in Vrbo \u2192 Calendar \u2192 Import calendar, named \"Repull\". Changes arrive as `listing.ical_feed_changed`.\n\nThe address is a credential: anyone with it can read the listing's booked dates (no guest details). Returns `403 listing_inactive` for an inactive listing.",
+        "tags": [
+          "Listings"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Repull listing id."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The feed address and its Vrbo state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "listingId",
+                    "url",
+                    "calendarName",
+                    "enabled",
+                    "vrbo"
+                  ],
+                  "properties": {
+                    "listingId": {
+                      "type": "string",
+                      "example": "1001"
+                    },
+                    "url": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "The feed address. Import it on any channel that reads iCal.",
+                      "example": "https://api.repull.dev/ical/4f9c2d7e1a8b3c6d5e0f9a2b7c4d1e8f3a6b9c2d5e8f1a4b7c0d3e6f9a2b5c8d.ics"
+                    },
+                    "calendarName": {
+                      "type": "string",
+                      "enum": [
+                        "Repull"
+                      ],
+                      "description": "The calendar name the feed carries, and the name to give it when importing it by hand."
+                    },
+                    "enabled": {
+                      "type": "boolean",
+                      "description": "False when the listing's feed was turned off; the address then answers 404."
+                    },
+                    "vrbo": {
+                      "type": "array",
+                      "description": "One entry per Vrbo unit mapped to the listing.",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "unitId",
+                          "calendarSync",
+                          "status",
+                          "otherFeeds",
+                          "checkedAt"
+                        ],
+                        "properties": {
+                          "unitId": {
+                            "type": "string",
+                            "description": "The Vrbo listing number (`unitId` on `GET /v1/connections/{id}/units`).",
+                            "example": "7001234"
+                          },
+                          "calendarSync": {
+                            "type": "boolean",
+                            "description": "Calendar sync is on for the unit."
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "imported",
+                              "pending",
+                              "failed",
+                              "not_imported",
+                              "off"
+                            ],
+                            "description": "`imported`: Vrbo imports the feed. `pending`: calendar sync is on and Repull has not checked the unit yet \u2014 it adds the feed itself. `failed`: Vrbo did not take it; ask the host to add `url` in Vrbo \u2192 Calendar \u2192 Import calendar, named \"Repull\". `not_imported`: checked, not there, and not added (for example, the feed is turned off). `off`: calendar sync is off, so Repull leaves the unit's imported calendars alone."
+                          },
+                          "otherFeeds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "Names of other calendars the unit still imports, as Vrbo shows them.",
+                            "example": []
+                          },
+                          "checkedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true,
+                            "description": "When Repull last read the unit's imported calendars."
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "listingId": "1001",
+                  "url": "https://api.repull.dev/ical/4f9c2d7e1a8b3c6d5e0f9a2b7c4d1e8f3a6b9c2d5e8f1a4b7c0d3e6f9a2b5c8d.ics",
+                  "calendarName": "Repull",
+                  "enabled": true,
+                  "vrbo": [
+                    {
+                      "unitId": "7001234",
+                      "calendarSync": true,
+                      "status": "imported",
+                      "otherFeeds": [],
+                      "checkedAt": "2026-11-19T05:12:40.000Z"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
           }
         }
       }

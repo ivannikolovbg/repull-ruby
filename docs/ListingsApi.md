@@ -11,6 +11,7 @@ All URIs are relative to *https://api.repull.dev*
 | [**generate_listing_content**](ListingsApi.md#generate_listing_content) | **POST** /v1/listings/{id}/generate-content | AI-generate listing content |
 | [**get_listing**](ListingsApi.md#get_listing) | **GET** /v1/listings/{id} | Get a listing |
 | [**get_listing_calendar_sync**](ListingsApi.md#get_listing_calendar_sync) | **GET** /v1/listings/{id}/calendar-sync | Calendar sync status per channel |
+| [**get_listing_ical**](ListingsApi.md#get_listing_ical) | **GET** /v1/listings/{id}/ical | Repull iCal backup feed |
 | [**get_listing_markups**](ListingsApi.md#get_listing_markups) | **GET** /v1/listings/{id}/markups | Get a listing&#39;s channel markups |
 | [**get_listing_publish_status**](ListingsApi.md#get_listing_publish_status) | **GET** /v1/listings/{id}/publish-status | Per-channel publish status |
 | [**get_vrbo_publish_job**](ListingsApi.md#get_vrbo_publish_job) | **GET** /v1/listings/{id}/publish/vrbo | Progress of a Vrbo listing creation |
@@ -515,6 +516,75 @@ end
 ### Return type
 
 [**GetListingCalendarSync200Response**](GetListingCalendarSync200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## get_listing_ical
+
+> <GetListingIcal200Response> get_listing_ical(id)
+
+Repull iCal backup feed
+
+The listing's Repull iCal backup feed: an iCal calendar named \"Repull\" with the listing's bookings and blocks as all-day events, at an unguessable address on `api.repull.dev` (created on first request, one per listing). Channels that import iCal close those nights from it on their own schedule — availability only, never prices.  **Vrbo:** Repull imports this feed into every calendar-synced Vrbo unit by itself, as a backup for the direct calendar push, and removes other tools' imported feeds while Repull is the unit's master calendar. `vrbo` says, per unit, whether Vrbo imports it (as last checked, once a day). When `status` is `failed`, ask the host to add `url` in Vrbo → Calendar → Import calendar, named \"Repull\". Changes arrive as `listing.ical_feed_changed`.  The address is a credential: anyone with it can read the listing's booked dates (no guest details). Returns `403 listing_inactive` for an inactive listing.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ListingsApi.new
+id = 56 # Integer | Repull listing id.
+
+begin
+  # Repull iCal backup feed
+  result = api_instance.get_listing_ical(id)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ListingsApi->get_listing_ical: #{e}"
+end
+```
+
+#### Using the get_listing_ical_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<GetListingIcal200Response>, Integer, Hash)> get_listing_ical_with_http_info(id)
+
+```ruby
+begin
+  # Repull iCal backup feed
+  data, status_code, headers = api_instance.get_listing_ical_with_http_info(id)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <GetListingIcal200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ListingsApi->get_listing_ical_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **Integer** | Repull listing id. |  |
+
+### Return type
+
+[**GetListingIcal200Response**](GetListingIcal200Response.md)
 
 ### Authorization
 

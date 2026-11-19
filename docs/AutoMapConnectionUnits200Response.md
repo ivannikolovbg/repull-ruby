@@ -7,7 +7,7 @@
 | **connection_id** | **String** |  | [optional] |
 | **channel** | **String** |  | [optional] |
 | **applied** | **Boolean** |  | [optional] |
-| **results** | [**Array&lt;ApplyConnectionMappings200ResponseResultsInner&gt;**](ApplyConnectionMappings200ResponseResultsInner.md) |  | [optional] |
+| **results** | [**Array&lt;AutoMapConnectionUnits200ResponseResultsInner&gt;**](AutoMapConnectionUnits200ResponseResultsInner.md) |  | [optional] |
 
 ## Example
 
