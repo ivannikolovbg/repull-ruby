@@ -25,16 +25,13 @@ module Repull
 
     attr_accessor :display_name
 
-    attr_accessor :avatar_url
-
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
         :'id' => :'id',
         :'airbnb_id' => :'airbnbId',
         :'first_name' => :'firstName',
-        :'display_name' => :'displayName',
-        :'avatar_url' => :'avatarUrl'
+        :'display_name' => :'displayName'
       }
     end
 
@@ -54,15 +51,13 @@ module Repull
         :'id' => :'String',
         :'airbnb_id' => :'String',
         :'first_name' => :'String',
-        :'display_name' => :'String',
-        :'avatar_url' => :'String'
+        :'display_name' => :'String'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
-        :'avatar_url'
       ])
     end
 
@@ -97,10 +92,6 @@ module Repull
       if attributes.key?(:'display_name')
         self.display_name = attributes[:'display_name']
       end
-
-      if attributes.key?(:'avatar_url')
-        self.avatar_url = attributes[:'avatar_url']
-      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -126,8 +117,7 @@ module Repull
           id == o.id &&
           airbnb_id == o.airbnb_id &&
           first_name == o.first_name &&
-          display_name == o.display_name &&
-          avatar_url == o.avatar_url
+          display_name == o.display_name
     end
 
     # @see the `==` method
@@ -139,7 +129,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, airbnb_id, first_name, display_name, avatar_url].hash
+      [id, airbnb_id, first_name, display_name].hash
     end
 
     # Builds the object from hash

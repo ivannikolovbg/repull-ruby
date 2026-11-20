@@ -7,7 +7,6 @@
 | **id** | **String** |  | [optional] |
 | **display_name** | **String** |  | [optional] |
 | **display_name_long** | **String** |  | [optional] |
-| **avatar_url** | **String** |  | [optional] |
 | **language** | **String** |  | [optional] |
 | **country** | **String** |  | [optional] |
 | **phone** | **String** | Primary phone contact. May be an Airbnb relay number — check &#x60;phoneType&#x60;. | [optional] |
@@ -35,7 +34,6 @@ instance = Repull::GuestProfile.new(
   id: null,
   display_name: null,
   display_name_long: null,
-  avatar_url: null,
   language: null,
   country: null,
   phone: null,

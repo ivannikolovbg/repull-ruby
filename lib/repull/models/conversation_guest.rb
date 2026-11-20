@@ -20,8 +20,6 @@ module Repull
 
     attr_accessor :display_name
 
-    attr_accessor :avatar_url
-
     attr_accessor :contacts
 
     # Attribute mapping from ruby-style variable name to JSON key.
@@ -29,7 +27,6 @@ module Repull
       {
         :'id' => :'id',
         :'display_name' => :'displayName',
-        :'avatar_url' => :'avatarUrl',
         :'contacts' => :'contacts'
       }
     end
@@ -49,7 +46,6 @@ module Repull
       {
         :'id' => :'String',
         :'display_name' => :'String',
-        :'avatar_url' => :'String',
         :'contacts' => :'Array<ConversationGuestContact>'
       }
     end
@@ -57,7 +53,6 @@ module Repull
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
-        :'avatar_url',
       ])
     end
 
@@ -83,10 +78,6 @@ module Repull
 
       if attributes.key?(:'display_name')
         self.display_name = attributes[:'display_name']
-      end
-
-      if attributes.key?(:'avatar_url')
-        self.avatar_url = attributes[:'avatar_url']
       end
 
       if attributes.key?(:'contacts')
@@ -118,7 +109,6 @@ module Repull
       self.class == o.class &&
           id == o.id &&
           display_name == o.display_name &&
-          avatar_url == o.avatar_url &&
           contacts == o.contacts
     end
 
@@ -131,7 +121,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, display_name, avatar_url, contacts].hash
+      [id, display_name, contacts].hash
     end
 
     # Builds the object from hash

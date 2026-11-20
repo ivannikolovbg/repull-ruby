@@ -1004,11 +1004,6 @@
             "example": "Jane Doe",
             "description": "Long display name (first + last). Falls back to displayName when last name is missing."
           },
-          "avatarUrl": {
-            "type": "string",
-            "format": "uri",
-            "nullable": true
-          },
           "language": {
             "type": "string",
             "nullable": true,
@@ -1176,11 +1171,6 @@
           },
           "displayNameLong": {
             "type": "string"
-          },
-          "avatarUrl": {
-            "type": "string",
-            "format": "uri",
-            "nullable": true
           },
           "language": {
             "type": "string",
@@ -1381,11 +1371,6 @@
           },
           "displayName": {
             "type": "string"
-          },
-          "avatarUrl": {
-            "type": "string",
-            "format": "uri",
-            "nullable": true
           }
         }
       },
@@ -1416,11 +1401,6 @@
           },
           "displayName": {
             "type": "string"
-          },
-          "avatarUrl": {
-            "type": "string",
-            "format": "uri",
-            "nullable": true
           },
           "contacts": {
             "type": "array",

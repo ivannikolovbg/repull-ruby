@@ -22,8 +22,6 @@ module Repull
 
     attr_accessor :display_name_long
 
-    attr_accessor :avatar_url
-
     attr_accessor :language
 
     attr_accessor :country
@@ -90,7 +88,6 @@ module Repull
         :'id' => :'id',
         :'display_name' => :'displayName',
         :'display_name_long' => :'displayNameLong',
-        :'avatar_url' => :'avatarUrl',
         :'language' => :'language',
         :'country' => :'country',
         :'phone' => :'phone',
@@ -127,7 +124,6 @@ module Repull
         :'id' => :'String',
         :'display_name' => :'String',
         :'display_name_long' => :'String',
-        :'avatar_url' => :'String',
         :'language' => :'String',
         :'country' => :'String',
         :'phone' => :'String',
@@ -151,7 +147,6 @@ module Repull
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
-        :'avatar_url',
         :'language',
         :'country',
         :'phone',
@@ -191,10 +186,6 @@ module Repull
 
       if attributes.key?(:'display_name_long')
         self.display_name_long = attributes[:'display_name_long']
-      end
-
-      if attributes.key?(:'avatar_url')
-        self.avatar_url = attributes[:'avatar_url']
       end
 
       if attributes.key?(:'language')
@@ -295,7 +286,6 @@ module Repull
           id == o.id &&
           display_name == o.display_name &&
           display_name_long == o.display_name_long &&
-          avatar_url == o.avatar_url &&
           language == o.language &&
           country == o.country &&
           phone == o.phone &&
@@ -324,7 +314,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, display_name, display_name_long, avatar_url, language, country, phone, phone_type, email, total_reservations, total_revenue, currency, is_blacklisted, blacklisted_reason, risk_level, verification_level, created_at, contacts, flags, notes, reservations_summary].hash
+      [id, display_name, display_name_long, language, country, phone, phone_type, email, total_reservations, total_revenue, currency, is_blacklisted, blacklisted_reason, risk_level, verification_level, created_at, contacts, flags, notes, reservations_summary].hash
     end
 
     # Builds the object from hash

@@ -7,7 +7,6 @@
 | **id** | **String** |  | [optional] |
 | **display_name** | **String** | Short display name (first name). | [optional] |
 | **display_name_long** | **String** | Long display name (first + last). Falls back to displayName when last name is missing. | [optional] |
-| **avatar_url** | **String** |  | [optional] |
 | **language** | **String** | Guest&#39;s preferred language (ISO 639-1). | [optional] |
 | **country** | **String** | Guest country (from profile metadata or address). | [optional] |
 | **phone** | **String** | Primary phone contact (or first non-primary if no primary set). May be an Airbnb relay number — check &#x60;phoneType&#x60;. | [optional] |
@@ -28,7 +27,6 @@ instance = Repull::Guest.new(
   id: null,
   display_name: Jane,
   display_name_long: Jane Doe,
-  avatar_url: null,
   language: null,
   country: null,
   phone: null,
