@@ -2,6 +2,10 @@
 
 All notable changes to the `repull` gem are documented here.
 
+## 0.2.53 — 2026-11-20
+
+- Regenerated from the live spec (automated spec refresh).
+
 ## 0.2.52 — 2026-11-19
 
 - New: `GET /v1/listings/{id}/ical`
