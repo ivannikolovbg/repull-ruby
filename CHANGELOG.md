@@ -2,6 +2,10 @@
 
 All notable changes to the `repull` gem are documented here.
 
+## 0.2.56 — 2026-11-21
+
+Vrbo bookings on Airbnb's reservation endpoints: `GET /v1/channels/vrbo/reservations/{code}` (the booking as Vrbo shows it; `options=cancel|change|decline` for Vrbo's choices), `POST /v1/channels/vrbo/reservations/{code}` (accept, decline, cancel, extra charge, refund — `preview: true` returns Vrbo's own preview) and `POST /v1/channels/vrbo/alterations` (dates, times, guests, pets, price). `POST /v1/reviews/{id}/guest-review` also rates Vrbo guests (same body; Vrbo takes the ratings, not the text).
+
 ## 0.2.55 — 2026-11-21
 
 Vrbo listing content on the Airbnb endpoints' names and verbs: `descriptions` (every language, `locale`), `details`, `permits`, `checkin-guide`, `checkout-guide`, `safety-disclosures`; photos (add, caption / move, delete, cover, order) and rooms (add, update, delete) as separate calls; the listing itself with its actions (push, unlist, relist, delete), `listings/map`, the Vrbo-only calendar (`availability`) and `connection`. Reads answer `{ data, dataFreshness }` from Repull's copy. The old section names (`description`, `property`, `registration`, `welcome-guide`, `translations`) are gone.
