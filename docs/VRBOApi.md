@@ -7,6 +7,7 @@ All URIs are relative to *https://api.repull.dev*
 | [**add_vrbo_listing_photos**](VRBOApi.md#add_vrbo_listing_photos) | **POST** /v1/channels/vrbo/listings/{id}/photos | Add photos to the Vrbo listing |
 | [**add_vrbo_listing_room**](VRBOApi.md#add_vrbo_listing_room) | **POST** /v1/channels/vrbo/listings/{id}/rooms | Add a room to the Vrbo listing |
 | [**add_vrbo_listing_video**](VRBOApi.md#add_vrbo_listing_video) | **POST** /v1/channels/vrbo/listings/{id}/videos | Add a video to the Vrbo listing |
+| [**create_vrbo_alteration**](VRBOApi.md#create_vrbo_alteration) | **POST** /v1/channels/vrbo/alterations | Change a Vrbo reservation |
 | [**delete_vrbo_listing_description**](VRBOApi.md#delete_vrbo_listing_description) | **DELETE** /v1/channels/vrbo/listings/{id}/descriptions | Remove a Vrbo translation |
 | [**delete_vrbo_listing_photos**](VRBOApi.md#delete_vrbo_listing_photos) | **DELETE** /v1/channels/vrbo/listings/{id}/photos | Remove Vrbo photos |
 | [**delete_vrbo_listing_room**](VRBOApi.md#delete_vrbo_listing_room) | **DELETE** /v1/channels/vrbo/listings/{id}/rooms | Remove a Vrbo room |
@@ -37,6 +38,7 @@ All URIs are relative to *https://api.repull.dev*
 | [**get_vrbo_listing_story**](VRBOApi.md#get_vrbo_listing_story) | **GET** /v1/channels/vrbo/listings/{id}/story | Get the Vrbo host story |
 | [**get_vrbo_listing_taxes**](VRBOApi.md#get_vrbo_listing_taxes) | **GET** /v1/channels/vrbo/listings/{id}/taxes | Get the Vrbo taxes |
 | [**get_vrbo_listing_videos**](VRBOApi.md#get_vrbo_listing_videos) | **GET** /v1/channels/vrbo/listings/{id}/videos | Get the Vrbo videos |
+| [**get_vrbo_reservation**](VRBOApi.md#get_vrbo_reservation) | **GET** /v1/channels/vrbo/reservations/{code} | Get a Vrbo reservation |
 | [**list_vrbo_listings**](VRBOApi.md#list_vrbo_listings) | **GET** /v1/channels/vrbo/listings | List VRBO listings |
 | [**list_vrbo_reservations**](VRBOApi.md#list_vrbo_reservations) | **GET** /v1/channels/vrbo/reservations | List VRBO reservations |
 | [**map_vrbo_listing**](VRBOApi.md#map_vrbo_listing) | **POST** /v1/channels/vrbo/listings/map | Link a Vrbo listing to a Repull listing |
@@ -64,6 +66,7 @@ All URIs are relative to *https://api.repull.dev*
 | [**update_vrbo_listing_story**](VRBOApi.md#update_vrbo_listing_story) | **PUT** /v1/channels/vrbo/listings/{id}/story | Update the Vrbo host story |
 | [**update_vrbo_listing_taxes**](VRBOApi.md#update_vrbo_listing_taxes) | **PUT** /v1/channels/vrbo/listings/{id}/taxes | Update the Vrbo taxes |
 | [**vrbo_listing_action**](VRBOApi.md#vrbo_listing_action) | **POST** /v1/channels/vrbo/listings/{id} | Act on the Vrbo listing |
+| [**vrbo_reservation_action**](VRBOApi.md#vrbo_reservation_action) | **POST** /v1/channels/vrbo/reservations/{code} | Accept, decline, cancel, charge or refund a Vrbo reservation |
 
 
 ## add_vrbo_listing_photos
@@ -280,6 +283,75 @@ end
 ### Return type
 
 [**AddVrboListingVideo200Response**](AddVrboListingVideo200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## create_vrbo_alteration
+
+> <CreateVrboAlteration200Response> create_vrbo_alteration(create_vrbo_alteration_request)
+
+Change a Vrbo reservation
+
+Change an existing Vrbo booking — the counterpart of `POST /v1/channels/airbnb/alterations`. Send `confirmation_code` and what changes: `check_in`, `check_out`, `check_in_time` / `check_out_time` (`HH:MM` on the hour or half hour), `number_of_adults`, `number_of_children`, `pets`; for the price, `rent_amount` (the new rent — Vrbo adds its fees and taxes) or `keep_original_price: true`. Fields you leave out keep the booking's values.  Unlike Airbnb, the change is made at once (the guest does not accept it); when the guest owes more, Vrbo requests it by `payment_due_date`. **`preview: true`** returns Vrbo's dry run — `before`, `after`, the price difference (`payment`, or `priceUnchanged`) and the due-date range — and changes nothing.  Vrbo's rules are checked first and refused by field: e.g. a pay-later booking's check-in cannot move, guests are capped by the listing. `GET /v1/channels/vrbo/reservations/{code}?options=change` shows the booking's values and limits. Airbnb fields with no Vrbo equivalent are refused by name: `number_of_guests` (send adults and children), `total_price` (send `rent_amount`), `listing_id` (Vrbo cannot move a booking to another unit).
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::VRBOApi.new
+create_vrbo_alteration_request = Repull::CreateVrboAlterationRequest.new({confirmation_code: 'HA-C3WBX1'}) # CreateVrboAlterationRequest | 
+
+begin
+  # Change a Vrbo reservation
+  result = api_instance.create_vrbo_alteration(create_vrbo_alteration_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->create_vrbo_alteration: #{e}"
+end
+```
+
+#### Using the create_vrbo_alteration_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<CreateVrboAlteration200Response>, Integer, Hash)> create_vrbo_alteration_with_http_info(create_vrbo_alteration_request)
+
+```ruby
+begin
+  # Change a Vrbo reservation
+  data, status_code, headers = api_instance.create_vrbo_alteration_with_http_info(create_vrbo_alteration_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <CreateVrboAlteration200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->create_vrbo_alteration_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **create_vrbo_alteration_request** | [**CreateVrboAlterationRequest**](CreateVrboAlterationRequest.md) |  |  |
+
+### Return type
+
+[**CreateVrboAlteration200Response**](CreateVrboAlteration200Response.md)
 
 ### Authorization
 
@@ -2542,6 +2614,79 @@ end
 - **Accept**: application/json
 
 
+## get_vrbo_reservation
+
+> <GetVrboReservation200Response> get_vrbo_reservation(code, opts)
+
+Get a Vrbo reservation
+
+A Vrbo booking by its confirmation code, as Vrbo shows it now — the counterpart of `GET /v1/channels/airbnb/reservations/{code}`: its state (`Booked`, a request, …), dates, party, the guest's charges (`guestLines`), your deductions and payout (`hostLines`, `payout`), the cancellation policy and the damage deposit, plus `availableActions` — what Vrbo's \"Change or cancel the booking\" menu offers right now.  `?options=cancel|change|decline` returns Vrbo's choices for that action instead: the cancel reasons and message limits; the booking's current dates, times and party with Vrbo's limits (e.g. a pay-later booking's check-in is locked); or the decline reasons of a booking request. Read live from Vrbo (a few seconds).
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::VRBOApi.new
+code = 'HA-C3WBX1' # String | The Vrbo confirmation code (`HA-…`), as in `GET /v1/channels/vrbo/reservations`.
+opts = {
+  options: 'cancel' # String | Return Vrbo's choices for this action instead of the booking.
+}
+
+begin
+  # Get a Vrbo reservation
+  result = api_instance.get_vrbo_reservation(code, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->get_vrbo_reservation: #{e}"
+end
+```
+
+#### Using the get_vrbo_reservation_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<GetVrboReservation200Response>, Integer, Hash)> get_vrbo_reservation_with_http_info(code, opts)
+
+```ruby
+begin
+  # Get a Vrbo reservation
+  data, status_code, headers = api_instance.get_vrbo_reservation_with_http_info(code, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <GetVrboReservation200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->get_vrbo_reservation_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **code** | **String** | The Vrbo confirmation code (&#x60;HA-…&#x60;), as in &#x60;GET /v1/channels/vrbo/reservations&#x60;. |  |
+| **options** | **String** | Return Vrbo&#39;s choices for this action instead of the booking. | [optional] |
+
+### Return type
+
+[**GetVrboReservation200Response**](GetVrboReservation200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
 ## list_vrbo_listings
 
 > <Array<VrboListing>> list_vrbo_listings(opts)
@@ -4546,6 +4691,77 @@ end
 ### Return type
 
 [**VrboListingAction200Response**](VrboListingAction200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## vrbo_reservation_action
+
+> <VrboReservationAction200Response> vrbo_reservation_action(code, vrbo_reservation_action_request)
+
+Accept, decline, cancel, charge or refund a Vrbo reservation
+
+Act on a Vrbo booking by its confirmation code — the counterpart of `POST /v1/channels/airbnb/reservations/{code}`, plus Vrbo's extra charge and refund. **Write-side**: Vrbo's own host-app actions, as the account that owns the booking.  - `accept` — accept a pending booking request. Optional `message` to the guest (≤ 250 characters). - `decline` — decline a pending booking request. `reason` is one of Vrbo's decline reasons (`?options=decline`); `block_dates: true` also blocks the dates (default: they stay open). - `cancel` — cancel a booking as the host. `reason`: `property-sold-or-ownership-change`, `conflict-with-house-rules`, `dates-booked-on-another-platform`, `extenuating-circumstance` or `payment-not-received` (Vrbo's list, read live: `?options=cancel`); `message` to the guest, 25–250 characters; `refund_level` (default `FULL`). **Host cancellations carry Vrbo penalties** — the listing hidden for 7 days and a fee from your payout, unless the cancellation was unavoidable. - `charge` — request an extra payment from the guest: `fee_type` (Vrbo's list, e.g. `PARKING`, `HOT_TUB`, `DEPARTURE_LATE`), `amount` (1–10,000, the booking's currency), `message` (≤ 50 characters) and `due_date`. - `refund` — refund the guest part of what they paid: `reason`, `amount`, `message`. Vrbo offers it once the guest has paid.  **`preview: true`** (cancel, charge, refund) returns Vrbo's own dry run — for a cancel, the terms and penalties (`penalties.cancellationFee`, `penalties.listingHidden`, `refundToGuest`); for a charge, the guest's total with taxes — and changes nothing. Without it, the dry run runs first and the action after, once: a lost answer is `502 vrbo_unconfirmed` (read the booking before retrying), never a second cancel.  Changing dates, times, guests or price is `POST /v1/channels/vrbo/alterations`. The body is validated before anything reaches Vrbo; unknown fields are refused by name. Returns `403 listing_inactive` when the listing is inactive.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::VRBOApi.new
+code = 'HA-C3WBX1' # String | The Vrbo confirmation code (`HA-…`), as in `GET /v1/channels/vrbo/reservations`.
+vrbo_reservation_action_request = Repull::VrboReservationActionRequest.new({action: 'accept'}) # VrboReservationActionRequest | 
+
+begin
+  # Accept, decline, cancel, charge or refund a Vrbo reservation
+  result = api_instance.vrbo_reservation_action(code, vrbo_reservation_action_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->vrbo_reservation_action: #{e}"
+end
+```
+
+#### Using the vrbo_reservation_action_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<VrboReservationAction200Response>, Integer, Hash)> vrbo_reservation_action_with_http_info(code, vrbo_reservation_action_request)
+
+```ruby
+begin
+  # Accept, decline, cancel, charge or refund a Vrbo reservation
+  data, status_code, headers = api_instance.vrbo_reservation_action_with_http_info(code, vrbo_reservation_action_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <VrboReservationAction200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->vrbo_reservation_action_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **code** | **String** | The Vrbo confirmation code (&#x60;HA-…&#x60;), as in &#x60;GET /v1/channels/vrbo/reservations&#x60;. |  |
+| **vrbo_reservation_action_request** | [**VrboReservationActionRequest**](VrboReservationActionRequest.md) |  |  |
+
+### Return type
+
+[**VrboReservationAction200Response**](VrboReservationAction200Response.md)
 
 ### Authorization
 

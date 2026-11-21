@@ -250,6 +250,74 @@ module Repull
       return data, status_code, headers
     end
 
+    # Change a Vrbo reservation
+    # Change an existing Vrbo booking — the counterpart of `POST /v1/channels/airbnb/alterations`. Send `confirmation_code` and what changes: `check_in`, `check_out`, `check_in_time` / `check_out_time` (`HH:MM` on the hour or half hour), `number_of_adults`, `number_of_children`, `pets`; for the price, `rent_amount` (the new rent — Vrbo adds its fees and taxes) or `keep_original_price: true`. Fields you leave out keep the booking's values.  Unlike Airbnb, the change is made at once (the guest does not accept it); when the guest owes more, Vrbo requests it by `payment_due_date`. **`preview: true`** returns Vrbo's dry run — `before`, `after`, the price difference (`payment`, or `priceUnchanged`) and the due-date range — and changes nothing.  Vrbo's rules are checked first and refused by field: e.g. a pay-later booking's check-in cannot move, guests are capped by the listing. `GET /v1/channels/vrbo/reservations/{code}?options=change` shows the booking's values and limits. Airbnb fields with no Vrbo equivalent are refused by name: `number_of_guests` (send adults and children), `total_price` (send `rent_amount`), `listing_id` (Vrbo cannot move a booking to another unit).
+    # @param create_vrbo_alteration_request [CreateVrboAlterationRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [CreateVrboAlteration200Response]
+    def create_vrbo_alteration(create_vrbo_alteration_request, opts = {})
+      data, _status_code, _headers = create_vrbo_alteration_with_http_info(create_vrbo_alteration_request, opts)
+      data
+    end
+
+    # Change a Vrbo reservation
+    # Change an existing Vrbo booking — the counterpart of &#x60;POST /v1/channels/airbnb/alterations&#x60;. Send &#x60;confirmation_code&#x60; and what changes: &#x60;check_in&#x60;, &#x60;check_out&#x60;, &#x60;check_in_time&#x60; / &#x60;check_out_time&#x60; (&#x60;HH:MM&#x60; on the hour or half hour), &#x60;number_of_adults&#x60;, &#x60;number_of_children&#x60;, &#x60;pets&#x60;; for the price, &#x60;rent_amount&#x60; (the new rent — Vrbo adds its fees and taxes) or &#x60;keep_original_price: true&#x60;. Fields you leave out keep the booking&#39;s values.  Unlike Airbnb, the change is made at once (the guest does not accept it); when the guest owes more, Vrbo requests it by &#x60;payment_due_date&#x60;. **&#x60;preview: true&#x60;** returns Vrbo&#39;s dry run — &#x60;before&#x60;, &#x60;after&#x60;, the price difference (&#x60;payment&#x60;, or &#x60;priceUnchanged&#x60;) and the due-date range — and changes nothing.  Vrbo&#39;s rules are checked first and refused by field: e.g. a pay-later booking&#39;s check-in cannot move, guests are capped by the listing. &#x60;GET /v1/channels/vrbo/reservations/{code}?options&#x3D;change&#x60; shows the booking&#39;s values and limits. Airbnb fields with no Vrbo equivalent are refused by name: &#x60;number_of_guests&#x60; (send adults and children), &#x60;total_price&#x60; (send &#x60;rent_amount&#x60;), &#x60;listing_id&#x60; (Vrbo cannot move a booking to another unit).
+    # @param create_vrbo_alteration_request [CreateVrboAlterationRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(CreateVrboAlteration200Response, Integer, Hash)>] CreateVrboAlteration200Response data, response status code and response headers
+    def create_vrbo_alteration_with_http_info(create_vrbo_alteration_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: VRBOApi.create_vrbo_alteration ...'
+      end
+      # verify the required parameter 'create_vrbo_alteration_request' is set
+      if @api_client.config.client_side_validation && create_vrbo_alteration_request.nil?
+        fail ArgumentError, "Missing the required parameter 'create_vrbo_alteration_request' when calling VRBOApi.create_vrbo_alteration"
+      end
+      # resource path
+      local_var_path = '/v1/channels/vrbo/alterations'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(create_vrbo_alteration_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'CreateVrboAlteration200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"VRBOApi.create_vrbo_alteration",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: VRBOApi#create_vrbo_alteration\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # Remove a Vrbo translation
     # Remove the hand-written translation for `locale`; Vrbo goes back to translating that language automatically. The listing's own description cannot be removed, only changed. The answer is every language left.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data`. A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
     # @param id [String] Repull listing id (numeric string) of a listing linked to Vrbo.
@@ -2435,6 +2503,76 @@ module Repull
       return data, status_code, headers
     end
 
+    # Get a Vrbo reservation
+    # A Vrbo booking by its confirmation code, as Vrbo shows it now — the counterpart of `GET /v1/channels/airbnb/reservations/{code}`: its state (`Booked`, a request, …), dates, party, the guest's charges (`guestLines`), your deductions and payout (`hostLines`, `payout`), the cancellation policy and the damage deposit, plus `availableActions` — what Vrbo's \"Change or cancel the booking\" menu offers right now.  `?options=cancel|change|decline` returns Vrbo's choices for that action instead: the cancel reasons and message limits; the booking's current dates, times and party with Vrbo's limits (e.g. a pay-later booking's check-in is locked); or the decline reasons of a booking request. Read live from Vrbo (a few seconds).
+    # @param code [String] The Vrbo confirmation code (&#x60;HA-…&#x60;), as in &#x60;GET /v1/channels/vrbo/reservations&#x60;.
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :options Return Vrbo&#39;s choices for this action instead of the booking.
+    # @return [GetVrboReservation200Response]
+    def get_vrbo_reservation(code, opts = {})
+      data, _status_code, _headers = get_vrbo_reservation_with_http_info(code, opts)
+      data
+    end
+
+    # Get a Vrbo reservation
+    # A Vrbo booking by its confirmation code, as Vrbo shows it now — the counterpart of &#x60;GET /v1/channels/airbnb/reservations/{code}&#x60;: its state (&#x60;Booked&#x60;, a request, …), dates, party, the guest&#39;s charges (&#x60;guestLines&#x60;), your deductions and payout (&#x60;hostLines&#x60;, &#x60;payout&#x60;), the cancellation policy and the damage deposit, plus &#x60;availableActions&#x60; — what Vrbo&#39;s \&quot;Change or cancel the booking\&quot; menu offers right now.  &#x60;?options&#x3D;cancel|change|decline&#x60; returns Vrbo&#39;s choices for that action instead: the cancel reasons and message limits; the booking&#39;s current dates, times and party with Vrbo&#39;s limits (e.g. a pay-later booking&#39;s check-in is locked); or the decline reasons of a booking request. Read live from Vrbo (a few seconds).
+    # @param code [String] The Vrbo confirmation code (&#x60;HA-…&#x60;), as in &#x60;GET /v1/channels/vrbo/reservations&#x60;.
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :options Return Vrbo&#39;s choices for this action instead of the booking.
+    # @return [Array<(GetVrboReservation200Response, Integer, Hash)>] GetVrboReservation200Response data, response status code and response headers
+    def get_vrbo_reservation_with_http_info(code, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: VRBOApi.get_vrbo_reservation ...'
+      end
+      # verify the required parameter 'code' is set
+      if @api_client.config.client_side_validation && code.nil?
+        fail ArgumentError, "Missing the required parameter 'code' when calling VRBOApi.get_vrbo_reservation"
+      end
+      allowable_values = ["cancel", "change", "decline"]
+      if @api_client.config.client_side_validation && opts[:'options'] && !allowable_values.include?(opts[:'options'])
+        fail ArgumentError, "invalid value for \"options\", must be one of #{allowable_values}"
+      end
+      # resource path
+      local_var_path = '/v1/channels/vrbo/reservations/{code}'.sub('{code}', CGI.escape(code.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+      query_params[:'options'] = opts[:'options'] if !opts[:'options'].nil?
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'GetVrboReservation200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"VRBOApi.get_vrbo_reservation",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: VRBOApi#get_vrbo_reservation\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # List VRBO listings
     # List the Vrbo units linked to this workspace's listings, from the host's connected Vrbo account (host sign-in, beta).  Inactive listings are left out unless `?status=inactive|all` asks for them; they then come back with identity fields only (ids, `listingName`, `listingCity`, `status`, `inactiveReason`). They keep syncing and are complete again once activated.
     # @param [Hash] opts the optional parameters
@@ -4500,6 +4638,80 @@ module Repull
       data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: VRBOApi#vrbo_listing_action\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Accept, decline, cancel, charge or refund a Vrbo reservation
+    # Act on a Vrbo booking by its confirmation code — the counterpart of `POST /v1/channels/airbnb/reservations/{code}`, plus Vrbo's extra charge and refund. **Write-side**: Vrbo's own host-app actions, as the account that owns the booking.  - `accept` — accept a pending booking request. Optional `message` to the guest (≤ 250 characters). - `decline` — decline a pending booking request. `reason` is one of Vrbo's decline reasons (`?options=decline`); `block_dates: true` also blocks the dates (default: they stay open). - `cancel` — cancel a booking as the host. `reason`: `property-sold-or-ownership-change`, `conflict-with-house-rules`, `dates-booked-on-another-platform`, `extenuating-circumstance` or `payment-not-received` (Vrbo's list, read live: `?options=cancel`); `message` to the guest, 25–250 characters; `refund_level` (default `FULL`). **Host cancellations carry Vrbo penalties** — the listing hidden for 7 days and a fee from your payout, unless the cancellation was unavoidable. - `charge` — request an extra payment from the guest: `fee_type` (Vrbo's list, e.g. `PARKING`, `HOT_TUB`, `DEPARTURE_LATE`), `amount` (1–10,000, the booking's currency), `message` (≤ 50 characters) and `due_date`. - `refund` — refund the guest part of what they paid: `reason`, `amount`, `message`. Vrbo offers it once the guest has paid.  **`preview: true`** (cancel, charge, refund) returns Vrbo's own dry run — for a cancel, the terms and penalties (`penalties.cancellationFee`, `penalties.listingHidden`, `refundToGuest`); for a charge, the guest's total with taxes — and changes nothing. Without it, the dry run runs first and the action after, once: a lost answer is `502 vrbo_unconfirmed` (read the booking before retrying), never a second cancel.  Changing dates, times, guests or price is `POST /v1/channels/vrbo/alterations`. The body is validated before anything reaches Vrbo; unknown fields are refused by name. Returns `403 listing_inactive` when the listing is inactive.
+    # @param code [String] The Vrbo confirmation code (&#x60;HA-…&#x60;), as in &#x60;GET /v1/channels/vrbo/reservations&#x60;.
+    # @param vrbo_reservation_action_request [VrboReservationActionRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [VrboReservationAction200Response]
+    def vrbo_reservation_action(code, vrbo_reservation_action_request, opts = {})
+      data, _status_code, _headers = vrbo_reservation_action_with_http_info(code, vrbo_reservation_action_request, opts)
+      data
+    end
+
+    # Accept, decline, cancel, charge or refund a Vrbo reservation
+    # Act on a Vrbo booking by its confirmation code — the counterpart of &#x60;POST /v1/channels/airbnb/reservations/{code}&#x60;, plus Vrbo&#39;s extra charge and refund. **Write-side**: Vrbo&#39;s own host-app actions, as the account that owns the booking.  - &#x60;accept&#x60; — accept a pending booking request. Optional &#x60;message&#x60; to the guest (≤ 250 characters). - &#x60;decline&#x60; — decline a pending booking request. &#x60;reason&#x60; is one of Vrbo&#39;s decline reasons (&#x60;?options&#x3D;decline&#x60;); &#x60;block_dates: true&#x60; also blocks the dates (default: they stay open). - &#x60;cancel&#x60; — cancel a booking as the host. &#x60;reason&#x60;: &#x60;property-sold-or-ownership-change&#x60;, &#x60;conflict-with-house-rules&#x60;, &#x60;dates-booked-on-another-platform&#x60;, &#x60;extenuating-circumstance&#x60; or &#x60;payment-not-received&#x60; (Vrbo&#39;s list, read live: &#x60;?options&#x3D;cancel&#x60;); &#x60;message&#x60; to the guest, 25–250 characters; &#x60;refund_level&#x60; (default &#x60;FULL&#x60;). **Host cancellations carry Vrbo penalties** — the listing hidden for 7 days and a fee from your payout, unless the cancellation was unavoidable. - &#x60;charge&#x60; — request an extra payment from the guest: &#x60;fee_type&#x60; (Vrbo&#39;s list, e.g. &#x60;PARKING&#x60;, &#x60;HOT_TUB&#x60;, &#x60;DEPARTURE_LATE&#x60;), &#x60;amount&#x60; (1–10,000, the booking&#39;s currency), &#x60;message&#x60; (≤ 50 characters) and &#x60;due_date&#x60;. - &#x60;refund&#x60; — refund the guest part of what they paid: &#x60;reason&#x60;, &#x60;amount&#x60;, &#x60;message&#x60;. Vrbo offers it once the guest has paid.  **&#x60;preview: true&#x60;** (cancel, charge, refund) returns Vrbo&#39;s own dry run — for a cancel, the terms and penalties (&#x60;penalties.cancellationFee&#x60;, &#x60;penalties.listingHidden&#x60;, &#x60;refundToGuest&#x60;); for a charge, the guest&#39;s total with taxes — and changes nothing. Without it, the dry run runs first and the action after, once: a lost answer is &#x60;502 vrbo_unconfirmed&#x60; (read the booking before retrying), never a second cancel.  Changing dates, times, guests or price is &#x60;POST /v1/channels/vrbo/alterations&#x60;. The body is validated before anything reaches Vrbo; unknown fields are refused by name. Returns &#x60;403 listing_inactive&#x60; when the listing is inactive.
+    # @param code [String] The Vrbo confirmation code (&#x60;HA-…&#x60;), as in &#x60;GET /v1/channels/vrbo/reservations&#x60;.
+    # @param vrbo_reservation_action_request [VrboReservationActionRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(VrboReservationAction200Response, Integer, Hash)>] VrboReservationAction200Response data, response status code and response headers
+    def vrbo_reservation_action_with_http_info(code, vrbo_reservation_action_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: VRBOApi.vrbo_reservation_action ...'
+      end
+      # verify the required parameter 'code' is set
+      if @api_client.config.client_side_validation && code.nil?
+        fail ArgumentError, "Missing the required parameter 'code' when calling VRBOApi.vrbo_reservation_action"
+      end
+      # verify the required parameter 'vrbo_reservation_action_request' is set
+      if @api_client.config.client_side_validation && vrbo_reservation_action_request.nil?
+        fail ArgumentError, "Missing the required parameter 'vrbo_reservation_action_request' when calling VRBOApi.vrbo_reservation_action"
+      end
+      # resource path
+      local_var_path = '/v1/channels/vrbo/reservations/{code}'.sub('{code}', CGI.escape(code.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(vrbo_reservation_action_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'VrboReservationAction200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"VRBOApi.vrbo_reservation_action",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: VRBOApi#vrbo_reservation_action\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end

@@ -22787,7 +22787,7 @@
       "post": {
         "operationId": "replyToReview",
         "summary": "Reply to a review on any channel",
-        "description": "Resolves the review, reads its channel and dispatches the reply. Channel-neutral: you do not need to know where the review came from.\n\nReplies work on Airbnb, Booking.com and VRBO. Each channel accepts one reply per review (VRBO: a second is `409 already_replied`; a review VRBO no longer takes a response to is `409 reply_not_allowed`). On VRBO the response is signed with a name \u2014 the connected account's host name, or `name` if you send it. A review from a channel without a reply API returns `422 unsupported_channel` naming the channels that do work.\n\n**Reviews read from a PMS** (`pms` set on the review \u2014 Guesty, Hostaway, \u2026) are answered through that PMS. A PMS whose API has no reply returns `422 pms_write_unsupported` naming it (Hostaway today); `GET /v1/connect/{provider}` \u2192 `capabilities.pms.reviews.reply` says so beforehand. A revoked PMS connection is `403 connection_reauth_required`.\n\nTo review a guest (Airbnb only), use `POST /v1/reviews/{id}/guest-review`.\n\n**Inactive listings:** a review of an inactive listing returns `403 listing_inactive` and no reply reaches the channel. Activate the listing first.",
+        "description": "Resolves the review, reads its channel and dispatches the reply. Channel-neutral: you do not need to know where the review came from.\n\nReplies work on Airbnb, Booking.com and VRBO. Each channel accepts one reply per review (VRBO: a second is `409 already_replied`; a review VRBO no longer takes a response to is `409 reply_not_allowed`). On VRBO the response is signed with a name \u2014 the connected account's host name, or `name` if you send it. A review from a channel without a reply API returns `422 unsupported_channel` naming the channels that do work.\n\n**Reviews read from a PMS** (`pms` set on the review \u2014 Guesty, Hostaway, \u2026) are answered through that PMS. A PMS whose API has no reply returns `422 pms_write_unsupported` naming it (Hostaway today); `GET /v1/connect/{provider}` \u2192 `capabilities.pms.reviews.reply` says so beforehand. A revoked PMS connection is `403 connection_reauth_required`.\n\nTo review a guest (Airbnb and Vrbo), use `POST /v1/reviews/{id}/guest-review`.\n\n**Inactive listings:** a review of an inactive listing returns `403 listing_inactive` and no reply reaches the channel. Activate the listing first.",
         "tags": [
           "Reviews"
         ],
@@ -36267,7 +36267,7 @@
       "post": {
         "operationId": "accept_reservation_request",
         "summary": "Accept a booking request",
-        "description": "Accept a pending Airbnb booking request \u2014 a reservation with status `pending`, made on a listing without Instant Book. Find them with `GET /v1/reservations?status=pending`. Airbnb expires a request the host has not answered within 24 hours.\n\nAirbnb confirms asynchronously: the reservation\u2019s status moves to confirmed, and a `reservation.updated` webhook fires, when Airbnb\u2019s notification lands (usually within seconds). The response reports what Airbnb was asked to do.\n\n**Airbnb**, for listings connected to Airbnb directly; other channels have no request step (`422 channel_not_supported`). **A request relayed by a PMS** (Guesty, Hostaway, \u2026) is answered in that PMS, whatever channel it came from; a PMS whose API cannot answer requests returns `422 pms_write_unsupported` naming it (Hostaway today), and `GET /v1/connect/{provider}` \u2192 `capabilities.pms.reservations.respond` says so beforehand. The response then carries `pms`. A reservation that is not pending is refused before Airbnb is contacted (`409 reservation_not_pending`); one Airbnb says already moved on is `409 request_no_longer_pending`. Neither is worth retrying.\n\nTakes no body.\n\nSend `Idempotency-Key`: a repeat with the same key replays the first response instead of acting twice (a `409 idempotency_key_in_use` while the first is still running). A 5xx, a `429 airbnb_rate_limited` or a `403 connection_reauth_required` is not stored \u2014 nothing was done \u2014 so retrying with the same key reaches Airbnb again.",
+        "description": "Accept a pending Airbnb or Vrbo booking request \u2014 a reservation with status `pending`, made on a listing without Instant Book. Find them with `GET /v1/reservations?status=pending`. Airbnb and Vrbo expire a request the host has not answered within 24 hours.\n\nAirbnb confirms asynchronously: the reservation\u2019s status moves to confirmed, and a `reservation.updated` webhook fires, when Airbnb\u2019s notification lands (usually within seconds). The response reports what Airbnb was asked to do.\n\n**Airbnb**, for listings connected to Airbnb directly, and **Vrbo**, where the request is answered on Vrbo itself (the same as `POST /v1/channels/vrbo/reservations/{code}`); other channels have no request step (`422 channel_not_supported`). **A request relayed by a PMS** (Guesty, Hostaway, \u2026) is answered in that PMS, whatever channel it came from; a PMS whose API cannot answer requests returns `422 pms_write_unsupported` naming it (Hostaway today), and `GET /v1/connect/{provider}` \u2192 `capabilities.pms.reservations.respond` says so beforehand. The response then carries `pms`. A reservation that is not pending is refused before Airbnb is contacted (`409 reservation_not_pending`); one Airbnb says already moved on is `409 request_no_longer_pending`. Neither is worth retrying.\n\nTakes no body.\n\nSend `Idempotency-Key`: a repeat with the same key replays the first response instead of acting twice (a `409 idempotency_key_in_use` while the first is still running). A 5xx, a `429 airbnb_rate_limited` or a `403 connection_reauth_required` is not stored \u2014 nothing was done \u2014 so retrying with the same key reaches Airbnb again.",
         "tags": [
           "Reservations"
         ],
@@ -36627,7 +36627,7 @@
       "post": {
         "operationId": "decline_reservation_request",
         "summary": "Decline a booking request",
-        "description": "Decline a pending Airbnb booking request (a reservation with status `pending`; find them with `GET /v1/reservations?status=pending`).\n\n`reason` must be one of Airbnb\u2019s own decline reasons. `message` is required: Airbnb sends it to the guest with the decline (at most 500 characters). It is not defaulted \u2014 a canned message would put words in your mouth.\n\nAirbnb confirms asynchronously; the reservation\u2019s status moves, and `reservation.updated` fires, when its notification lands. Same channel and status rules as `POST /v1/reservations/{id}/accept`.\n\nSend `Idempotency-Key`: a repeat with the same key replays the first response instead of acting twice (a `409 idempotency_key_in_use` while the first is still running). A 5xx, a `429 airbnb_rate_limited` or a `403 connection_reauth_required` is not stored \u2014 nothing was done \u2014 so retrying with the same key reaches Airbnb again.",
+        "description": "Decline a pending Airbnb or Vrbo booking request (a reservation with status `pending`; find them with `GET /v1/reservations?status=pending`).\n\n`reason` must be one of Airbnb\u2019s own decline reasons. `message` is required: the channel sends it to the guest with the decline (Airbnb: at most 500 characters; Vrbo: 250). It is not defaulted \u2014 a canned message would put words in your mouth.\n\n**Vrbo** has its own decline reasons: `dates_not_available` is sent as Vrbo\u2019s \u201cdates unavailable\u201d (and blocks the dates, as Vrbo does); any other reason is refused with `422 invalid_params` pointing at `POST /v1/channels/vrbo/reservations/{code}`, which takes Vrbo\u2019s reasons directly.\n\nAirbnb confirms asynchronously; the reservation\u2019s status moves, and `reservation.updated` fires, when its notification lands. Same channel and status rules as `POST /v1/reservations/{id}/accept`.\n\nSend `Idempotency-Key`: a repeat with the same key replays the first response instead of acting twice (a `409 idempotency_key_in_use` while the first is still running). A 5xx, a `429 airbnb_rate_limited` or a `403 connection_reauth_required` is not stored \u2014 nothing was done \u2014 so retrying with the same key reaches Airbnb again.",
         "tags": [
           "Reservations"
         ],
@@ -38654,8 +38654,8 @@
     "/v1/reviews/{id}/guest-review": {
       "post": {
         "operationId": "submitGuestReview",
-        "summary": "Review a guest (publishes, final)",
-        "description": "Submit your review of a guest \u2014 a review with `reviewerRole: \"host\"` from `GET /v1/reviews?reviewerRole=host`. Only Airbnb lets hosts review guests; a review from another channel returns `422 unsupported_channel`.\n\n**Submitting publishes it and is final:** Airbnb has no draft and does not allow edits; a second submission is `409 review_already_submitted`. Airbnb accepts it up to 14 days after checkout (`expiresAt`); after that, `409 review_window_closed`.\n\nRequired: `publicReview`, `isRevieweeRecommended` (whether you would host the guest again), and a 1\u20135 rating for **each** of `cleanliness`, `communication` and `respect_house_rules` \u2014 send `rating` to use one score for all three, `categoryRatings` to score them individually, or both (`rating` fills any category you did not rate). Optional: `privateFeedback`, a note to the guest that is not published. A request missing a required piece is refused with `422 invalid_params` naming it, before anything is sent to Airbnb.\n\n```json\n{\n  \"publicReview\": \"Joanne was a great guest.\",\n  \"rating\": 5,\n  \"privateFeedback\": \"Thanks for leaving the place so tidy!\",\n  \"isRevieweeRecommended\": true\n}\n```\n\nA guest's review of you (`reviewerRole: \"guest\"`) cannot be written here \u2014 `409 not_host_review`; answer it with `POST /v1/reviews/{id}/reply`. Same behaviour as `PUT /v1/channels/airbnb/reviews/{id}`. Guide: https://repull.dev/docs/reviews#review-a-guest",
+        "summary": "Review a guest",
+        "description": "Submit your review of a guest \u2014 a review with `reviewerRole: \"host\"` from `GET /v1/reviews?reviewerRole=host`. Airbnb and Vrbo let hosts review guests; a review from another channel returns `422 unsupported_channel`.\n\n**Airbnb \u2014 publishes it, final:** Airbnb has no draft and does not allow edits; a second submission is `409 review_already_submitted`. Airbnb accepts it up to 14 days after checkout (`expiresAt`); after that, `409 review_window_closed`. Required: `publicReview`, `isRevieweeRecommended` (whether you would host the guest again), and a 1\u20135 rating for **each** of `cleanliness`, `communication` and `respect_house_rules` \u2014 send `rating` to use one score for all three, `categoryRatings` to score them individually, or both (`rating` fills any category you did not rate). Optional: `privateFeedback`, a note to the guest that is not published.\n\n```json\n{\n  \"publicReview\": \"Joanne was a great guest.\",\n  \"rating\": 5,\n  \"privateFeedback\": \"Thanks for leaving the place so tidy!\",\n  \"isRevieweeRecommended\": true\n}\n```\n\n**Vrbo \u2014 Vrbo's \"Rate guest\":** stars and \"would you rent to this guest again\", with no text, and never shown to the guest. `rating` (the overall experience, 1\u20135) is required; `categoryRatings` (cleanliness, communication, respect_house_rules) and `isRevieweeRecommended` are optional. `publicReview` and `privateFeedback` must be left out or empty (typed SDKs send them empty) \u2014 text is refused by name. A stay already rated is `409 review_already_submitted`; one Vrbo no longer takes a rating for, `409 review_window_closed`.\n\n```json\n{ \"rating\": 5, \"categoryRatings\": [{ \"category\": \"cleanliness\", \"rating\": 4 }], \"isRevieweeRecommended\": true }\n```\n\nA request missing a required piece is refused with `422 invalid_params` naming it, before anything is sent to the channel. A guest's review of you (`reviewerRole: \"guest\"`) cannot be written here \u2014 `409 not_host_review` (Vrbo: `422`); answer it with `POST /v1/reviews/{id}/reply`. Guide: https://repull.dev/docs/reviews#review-a-guest",
         "tags": [
           "Reviews"
         ],
@@ -38682,7 +38682,7 @@
         },
         "responses": {
           "200": {
-            "description": "Review published on Airbnb",
+            "description": "Review published on Airbnb, or rating saved on Vrbo",
             "content": {
               "application/json": {
                 "schema": {
@@ -38696,6 +38696,15 @@
                     },
                     "submitted": {
                       "type": "boolean"
+                    },
+                    "platform": {
+                      "type": "string",
+                      "description": "`vrbo` for a Vrbo rating."
+                    },
+                    "rating": {
+                      "type": "object",
+                      "description": "Vrbo: the rating as sent to Vrbo.",
+                      "additionalProperties": true
                     }
                   }
                 }
@@ -38722,7 +38731,7 @@
             }
           },
           "422": {
-            "description": "`invalid_params` (a required piece is missing, named in `field`) or `unsupported_channel` (the review is not from Airbnb).",
+            "description": "`invalid_params` (a required piece is missing, named in `field`) or `unsupported_channel` (the review is not from Airbnb or Vrbo).",
             "content": {
               "application/json": {
                 "schema": {
@@ -68171,6 +68180,1277 @@
           },
           "500": {
             "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/channels/vrbo/alterations": {
+      "post": {
+        "operationId": "createVrboAlteration",
+        "summary": "Change a Vrbo reservation",
+        "description": "Change an existing Vrbo booking \u2014 the counterpart of `POST /v1/channels/airbnb/alterations`. Send `confirmation_code` and what changes: `check_in`, `check_out`, `check_in_time` / `check_out_time` (`HH:MM` on the hour or half hour), `number_of_adults`, `number_of_children`, `pets`; for the price, `rent_amount` (the new rent \u2014 Vrbo adds its fees and taxes) or `keep_original_price: true`. Fields you leave out keep the booking's values.\n\nUnlike Airbnb, the change is made at once (the guest does not accept it); when the guest owes more, Vrbo requests it by `payment_due_date`. **`preview: true`** returns Vrbo's dry run \u2014 `before`, `after`, the price difference (`payment`, or `priceUnchanged`) and the due-date range \u2014 and changes nothing.\n\nVrbo's rules are checked first and refused by field: e.g. a pay-later booking's check-in cannot move, guests are capped by the listing. `GET /v1/channels/vrbo/reservations/{code}?options=change` shows the booking's values and limits. Airbnb fields with no Vrbo equivalent are refused by name: `number_of_guests` (send adults and children), `total_price` (send `rent_amount`), `listing_id` (Vrbo cannot move a booking to another unit).",
+        "tags": [
+          "VRBO"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "confirmation_code": {
+                    "type": "string",
+                    "example": "HA-C3WBX1"
+                  },
+                  "check_in": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "check_out": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "check_in_time": {
+                    "type": "string",
+                    "example": "16:00"
+                  },
+                  "check_out_time": {
+                    "type": "string",
+                    "example": "11:00"
+                  },
+                  "number_of_adults": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "number_of_children": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "pets": {
+                    "type": "boolean"
+                  },
+                  "rent_amount": {
+                    "type": "number",
+                    "description": "The new rent for the stay, in the booking's currency; Vrbo adds its fees and taxes."
+                  },
+                  "keep_original_price": {
+                    "type": "boolean",
+                    "description": "Change the stay without changing what the guest pays."
+                  },
+                  "payment_due_date": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "When the guest must pay any difference (Vrbo's default otherwise)."
+                  },
+                  "preview": {
+                    "type": "boolean",
+                    "description": "Vrbo's dry run only: nothing is changed."
+                  }
+                },
+                "required": [
+                  "confirmation_code"
+                ],
+                "additionalProperties": false
+              },
+              "examples": {
+                "extendPreview": {
+                  "summary": "Price of one more night",
+                  "value": {
+                    "confirmation_code": "HA-C3WBX1",
+                    "check_out": "2026-12-26",
+                    "preview": true
+                  }
+                },
+                "lateCheckout": {
+                  "summary": "Late checkout, same price",
+                  "value": {
+                    "confirmation_code": "HA-C3WBX1",
+                    "check_out_time": "12:00",
+                    "keep_original_price": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The dry run (`preview: true`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "confirmationCode": {
+                          "type": "string"
+                        },
+                        "preview": {
+                          "type": "boolean"
+                        },
+                        "before": {
+                          "type": "object",
+                          "properties": {
+                            "checkIn": {
+                              "type": "string"
+                            },
+                            "checkOut": {
+                              "type": "string"
+                            },
+                            "checkInTime": {
+                              "type": "string"
+                            },
+                            "checkOutTime": {
+                              "type": "string"
+                            },
+                            "adults": {
+                              "type": "integer"
+                            },
+                            "children": {
+                              "type": "integer"
+                            },
+                            "pets": {
+                              "type": "boolean"
+                            }
+                          }
+                        },
+                        "after": {
+                          "type": "object",
+                          "properties": {
+                            "checkIn": {
+                              "type": "string"
+                            },
+                            "checkOut": {
+                              "type": "string"
+                            },
+                            "checkInTime": {
+                              "type": "string"
+                            },
+                            "checkOutTime": {
+                              "type": "string"
+                            },
+                            "adults": {
+                              "type": "integer"
+                            },
+                            "children": {
+                              "type": "integer"
+                            },
+                            "pets": {
+                              "type": "boolean"
+                            }
+                          }
+                        },
+                        "priceUnchanged": {
+                          "type": "boolean"
+                        },
+                        "payment": {
+                          "type": "object",
+                          "properties": {
+                            "title": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "lines": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "label": {
+                                    "type": "string"
+                                  },
+                                  "amount": {
+                                    "type": "number",
+                                    "nullable": true
+                                  }
+                                }
+                              }
+                            },
+                            "total": {
+                              "type": "object",
+                              "properties": {
+                                "label": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "amount": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "description": "With its currency, as Vrbo shows it (e.g. `CAD 1,107.04`)."
+                                }
+                              }
+                            }
+                          },
+                          "nullable": true
+                        },
+                        "dueDate": {
+                          "type": "object",
+                          "properties": {
+                            "default": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "earliest": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "latest": {
+                              "type": "string",
+                              "nullable": true
+                            }
+                          }
+                        }
+                      },
+                      "additionalProperties": true
+                    },
+                    "listingId": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "The booking was changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "confirmationCode": {
+                          "type": "string"
+                        },
+                        "preview": {
+                          "type": "boolean"
+                        },
+                        "committed": {
+                          "type": "boolean"
+                        },
+                        "before": {
+                          "type": "object",
+                          "properties": {
+                            "checkIn": {
+                              "type": "string"
+                            },
+                            "checkOut": {
+                              "type": "string"
+                            },
+                            "checkInTime": {
+                              "type": "string"
+                            },
+                            "checkOutTime": {
+                              "type": "string"
+                            },
+                            "adults": {
+                              "type": "integer"
+                            },
+                            "children": {
+                              "type": "integer"
+                            },
+                            "pets": {
+                              "type": "boolean"
+                            }
+                          }
+                        },
+                        "after": {
+                          "type": "object",
+                          "properties": {
+                            "checkIn": {
+                              "type": "string"
+                            },
+                            "checkOut": {
+                              "type": "string"
+                            },
+                            "checkInTime": {
+                              "type": "string"
+                            },
+                            "checkOutTime": {
+                              "type": "string"
+                            },
+                            "adults": {
+                              "type": "integer"
+                            },
+                            "children": {
+                              "type": "integer"
+                            },
+                            "pets": {
+                              "type": "boolean"
+                            }
+                          }
+                        },
+                        "payment": {
+                          "type": "object",
+                          "properties": {
+                            "title": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "lines": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "label": {
+                                    "type": "string"
+                                  },
+                                  "amount": {
+                                    "type": "number",
+                                    "nullable": true
+                                  }
+                                }
+                              }
+                            },
+                            "total": {
+                              "type": "object",
+                              "properties": {
+                                "label": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "amount": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "description": "With its currency, as Vrbo shows it (e.g. `CAD 1,107.04`)."
+                                }
+                              }
+                            }
+                          },
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": true
+                    },
+                    "listingId": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "description": "No Vrbo booking with this code in the workspace (a new one can be acted on once its Vrbo conversation has been read, within minutes).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "notFound": {
+                    "summary": "Unknown code",
+                    "value": {
+                      "error": {
+                        "code": "not_found",
+                        "message": "No Vrbo booking HA-NOPE123 in this workspace.",
+                        "fix": "Use the Vrbo confirmation code (HA-\u2026) from `GET /v1/channels/vrbo/reservations`.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/reservations",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`request_no_longer_pending` \u2014 accept/decline on a booking that is not a pending request (do not retry); `reconnect_required` \u2014 Vrbo signed the account out.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "noLongerPending": {
+                    "summary": "Not a request",
+                    "value": {
+                      "error": {
+                        "code": "request_no_longer_pending",
+                        "message": "this booking is Booked, not a pending booking request",
+                        "fix": "This is not a pending booking request any more. Do not retry; read the booking to see where it stands.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/reservations",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  },
+                  "reconnect": {
+                    "summary": "Signed out",
+                    "value": {
+                      "error": {
+                        "code": "reconnect_required",
+                        "message": "Vrbo signed this account out. Reconnect it, then try again.",
+                        "fix": "Reconnect the Vrbo account, then send the request again.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/reservations",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`invalid_params` \u2014 the body is wrong (`field` names it; nothing reached Vrbo); `vrbo_rejected` \u2014 Vrbo's own rule refused it (its words are the message).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "reason": {
+                    "summary": "Unknown reason",
+                    "value": {
+                      "error": {
+                        "code": "invalid_params",
+                        "message": "reason must be one of: property-sold-or-ownership-change, conflict-with-house-rules, dates-booked-on-another-platform, extenuating-circumstance, payment-not-received",
+                        "fix": "Correct the field named and send it again. Nothing was sent to Vrbo.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/reservations",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "field": "reason"
+                      }
+                    }
+                  },
+                  "locked": {
+                    "summary": "Check-in locked",
+                    "value": {
+                      "error": {
+                        "code": "invalid_params",
+                        "message": "Check-in date cannot be changed for pay-later bookings",
+                        "fix": "Correct the field named and send it again. Nothing was sent to Vrbo.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/reservations",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "field": "check_in"
+                      }
+                    }
+                  },
+                  "vrbo": {
+                    "summary": "Vrbo refused",
+                    "value": {
+                      "error": {
+                        "code": "vrbo_rejected",
+                        "message": "Vrbo refused: Check-in date cannot be changed for pay-later bookings",
+                        "fix": "Vrbo's own rule refused this action; its reason is the message.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/reservations",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "`vrbo_unconfirmed` \u2014 Vrbo did not answer after a real action was sent: read the booking before trying again. `upstream_error` \u2014 Vrbo did not complete the request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "unconfirmed": {
+                    "summary": "Delivery unknown",
+                    "value": {
+                      "error": {
+                        "code": "vrbo_unconfirmed",
+                        "message": "Vrbo did not answer after the action was sent. Read the booking before trying again: it may have gone through.",
+                        "fix": "Read the booking with GET /v1/channels/vrbo/reservations/{code} before trying again.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/reservations",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Vrbo asked us to slow down for this account (`retry_after` seconds).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "busy": {
+                    "summary": "Paused by Vrbo",
+                    "value": {
+                      "error": {
+                        "code": "vrbo_busy",
+                        "message": "Vrbo asked us to slow down for this account. Try again in a minute.",
+                        "fix": "Retry after 60 seconds.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/reservations",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "retry_after": 60
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/channels/vrbo/reservations/{code}": {
+      "get": {
+        "operationId": "getVrboReservation",
+        "summary": "Get a Vrbo reservation",
+        "description": "A Vrbo booking by its confirmation code, as Vrbo shows it now \u2014 the counterpart of `GET /v1/channels/airbnb/reservations/{code}`: its state (`Booked`, a request, \u2026), dates, party, the guest's charges (`guestLines`), your deductions and payout (`hostLines`, `payout`), the cancellation policy and the damage deposit, plus `availableActions` \u2014 what Vrbo's \"Change or cancel the booking\" menu offers right now.\n\n`?options=cancel|change|decline` returns Vrbo's choices for that action instead: the cancel reasons and message limits; the booking's current dates, times and party with Vrbo's limits (e.g. a pay-later booking's check-in is locked); or the decline reasons of a booking request. Read live from Vrbo (a few seconds).",
+        "tags": [
+          "VRBO"
+        ],
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "HA-C3WBX1"
+            },
+            "description": "The Vrbo confirmation code (`HA-\u2026`), as in `GET /v1/channels/vrbo/reservations`."
+          },
+          {
+            "name": "options",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "cancel",
+                "change",
+                "decline"
+              ]
+            },
+            "description": "Return Vrbo's choices for this action instead of the booking."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The booking (or the choices)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "reservationCode": {
+                          "type": "string"
+                        },
+                        "reservationUuid": {
+                          "type": "string"
+                        },
+                        "state": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "checkIn": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "checkOut": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "adults": {
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "children": {
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "pets": {
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "guestName": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "currency": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "guestLines": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "label": {
+                                "type": "string"
+                              },
+                              "amount": {
+                                "type": "number",
+                                "nullable": true
+                              }
+                            }
+                          }
+                        },
+                        "hostLines": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "label": {
+                                "type": "string"
+                              },
+                              "amount": {
+                                "type": "number",
+                                "nullable": true
+                              }
+                            }
+                          }
+                        },
+                        "totalGuestPayment": {
+                          "type": "number",
+                          "nullable": true
+                        },
+                        "payout": {
+                          "type": "number",
+                          "nullable": true
+                        },
+                        "cancellationPolicy": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "damageDeposit": {
+                          "type": "number",
+                          "nullable": true
+                        },
+                        "availableActions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "example": "CANCEL"
+                              },
+                              "label": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "description": "The booking as Vrbo shows it; with `?options=`, Vrbo's choices for that action.",
+                      "additionalProperties": true
+                    },
+                    "confirmationCode": {
+                      "type": "string"
+                    },
+                    "listingId": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "dataFreshness": {
+                      "type": "object",
+                      "properties": {
+                        "lastSyncedAt": {
+                          "type": "string"
+                        },
+                        "stale": {
+                          "type": "boolean"
+                        },
+                        "reason": {
+                          "type": "string"
+                        },
+                        "source": {
+                          "type": "string",
+                          "enum": [
+                            "live"
+                          ]
+                        },
+                        "accounts": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "accountId": {
+                                "type": "string"
+                              },
+                              "lastSyncedAt": {
+                                "type": "string"
+                              },
+                              "stale": {
+                                "type": "boolean"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "description": "No Vrbo booking with this code in the workspace (a new one can be acted on once its Vrbo conversation has been read, within minutes).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "notFound": {
+                    "summary": "Unknown code",
+                    "value": {
+                      "error": {
+                        "code": "not_found",
+                        "message": "No Vrbo booking HA-NOPE123 in this workspace.",
+                        "fix": "Use the Vrbo confirmation code (HA-\u2026) from `GET /v1/channels/vrbo/reservations`.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/reservations",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`request_no_longer_pending` \u2014 accept/decline on a booking that is not a pending request (do not retry); `reconnect_required` \u2014 Vrbo signed the account out.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "noLongerPending": {
+                    "summary": "Not a request",
+                    "value": {
+                      "error": {
+                        "code": "request_no_longer_pending",
+                        "message": "this booking is Booked, not a pending booking request",
+                        "fix": "This is not a pending booking request any more. Do not retry; read the booking to see where it stands.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/reservations",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  },
+                  "reconnect": {
+                    "summary": "Signed out",
+                    "value": {
+                      "error": {
+                        "code": "reconnect_required",
+                        "message": "Vrbo signed this account out. Reconnect it, then try again.",
+                        "fix": "Reconnect the Vrbo account, then send the request again.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/reservations",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`invalid_params` \u2014 the body is wrong (`field` names it; nothing reached Vrbo); `vrbo_rejected` \u2014 Vrbo's own rule refused it (its words are the message).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "reason": {
+                    "summary": "Unknown reason",
+                    "value": {
+                      "error": {
+                        "code": "invalid_params",
+                        "message": "reason must be one of: property-sold-or-ownership-change, conflict-with-house-rules, dates-booked-on-another-platform, extenuating-circumstance, payment-not-received",
+                        "fix": "Correct the field named and send it again. Nothing was sent to Vrbo.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/reservations",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "field": "reason"
+                      }
+                    }
+                  },
+                  "locked": {
+                    "summary": "Check-in locked",
+                    "value": {
+                      "error": {
+                        "code": "invalid_params",
+                        "message": "Check-in date cannot be changed for pay-later bookings",
+                        "fix": "Correct the field named and send it again. Nothing was sent to Vrbo.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/reservations",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "field": "check_in"
+                      }
+                    }
+                  },
+                  "vrbo": {
+                    "summary": "Vrbo refused",
+                    "value": {
+                      "error": {
+                        "code": "vrbo_rejected",
+                        "message": "Vrbo refused: Check-in date cannot be changed for pay-later bookings",
+                        "fix": "Vrbo's own rule refused this action; its reason is the message.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/reservations",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "`vrbo_unconfirmed` \u2014 Vrbo did not answer after a real action was sent: read the booking before trying again. `upstream_error` \u2014 Vrbo did not complete the request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "unconfirmed": {
+                    "summary": "Delivery unknown",
+                    "value": {
+                      "error": {
+                        "code": "vrbo_unconfirmed",
+                        "message": "Vrbo did not answer after the action was sent. Read the booking before trying again: it may have gone through.",
+                        "fix": "Read the booking with GET /v1/channels/vrbo/reservations/{code} before trying again.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/reservations",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Vrbo asked us to slow down for this account (`retry_after` seconds).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "busy": {
+                    "summary": "Paused by Vrbo",
+                    "value": {
+                      "error": {
+                        "code": "vrbo_busy",
+                        "message": "Vrbo asked us to slow down for this account. Try again in a minute.",
+                        "fix": "Retry after 60 seconds.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/reservations",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "retry_after": 60
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "vrboReservationAction",
+        "summary": "Accept, decline, cancel, charge or refund a Vrbo reservation",
+        "description": "Act on a Vrbo booking by its confirmation code \u2014 the counterpart of `POST /v1/channels/airbnb/reservations/{code}`, plus Vrbo's extra charge and refund. **Write-side**: Vrbo's own host-app actions, as the account that owns the booking.\n\n- `accept` \u2014 accept a pending booking request. Optional `message` to the guest (\u2264 250 characters).\n- `decline` \u2014 decline a pending booking request. `reason` is one of Vrbo's decline reasons (`?options=decline`); `block_dates: true` also blocks the dates (default: they stay open).\n- `cancel` \u2014 cancel a booking as the host. `reason`: `property-sold-or-ownership-change`, `conflict-with-house-rules`, `dates-booked-on-another-platform`, `extenuating-circumstance` or `payment-not-received` (Vrbo's list, read live: `?options=cancel`); `message` to the guest, 25\u2013250 characters; `refund_level` (default `FULL`). **Host cancellations carry Vrbo penalties** \u2014 the listing hidden for 7 days and a fee from your payout, unless the cancellation was unavoidable.\n- `charge` \u2014 request an extra payment from the guest: `fee_type` (Vrbo's list, e.g. `PARKING`, `HOT_TUB`, `DEPARTURE_LATE`), `amount` (1\u201310,000, the booking's currency), `message` (\u2264 50 characters) and `due_date`.\n- `refund` \u2014 refund the guest part of what they paid: `reason`, `amount`, `message`. Vrbo offers it once the guest has paid.\n\n**`preview: true`** (cancel, charge, refund) returns Vrbo's own dry run \u2014 for a cancel, the terms and penalties (`penalties.cancellationFee`, `penalties.listingHidden`, `refundToGuest`); for a charge, the guest's total with taxes \u2014 and changes nothing. Without it, the dry run runs first and the action after, once: a lost answer is `502 vrbo_unconfirmed` (read the booking before retrying), never a second cancel.\n\nChanging dates, times, guests or price is `POST /v1/channels/vrbo/alterations`. The body is validated before anything reaches Vrbo; unknown fields are refused by name. Returns `403 listing_inactive` when the listing is inactive.",
+        "tags": [
+          "VRBO"
+        ],
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "HA-C3WBX1"
+            },
+            "description": "The Vrbo confirmation code (`HA-\u2026`), as in `GET /v1/channels/vrbo/reservations`."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "accept",
+                      "decline",
+                      "cancel",
+                      "charge",
+                      "refund"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "`cancel`: Vrbo's cancel reason; `decline`: Vrbo's decline reason; `refund`: why."
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "Sent to the guest. `cancel` 25\u2013250 characters (required); `charge` \u2264 50 (required); `accept`/`decline` \u2264 250."
+                  },
+                  "refund_level": {
+                    "type": "string",
+                    "example": "FULL",
+                    "description": "`cancel`: the refund Vrbo offers for the reason (default `FULL`)."
+                  },
+                  "block_dates": {
+                    "type": "boolean",
+                    "description": "`decline`: also block the requested dates."
+                  },
+                  "fee_type": {
+                    "type": "string",
+                    "example": "PARKING",
+                    "description": "`charge`: Vrbo's fee type."
+                  },
+                  "amount": {
+                    "type": "number",
+                    "example": 25,
+                    "description": "`charge`/`refund`: the amount, in the booking's currency."
+                  },
+                  "due_date": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "`charge`: when the guest must pay (default today)."
+                  },
+                  "preview": {
+                    "type": "boolean",
+                    "description": "Vrbo's dry run only (cancel, charge, refund): nothing is changed."
+                  }
+                },
+                "required": [
+                  "action"
+                ],
+                "additionalProperties": false
+              },
+              "examples": {
+                "cancelPreview": {
+                  "summary": "See a cancel's penalties first",
+                  "value": {
+                    "action": "cancel",
+                    "reason": "dates-booked-on-another-platform",
+                    "message": "Sorry \u2014 these dates were booked elsewhere. You will get a full refund.",
+                    "preview": true
+                  }
+                },
+                "charge": {
+                  "summary": "Charge for parking",
+                  "value": {
+                    "action": "charge",
+                    "fee_type": "PARKING",
+                    "amount": 25,
+                    "message": "Parking pass for 2 nights",
+                    "due_date": "2026-12-20"
+                  }
+                },
+                "accept": {
+                  "summary": "Accept a request",
+                  "value": {
+                    "action": "accept",
+                    "message": "Welcome \u2014 looking forward to hosting you!"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The dry run, or the action done",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "action": {
+                          "type": "string"
+                        },
+                        "preview": {
+                          "type": "boolean"
+                        },
+                        "committed": {
+                          "type": "boolean"
+                        },
+                        "reservationCode": {
+                          "type": "string"
+                        },
+                        "refundToGuest": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "`cancel`: what the guest gets back."
+                        },
+                        "penalties": {
+                          "type": "object",
+                          "properties": {
+                            "cancellationFee": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "listingHidden": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "datesBlocked": {
+                              "type": "boolean"
+                            }
+                          },
+                          "description": "`cancel`: Vrbo's terms for a host cancellation."
+                        },
+                        "terms": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "title": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "text": {
+                                "type": "string",
+                                "nullable": true
+                              }
+                            }
+                          }
+                        },
+                        "payment": {
+                          "type": "object",
+                          "properties": {
+                            "title": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "lines": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "label": {
+                                    "type": "string"
+                                  },
+                                  "amount": {
+                                    "type": "number",
+                                    "nullable": true
+                                  }
+                                }
+                              }
+                            },
+                            "total": {
+                              "type": "object",
+                              "properties": {
+                                "label": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "amount": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "description": "With its currency, as Vrbo shows it (e.g. `CAD 1,107.04`)."
+                                }
+                              }
+                            }
+                          },
+                          "nullable": true,
+                          "description": "`charge`: the guest's payment with taxes."
+                        }
+                      },
+                      "additionalProperties": true
+                    },
+                    "confirmationCode": {
+                      "type": "string"
+                    },
+                    "listingId": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "description": "No Vrbo booking with this code in the workspace (a new one can be acted on once its Vrbo conversation has been read, within minutes).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "notFound": {
+                    "summary": "Unknown code",
+                    "value": {
+                      "error": {
+                        "code": "not_found",
+                        "message": "No Vrbo booking HA-NOPE123 in this workspace.",
+                        "fix": "Use the Vrbo confirmation code (HA-\u2026) from `GET /v1/channels/vrbo/reservations`.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/reservations",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`request_no_longer_pending` \u2014 accept/decline on a booking that is not a pending request (do not retry); `reconnect_required` \u2014 Vrbo signed the account out.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "noLongerPending": {
+                    "summary": "Not a request",
+                    "value": {
+                      "error": {
+                        "code": "request_no_longer_pending",
+                        "message": "this booking is Booked, not a pending booking request",
+                        "fix": "This is not a pending booking request any more. Do not retry; read the booking to see where it stands.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/reservations",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  },
+                  "reconnect": {
+                    "summary": "Signed out",
+                    "value": {
+                      "error": {
+                        "code": "reconnect_required",
+                        "message": "Vrbo signed this account out. Reconnect it, then try again.",
+                        "fix": "Reconnect the Vrbo account, then send the request again.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/reservations",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`invalid_params` \u2014 the body is wrong (`field` names it; nothing reached Vrbo); `vrbo_rejected` \u2014 Vrbo's own rule refused it (its words are the message).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "reason": {
+                    "summary": "Unknown reason",
+                    "value": {
+                      "error": {
+                        "code": "invalid_params",
+                        "message": "reason must be one of: property-sold-or-ownership-change, conflict-with-house-rules, dates-booked-on-another-platform, extenuating-circumstance, payment-not-received",
+                        "fix": "Correct the field named and send it again. Nothing was sent to Vrbo.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/reservations",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "field": "reason"
+                      }
+                    }
+                  },
+                  "locked": {
+                    "summary": "Check-in locked",
+                    "value": {
+                      "error": {
+                        "code": "invalid_params",
+                        "message": "Check-in date cannot be changed for pay-later bookings",
+                        "fix": "Correct the field named and send it again. Nothing was sent to Vrbo.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/reservations",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "field": "check_in"
+                      }
+                    }
+                  },
+                  "vrbo": {
+                    "summary": "Vrbo refused",
+                    "value": {
+                      "error": {
+                        "code": "vrbo_rejected",
+                        "message": "Vrbo refused: Check-in date cannot be changed for pay-later bookings",
+                        "fix": "Vrbo's own rule refused this action; its reason is the message.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/reservations",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "`vrbo_unconfirmed` \u2014 Vrbo did not answer after a real action was sent: read the booking before trying again. `upstream_error` \u2014 Vrbo did not complete the request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "unconfirmed": {
+                    "summary": "Delivery unknown",
+                    "value": {
+                      "error": {
+                        "code": "vrbo_unconfirmed",
+                        "message": "Vrbo did not answer after the action was sent. Read the booking before trying again: it may have gone through.",
+                        "fix": "Read the booking with GET /v1/channels/vrbo/reservations/{code} before trying again.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/reservations",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Vrbo asked us to slow down for this account (`retry_after` seconds).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "busy": {
+                    "summary": "Paused by Vrbo",
+                    "value": {
+                      "error": {
+                        "code": "vrbo_busy",
+                        "message": "Vrbo asked us to slow down for this account. Try again in a minute.",
+                        "fix": "Retry after 60 seconds.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/reservations",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "retry_after": 60
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }

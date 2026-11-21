@@ -21,12 +21,20 @@ module Repull
 
     attr_accessor :submitted
 
+    # `vrbo` for a Vrbo rating.
+    attr_accessor :platform
+
+    # Vrbo: the rating as sent to Vrbo.
+    attr_accessor :rating
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
         :'id' => :'id',
         :'external_review_id' => :'externalReviewId',
-        :'submitted' => :'submitted'
+        :'submitted' => :'submitted',
+        :'platform' => :'platform',
+        :'rating' => :'rating'
       }
     end
 
@@ -45,7 +53,9 @@ module Repull
       {
         :'id' => :'String',
         :'external_review_id' => :'String',
-        :'submitted' => :'Boolean'
+        :'submitted' => :'Boolean',
+        :'platform' => :'String',
+        :'rating' => :'Hash<String, Object>'
       }
     end
 
@@ -82,6 +92,16 @@ module Repull
       if attributes.key?(:'submitted')
         self.submitted = attributes[:'submitted']
       end
+
+      if attributes.key?(:'platform')
+        self.platform = attributes[:'platform']
+      end
+
+      if attributes.key?(:'rating')
+        if (value = attributes[:'rating']).is_a?(Hash)
+          self.rating = value
+        end
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -106,7 +126,9 @@ module Repull
       self.class == o.class &&
           id == o.id &&
           external_review_id == o.external_review_id &&
-          submitted == o.submitted
+          submitted == o.submitted &&
+          platform == o.platform &&
+          rating == o.rating
     end
 
     # @see the `==` method
@@ -118,7 +140,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, external_review_id, submitted].hash
+      [id, external_review_id, submitted, platform, rating].hash
     end
 
     # Builds the object from hash

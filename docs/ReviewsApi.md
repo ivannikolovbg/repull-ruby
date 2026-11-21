@@ -7,7 +7,7 @@ All URIs are relative to *https://api.repull.dev*
 | [**get_review**](ReviewsApi.md#get_review) | **GET** /v1/reviews/{id} | Get review |
 | [**list_reviews**](ReviewsApi.md#list_reviews) | **GET** /v1/reviews | List reviews |
 | [**reply_to_review**](ReviewsApi.md#reply_to_review) | **POST** /v1/reviews/{id}/reply | Reply to a review on any channel |
-| [**submit_guest_review**](ReviewsApi.md#submit_guest_review) | **POST** /v1/reviews/{id}/guest-review | Review a guest (publishes, final) |
+| [**submit_guest_review**](ReviewsApi.md#submit_guest_review) | **POST** /v1/reviews/{id}/guest-review | Review a guest |
 
 
 ## get_review
@@ -180,7 +180,7 @@ end
 
 Reply to a review on any channel
 
-Resolves the review, reads its channel and dispatches the reply. Channel-neutral: you do not need to know where the review came from.  Replies work on Airbnb, Booking.com and VRBO. Each channel accepts one reply per review (VRBO: a second is `409 already_replied`; a review VRBO no longer takes a response to is `409 reply_not_allowed`). On VRBO the response is signed with a name — the connected account's host name, or `name` if you send it. A review from a channel without a reply API returns `422 unsupported_channel` naming the channels that do work.  **Reviews read from a PMS** (`pms` set on the review — Guesty, Hostaway, …) are answered through that PMS. A PMS whose API has no reply returns `422 pms_write_unsupported` naming it (Hostaway today); `GET /v1/connect/{provider}` → `capabilities.pms.reviews.reply` says so beforehand. A revoked PMS connection is `403 connection_reauth_required`.  To review a guest (Airbnb only), use `POST /v1/reviews/{id}/guest-review`.  **Inactive listings:** a review of an inactive listing returns `403 listing_inactive` and no reply reaches the channel. Activate the listing first.
+Resolves the review, reads its channel and dispatches the reply. Channel-neutral: you do not need to know where the review came from.  Replies work on Airbnb, Booking.com and VRBO. Each channel accepts one reply per review (VRBO: a second is `409 already_replied`; a review VRBO no longer takes a response to is `409 reply_not_allowed`). On VRBO the response is signed with a name — the connected account's host name, or `name` if you send it. A review from a channel without a reply API returns `422 unsupported_channel` naming the channels that do work.  **Reviews read from a PMS** (`pms` set on the review — Guesty, Hostaway, …) are answered through that PMS. A PMS whose API has no reply returns `422 pms_write_unsupported` naming it (Hostaway today); `GET /v1/connect/{provider}` → `capabilities.pms.reviews.reply` says so beforehand. A revoked PMS connection is `403 connection_reauth_required`.  To review a guest (Airbnb and Vrbo), use `POST /v1/reviews/{id}/guest-review`.  **Inactive listings:** a review of an inactive listing returns `403 listing_inactive` and no reply reaches the channel. Activate the listing first.
 
 ### Examples
 
@@ -249,9 +249,9 @@ end
 
 > <SubmitGuestReview200Response> submit_guest_review(id, airbnb_host_review_submit)
 
-Review a guest (publishes, final)
+Review a guest
 
-Submit your review of a guest — a review with `reviewerRole: \"host\"` from `GET /v1/reviews?reviewerRole=host`. Only Airbnb lets hosts review guests; a review from another channel returns `422 unsupported_channel`.  **Submitting publishes it and is final:** Airbnb has no draft and does not allow edits; a second submission is `409 review_already_submitted`. Airbnb accepts it up to 14 days after checkout (`expiresAt`); after that, `409 review_window_closed`.  Required: `publicReview`, `isRevieweeRecommended` (whether you would host the guest again), and a 1–5 rating for **each** of `cleanliness`, `communication` and `respect_house_rules` — send `rating` to use one score for all three, `categoryRatings` to score them individually, or both (`rating` fills any category you did not rate). Optional: `privateFeedback`, a note to the guest that is not published. A request missing a required piece is refused with `422 invalid_params` naming it, before anything is sent to Airbnb.  ```json {   \"publicReview\": \"Joanne was a great guest.\",   \"rating\": 5,   \"privateFeedback\": \"Thanks for leaving the place so tidy!\",   \"isRevieweeRecommended\": true } ```  A guest's review of you (`reviewerRole: \"guest\"`) cannot be written here — `409 not_host_review`; answer it with `POST /v1/reviews/{id}/reply`. Same behaviour as `PUT /v1/channels/airbnb/reviews/{id}`. Guide: https://repull.dev/docs/reviews#review-a-guest
+Submit your review of a guest — a review with `reviewerRole: \"host\"` from `GET /v1/reviews?reviewerRole=host`. Airbnb and Vrbo let hosts review guests; a review from another channel returns `422 unsupported_channel`.  **Airbnb — publishes it, final:** Airbnb has no draft and does not allow edits; a second submission is `409 review_already_submitted`. Airbnb accepts it up to 14 days after checkout (`expiresAt`); after that, `409 review_window_closed`. Required: `publicReview`, `isRevieweeRecommended` (whether you would host the guest again), and a 1–5 rating for **each** of `cleanliness`, `communication` and `respect_house_rules` — send `rating` to use one score for all three, `categoryRatings` to score them individually, or both (`rating` fills any category you did not rate). Optional: `privateFeedback`, a note to the guest that is not published.  ```json {   \"publicReview\": \"Joanne was a great guest.\",   \"rating\": 5,   \"privateFeedback\": \"Thanks for leaving the place so tidy!\",   \"isRevieweeRecommended\": true } ```  **Vrbo — Vrbo's \"Rate guest\":** stars and \"would you rent to this guest again\", with no text, and never shown to the guest. `rating` (the overall experience, 1–5) is required; `categoryRatings` (cleanliness, communication, respect_house_rules) and `isRevieweeRecommended` are optional. `publicReview` and `privateFeedback` must be left out or empty (typed SDKs send them empty) — text is refused by name. A stay already rated is `409 review_already_submitted`; one Vrbo no longer takes a rating for, `409 review_window_closed`.  ```json { \"rating\": 5, \"categoryRatings\": [{ \"category\": \"cleanliness\", \"rating\": 4 }], \"isRevieweeRecommended\": true } ```  A request missing a required piece is refused with `422 invalid_params` naming it, before anything is sent to the channel. A guest's review of you (`reviewerRole: \"guest\"`) cannot be written here — `409 not_host_review` (Vrbo: `422`); answer it with `POST /v1/reviews/{id}/reply`. Guide: https://repull.dev/docs/reviews#review-a-guest
 
 ### Examples
 
@@ -269,7 +269,7 @@ id = 56 # Integer | The review `id` from `GET /v1/reviews`.
 airbnb_host_review_submit = Repull::AirbnbHostReviewSubmit.new({public_review: 'Joanne was a great guest. The space was kept clean and communication was clear.', is_reviewee_recommended: false}) # AirbnbHostReviewSubmit | 
 
 begin
-  # Review a guest (publishes, final)
+  # Review a guest
   result = api_instance.submit_guest_review(id, airbnb_host_review_submit)
   p result
 rescue Repull::ApiError => e
@@ -285,7 +285,7 @@ This returns an Array which contains the response data, status code and headers.
 
 ```ruby
 begin
-  # Review a guest (publishes, final)
+  # Review a guest
   data, status_code, headers = api_instance.submit_guest_review_with_http_info(id, airbnb_host_review_submit)
   p status_code # => 2xx
   p headers # => { ... }
