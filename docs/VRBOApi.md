@@ -2248,7 +2248,7 @@ end
 
 Get the Vrbo safety disclosures
 
-What the listing tells guests about safety: Vrbo's home-safety (`homeSafety`: e.g. pool or hot tub without a gate, nearby water, heights) and safety-device (`safetyDevices`: smoke and carbon-monoxide detectors, fire extinguisher, first aid) amenities, field by field like GET …/amenities.  Answers from Repull's stored copy of the listing's Vrbo content, like the Airbnb endpoints (`dataFreshness.lastSyncedAt` says when it was read from Vrbo). The first read of a section reads Vrbo and stores it; a copy over 24 h old answers and is refreshed in the background (`reason: refreshing`); every write through Repull stores what Vrbo has after it. `?source=live` reads Vrbo now. **Cost:** from the copy, milliseconds; a live read is 2 Vrbo calls.
+What the listing tells guests about safety — the same path as Airbnb's safety disclosures. On Vrbo these are two amenity groups, field by field like GET …/amenities: `homeSafety` (smoke and carbon-monoxide detectors, fire extinguisher, deadbolt lock, exterior lighting, first-aid kit and where it is, emergency exit instructions, hospital and police contacts) and `safetyDevices` (smoke and carbon-monoxide detectors, gas-powered appliances). The detector questions are choices (`yes` / `no`, see each field's `options`).  Answers from Repull's stored copy of the listing's Vrbo content, like the Airbnb endpoints (`dataFreshness.lastSyncedAt` says when it was read from Vrbo). The first read of a section reads Vrbo and stores it; a copy over 24 h old answers and is refreshed in the background (`reason: refreshing`); every write through Repull stores what Vrbo has after it. `?source=live` reads Vrbo now. **Cost:** from the copy, milliseconds; a live read is 2 Vrbo calls.
 
 ### Examples
 
@@ -4267,7 +4267,7 @@ end
 
 Update the Vrbo safety disclosures
 
-Set safety values field by field, as PUT …/amenities does for these two groups: `{\"groups\": {\"safetyDevices\": {\"values\": {\"<fieldId>\": true}}}}`. Field ids are in the read.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data`. A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
+Set safety values field by field, as PUT …/amenities does for these two groups: `{\"groups\": {\"homeSafety\": {\"values\": {\"smockDetector\": \"yes\", \"firstAidKit\": true}}}}` (Vrbo's own field ids, as the read lists them). Field ids are in the read.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data`. A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
 
 ### Examples
 
