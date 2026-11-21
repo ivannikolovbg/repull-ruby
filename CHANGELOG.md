@@ -2,6 +2,54 @@
 
 All notable changes to the `repull` gem are documented here.
 
+## 0.2.54 — 2026-11-21
+
+- New: `DELETE /v1/channels/vrbo/listings/{id}/videos`
+- New: `GET /v1/channels/vrbo/listings/{id}/additional-info`
+- New: `GET /v1/channels/vrbo/listings/{id}/amenities`
+- New: `GET /v1/channels/vrbo/listings/{id}/booking-settings`
+- New: `GET /v1/channels/vrbo/listings/{id}/cancellation`
+- New: `GET /v1/channels/vrbo/listings/{id}/content`
+- New: `GET /v1/channels/vrbo/listings/{id}/description`
+- New: `GET /v1/channels/vrbo/listings/{id}/fees`
+- New: `GET /v1/channels/vrbo/listings/{id}/house-rules`
+- New: `GET /v1/channels/vrbo/listings/{id}/location`
+- New: `GET /v1/channels/vrbo/listings/{id}/payment-terms`
+- New: `GET /v1/channels/vrbo/listings/{id}/photos`
+- New: `GET /v1/channels/vrbo/listings/{id}/pricing`
+- New: `GET /v1/channels/vrbo/listings/{id}/property`
+- New: `GET /v1/channels/vrbo/listings/{id}/protection`
+- New: `GET /v1/channels/vrbo/listings/{id}/rates`
+- New: `GET /v1/channels/vrbo/listings/{id}/registration`
+- New: `GET /v1/channels/vrbo/listings/{id}/rooms`
+- New: `GET /v1/channels/vrbo/listings/{id}/story`
+- New: `GET /v1/channels/vrbo/listings/{id}/taxes`
+- New: `GET /v1/channels/vrbo/listings/{id}/translations`
+- New: `GET /v1/channels/vrbo/listings/{id}/videos`
+- New: `GET /v1/channels/vrbo/listings/{id}/welcome-guide`
+- New: `POST /v1/channels/vrbo/listings/{id}/videos`
+- New: `PUT /v1/channels/vrbo/listings/{id}/additional-info`
+- New: `PUT /v1/channels/vrbo/listings/{id}/amenities`
+- New: `PUT /v1/channels/vrbo/listings/{id}/booking-settings`
+- New: `PUT /v1/channels/vrbo/listings/{id}/cancellation`
+- New: `PUT /v1/channels/vrbo/listings/{id}/description`
+- New: `PUT /v1/channels/vrbo/listings/{id}/fees`
+- New: `PUT /v1/channels/vrbo/listings/{id}/house-rules`
+- New: `PUT /v1/channels/vrbo/listings/{id}/location`
+- New: `PUT /v1/channels/vrbo/listings/{id}/payment-terms`
+- New: `PUT /v1/channels/vrbo/listings/{id}/photos`
+- New: `PUT /v1/channels/vrbo/listings/{id}/pricing`
+- New: `PUT /v1/channels/vrbo/listings/{id}/property`
+- New: `PUT /v1/channels/vrbo/listings/{id}/protection`
+- New: `PUT /v1/channels/vrbo/listings/{id}/rates`
+- New: `PUT /v1/channels/vrbo/listings/{id}/registration`
+- New: `PUT /v1/channels/vrbo/listings/{id}/rooms`
+- New: `PUT /v1/channels/vrbo/listings/{id}/story`
+- New: `PUT /v1/channels/vrbo/listings/{id}/taxes`
+- New: `PUT /v1/channels/vrbo/listings/{id}/translations`
+- New: `PUT /v1/channels/vrbo/listings/{id}/welcome-guide`
+- Regenerated from the live spec (automated spec refresh).
+
 ## 0.2.53 — 2026-11-20
 
 - Regenerated from the live spec (automated spec refresh).
