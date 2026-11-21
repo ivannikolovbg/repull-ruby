@@ -41,9 +41,11 @@ All URIs are relative to *https://api.repull.dev*
 | [**get_vrbo_reservation**](VRBOApi.md#get_vrbo_reservation) | **GET** /v1/channels/vrbo/reservations/{code} | Get a Vrbo reservation |
 | [**list_vrbo_listings**](VRBOApi.md#list_vrbo_listings) | **GET** /v1/channels/vrbo/listings | List VRBO listings |
 | [**list_vrbo_reservations**](VRBOApi.md#list_vrbo_reservations) | **GET** /v1/channels/vrbo/reservations | List VRBO reservations |
+| [**list_vrbo_transactions**](VRBOApi.md#list_vrbo_transactions) | **GET** /v1/channels/vrbo/transactions | List Vrbo transactions (payout ledger) |
 | [**map_vrbo_listing**](VRBOApi.md#map_vrbo_listing) | **POST** /v1/channels/vrbo/listings/map | Link a Vrbo listing to a Repull listing |
 | [**reorder_vrbo_listing_photos**](VRBOApi.md#reorder_vrbo_listing_photos) | **PUT** /v1/channels/vrbo/listings/{id}/photos/order | Reorder the Vrbo photos |
 | [**set_vrbo_listing_cover_photo**](VRBOApi.md#set_vrbo_listing_cover_photo) | **PUT** /v1/channels/vrbo/listings/{id}/photos/cover | Set the Vrbo cover photo |
+| [**sync_vrbo_transactions**](VRBOApi.md#sync_vrbo_transactions) | **POST** /v1/channels/vrbo/transactions | Refresh the Vrbo payout ledger |
 | [**update_vrbo_listing_additional_info**](VRBOApi.md#update_vrbo_listing_additional_info) | **PUT** /v1/channels/vrbo/listings/{id}/additional-info | Update the Vrbo additional details |
 | [**update_vrbo_listing_amenities**](VRBOApi.md#update_vrbo_listing_amenities) | **PUT** /v1/channels/vrbo/listings/{id}/amenities | Update the Vrbo amenities |
 | [**update_vrbo_listing_availability**](VRBOApi.md#update_vrbo_listing_availability) | **PUT** /v1/channels/vrbo/listings/{id}/availability | Update the Vrbo calendar |
@@ -314,7 +316,7 @@ Repull.configure do |config|
 end
 
 api_instance = Repull::VRBOApi.new
-create_vrbo_alteration_request = Repull::CreateVrboAlterationRequest.new({confirmation_code: 'HA-C3WBX1'}) # CreateVrboAlterationRequest | 
+create_vrbo_alteration_request = Repull::CreateVrboAlterationRequest.new({confirmation_code: 'HA-8K2P3Q'}) # CreateVrboAlterationRequest | 
 
 begin
   # Change a Vrbo reservation
@@ -2634,7 +2636,7 @@ Repull.configure do |config|
 end
 
 api_instance = Repull::VRBOApi.new
-code = 'HA-C3WBX1' # String | The Vrbo confirmation code (`HA-…`), as in `GET /v1/channels/vrbo/reservations`.
+code = 'HA-8K2P3Q' # String | The Vrbo confirmation code (`HA-…`), as in `GET /v1/channels/vrbo/reservations`.
 opts = {
   options: 'cancel' # String | Return Vrbo's choices for this action instead of the booking.
 }
@@ -2824,6 +2826,93 @@ end
 ### Return type
 
 [**VrboReservationListResponse**](VrboReservationListResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## list_vrbo_transactions
+
+> <ListVrboTransactions200Response> list_vrbo_transactions(opts)
+
+List Vrbo transactions (payout ledger)
+
+The Vrbo payout ledger for this workspace — the counterpart of `GET /v1/channels/airbnb/transactions`: every bank deposit Vrbo made to the host, each followed by the bookings it paid. A deposit's lines' signed `amount`s sum to its `payout.paidOutAmount` exactly; a negative line (`type: Adjustment`) is money taken back from that deposit. `status: UPCOMING` lines are payouts Vrbo has scheduled and not made yet, with Vrbo's `upcomingStatus` (`Scheduled`, `Blocked`).  **Ids are stable**, so you can upsert on `transactionId`: a Payout row's id is Vrbo's deposit reference number; a line's is `<reference>:<confirmationCode>:<n>`.  **Order:** newest deposit first, each followed by its lines in Vrbo's order (`payout.lineIndex`). `start_date` / `end_date` match the deposit's date (a scheduled line's estimated payout date).  **From Repull's copy.** The ledger is read from the Vrbo account (the last 12 months of deposits, and the payouts scheduled for the next 6) and kept: a read answers from it at once. A copy over a day old — or never filled — answers and is refreshed in the background (`dataFreshness.reason`: `refreshing` / `never_synced`); `POST` refreshes it now.  Lines on listings that are inactive in Repull are included and flagged `onInactiveListing: true`, so every deposit reconciles. **Not in Vrbo's payout reports** (`unavailableFields`): the fee split per booking, taxes, and the stay's nights and dates — see the reservation for those.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::VRBOApi.new
+opts = {
+  account_id: 'vrbo:7001234', # String | Only this Vrbo account (`accountId` from `GET /v1/channels/vrbo/connection`).
+  start_date: Date.parse('2013-10-20'), # Date | Inclusive lower bound on the deposit's date. YYYY-MM-DD.
+  end_date: Date.parse('2013-10-20'), # Date | Inclusive upper bound on the deposit's date. YYYY-MM-DD.
+  status: 'COMPLETED', # String | 
+  type: 'Payout', # String | `Payout`, `Reservation` or `Adjustment`.
+  payout_id: 'payout_id_example', # String | One deposit (its reference number) and its lines.
+  confirmation_code: 'HA-8K2P3Q', # String | 
+  cursor: 'cursor_example', # String | From the previous page's `pagination.nextCursor`.
+  limit: 56 # Integer | Rows per page (default 100, at most 500).
+}
+
+begin
+  # List Vrbo transactions (payout ledger)
+  result = api_instance.list_vrbo_transactions(opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->list_vrbo_transactions: #{e}"
+end
+```
+
+#### Using the list_vrbo_transactions_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<ListVrboTransactions200Response>, Integer, Hash)> list_vrbo_transactions_with_http_info(opts)
+
+```ruby
+begin
+  # List Vrbo transactions (payout ledger)
+  data, status_code, headers = api_instance.list_vrbo_transactions_with_http_info(opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <ListVrboTransactions200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->list_vrbo_transactions_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **account_id** | **String** | Only this Vrbo account (&#x60;accountId&#x60; from &#x60;GET /v1/channels/vrbo/connection&#x60;). | [optional] |
+| **start_date** | **Date** | Inclusive lower bound on the deposit&#39;s date. YYYY-MM-DD. | [optional] |
+| **end_date** | **Date** | Inclusive upper bound on the deposit&#39;s date. YYYY-MM-DD. | [optional] |
+| **status** | **String** |  | [optional] |
+| **type** | **String** | &#x60;Payout&#x60;, &#x60;Reservation&#x60; or &#x60;Adjustment&#x60;. | [optional] |
+| **payout_id** | **String** | One deposit (its reference number) and its lines. | [optional] |
+| **confirmation_code** | **String** |  | [optional] |
+| **cursor** | **String** | From the previous page&#39;s &#x60;pagination.nextCursor&#x60;. | [optional] |
+| **limit** | **Integer** | Rows per page (default 100, at most 500). | [optional][default to 100] |
+
+### Return type
+
+[**ListVrboTransactions200Response**](ListVrboTransactions200Response.md)
 
 ### Authorization
 
@@ -3043,6 +3132,79 @@ end
 ### Return type
 
 [**AddVrboListingPhotos200Response**](AddVrboListingPhotos200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## sync_vrbo_transactions
+
+> <SyncVrboTransactions200Response> sync_vrbo_transactions(opts)
+
+Refresh the Vrbo payout ledger
+
+Read the ledger from Vrbo now — every connected Vrbo account, or the one in `?account_id=` — and keep it; then read it with GET. Body (optional): `start_date` / `end_date` (YYYY-MM-DD) for the deposits to read; without them, the last 12 months. The payouts Vrbo has scheduled are always read again. One account failing never stops the others: it carries `error` in `accounts[]`. About 15 seconds per account.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::VRBOApi.new
+opts = {
+  account_id: 'vrbo:7001234', # String | Only this Vrbo account (`accountId` from `GET /v1/channels/vrbo/connection`).
+  sync_vrbo_transactions_request: Repull::SyncVrboTransactionsRequest.new # SyncVrboTransactionsRequest | 
+}
+
+begin
+  # Refresh the Vrbo payout ledger
+  result = api_instance.sync_vrbo_transactions(opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->sync_vrbo_transactions: #{e}"
+end
+```
+
+#### Using the sync_vrbo_transactions_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<SyncVrboTransactions200Response>, Integer, Hash)> sync_vrbo_transactions_with_http_info(opts)
+
+```ruby
+begin
+  # Refresh the Vrbo payout ledger
+  data, status_code, headers = api_instance.sync_vrbo_transactions_with_http_info(opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <SyncVrboTransactions200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->sync_vrbo_transactions_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **account_id** | **String** | Only this Vrbo account (&#x60;accountId&#x60; from &#x60;GET /v1/channels/vrbo/connection&#x60;). | [optional] |
+| **sync_vrbo_transactions_request** | [**SyncVrboTransactionsRequest**](SyncVrboTransactionsRequest.md) |  | [optional] |
+
+### Return type
+
+[**SyncVrboTransactions200Response**](SyncVrboTransactions200Response.md)
 
 ### Authorization
 
@@ -4722,7 +4884,7 @@ Repull.configure do |config|
 end
 
 api_instance = Repull::VRBOApi.new
-code = 'HA-C3WBX1' # String | The Vrbo confirmation code (`HA-…`), as in `GET /v1/channels/vrbo/reservations`.
+code = 'HA-8K2P3Q' # String | The Vrbo confirmation code (`HA-…`), as in `GET /v1/channels/vrbo/reservations`.
 vrbo_reservation_action_request = Repull::VrboReservationActionRequest.new({action: 'accept'}) # VrboReservationActionRequest | 
 
 begin
