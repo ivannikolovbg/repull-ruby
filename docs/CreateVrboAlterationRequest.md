@@ -23,7 +23,7 @@
 require 'repull'
 
 instance = Repull::CreateVrboAlterationRequest.new(
-  confirmation_code: HA-C3WBX1,
+  confirmation_code: HA-8K2P3Q,
   check_in: null,
   check_out: null,
   check_in_time: 16:00,

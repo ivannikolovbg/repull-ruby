@@ -2722,6 +2722,98 @@ module Repull
       return data, status_code, headers
     end
 
+    # List Vrbo transactions (payout ledger)
+    # The Vrbo payout ledger for this workspace — the counterpart of `GET /v1/channels/airbnb/transactions`: every bank deposit Vrbo made to the host, each followed by the bookings it paid. A deposit's lines' signed `amount`s sum to its `payout.paidOutAmount` exactly; a negative line (`type: Adjustment`) is money taken back from that deposit. `status: UPCOMING` lines are payouts Vrbo has scheduled and not made yet, with Vrbo's `upcomingStatus` (`Scheduled`, `Blocked`).  **Ids are stable**, so you can upsert on `transactionId`: a Payout row's id is Vrbo's deposit reference number; a line's is `<reference>:<confirmationCode>:<n>`.  **Order:** newest deposit first, each followed by its lines in Vrbo's order (`payout.lineIndex`). `start_date` / `end_date` match the deposit's date (a scheduled line's estimated payout date).  **From Repull's copy.** The ledger is read from the Vrbo account (the last 12 months of deposits, and the payouts scheduled for the next 6) and kept: a read answers from it at once. A copy over a day old — or never filled — answers and is refreshed in the background (`dataFreshness.reason`: `refreshing` / `never_synced`); `POST` refreshes it now.  Lines on listings that are inactive in Repull are included and flagged `onInactiveListing: true`, so every deposit reconciles. **Not in Vrbo's payout reports** (`unavailableFields`): the fee split per booking, taxes, and the stay's nights and dates — see the reservation for those.
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :account_id Only this Vrbo account (&#x60;accountId&#x60; from &#x60;GET /v1/channels/vrbo/connection&#x60;).
+    # @option opts [Date] :start_date Inclusive lower bound on the deposit&#39;s date. YYYY-MM-DD.
+    # @option opts [Date] :end_date Inclusive upper bound on the deposit&#39;s date. YYYY-MM-DD.
+    # @option opts [String] :status 
+    # @option opts [String] :type &#x60;Payout&#x60;, &#x60;Reservation&#x60; or &#x60;Adjustment&#x60;.
+    # @option opts [String] :payout_id One deposit (its reference number) and its lines.
+    # @option opts [String] :confirmation_code 
+    # @option opts [String] :cursor From the previous page&#39;s &#x60;pagination.nextCursor&#x60;.
+    # @option opts [Integer] :limit Rows per page (default 100, at most 500). (default to 100)
+    # @return [ListVrboTransactions200Response]
+    def list_vrbo_transactions(opts = {})
+      data, _status_code, _headers = list_vrbo_transactions_with_http_info(opts)
+      data
+    end
+
+    # List Vrbo transactions (payout ledger)
+    # The Vrbo payout ledger for this workspace — the counterpart of &#x60;GET /v1/channels/airbnb/transactions&#x60;: every bank deposit Vrbo made to the host, each followed by the bookings it paid. A deposit&#39;s lines&#39; signed &#x60;amount&#x60;s sum to its &#x60;payout.paidOutAmount&#x60; exactly; a negative line (&#x60;type: Adjustment&#x60;) is money taken back from that deposit. &#x60;status: UPCOMING&#x60; lines are payouts Vrbo has scheduled and not made yet, with Vrbo&#39;s &#x60;upcomingStatus&#x60; (&#x60;Scheduled&#x60;, &#x60;Blocked&#x60;).  **Ids are stable**, so you can upsert on &#x60;transactionId&#x60;: a Payout row&#39;s id is Vrbo&#39;s deposit reference number; a line&#39;s is &#x60;&lt;reference&gt;:&lt;confirmationCode&gt;:&lt;n&gt;&#x60;.  **Order:** newest deposit first, each followed by its lines in Vrbo&#39;s order (&#x60;payout.lineIndex&#x60;). &#x60;start_date&#x60; / &#x60;end_date&#x60; match the deposit&#39;s date (a scheduled line&#39;s estimated payout date).  **From Repull&#39;s copy.** The ledger is read from the Vrbo account (the last 12 months of deposits, and the payouts scheduled for the next 6) and kept: a read answers from it at once. A copy over a day old — or never filled — answers and is refreshed in the background (&#x60;dataFreshness.reason&#x60;: &#x60;refreshing&#x60; / &#x60;never_synced&#x60;); &#x60;POST&#x60; refreshes it now.  Lines on listings that are inactive in Repull are included and flagged &#x60;onInactiveListing: true&#x60;, so every deposit reconciles. **Not in Vrbo&#39;s payout reports** (&#x60;unavailableFields&#x60;): the fee split per booking, taxes, and the stay&#39;s nights and dates — see the reservation for those.
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :account_id Only this Vrbo account (&#x60;accountId&#x60; from &#x60;GET /v1/channels/vrbo/connection&#x60;).
+    # @option opts [Date] :start_date Inclusive lower bound on the deposit&#39;s date. YYYY-MM-DD.
+    # @option opts [Date] :end_date Inclusive upper bound on the deposit&#39;s date. YYYY-MM-DD.
+    # @option opts [String] :status 
+    # @option opts [String] :type &#x60;Payout&#x60;, &#x60;Reservation&#x60; or &#x60;Adjustment&#x60;.
+    # @option opts [String] :payout_id One deposit (its reference number) and its lines.
+    # @option opts [String] :confirmation_code 
+    # @option opts [String] :cursor From the previous page&#39;s &#x60;pagination.nextCursor&#x60;.
+    # @option opts [Integer] :limit Rows per page (default 100, at most 500). (default to 100)
+    # @return [Array<(ListVrboTransactions200Response, Integer, Hash)>] ListVrboTransactions200Response data, response status code and response headers
+    def list_vrbo_transactions_with_http_info(opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: VRBOApi.list_vrbo_transactions ...'
+      end
+      allowable_values = ["COMPLETED", "UPCOMING"]
+      if @api_client.config.client_side_validation && opts[:'status'] && !allowable_values.include?(opts[:'status'])
+        fail ArgumentError, "invalid value for \"status\", must be one of #{allowable_values}"
+      end
+      if @api_client.config.client_side_validation && !opts[:'limit'].nil? && opts[:'limit'] > 500
+        fail ArgumentError, 'invalid value for "opts[:"limit"]" when calling VRBOApi.list_vrbo_transactions, must be smaller than or equal to 500.'
+      end
+
+      # resource path
+      local_var_path = '/v1/channels/vrbo/transactions'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+      query_params[:'account_id'] = opts[:'account_id'] if !opts[:'account_id'].nil?
+      query_params[:'start_date'] = opts[:'start_date'] if !opts[:'start_date'].nil?
+      query_params[:'end_date'] = opts[:'end_date'] if !opts[:'end_date'].nil?
+      query_params[:'status'] = opts[:'status'] if !opts[:'status'].nil?
+      query_params[:'type'] = opts[:'type'] if !opts[:'type'].nil?
+      query_params[:'payout_id'] = opts[:'payout_id'] if !opts[:'payout_id'].nil?
+      query_params[:'confirmation_code'] = opts[:'confirmation_code'] if !opts[:'confirmation_code'].nil?
+      query_params[:'cursor'] = opts[:'cursor'] if !opts[:'cursor'].nil?
+      query_params[:'limit'] = opts[:'limit'] if !opts[:'limit'].nil?
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'ListVrboTransactions200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"VRBOApi.list_vrbo_transactions",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: VRBOApi#list_vrbo_transactions\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # Link a Vrbo listing to a Repull listing
     # Link a Vrbo unit that is already on the host's connected Vrbo account to a Repull listing — the Vrbo counterpart of `POST /v1/channels/airbnb/listings/map`. Send `listingId` to link it to that listing, or `create: true` to create a Repull listing from what Vrbo shows. Once linked, the unit's bookings and messages are imported (upcoming ones and the last 30 days first).  `accountId` names the Vrbo account when the workspace has several (`GET /v1/connect/vrbo-login`). `syncEnabled: true` also sends the listing's calendar to Vrbo (full access; refused with `409 calendar_managed_elsewhere` while another tool manages the account's calendar).  The same write as `POST /v1/connections/{id}/mappings`, for one unit.
     # @param map_vrbo_listing_request [MapVrboListingRequest] 
@@ -2940,6 +3032,73 @@ module Repull
       data, status_code, headers = @api_client.call_api(:PUT, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: VRBOApi#set_vrbo_listing_cover_photo\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Refresh the Vrbo payout ledger
+    # Read the ledger from Vrbo now — every connected Vrbo account, or the one in `?account_id=` — and keep it; then read it with GET. Body (optional): `start_date` / `end_date` (YYYY-MM-DD) for the deposits to read; without them, the last 12 months. The payouts Vrbo has scheduled are always read again. One account failing never stops the others: it carries `error` in `accounts[]`. About 15 seconds per account.
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :account_id Only this Vrbo account (&#x60;accountId&#x60; from &#x60;GET /v1/channels/vrbo/connection&#x60;).
+    # @option opts [SyncVrboTransactionsRequest] :sync_vrbo_transactions_request 
+    # @return [SyncVrboTransactions200Response]
+    def sync_vrbo_transactions(opts = {})
+      data, _status_code, _headers = sync_vrbo_transactions_with_http_info(opts)
+      data
+    end
+
+    # Refresh the Vrbo payout ledger
+    # Read the ledger from Vrbo now — every connected Vrbo account, or the one in &#x60;?account_id&#x3D;&#x60; — and keep it; then read it with GET. Body (optional): &#x60;start_date&#x60; / &#x60;end_date&#x60; (YYYY-MM-DD) for the deposits to read; without them, the last 12 months. The payouts Vrbo has scheduled are always read again. One account failing never stops the others: it carries &#x60;error&#x60; in &#x60;accounts[]&#x60;. About 15 seconds per account.
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :account_id Only this Vrbo account (&#x60;accountId&#x60; from &#x60;GET /v1/channels/vrbo/connection&#x60;).
+    # @option opts [SyncVrboTransactionsRequest] :sync_vrbo_transactions_request 
+    # @return [Array<(SyncVrboTransactions200Response, Integer, Hash)>] SyncVrboTransactions200Response data, response status code and response headers
+    def sync_vrbo_transactions_with_http_info(opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: VRBOApi.sync_vrbo_transactions ...'
+      end
+      # resource path
+      local_var_path = '/v1/channels/vrbo/transactions'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+      query_params[:'account_id'] = opts[:'account_id'] if !opts[:'account_id'].nil?
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(opts[:'sync_vrbo_transactions_request'])
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'SyncVrboTransactions200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"VRBOApi.sync_vrbo_transactions",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: VRBOApi#sync_vrbo_transactions\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end

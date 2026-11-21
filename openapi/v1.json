@@ -68201,7 +68201,7 @@
                 "properties": {
                   "confirmation_code": {
                     "type": "string",
-                    "example": "HA-C3WBX1"
+                    "example": "HA-8K2P3Q"
                   },
                   "check_in": {
                     "type": "string",
@@ -68257,7 +68257,7 @@
                 "extendPreview": {
                   "summary": "Price of one more night",
                   "value": {
-                    "confirmation_code": "HA-C3WBX1",
+                    "confirmation_code": "HA-8K2P3Q",
                     "check_out": "2026-12-26",
                     "preview": true
                   }
@@ -68265,7 +68265,7 @@
                 "lateCheckout": {
                   "summary": "Late checkout, same price",
                   "value": {
-                    "confirmation_code": "HA-C3WBX1",
+                    "confirmation_code": "HA-8K2P3Q",
                     "check_out_time": "12:00",
                     "keep_original_price": true
                   }
@@ -68716,7 +68716,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "example": "HA-C3WBX1"
+              "example": "HA-8K2P3Q"
             },
             "description": "The Vrbo confirmation code (`HA-\u2026`), as in `GET /v1/channels/vrbo/reservations`."
           },
@@ -69079,7 +69079,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "example": "HA-C3WBX1"
+              "example": "HA-8K2P3Q"
             },
             "description": "The Vrbo confirmation code (`HA-\u2026`), as in `GET /v1/channels/vrbo/reservations`."
           }
@@ -69448,6 +69448,414 @@
                       }
                     }
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/channels/vrbo/transactions": {
+      "get": {
+        "operationId": "listVrboTransactions",
+        "summary": "List Vrbo transactions (payout ledger)",
+        "description": "The Vrbo payout ledger for this workspace \u2014 the counterpart of `GET /v1/channels/airbnb/transactions`: every bank deposit Vrbo made to the host, each followed by the bookings it paid. A deposit's lines' signed `amount`s sum to its `payout.paidOutAmount` exactly; a negative line (`type: Adjustment`) is money taken back from that deposit. `status: UPCOMING` lines are payouts Vrbo has scheduled and not made yet, with Vrbo's `upcomingStatus` (`Scheduled`, `Blocked`).\n\n**Ids are stable**, so you can upsert on `transactionId`: a Payout row's id is Vrbo's deposit reference number; a line's is `<reference>:<confirmationCode>:<n>`.\n\n**Order:** newest deposit first, each followed by its lines in Vrbo's order (`payout.lineIndex`). `start_date` / `end_date` match the deposit's date (a scheduled line's estimated payout date).\n\n**From Repull's copy.** The ledger is read from the Vrbo account (the last 12 months of deposits, and the payouts scheduled for the next 6) and kept: a read answers from it at once. A copy over a day old \u2014 or never filled \u2014 answers and is refreshed in the background (`dataFreshness.reason`: `refreshing` / `never_synced`); `POST` refreshes it now.\n\nLines on listings that are inactive in Repull are included and flagged `onInactiveListing: true`, so every deposit reconciles. **Not in Vrbo's payout reports** (`unavailableFields`): the fee split per booking, taxes, and the stay's nights and dates \u2014 see the reservation for those.",
+        "tags": [
+          "VRBO"
+        ],
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "vrbo:7001234"
+            },
+            "description": "Only this Vrbo account (`accountId` from `GET /v1/channels/vrbo/connection`)."
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "description": "Inclusive lower bound on the deposit's date. YYYY-MM-DD.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "description": "Inclusive upper bound on the deposit's date. YYYY-MM-DD.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "COMPLETED",
+                "UPCOMING"
+              ]
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "Payout"
+            },
+            "description": "`Payout`, `Reservation` or `Adjustment`."
+          },
+          {
+            "name": "payout_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "One deposit (its reference number) and its lines."
+          },
+          {
+            "name": "confirmation_code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "HA-8K2P3Q"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "From the previous page's `pagination.nextCursor`."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "maximum": 500
+            },
+            "description": "Rows per page (default 100, at most 500)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The ledger",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "transactionId": {
+                            "type": "string",
+                            "description": "Stable: the deposit's reference number on a Payout row; `<reference>:<confirmationCode>:<n>` on a line; `upcoming:<confirmationCode>:<n>` on a scheduled payout."
+                          },
+                          "accountId": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "accountName": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "COMPLETED",
+                              "UPCOMING"
+                            ]
+                          },
+                          "type": {
+                            "type": "string",
+                            "example": "Reservation",
+                            "description": "`Payout` (the bank deposit), `Reservation` (a booking it paid), `Adjustment` (money taken back from it)."
+                          },
+                          "isPayout": {
+                            "type": "boolean"
+                          },
+                          "date": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "date"
+                          },
+                          "currency": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "amount": {
+                            "type": "number",
+                            "nullable": true,
+                            "description": "Signed: what this line adds to its deposit. On a Payout row, the amount deposited."
+                          },
+                          "payout": {
+                            "type": "object",
+                            "properties": {
+                              "payoutId": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "payoutDate": {
+                                "type": "string",
+                                "nullable": true,
+                                "format": "date"
+                              },
+                              "lineIndex": {
+                                "type": "integer",
+                                "nullable": true
+                              },
+                              "paidOutAmount": {
+                                "type": "number",
+                                "nullable": true
+                              },
+                              "bankDestination": {
+                                "type": "string",
+                                "nullable": true,
+                                "description": "The bank account, as Vrbo shows it (masked)."
+                              }
+                            }
+                          },
+                          "confirmationCode": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "reservationId": {
+                            "type": "integer",
+                            "nullable": true,
+                            "description": "The Repull reservation, when the booking is in the workspace."
+                          },
+                          "listingId": {
+                            "type": "integer",
+                            "nullable": true
+                          },
+                          "vrboListingNumber": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "onInactiveListing": {
+                            "type": "boolean"
+                          },
+                          "guestName": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "upcomingStatus": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "On an UPCOMING line: Vrbo's status for the payout (`Scheduled`, `Blocked`, \u2026)."
+                          },
+                          "unavailableFields": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "syncedAt": {
+                            "type": "string",
+                            "nullable": true
+                          }
+                        }
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/CursorPagination"
+                    },
+                    "dataFreshness": {
+                      "type": "object",
+                      "properties": {
+                        "lastSyncedAt": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "stale": {
+                          "type": "boolean"
+                        },
+                        "reason": {
+                          "type": "string",
+                          "enum": [
+                            "ok",
+                            "refreshing",
+                            "never_synced",
+                            "reconnect_required"
+                          ]
+                        },
+                        "fixUrl": {
+                          "type": "string"
+                        },
+                        "accounts": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "accountId": {
+                                "type": "string"
+                              },
+                              "accountName": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "lastSyncedAt": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "stale": {
+                                "type": "boolean"
+                              },
+                              "reason": {
+                                "type": "string"
+                              },
+                              "fixUrl": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`invalid_params` \u2014 a date not YYYY-MM-DD, an unknown `status`, or an `account_id` that is not one of the workspace's Vrbo accounts (`valid_values` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "syncVrboTransactions",
+        "summary": "Refresh the Vrbo payout ledger",
+        "description": "Read the ledger from Vrbo now \u2014 every connected Vrbo account, or the one in `?account_id=` \u2014 and keep it; then read it with GET. Body (optional): `start_date` / `end_date` (YYYY-MM-DD) for the deposits to read; without them, the last 12 months. The payouts Vrbo has scheduled are always read again. One account failing never stops the others: it carries `error` in `accounts[]`. About 15 seconds per account.",
+        "tags": [
+          "VRBO"
+        ],
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "vrbo:7001234"
+            },
+            "description": "Only this Vrbo account (`accountId` from `GET /v1/channels/vrbo/connection`)."
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "start_date": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "end_date": {
+                    "type": "string",
+                    "format": "date"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "What was refreshed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "synced": {
+                      "type": "boolean"
+                    },
+                    "count": {
+                      "type": "integer"
+                    },
+                    "accounts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "accountId": {
+                            "type": "string"
+                          },
+                          "count": {
+                            "type": "integer"
+                          },
+                          "payouts": {
+                            "type": "integer"
+                          },
+                          "upcoming": {
+                            "type": "integer"
+                          },
+                          "error": {
+                            "type": "object",
+                            "properties": {
+                              "code": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`no_connection` \u2014 the workspace has no connected Vrbo account.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`invalid_params` \u2014 a date not YYYY-MM-DD, an unknown field, or an unknown `account_id`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
