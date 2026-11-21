@@ -2,6 +2,47 @@
 
 All notable changes to the `repull` gem are documented here.
 
+## 0.2.55 — 2026-11-21
+
+Vrbo listing content on the Airbnb endpoints' names and verbs: `descriptions` (every language, `locale`), `details`, `permits`, `checkin-guide`, `checkout-guide`, `safety-disclosures`; photos (add, caption / move, delete, cover, order) and rooms (add, update, delete) as separate calls; the listing itself with its actions (push, unlist, relist, delete), `listings/map`, the Vrbo-only calendar (`availability`) and `connection`. Reads answer `{ data, dataFreshness }` from Repull's copy. The old section names (`description`, `property`, `registration`, `welcome-guide`, `translations`) are gone.
+
+- New: `GET /v1/channels/vrbo/connection`
+- New: `POST /v1/channels/vrbo/listings/map`
+- New: `GET /v1/channels/vrbo/listings/{id}`
+- New: `POST /v1/channels/vrbo/listings/{id}`
+- New: `GET /v1/channels/vrbo/listings/{id}/availability`
+- New: `PUT /v1/channels/vrbo/listings/{id}/availability`
+- New: `GET /v1/channels/vrbo/listings/{id}/checkin-guide`
+- New: `PUT /v1/channels/vrbo/listings/{id}/checkin-guide`
+- New: `GET /v1/channels/vrbo/listings/{id}/checkout-guide`
+- New: `DELETE /v1/channels/vrbo/listings/{id}/descriptions`
+- New: `GET /v1/channels/vrbo/listings/{id}/descriptions`
+- New: `PUT /v1/channels/vrbo/listings/{id}/descriptions`
+- New: `GET /v1/channels/vrbo/listings/{id}/details`
+- New: `PUT /v1/channels/vrbo/listings/{id}/details`
+- New: `GET /v1/channels/vrbo/listings/{id}/permits`
+- New: `PUT /v1/channels/vrbo/listings/{id}/permits`
+- New: `DELETE /v1/channels/vrbo/listings/{id}/photos`
+- New: `PATCH /v1/channels/vrbo/listings/{id}/photos`
+- New: `POST /v1/channels/vrbo/listings/{id}/photos`
+- New: `PUT /v1/channels/vrbo/listings/{id}/photos/cover`
+- New: `PUT /v1/channels/vrbo/listings/{id}/photos/order`
+- New: `DELETE /v1/channels/vrbo/listings/{id}/rooms`
+- New: `POST /v1/channels/vrbo/listings/{id}/rooms`
+- New: `GET /v1/channels/vrbo/listings/{id}/safety-disclosures`
+- New: `PUT /v1/channels/vrbo/listings/{id}/safety-disclosures`
+- Removed: `GET /v1/channels/vrbo/listings/{id}/description`
+- Removed: `PUT /v1/channels/vrbo/listings/{id}/description`
+- Removed: `PUT /v1/channels/vrbo/listings/{id}/photos`
+- Removed: `GET /v1/channels/vrbo/listings/{id}/property`
+- Removed: `PUT /v1/channels/vrbo/listings/{id}/property`
+- Removed: `GET /v1/channels/vrbo/listings/{id}/registration`
+- Removed: `PUT /v1/channels/vrbo/listings/{id}/registration`
+- Removed: `GET /v1/channels/vrbo/listings/{id}/translations`
+- Removed: `PUT /v1/channels/vrbo/listings/{id}/translations`
+- Removed: `GET /v1/channels/vrbo/listings/{id}/welcome-guide`
+- Removed: `PUT /v1/channels/vrbo/listings/{id}/welcome-guide`
+
 ## 0.2.54 — 2026-11-21
 
 - New: `DELETE /v1/channels/vrbo/listings/{id}/videos`

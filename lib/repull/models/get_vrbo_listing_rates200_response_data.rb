@@ -14,7 +14,7 @@ require 'date'
 require 'time'
 
 module Repull
-  # The section as Vrbo has it now.
+  # The section as Vrbo has it.
   class GetVrboListingRates200ResponseData < ApiModelBase
     attr_accessor :start
 
@@ -50,7 +50,7 @@ module Repull
         :'start' => :'String',
         :'_end' => :'String',
         :'currency' => :'String',
-        :'days' => :'Array<GetVrboListingContent200ResponseSectionsRatesDaysInner>'
+        :'days' => :'Array<GetVrboListingRates200ResponseDataDaysInner>'
       }
     end
 

@@ -4,11 +4,9 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **listing_id** | **String** |  |  |
-| **vrbo_listing_number** | **String** |  |  |
-| **property_id** | **String** | Vrbo&#39;s property id for the unit. |  |
-| **section** | **String** |  |  |
 | **data** | [**GetVrboListingCancellation200ResponseData**](GetVrboListingCancellation200ResponseData.md) |  |  |
+| **data_freshness** | [**GetVrboListingAdditionalInfo200ResponseDataFreshness**](GetVrboListingAdditionalInfo200ResponseDataFreshness.md) |  |  |
+| **vrbo_listing_number** | **String** | The Vrbo listing number this is about. |  |
 
 ## Example
 
@@ -16,11 +14,9 @@
 require 'repull'
 
 instance = Repull::GetVrboListingCancellation200Response.new(
-  listing_id: null,
-  vrbo_listing_number: null,
-  property_id: null,
-  section: cancellation,
-  data: null
+  data: null,
+  data_freshness: null,
+  vrbo_listing_number: null
 )
 ```
 

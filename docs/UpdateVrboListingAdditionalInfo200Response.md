@@ -4,12 +4,10 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **listing_id** | **String** |  |  |
-| **vrbo_listing_number** | **String** |  |  |
-| **property_id** | **String** | Vrbo&#39;s property id for the unit. |  |
-| **section** | **String** |  |  |
-| **written** | **Array&lt;String&gt;** | The fields this request sent. |  |
 | **data** | [**UpdateVrboListingAdditionalInfo200ResponseData**](UpdateVrboListingAdditionalInfo200ResponseData.md) |  |  |
+| **written** | **Array&lt;String&gt;** | The fields this request sent. |  |
+| **data_freshness** | [**GetVrboListingAdditionalInfo200ResponseDataFreshness**](GetVrboListingAdditionalInfo200ResponseDataFreshness.md) |  |  |
+| **vrbo_listing_number** | **String** |  |  |
 
 ## Example
 
@@ -17,12 +15,10 @@
 require 'repull'
 
 instance = Repull::UpdateVrboListingAdditionalInfo200Response.new(
-  listing_id: null,
-  vrbo_listing_number: null,
-  property_id: null,
-  section: additional-info,
+  data: null,
   written: null,
-  data: null
+  data_freshness: null,
+  vrbo_listing_number: null
 )
 ```
 

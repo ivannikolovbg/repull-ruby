@@ -4,11 +4,9 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **listing_id** | **String** |  |  |
-| **vrbo_listing_number** | **String** |  |  |
-| **property_id** | **String** |  |  |
-| **listing** | [**GetVrboListingContent200ResponseListing**](GetVrboListingContent200ResponseListing.md) |  | [optional] |
 | **sections** | [**GetVrboListingContent200ResponseSections**](GetVrboListingContent200ResponseSections.md) |  |  |
+| **data_freshness** | [**GetVrboListingAdditionalInfo200ResponseDataFreshness**](GetVrboListingAdditionalInfo200ResponseDataFreshness.md) |  |  |
+| **vrbo_listing_number** | **String** |  |  |
 
 ## Example
 
@@ -16,11 +14,9 @@
 require 'repull'
 
 instance = Repull::GetVrboListingContent200Response.new(
-  listing_id: null,
-  vrbo_listing_number: null,
-  property_id: null,
-  listing: null,
-  sections: null
+  sections: null,
+  data_freshness: null,
+  vrbo_listing_number: null
 )
 ```
 

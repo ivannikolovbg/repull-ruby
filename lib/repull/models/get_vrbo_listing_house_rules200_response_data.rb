@@ -14,7 +14,7 @@ require 'date'
 require 'time'
 
 module Repull
-  # The section as Vrbo has it now.
+  # The section as Vrbo has it.
   class GetVrboListingHouseRules200ResponseData < ApiModelBase
     attr_accessor :check_in_time
 

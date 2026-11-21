@@ -14,7 +14,7 @@ require 'date'
 require 'time'
 
 module Repull
-  # What Vrbo has stored for the section, read back after the write.
+  # What Vrbo has after the write, read back from Vrbo.
   class UpdateVrboListingRates200ResponseData < ApiModelBase
     attr_accessor :start
 
@@ -50,7 +50,7 @@ module Repull
         :'start' => :'String',
         :'_end' => :'String',
         :'currency' => :'String',
-        :'days' => :'Array<GetVrboListingContent200ResponseSectionsRatesDaysInner>'
+        :'days' => :'Array<GetVrboListingRates200ResponseDataDaysInner>'
       }
     end
 

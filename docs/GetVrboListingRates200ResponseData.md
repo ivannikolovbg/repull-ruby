@@ -7,7 +7,7 @@
 | **start** | **String** |  | [optional] |
 | **_end** | **String** |  | [optional] |
 | **currency** | **String** |  | [optional] |
-| **days** | [**Array&lt;GetVrboListingContent200ResponseSectionsRatesDaysInner&gt;**](GetVrboListingContent200ResponseSectionsRatesDaysInner.md) |  | [optional] |
+| **days** | [**Array&lt;GetVrboListingRates200ResponseDataDaysInner&gt;**](GetVrboListingRates200ResponseDataDaysInner.md) |  | [optional] |
 
 ## Example
 

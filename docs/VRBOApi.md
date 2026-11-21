@@ -4,52 +4,216 @@ All URIs are relative to *https://api.repull.dev*
 
 | Method | HTTP request | Description |
 | ------ | ------------ | ----------- |
+| [**add_vrbo_listing_photos**](VRBOApi.md#add_vrbo_listing_photos) | **POST** /v1/channels/vrbo/listings/{id}/photos | Add photos to the Vrbo listing |
+| [**add_vrbo_listing_room**](VRBOApi.md#add_vrbo_listing_room) | **POST** /v1/channels/vrbo/listings/{id}/rooms | Add a room to the Vrbo listing |
 | [**add_vrbo_listing_video**](VRBOApi.md#add_vrbo_listing_video) | **POST** /v1/channels/vrbo/listings/{id}/videos | Add a video to the Vrbo listing |
+| [**delete_vrbo_listing_description**](VRBOApi.md#delete_vrbo_listing_description) | **DELETE** /v1/channels/vrbo/listings/{id}/descriptions | Remove a Vrbo translation |
+| [**delete_vrbo_listing_photos**](VRBOApi.md#delete_vrbo_listing_photos) | **DELETE** /v1/channels/vrbo/listings/{id}/photos | Remove Vrbo photos |
+| [**delete_vrbo_listing_room**](VRBOApi.md#delete_vrbo_listing_room) | **DELETE** /v1/channels/vrbo/listings/{id}/rooms | Remove a Vrbo room |
 | [**delete_vrbo_listing_videos**](VRBOApi.md#delete_vrbo_listing_videos) | **DELETE** /v1/channels/vrbo/listings/{id}/videos | Remove videos from the Vrbo listing |
+| [**get_vrbo_connection**](VRBOApi.md#get_vrbo_connection) | **GET** /v1/channels/vrbo/connection | Get the Vrbo connection state |
+| [**get_vrbo_listing**](VRBOApi.md#get_vrbo_listing) | **GET** /v1/channels/vrbo/listings/{id} | Get the Vrbo listing |
 | [**get_vrbo_listing_additional_info**](VRBOApi.md#get_vrbo_listing_additional_info) | **GET** /v1/channels/vrbo/listings/{id}/additional-info | Get the Vrbo additional details |
 | [**get_vrbo_listing_amenities**](VRBOApi.md#get_vrbo_listing_amenities) | **GET** /v1/channels/vrbo/listings/{id}/amenities | Get the Vrbo amenities |
+| [**get_vrbo_listing_availability**](VRBOApi.md#get_vrbo_listing_availability) | **GET** /v1/channels/vrbo/listings/{id}/availability | Get the Vrbo calendar |
 | [**get_vrbo_listing_booking_settings**](VRBOApi.md#get_vrbo_listing_booking_settings) | **GET** /v1/channels/vrbo/listings/{id}/booking-settings | Get the Vrbo booking settings |
 | [**get_vrbo_listing_cancellation**](VRBOApi.md#get_vrbo_listing_cancellation) | **GET** /v1/channels/vrbo/listings/{id}/cancellation | Get the Vrbo cancellation policy |
+| [**get_vrbo_listing_checkin_guide**](VRBOApi.md#get_vrbo_listing_checkin_guide) | **GET** /v1/channels/vrbo/listings/{id}/checkin-guide | Get the Vrbo welcome guide |
+| [**get_vrbo_listing_checkout_guide**](VRBOApi.md#get_vrbo_listing_checkout_guide) | **GET** /v1/channels/vrbo/listings/{id}/checkout-guide | Get the Vrbo checkout guide |
 | [**get_vrbo_listing_content**](VRBOApi.md#get_vrbo_listing_content) | **GET** /v1/channels/vrbo/listings/{id}/content | Get several Vrbo listing sections |
-| [**get_vrbo_listing_description**](VRBOApi.md#get_vrbo_listing_description) | **GET** /v1/channels/vrbo/listings/{id}/description | Get the Vrbo headline and description |
+| [**get_vrbo_listing_descriptions**](VRBOApi.md#get_vrbo_listing_descriptions) | **GET** /v1/channels/vrbo/listings/{id}/descriptions | Get the Vrbo headline and description |
+| [**get_vrbo_listing_details**](VRBOApi.md#get_vrbo_listing_details) | **GET** /v1/channels/vrbo/listings/{id}/details | Get the Vrbo property details |
 | [**get_vrbo_listing_fees**](VRBOApi.md#get_vrbo_listing_fees) | **GET** /v1/channels/vrbo/listings/{id}/fees | Get the Vrbo fees |
 | [**get_vrbo_listing_house_rules**](VRBOApi.md#get_vrbo_listing_house_rules) | **GET** /v1/channels/vrbo/listings/{id}/house-rules | Get the Vrbo house rules |
 | [**get_vrbo_listing_location**](VRBOApi.md#get_vrbo_listing_location) | **GET** /v1/channels/vrbo/listings/{id}/location | Get the Vrbo map setting |
 | [**get_vrbo_listing_payment_terms**](VRBOApi.md#get_vrbo_listing_payment_terms) | **GET** /v1/channels/vrbo/listings/{id}/payment-terms | Get the Vrbo payment terms |
+| [**get_vrbo_listing_permits**](VRBOApi.md#get_vrbo_listing_permits) | **GET** /v1/channels/vrbo/listings/{id}/permits | Get the Vrbo registration / licence |
 | [**get_vrbo_listing_photos**](VRBOApi.md#get_vrbo_listing_photos) | **GET** /v1/channels/vrbo/listings/{id}/photos | Get the Vrbo photos |
 | [**get_vrbo_listing_pricing**](VRBOApi.md#get_vrbo_listing_pricing) | **GET** /v1/channels/vrbo/listings/{id}/pricing | Get the Vrbo base pricing |
-| [**get_vrbo_listing_property**](VRBOApi.md#get_vrbo_listing_property) | **GET** /v1/channels/vrbo/listings/{id}/property | Get the Vrbo property details |
 | [**get_vrbo_listing_protection**](VRBOApi.md#get_vrbo_listing_protection) | **GET** /v1/channels/vrbo/listings/{id}/protection | Get the Vrbo damage protection |
 | [**get_vrbo_listing_rates**](VRBOApi.md#get_vrbo_listing_rates) | **GET** /v1/channels/vrbo/listings/{id}/rates | Get the Vrbo rates and stay discounts |
-| [**get_vrbo_listing_registration**](VRBOApi.md#get_vrbo_listing_registration) | **GET** /v1/channels/vrbo/listings/{id}/registration | Get the Vrbo registration / licence |
-| [**get_vrbo_listing_rooms**](VRBOApi.md#get_vrbo_listing_rooms) | **GET** /v1/channels/vrbo/listings/{id}/rooms | Get the Vrbo rooms and spaces |
+| [**get_vrbo_listing_rooms**](VRBOApi.md#get_vrbo_listing_rooms) | **GET** /v1/channels/vrbo/listings/{id}/rooms | Get the Vrbo rooms |
+| [**get_vrbo_listing_safety_disclosures**](VRBOApi.md#get_vrbo_listing_safety_disclosures) | **GET** /v1/channels/vrbo/listings/{id}/safety-disclosures | Get the Vrbo safety disclosures |
 | [**get_vrbo_listing_story**](VRBOApi.md#get_vrbo_listing_story) | **GET** /v1/channels/vrbo/listings/{id}/story | Get the Vrbo host story |
 | [**get_vrbo_listing_taxes**](VRBOApi.md#get_vrbo_listing_taxes) | **GET** /v1/channels/vrbo/listings/{id}/taxes | Get the Vrbo taxes |
-| [**get_vrbo_listing_translations**](VRBOApi.md#get_vrbo_listing_translations) | **GET** /v1/channels/vrbo/listings/{id}/translations | Get the Vrbo manual translations |
 | [**get_vrbo_listing_videos**](VRBOApi.md#get_vrbo_listing_videos) | **GET** /v1/channels/vrbo/listings/{id}/videos | Get the Vrbo videos |
-| [**get_vrbo_listing_welcome_guide**](VRBOApi.md#get_vrbo_listing_welcome_guide) | **GET** /v1/channels/vrbo/listings/{id}/welcome-guide | Get the Vrbo welcome guide |
 | [**list_vrbo_listings**](VRBOApi.md#list_vrbo_listings) | **GET** /v1/channels/vrbo/listings | List VRBO listings |
 | [**list_vrbo_reservations**](VRBOApi.md#list_vrbo_reservations) | **GET** /v1/channels/vrbo/reservations | List VRBO reservations |
+| [**map_vrbo_listing**](VRBOApi.md#map_vrbo_listing) | **POST** /v1/channels/vrbo/listings/map | Link a Vrbo listing to a Repull listing |
+| [**reorder_vrbo_listing_photos**](VRBOApi.md#reorder_vrbo_listing_photos) | **PUT** /v1/channels/vrbo/listings/{id}/photos/order | Reorder the Vrbo photos |
+| [**set_vrbo_listing_cover_photo**](VRBOApi.md#set_vrbo_listing_cover_photo) | **PUT** /v1/channels/vrbo/listings/{id}/photos/cover | Set the Vrbo cover photo |
 | [**update_vrbo_listing_additional_info**](VRBOApi.md#update_vrbo_listing_additional_info) | **PUT** /v1/channels/vrbo/listings/{id}/additional-info | Update the Vrbo additional details |
 | [**update_vrbo_listing_amenities**](VRBOApi.md#update_vrbo_listing_amenities) | **PUT** /v1/channels/vrbo/listings/{id}/amenities | Update the Vrbo amenities |
+| [**update_vrbo_listing_availability**](VRBOApi.md#update_vrbo_listing_availability) | **PUT** /v1/channels/vrbo/listings/{id}/availability | Update the Vrbo calendar |
 | [**update_vrbo_listing_booking_settings**](VRBOApi.md#update_vrbo_listing_booking_settings) | **PUT** /v1/channels/vrbo/listings/{id}/booking-settings | Update the Vrbo booking settings |
 | [**update_vrbo_listing_cancellation**](VRBOApi.md#update_vrbo_listing_cancellation) | **PUT** /v1/channels/vrbo/listings/{id}/cancellation | Update the Vrbo cancellation policy |
-| [**update_vrbo_listing_description**](VRBOApi.md#update_vrbo_listing_description) | **PUT** /v1/channels/vrbo/listings/{id}/description | Update the Vrbo headline and description |
+| [**update_vrbo_listing_checkin_guide**](VRBOApi.md#update_vrbo_listing_checkin_guide) | **PUT** /v1/channels/vrbo/listings/{id}/checkin-guide | Update the Vrbo welcome guide |
+| [**update_vrbo_listing_descriptions**](VRBOApi.md#update_vrbo_listing_descriptions) | **PUT** /v1/channels/vrbo/listings/{id}/descriptions | Update the Vrbo headline and description |
+| [**update_vrbo_listing_details**](VRBOApi.md#update_vrbo_listing_details) | **PUT** /v1/channels/vrbo/listings/{id}/details | Update the Vrbo property details |
 | [**update_vrbo_listing_fees**](VRBOApi.md#update_vrbo_listing_fees) | **PUT** /v1/channels/vrbo/listings/{id}/fees | Update the Vrbo fees |
 | [**update_vrbo_listing_house_rules**](VRBOApi.md#update_vrbo_listing_house_rules) | **PUT** /v1/channels/vrbo/listings/{id}/house-rules | Update the Vrbo house rules |
 | [**update_vrbo_listing_location**](VRBOApi.md#update_vrbo_listing_location) | **PUT** /v1/channels/vrbo/listings/{id}/location | Update the Vrbo map setting |
 | [**update_vrbo_listing_payment_terms**](VRBOApi.md#update_vrbo_listing_payment_terms) | **PUT** /v1/channels/vrbo/listings/{id}/payment-terms | Update the Vrbo payment terms |
-| [**update_vrbo_listing_photos**](VRBOApi.md#update_vrbo_listing_photos) | **PUT** /v1/channels/vrbo/listings/{id}/photos | Update the Vrbo photos |
+| [**update_vrbo_listing_permits**](VRBOApi.md#update_vrbo_listing_permits) | **PUT** /v1/channels/vrbo/listings/{id}/permits | Update the Vrbo registration / licence |
+| [**update_vrbo_listing_photo**](VRBOApi.md#update_vrbo_listing_photo) | **PATCH** /v1/channels/vrbo/listings/{id}/photos | Update a Vrbo photo |
 | [**update_vrbo_listing_pricing**](VRBOApi.md#update_vrbo_listing_pricing) | **PUT** /v1/channels/vrbo/listings/{id}/pricing | Update the Vrbo base pricing |
-| [**update_vrbo_listing_property**](VRBOApi.md#update_vrbo_listing_property) | **PUT** /v1/channels/vrbo/listings/{id}/property | Update the Vrbo property details |
 | [**update_vrbo_listing_protection**](VRBOApi.md#update_vrbo_listing_protection) | **PUT** /v1/channels/vrbo/listings/{id}/protection | Update the Vrbo damage protection |
 | [**update_vrbo_listing_rates**](VRBOApi.md#update_vrbo_listing_rates) | **PUT** /v1/channels/vrbo/listings/{id}/rates | Update the Vrbo rates and stay discounts |
-| [**update_vrbo_listing_registration**](VRBOApi.md#update_vrbo_listing_registration) | **PUT** /v1/channels/vrbo/listings/{id}/registration | Update the Vrbo registration / licence |
-| [**update_vrbo_listing_rooms**](VRBOApi.md#update_vrbo_listing_rooms) | **PUT** /v1/channels/vrbo/listings/{id}/rooms | Update the Vrbo rooms and spaces |
+| [**update_vrbo_listing_room**](VRBOApi.md#update_vrbo_listing_room) | **PUT** /v1/channels/vrbo/listings/{id}/rooms | Update a Vrbo room |
+| [**update_vrbo_listing_safety_disclosures**](VRBOApi.md#update_vrbo_listing_safety_disclosures) | **PUT** /v1/channels/vrbo/listings/{id}/safety-disclosures | Update the Vrbo safety disclosures |
 | [**update_vrbo_listing_story**](VRBOApi.md#update_vrbo_listing_story) | **PUT** /v1/channels/vrbo/listings/{id}/story | Update the Vrbo host story |
 | [**update_vrbo_listing_taxes**](VRBOApi.md#update_vrbo_listing_taxes) | **PUT** /v1/channels/vrbo/listings/{id}/taxes | Update the Vrbo taxes |
-| [**update_vrbo_listing_translations**](VRBOApi.md#update_vrbo_listing_translations) | **PUT** /v1/channels/vrbo/listings/{id}/translations | Update the Vrbo manual translations |
-| [**update_vrbo_listing_welcome_guide**](VRBOApi.md#update_vrbo_listing_welcome_guide) | **PUT** /v1/channels/vrbo/listings/{id}/welcome-guide | Update the Vrbo welcome guide |
+| [**vrbo_listing_action**](VRBOApi.md#vrbo_listing_action) | **POST** /v1/channels/vrbo/listings/{id} | Act on the Vrbo listing |
+
+
+## add_vrbo_listing_photos
+
+> <AddVrboListingPhotos200Response> add_vrbo_listing_photos(id, add_vrbo_listing_photos_request, opts)
+
+Add photos to the Vrbo listing
+
+Add 1–20 photos, each from an https `url` Vrbo downloads or as base64 `image` data (like Airbnb's upload), with an optional `caption`. New photos go to the end; move them with PATCH or PUT …/photos/order.  **Cost:** about 2 Vrbo calls per photo, then the photos are read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data`. A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::VRBOApi.new
+id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
+add_vrbo_listing_photos_request = Repull::AddVrboListingPhotosRequest.new({photos: [Repull::AddVrboListingPhotosRequestPhotosInner.new]}) # AddVrboListingPhotosRequest | 
+opts = {
+  vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+}
+
+begin
+  # Add photos to the Vrbo listing
+  result = api_instance.add_vrbo_listing_photos(id, add_vrbo_listing_photos_request, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->add_vrbo_listing_photos: #{e}"
+end
+```
+
+#### Using the add_vrbo_listing_photos_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<AddVrboListingPhotos200Response>, Integer, Hash)> add_vrbo_listing_photos_with_http_info(id, add_vrbo_listing_photos_request, opts)
+
+```ruby
+begin
+  # Add photos to the Vrbo listing
+  data, status_code, headers = api_instance.add_vrbo_listing_photos_with_http_info(id, add_vrbo_listing_photos_request, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <AddVrboListingPhotos200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->add_vrbo_listing_photos_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
+| **add_vrbo_listing_photos_request** | [**AddVrboListingPhotosRequest**](AddVrboListingPhotosRequest.md) |  |  |
+| **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
+
+### Return type
+
+[**AddVrboListingPhotos200Response**](AddVrboListingPhotos200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## add_vrbo_listing_room
+
+> <UpdateVrboListingRoom200Response> add_vrbo_listing_room(id, add_vrbo_listing_room_request, opts)
+
+Add a room to the Vrbo listing
+
+Add one room with its beds. Room types: Airbnb's words (`bedroom`, `bathroom`, `living_room`, `office`) or Vrbo's (BEDROOM, BATHROOM, LIVING_ROOM, OFFICE) — Vrbo has no other room types; describe a kitchen or outdoor space with the amenities.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data`. A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::VRBOApi.new
+id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
+add_vrbo_listing_room_request = Repull::AddVrboListingRoomRequest.new({room_type: 'bedroom'}) # AddVrboListingRoomRequest | 
+opts = {
+  vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+}
+
+begin
+  # Add a room to the Vrbo listing
+  result = api_instance.add_vrbo_listing_room(id, add_vrbo_listing_room_request, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->add_vrbo_listing_room: #{e}"
+end
+```
+
+#### Using the add_vrbo_listing_room_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<UpdateVrboListingRoom200Response>, Integer, Hash)> add_vrbo_listing_room_with_http_info(id, add_vrbo_listing_room_request, opts)
+
+```ruby
+begin
+  # Add a room to the Vrbo listing
+  data, status_code, headers = api_instance.add_vrbo_listing_room_with_http_info(id, add_vrbo_listing_room_request, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <UpdateVrboListingRoom200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->add_vrbo_listing_room_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
+| **add_vrbo_listing_room_request** | [**AddVrboListingRoomRequest**](AddVrboListingRoomRequest.md) |  |  |
+| **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
+
+### Return type
+
+[**UpdateVrboListingRoom200Response**](UpdateVrboListingRoom200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
 
 
 ## add_vrbo_listing_video
@@ -124,6 +288,231 @@ end
 ### HTTP request headers
 
 - **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## delete_vrbo_listing_description
+
+> <UpdateVrboListingDescriptions200Response> delete_vrbo_listing_description(id, locale, opts)
+
+Remove a Vrbo translation
+
+Remove the hand-written translation for `locale`; Vrbo goes back to translating that language automatically. The listing's own description cannot be removed, only changed. The answer is every language left.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data`. A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::VRBOApi.new
+id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
+locale = 'fr-FR' # String | The language to remove.
+opts = {
+  vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+}
+
+begin
+  # Remove a Vrbo translation
+  result = api_instance.delete_vrbo_listing_description(id, locale, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->delete_vrbo_listing_description: #{e}"
+end
+```
+
+#### Using the delete_vrbo_listing_description_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<UpdateVrboListingDescriptions200Response>, Integer, Hash)> delete_vrbo_listing_description_with_http_info(id, locale, opts)
+
+```ruby
+begin
+  # Remove a Vrbo translation
+  data, status_code, headers = api_instance.delete_vrbo_listing_description_with_http_info(id, locale, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <UpdateVrboListingDescriptions200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->delete_vrbo_listing_description_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
+| **locale** | **String** | The language to remove. |  |
+| **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
+
+### Return type
+
+[**UpdateVrboListingDescriptions200Response**](UpdateVrboListingDescriptions200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## delete_vrbo_listing_photos
+
+> <AddVrboListingPhotos200Response> delete_vrbo_listing_photos(id, photo_id, opts)
+
+Remove Vrbo photos
+
+Remove photos by `photoId` (comma-separated for several). Photo ids are the `id`s of GET …/photos.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data`. A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::VRBOApi.new
+id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
+photo_id = '1234567' # String | The `id` of the photo to remove (comma-separated for several).
+opts = {
+  vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+}
+
+begin
+  # Remove Vrbo photos
+  result = api_instance.delete_vrbo_listing_photos(id, photo_id, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->delete_vrbo_listing_photos: #{e}"
+end
+```
+
+#### Using the delete_vrbo_listing_photos_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<AddVrboListingPhotos200Response>, Integer, Hash)> delete_vrbo_listing_photos_with_http_info(id, photo_id, opts)
+
+```ruby
+begin
+  # Remove Vrbo photos
+  data, status_code, headers = api_instance.delete_vrbo_listing_photos_with_http_info(id, photo_id, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <AddVrboListingPhotos200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->delete_vrbo_listing_photos_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
+| **photo_id** | **String** | The &#x60;id&#x60; of the photo to remove (comma-separated for several). |  |
+| **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
+
+### Return type
+
+[**AddVrboListingPhotos200Response**](AddVrboListingPhotos200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## delete_vrbo_listing_room
+
+> <UpdateVrboListingRoom200Response> delete_vrbo_listing_room(id, room_id, opts)
+
+Remove a Vrbo room
+
+Remove the room `roomId`.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data`. A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::VRBOApi.new
+id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
+room_id = 'd342a2ab-0cf2-4032-a962-bb1c0e35648c' # String | The room's `spaceId` from GET …/rooms.
+opts = {
+  vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+}
+
+begin
+  # Remove a Vrbo room
+  result = api_instance.delete_vrbo_listing_room(id, room_id, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->delete_vrbo_listing_room: #{e}"
+end
+```
+
+#### Using the delete_vrbo_listing_room_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<UpdateVrboListingRoom200Response>, Integer, Hash)> delete_vrbo_listing_room_with_http_info(id, room_id, opts)
+
+```ruby
+begin
+  # Remove a Vrbo room
+  data, status_code, headers = api_instance.delete_vrbo_listing_room_with_http_info(id, room_id, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <UpdateVrboListingRoom200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->delete_vrbo_listing_room_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
+| **room_id** | **String** | The room&#39;s &#x60;spaceId&#x60; from GET …/rooms. |  |
+| **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
+
+### Return type
+
+[**UpdateVrboListingRoom200Response**](UpdateVrboListingRoom200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 
@@ -202,13 +591,152 @@ end
 - **Accept**: application/json
 
 
+## get_vrbo_connection
+
+> <GetVrboConnection200Response> get_vrbo_connection
+
+Get the Vrbo connection state
+
+Whether the workspace's Vrbo accounts are still signed in — the Vrbo counterpart of `GET /v1/channels/airbnb/connection`, with the same `status` values: `connected` (every account), `reconnect_required` (some), `disconnected` (none), `never_connected` (no Vrbo account). `fixUrl` is set whenever an account needs to be reconnected.  Per account: its `account_id`, name, sign-in state, access (`full_access` or `messaging`), the Vrbo units linked through it, when it last synced and its import progress.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::VRBOApi.new
+
+begin
+  # Get the Vrbo connection state
+  result = api_instance.get_vrbo_connection
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->get_vrbo_connection: #{e}"
+end
+```
+
+#### Using the get_vrbo_connection_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<GetVrboConnection200Response>, Integer, Hash)> get_vrbo_connection_with_http_info
+
+```ruby
+begin
+  # Get the Vrbo connection state
+  data, status_code, headers = api_instance.get_vrbo_connection_with_http_info
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <GetVrboConnection200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->get_vrbo_connection_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+[**GetVrboConnection200Response**](GetVrboConnection200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## get_vrbo_listing
+
+> <GetVrboListing200Response> get_vrbo_listing(id, opts)
+
+Get the Vrbo listing
+
+Every Vrbo unit linked to the listing (usually one; live ones first), from Repull's own data — no Vrbo call: the Vrbo listing number and URL, Vrbo's status, headline, capacity, rooms, check-in/out, minimum stay, address, rating, the Vrbo account it is on and that account's access.  `?include=content` adds the listing-content sections Repull holds for each unit (descriptions, amenities, house rules, fees, …), so one call returns everything stored.  Returns `404` when the listing is not linked to Vrbo and `403 listing_inactive` when the listing is inactive.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::VRBOApi.new
+id = 'id_example' # String | Repull listing id (numeric string).
+opts = {
+  include: 'content' # String | `content`: add the stored listing-content sections.
+}
+
+begin
+  # Get the Vrbo listing
+  result = api_instance.get_vrbo_listing(id, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->get_vrbo_listing: #{e}"
+end
+```
+
+#### Using the get_vrbo_listing_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<GetVrboListing200Response>, Integer, Hash)> get_vrbo_listing_with_http_info(id, opts)
+
+```ruby
+begin
+  # Get the Vrbo listing
+  data, status_code, headers = api_instance.get_vrbo_listing_with_http_info(id, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <GetVrboListing200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->get_vrbo_listing_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string). |  |
+| **include** | **String** | &#x60;content&#x60;: add the stored listing-content sections. | [optional] |
+
+### Return type
+
+[**GetVrboListing200Response**](GetVrboListing200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
 ## get_vrbo_listing_additional_info
 
 > <GetVrboListingAdditionalInfo200Response> get_vrbo_listing_additional_info(id, opts)
 
 Get the Vrbo additional details
 
-The free-text additional details for the property, its bedrooms and its bathrooms.  Read live from the listing's Vrbo listing in the host's connected Vrbo account. **Cost:** 2 Vrbo calls on Vrbo, spaced ~3 s apart per account — a few seconds. Vrbo is read live on every request (nothing is cached), so read the section you need rather than polling.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
+The free-text additional details for the property, its bedrooms and its bathrooms.  Answers from Repull's stored copy of the listing's Vrbo content, like the Airbnb endpoints (`dataFreshness.lastSyncedAt` says when it was read from Vrbo). The first read of a section reads Vrbo and stores it; a copy over 24 h old answers and is refreshed in the background (`reason: refreshing`); every write through Repull stores what Vrbo has after it. `?source=live` reads Vrbo now. **Cost:** from the copy, milliseconds. A live read is 2 Vrbo calls on Vrbo, spaced ~3 s apart per account — a few seconds.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
 
 ### Examples
 
@@ -224,7 +752,8 @@ end
 api_instance = Repull::VRBOApi.new
 id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
 opts = {
-  vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+  vrbo_listing_number: 'vrbo_listing_number_example', # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+  source: 'stored' # String | `stored` (default): Repull's copy, in milliseconds. `live`: read Vrbo now (seconds) and refresh the copy.
 }
 
 begin
@@ -260,6 +789,7 @@ end
 | ---- | ---- | ----------- | ----- |
 | **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
 | **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
+| **source** | **String** | &#x60;stored&#x60; (default): Repull&#39;s copy, in milliseconds. &#x60;live&#x60;: read Vrbo now (seconds) and refresh the copy. | [optional][default to &#39;stored&#39;] |
 
 ### Return type
 
@@ -281,7 +811,7 @@ end
 
 Get the Vrbo amenities
 
-Vrbo's 19 amenity groups (~440 fields) — each field with its id, type (checkbox, choice, text, number, measurement, checkboxGroup), current value, options and the parent it is shown under (`shownWhen`). Includes location & view, nearby attractions and check-out instructions.  Read live from the listing's Vrbo listing in the host's connected Vrbo account. **Cost:** 1 Vrbo call per group (19 in all; narrow with `?groups=`) on Vrbo, spaced ~3 s apart per account — a few seconds. Vrbo is read live on every request (nothing is cached), so read the section you need rather than polling.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
+Vrbo's 19 amenity groups (~440 fields) — each field with its id, type (checkbox, choice, text, number, measurement, checkboxGroup), current value, options and the parent it is shown under (`shownWhen`). Includes location & view, nearby attractions and check-out instructions.  Answers from Repull's stored copy of the listing's Vrbo content, like the Airbnb endpoints (`dataFreshness.lastSyncedAt` says when it was read from Vrbo). The first read of a section reads Vrbo and stores it; a copy over 24 h old answers and is refreshed in the background (`reason: refreshing`); every write through Repull stores what Vrbo has after it. `?source=live` reads Vrbo now. **Cost:** from the copy, milliseconds. A live read is 1 Vrbo call per group (19 in all; narrow with `?groups=`) on Vrbo, spaced ~3 s apart per account — a few seconds.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
 
 ### Examples
 
@@ -298,7 +828,8 @@ api_instance = Repull::VRBOApi.new
 id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
 opts = {
   vrbo_listing_number: 'vrbo_listing_number_example', # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
-  groups: 'essentials,internet' # String | Amenity groups to read, comma-separated (default: all 19 — one Vrbo call each): essentials, internet, climateControl, general, office, kitchenAndDining, parking, poolAndSpa, sustainability, entertainment, outdoor, onsiteService, accessibility, homeSafety, safetyDevices, enhancedCleaning, locationAndView, localAttractionsAndActivities, checkoutInstructions.
+  source: 'stored', # String | `stored` (default): Repull's copy, in milliseconds. `live`: read Vrbo now (seconds) and refresh the copy.
+  groups: 'essentials,internet' # String | Amenity groups to read, comma-separated (default: all 19): essentials, internet, climateControl, general, office, kitchenAndDining, parking, poolAndSpa, sustainability, entertainment, outdoor, onsiteService, accessibility, homeSafety, safetyDevices, enhancedCleaning, locationAndView, localAttractionsAndActivities, checkoutInstructions.
 }
 
 begin
@@ -334,11 +865,91 @@ end
 | ---- | ---- | ----------- | ----- |
 | **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
 | **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
-| **groups** | **String** | Amenity groups to read, comma-separated (default: all 19 — one Vrbo call each): essentials, internet, climateControl, general, office, kitchenAndDining, parking, poolAndSpa, sustainability, entertainment, outdoor, onsiteService, accessibility, homeSafety, safetyDevices, enhancedCleaning, locationAndView, localAttractionsAndActivities, checkoutInstructions. | [optional] |
+| **source** | **String** | &#x60;stored&#x60; (default): Repull&#39;s copy, in milliseconds. &#x60;live&#x60;: read Vrbo now (seconds) and refresh the copy. | [optional][default to &#39;stored&#39;] |
+| **groups** | **String** | Amenity groups to read, comma-separated (default: all 19): essentials, internet, climateControl, general, office, kitchenAndDining, parking, poolAndSpa, sustainability, entertainment, outdoor, onsiteService, accessibility, homeSafety, safetyDevices, enhancedCleaning, locationAndView, localAttractionsAndActivities, checkoutInstructions. | [optional] |
 
 ### Return type
 
 [**GetVrboListingAmenities200Response**](GetVrboListingAmenities200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## get_vrbo_listing_availability
+
+> <GetVrboListingAvailability200Response> get_vrbo_listing_availability(id, opts)
+
+Get the Vrbo calendar
+
+The listing's calendar as Vrbo shows it, night by night — the counterpart of `GET /v1/channels/airbnb/listings/{id}/availability`: whether each night is `available`, what holds it (`blockedBy`: a `reservation`, a `block` or an imported `ical` calendar, with the booking's `reservationRef`), the nightly price, minimum stay and whether guests can arrive or leave that day.  Read from Vrbo for each request (one Vrbo read for the range): `start_date`..`end_date`, at most 366 nights, default the next 30. `?jobId=` reads the status of a write instead.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::VRBOApi.new
+id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
+opts = {
+  start_date: Date.parse('2013-10-20'), # Date | First night (default today).
+  end_date: Date.parse('2013-10-20'), # Date | Last night (default start + 29 days).
+  job_id: 'job_id_example', # String | The `jobId` a PUT returned: read that write's status.
+  vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number, when the listing is linked to more than one Vrbo unit.
+}
+
+begin
+  # Get the Vrbo calendar
+  result = api_instance.get_vrbo_listing_availability(id, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->get_vrbo_listing_availability: #{e}"
+end
+```
+
+#### Using the get_vrbo_listing_availability_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<GetVrboListingAvailability200Response>, Integer, Hash)> get_vrbo_listing_availability_with_http_info(id, opts)
+
+```ruby
+begin
+  # Get the Vrbo calendar
+  data, status_code, headers = api_instance.get_vrbo_listing_availability_with_http_info(id, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <GetVrboListingAvailability200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->get_vrbo_listing_availability_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
+| **start_date** | **Date** | First night (default today). | [optional] |
+| **end_date** | **Date** | Last night (default start + 29 days). | [optional] |
+| **job_id** | **String** | The &#x60;jobId&#x60; a PUT returned: read that write&#39;s status. | [optional] |
+| **vrbo_listing_number** | **String** | The Vrbo listing number, when the listing is linked to more than one Vrbo unit. | [optional] |
+
+### Return type
+
+[**GetVrboListingAvailability200Response**](GetVrboListingAvailability200Response.md)
 
 ### Authorization
 
@@ -356,7 +967,7 @@ end
 
 Get the Vrbo booking settings
 
-Instant book or quote-and-hold, minimum nights, notice before arrival, how far ahead guests can book, maximum stay, access type.  Read live from the listing's Vrbo listing in the host's connected Vrbo account. **Cost:** 2 Vrbo calls on Vrbo, spaced ~3 s apart per account — a few seconds. Vrbo is read live on every request (nothing is cached), so read the section you need rather than polling.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
+Instant book or quote-and-hold, minimum nights, notice before arrival, how far ahead guests can book, maximum stay, access type.  Answers from Repull's stored copy of the listing's Vrbo content, like the Airbnb endpoints (`dataFreshness.lastSyncedAt` says when it was read from Vrbo). The first read of a section reads Vrbo and stores it; a copy over 24 h old answers and is refreshed in the background (`reason: refreshing`); every write through Repull stores what Vrbo has after it. `?source=live` reads Vrbo now. **Cost:** from the copy, milliseconds. A live read is 2 Vrbo calls on Vrbo, spaced ~3 s apart per account — a few seconds.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
 
 ### Examples
 
@@ -372,7 +983,8 @@ end
 api_instance = Repull::VRBOApi.new
 id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
 opts = {
-  vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+  vrbo_listing_number: 'vrbo_listing_number_example', # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+  source: 'stored' # String | `stored` (default): Repull's copy, in milliseconds. `live`: read Vrbo now (seconds) and refresh the copy.
 }
 
 begin
@@ -408,6 +1020,7 @@ end
 | ---- | ---- | ----------- | ----- |
 | **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
 | **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
+| **source** | **String** | &#x60;stored&#x60; (default): Repull&#39;s copy, in milliseconds. &#x60;live&#x60;: read Vrbo now (seconds) and refresh the copy. | [optional][default to &#39;stored&#39;] |
 
 ### Return type
 
@@ -429,7 +1042,7 @@ end
 
 Get the Vrbo cancellation policy
 
-The policy (Vrbo's named ones or custom refund windows), seasonal overrides, and the named policies Vrbo offers.  Read live from the listing's Vrbo listing in the host's connected Vrbo account. **Cost:** 1 Vrbo call on Vrbo, spaced ~3 s apart per account — a few seconds. Vrbo is read live on every request (nothing is cached), so read the section you need rather than polling.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
+The policy (Vrbo's named ones or custom refund windows), seasonal overrides, and the named policies Vrbo offers.  Answers from Repull's stored copy of the listing's Vrbo content, like the Airbnb endpoints (`dataFreshness.lastSyncedAt` says when it was read from Vrbo). The first read of a section reads Vrbo and stores it; a copy over 24 h old answers and is refreshed in the background (`reason: refreshing`); every write through Repull stores what Vrbo has after it. `?source=live` reads Vrbo now. **Cost:** from the copy, milliseconds. A live read is 1 Vrbo call on Vrbo, spaced ~3 s apart per account — a few seconds.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
 
 ### Examples
 
@@ -445,7 +1058,8 @@ end
 api_instance = Repull::VRBOApi.new
 id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
 opts = {
-  vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+  vrbo_listing_number: 'vrbo_listing_number_example', # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+  source: 'stored' # String | `stored` (default): Repull's copy, in milliseconds. `live`: read Vrbo now (seconds) and refresh the copy.
 }
 
 begin
@@ -481,10 +1095,161 @@ end
 | ---- | ---- | ----------- | ----- |
 | **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
 | **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
+| **source** | **String** | &#x60;stored&#x60; (default): Repull&#39;s copy, in milliseconds. &#x60;live&#x60;: read Vrbo now (seconds) and refresh the copy. | [optional][default to &#39;stored&#39;] |
 
 ### Return type
 
 [**GetVrboListingCancellation200Response**](GetVrboListingCancellation200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## get_vrbo_listing_checkin_guide
+
+> <GetVrboListingCheckinGuide200Response> get_vrbo_listing_checkin_guide(id, opts)
+
+Get the Vrbo welcome guide
+
+What guests receive before arrival: check-in and check-out instructions, driving and parking directions, access (type, code), wifi, per-amenity instructions, contacts.  Answers from Repull's stored copy of the listing's Vrbo content, like the Airbnb endpoints (`dataFreshness.lastSyncedAt` says when it was read from Vrbo). The first read of a section reads Vrbo and stores it; a copy over 24 h old answers and is refreshed in the background (`reason: refreshing`); every write through Repull stores what Vrbo has after it. `?source=live` reads Vrbo now. **Cost:** from the copy, milliseconds. A live read is 1 Vrbo call on Vrbo, spaced ~3 s apart per account — a few seconds.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::VRBOApi.new
+id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
+opts = {
+  vrbo_listing_number: 'vrbo_listing_number_example', # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+  source: 'stored' # String | `stored` (default): Repull's copy, in milliseconds. `live`: read Vrbo now (seconds) and refresh the copy.
+}
+
+begin
+  # Get the Vrbo welcome guide
+  result = api_instance.get_vrbo_listing_checkin_guide(id, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->get_vrbo_listing_checkin_guide: #{e}"
+end
+```
+
+#### Using the get_vrbo_listing_checkin_guide_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<GetVrboListingCheckinGuide200Response>, Integer, Hash)> get_vrbo_listing_checkin_guide_with_http_info(id, opts)
+
+```ruby
+begin
+  # Get the Vrbo welcome guide
+  data, status_code, headers = api_instance.get_vrbo_listing_checkin_guide_with_http_info(id, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <GetVrboListingCheckinGuide200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->get_vrbo_listing_checkin_guide_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
+| **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
+| **source** | **String** | &#x60;stored&#x60; (default): Repull&#39;s copy, in milliseconds. &#x60;live&#x60;: read Vrbo now (seconds) and refresh the copy. | [optional][default to &#39;stored&#39;] |
+
+### Return type
+
+[**GetVrboListingCheckinGuide200Response**](GetVrboListingCheckinGuide200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## get_vrbo_listing_checkout_guide
+
+> <GetVrboListingCheckoutGuide200Response> get_vrbo_listing_checkout_guide(id, opts)
+
+Get the Vrbo checkout guide
+
+The checkout instructions guests get in Vrbo's welcome guide (`instructions`, `photos`). Written with PUT …/checkin-guide (`checkOut`), which holds the whole guide.  Answers from Repull's stored copy of the listing's Vrbo content, like the Airbnb endpoints (`dataFreshness.lastSyncedAt` says when it was read from Vrbo). The first read of a section reads Vrbo and stores it; a copy over 24 h old answers and is refreshed in the background (`reason: refreshing`); every write through Repull stores what Vrbo has after it. `?source=live` reads Vrbo now.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::VRBOApi.new
+id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
+opts = {
+  source: 'stored', # String | `stored` (default): Repull's copy, in milliseconds. `live`: read Vrbo now (seconds) and refresh the copy.
+  vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+}
+
+begin
+  # Get the Vrbo checkout guide
+  result = api_instance.get_vrbo_listing_checkout_guide(id, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->get_vrbo_listing_checkout_guide: #{e}"
+end
+```
+
+#### Using the get_vrbo_listing_checkout_guide_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<GetVrboListingCheckoutGuide200Response>, Integer, Hash)> get_vrbo_listing_checkout_guide_with_http_info(id, opts)
+
+```ruby
+begin
+  # Get the Vrbo checkout guide
+  data, status_code, headers = api_instance.get_vrbo_listing_checkout_guide_with_http_info(id, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <GetVrboListingCheckoutGuide200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->get_vrbo_listing_checkout_guide_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
+| **source** | **String** | &#x60;stored&#x60; (default): Repull&#39;s copy, in milliseconds. &#x60;live&#x60;: read Vrbo now (seconds) and refresh the copy. | [optional][default to &#39;stored&#39;] |
+| **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
+
+### Return type
+
+[**GetVrboListingCheckoutGuide200Response**](GetVrboListingCheckoutGuide200Response.md)
 
 ### Authorization
 
@@ -502,7 +1267,7 @@ end
 
 Get several Vrbo listing sections
 
-Read several sections of the listing's Vrbo listing in one call. `sections` is required: name them (`?sections=description,house-rules,fees`) or ask for `all`.  **Cost:** each section is read live on Vrbo, with calls spaced ~3 s apart per account — `all` is about 45 Vrbo calls, **around 2.5 minutes**. Prefer the one-section endpoints (`GET /v1/channels/vrbo/listings/{id}/{section}`) and never poll this one. A section that fails carries `{ error: { code, message } }`; the others still answer.  Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
+Read several sections of the listing's Vrbo listing in one call. `sections` is required: name them (`?sections=descriptions,house-rules,fees`) or ask for `all`. Each section is the `data` of its own endpoint.  Sections Repull holds answer from its copy; only the others are read on Vrbo, in one pass (`?source=live` reads them all on Vrbo: about 45 calls, **around 2.5 minutes** for `all`). A section Vrbo fails to return carries `{ error: { code, message } }`; the others still answer. `dataFreshness.lastSyncedAt` is the oldest section's.  Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
 
 ### Examples
 
@@ -517,8 +1282,9 @@ end
 
 api_instance = Repull::VRBOApi.new
 id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
-sections = 'description,house-rules,fees' # String | Comma-separated sections, or `all`: description, property, story, additional-info, translations, photos, amenities, rooms, location, house-rules, booking-settings, cancellation, fees, pricing, rates, payment-terms, protection, taxes, registration, welcome-guide, videos.
+sections = 'descriptions,house-rules,fees' # String | Comma-separated sections, or `all`: descriptions, details, story, additional-info, photos, amenities, rooms, location, house-rules, booking-settings, cancellation, fees, pricing, payment-terms, protection, taxes, permits, checkin-guide, videos.
 opts = {
+  source: 'stored', # String | `stored` (default): Repull's copy, in milliseconds. `live`: read Vrbo now (seconds) and refresh the copy.
   vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
 }
 
@@ -554,7 +1320,8 @@ end
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
-| **sections** | **String** | Comma-separated sections, or &#x60;all&#x60;: description, property, story, additional-info, translations, photos, amenities, rooms, location, house-rules, booking-settings, cancellation, fees, pricing, rates, payment-terms, protection, taxes, registration, welcome-guide, videos. |  |
+| **sections** | **String** | Comma-separated sections, or &#x60;all&#x60;: descriptions, details, story, additional-info, photos, amenities, rooms, location, house-rules, booking-settings, cancellation, fees, pricing, payment-terms, protection, taxes, permits, checkin-guide, videos. |  |
+| **source** | **String** | &#x60;stored&#x60; (default): Repull&#39;s copy, in milliseconds. &#x60;live&#x60;: read Vrbo now (seconds) and refresh the copy. | [optional][default to &#39;stored&#39;] |
 | **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
 
 ### Return type
@@ -571,13 +1338,13 @@ end
 - **Accept**: application/json
 
 
-## get_vrbo_listing_description
+## get_vrbo_listing_descriptions
 
-> <GetVrboListingDescription200Response> get_vrbo_listing_description(id, opts)
+> <GetVrboListingDescriptions200Response> get_vrbo_listing_descriptions(id, opts)
 
 Get the Vrbo headline and description
 
-The headline (10–80 characters) and the description guests read.  Read live from the listing's Vrbo listing in the host's connected Vrbo account. **Cost:** 1 Vrbo call on Vrbo, spaced ~3 s apart per account — a few seconds. Vrbo is read live on every request (nothing is cached), so read the section you need rather than polling.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
+The headline and description guests read: the listing's own language (`primary: true`, `locale: null`) and every language written for it by hand, which replaces Vrbo's automatic translation. `?locale=` returns one language.  Answers from Repull's stored copy of the listing's Vrbo content, like the Airbnb endpoints (`dataFreshness.lastSyncedAt` says when it was read from Vrbo). The first read of a section reads Vrbo and stores it; a copy over 24 h old answers and is refreshed in the background (`reason: refreshing`); every write through Repull stores what Vrbo has after it. `?source=live` reads Vrbo now. **Cost:** from the copy, milliseconds; a live read is 2 Vrbo calls plus 1 per language.
 
 ### Examples
 
@@ -593,33 +1360,111 @@ end
 api_instance = Repull::VRBOApi.new
 id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
 opts = {
+  locale: 'fr-FR', # String | Only this language (a code from `languages`).
+  source: 'stored', # String | `stored` (default): Repull's copy, in milliseconds. `live`: read Vrbo now (seconds) and refresh the copy.
   vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
 }
 
 begin
   # Get the Vrbo headline and description
-  result = api_instance.get_vrbo_listing_description(id, opts)
+  result = api_instance.get_vrbo_listing_descriptions(id, opts)
   p result
 rescue Repull::ApiError => e
-  puts "Error when calling VRBOApi->get_vrbo_listing_description: #{e}"
+  puts "Error when calling VRBOApi->get_vrbo_listing_descriptions: #{e}"
 end
 ```
 
-#### Using the get_vrbo_listing_description_with_http_info variant
+#### Using the get_vrbo_listing_descriptions_with_http_info variant
 
 This returns an Array which contains the response data, status code and headers.
 
-> <Array(<GetVrboListingDescription200Response>, Integer, Hash)> get_vrbo_listing_description_with_http_info(id, opts)
+> <Array(<GetVrboListingDescriptions200Response>, Integer, Hash)> get_vrbo_listing_descriptions_with_http_info(id, opts)
 
 ```ruby
 begin
   # Get the Vrbo headline and description
-  data, status_code, headers = api_instance.get_vrbo_listing_description_with_http_info(id, opts)
+  data, status_code, headers = api_instance.get_vrbo_listing_descriptions_with_http_info(id, opts)
   p status_code # => 2xx
   p headers # => { ... }
-  p data # => <GetVrboListingDescription200Response>
+  p data # => <GetVrboListingDescriptions200Response>
 rescue Repull::ApiError => e
-  puts "Error when calling VRBOApi->get_vrbo_listing_description_with_http_info: #{e}"
+  puts "Error when calling VRBOApi->get_vrbo_listing_descriptions_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
+| **locale** | **String** | Only this language (a code from &#x60;languages&#x60;). | [optional] |
+| **source** | **String** | &#x60;stored&#x60; (default): Repull&#39;s copy, in milliseconds. &#x60;live&#x60;: read Vrbo now (seconds) and refresh the copy. | [optional][default to &#39;stored&#39;] |
+| **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
+
+### Return type
+
+[**GetVrboListingDescriptions200Response**](GetVrboListingDescriptions200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## get_vrbo_listing_details
+
+> <GetVrboListingDetails200Response> get_vrbo_listing_details(id, opts)
+
+Get the Vrbo property details
+
+Property type (and the types Vrbo offers), internal name, interior size, seniors-only and long-term-renter flags.  Answers from Repull's stored copy of the listing's Vrbo content, like the Airbnb endpoints (`dataFreshness.lastSyncedAt` says when it was read from Vrbo). The first read of a section reads Vrbo and stores it; a copy over 24 h old answers and is refreshed in the background (`reason: refreshing`); every write through Repull stores what Vrbo has after it. `?source=live` reads Vrbo now. **Cost:** from the copy, milliseconds. A live read is 1 Vrbo call on Vrbo, spaced ~3 s apart per account — a few seconds.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::VRBOApi.new
+id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
+opts = {
+  vrbo_listing_number: 'vrbo_listing_number_example', # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+  source: 'stored' # String | `stored` (default): Repull's copy, in milliseconds. `live`: read Vrbo now (seconds) and refresh the copy.
+}
+
+begin
+  # Get the Vrbo property details
+  result = api_instance.get_vrbo_listing_details(id, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->get_vrbo_listing_details: #{e}"
+end
+```
+
+#### Using the get_vrbo_listing_details_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<GetVrboListingDetails200Response>, Integer, Hash)> get_vrbo_listing_details_with_http_info(id, opts)
+
+```ruby
+begin
+  # Get the Vrbo property details
+  data, status_code, headers = api_instance.get_vrbo_listing_details_with_http_info(id, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <GetVrboListingDetails200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->get_vrbo_listing_details_with_http_info: #{e}"
 end
 ```
 
@@ -629,10 +1474,11 @@ end
 | ---- | ---- | ----------- | ----- |
 | **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
 | **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
+| **source** | **String** | &#x60;stored&#x60; (default): Repull&#39;s copy, in milliseconds. &#x60;live&#x60;: read Vrbo now (seconds) and refresh the copy. | [optional][default to &#39;stored&#39;] |
 
 ### Return type
 
-[**GetVrboListingDescription200Response**](GetVrboListingDescription200Response.md)
+[**GetVrboListingDetails200Response**](GetVrboListingDetails200Response.md)
 
 ### Authorization
 
@@ -650,7 +1496,7 @@ end
 
 Get the Vrbo fees
 
-Cleaning, pet and extra-guest fees and custom fees, with their type (per stay / per night) and whether they are taxable.  Read live from the listing's Vrbo listing in the host's connected Vrbo account. **Cost:** 1 Vrbo call on Vrbo, spaced ~3 s apart per account — a few seconds. Vrbo is read live on every request (nothing is cached), so read the section you need rather than polling.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
+Cleaning, pet and extra-guest fees and custom fees, with their type (per stay / per night) and whether they are taxable.  Answers from Repull's stored copy of the listing's Vrbo content, like the Airbnb endpoints (`dataFreshness.lastSyncedAt` says when it was read from Vrbo). The first read of a section reads Vrbo and stores it; a copy over 24 h old answers and is refreshed in the background (`reason: refreshing`); every write through Repull stores what Vrbo has after it. `?source=live` reads Vrbo now. **Cost:** from the copy, milliseconds. A live read is 1 Vrbo call on Vrbo, spaced ~3 s apart per account — a few seconds.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
 
 ### Examples
 
@@ -666,7 +1512,8 @@ end
 api_instance = Repull::VRBOApi.new
 id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
 opts = {
-  vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+  vrbo_listing_number: 'vrbo_listing_number_example', # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+  source: 'stored' # String | `stored` (default): Repull's copy, in milliseconds. `live`: read Vrbo now (seconds) and refresh the copy.
 }
 
 begin
@@ -702,6 +1549,7 @@ end
 | ---- | ---- | ----------- | ----- |
 | **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
 | **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
+| **source** | **String** | &#x60;stored&#x60; (default): Repull&#39;s copy, in milliseconds. &#x60;live&#x60;: read Vrbo now (seconds) and refresh the copy. | [optional][default to &#39;stored&#39;] |
 
 ### Return type
 
@@ -723,7 +1571,7 @@ end
 
 Get the Vrbo house rules
 
-Check-in/out times, maximum guests and adults, minimum age, children (with age bands), pets (count, weight), smoking (inside/outside), events (attendee cap), up to 3 custom rules, the rental agreement.  Read live from the listing's Vrbo listing in the host's connected Vrbo account. **Cost:** 1 Vrbo call on Vrbo, spaced ~3 s apart per account — a few seconds. Vrbo is read live on every request (nothing is cached), so read the section you need rather than polling.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
+Check-in/out times, maximum guests and adults, minimum age, children (with age bands), pets (count, weight), smoking (inside/outside), events (attendee cap), up to 3 custom rules, the rental agreement.  Answers from Repull's stored copy of the listing's Vrbo content, like the Airbnb endpoints (`dataFreshness.lastSyncedAt` says when it was read from Vrbo). The first read of a section reads Vrbo and stores it; a copy over 24 h old answers and is refreshed in the background (`reason: refreshing`); every write through Repull stores what Vrbo has after it. `?source=live` reads Vrbo now. **Cost:** from the copy, milliseconds. A live read is 1 Vrbo call on Vrbo, spaced ~3 s apart per account — a few seconds.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
 
 ### Examples
 
@@ -739,7 +1587,8 @@ end
 api_instance = Repull::VRBOApi.new
 id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
 opts = {
-  vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+  vrbo_listing_number: 'vrbo_listing_number_example', # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+  source: 'stored' # String | `stored` (default): Repull's copy, in milliseconds. `live`: read Vrbo now (seconds) and refresh the copy.
 }
 
 begin
@@ -775,6 +1624,7 @@ end
 | ---- | ---- | ----------- | ----- |
 | **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
 | **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
+| **source** | **String** | &#x60;stored&#x60; (default): Repull&#39;s copy, in milliseconds. &#x60;live&#x60;: read Vrbo now (seconds) and refresh the copy. | [optional][default to &#39;stored&#39;] |
 
 ### Return type
 
@@ -796,7 +1646,7 @@ end
 
 Get the Vrbo map setting
 
-The address (read-only: Vrbo changes it only through its support) and whether guests see the exact location or an area.  Read live from the listing's Vrbo listing in the host's connected Vrbo account. **Cost:** 1 Vrbo call on Vrbo, spaced ~3 s apart per account — a few seconds. Vrbo is read live on every request (nothing is cached), so read the section you need rather than polling.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
+The address (read-only: Vrbo changes it only through its support) and whether guests see the exact location or an area.  Answers from Repull's stored copy of the listing's Vrbo content, like the Airbnb endpoints (`dataFreshness.lastSyncedAt` says when it was read from Vrbo). The first read of a section reads Vrbo and stores it; a copy over 24 h old answers and is refreshed in the background (`reason: refreshing`); every write through Repull stores what Vrbo has after it. `?source=live` reads Vrbo now. **Cost:** from the copy, milliseconds. A live read is 1 Vrbo call on Vrbo, spaced ~3 s apart per account — a few seconds.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
 
 ### Examples
 
@@ -812,7 +1662,8 @@ end
 api_instance = Repull::VRBOApi.new
 id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
 opts = {
-  vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+  vrbo_listing_number: 'vrbo_listing_number_example', # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+  source: 'stored' # String | `stored` (default): Repull's copy, in milliseconds. `live`: read Vrbo now (seconds) and refresh the copy.
 }
 
 begin
@@ -848,6 +1699,7 @@ end
 | ---- | ---- | ----------- | ----- |
 | **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
 | **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
+| **source** | **String** | &#x60;stored&#x60; (default): Repull&#39;s copy, in milliseconds. &#x60;live&#x60;: read Vrbo now (seconds) and refresh the copy. | [optional][default to &#39;stored&#39;] |
 
 ### Return type
 
@@ -869,7 +1721,7 @@ end
 
 Get the Vrbo payment terms
 
-How much the guest pays at booking and when the rest is due.  Read live from the listing's Vrbo listing in the host's connected Vrbo account. **Cost:** 1 Vrbo call on Vrbo, spaced ~3 s apart per account — a few seconds. Vrbo is read live on every request (nothing is cached), so read the section you need rather than polling.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
+How much the guest pays at booking and when the rest is due.  Answers from Repull's stored copy of the listing's Vrbo content, like the Airbnb endpoints (`dataFreshness.lastSyncedAt` says when it was read from Vrbo). The first read of a section reads Vrbo and stores it; a copy over 24 h old answers and is refreshed in the background (`reason: refreshing`); every write through Repull stores what Vrbo has after it. `?source=live` reads Vrbo now. **Cost:** from the copy, milliseconds. A live read is 1 Vrbo call on Vrbo, spaced ~3 s apart per account — a few seconds.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
 
 ### Examples
 
@@ -885,7 +1737,8 @@ end
 api_instance = Repull::VRBOApi.new
 id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
 opts = {
-  vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+  vrbo_listing_number: 'vrbo_listing_number_example', # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+  source: 'stored' # String | `stored` (default): Repull's copy, in milliseconds. `live`: read Vrbo now (seconds) and refresh the copy.
 }
 
 begin
@@ -921,10 +1774,86 @@ end
 | ---- | ---- | ----------- | ----- |
 | **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
 | **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
+| **source** | **String** | &#x60;stored&#x60; (default): Repull&#39;s copy, in milliseconds. &#x60;live&#x60;: read Vrbo now (seconds) and refresh the copy. | [optional][default to &#39;stored&#39;] |
 
 ### Return type
 
 [**GetVrboListingPaymentTerms200Response**](GetVrboListingPaymentTerms200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## get_vrbo_listing_permits
+
+> <GetVrboListingPermits200Response> get_vrbo_listing_permits(id, opts)
+
+Get the Vrbo registration / licence
+
+The local registration or licence fields Vrbo asks for in the listing's jurisdiction, and their status.  Answers from Repull's stored copy of the listing's Vrbo content, like the Airbnb endpoints (`dataFreshness.lastSyncedAt` says when it was read from Vrbo). The first read of a section reads Vrbo and stores it; a copy over 24 h old answers and is refreshed in the background (`reason: refreshing`); every write through Repull stores what Vrbo has after it. `?source=live` reads Vrbo now. **Cost:** from the copy, milliseconds. A live read is 1 Vrbo call on Vrbo, spaced ~3 s apart per account — a few seconds.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::VRBOApi.new
+id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
+opts = {
+  vrbo_listing_number: 'vrbo_listing_number_example', # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+  source: 'stored' # String | `stored` (default): Repull's copy, in milliseconds. `live`: read Vrbo now (seconds) and refresh the copy.
+}
+
+begin
+  # Get the Vrbo registration / licence
+  result = api_instance.get_vrbo_listing_permits(id, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->get_vrbo_listing_permits: #{e}"
+end
+```
+
+#### Using the get_vrbo_listing_permits_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<GetVrboListingPermits200Response>, Integer, Hash)> get_vrbo_listing_permits_with_http_info(id, opts)
+
+```ruby
+begin
+  # Get the Vrbo registration / licence
+  data, status_code, headers = api_instance.get_vrbo_listing_permits_with_http_info(id, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <GetVrboListingPermits200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->get_vrbo_listing_permits_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
+| **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
+| **source** | **String** | &#x60;stored&#x60; (default): Repull&#39;s copy, in milliseconds. &#x60;live&#x60;: read Vrbo now (seconds) and refresh the copy. | [optional][default to &#39;stored&#39;] |
+
+### Return type
+
+[**GetVrboListingPermits200Response**](GetVrboListingPermits200Response.md)
 
 ### Authorization
 
@@ -942,7 +1871,7 @@ end
 
 Get the Vrbo photos
 
-Photos in order (id, url, caption, Vrbo's own tags, rank, rooms), plus any Vrbo moderation rejected and why.  Read live from the listing's Vrbo listing in the host's connected Vrbo account. **Cost:** 2 Vrbo calls on Vrbo, spaced ~3 s apart per account — a few seconds. Vrbo is read live on every request (nothing is cached), so read the section you need rather than polling.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
+Photos in order (id, url, caption, Vrbo's own tags, rank, rooms), plus any Vrbo moderation rejected and why.  Answers from Repull's stored copy of the listing's Vrbo content, like the Airbnb endpoints (`dataFreshness.lastSyncedAt` says when it was read from Vrbo). The first read of a section reads Vrbo and stores it; a copy over 24 h old answers and is refreshed in the background (`reason: refreshing`); every write through Repull stores what Vrbo has after it. `?source=live` reads Vrbo now. **Cost:** from the copy, milliseconds. A live read is 2 Vrbo calls on Vrbo, spaced ~3 s apart per account — a few seconds.
 
 ### Examples
 
@@ -958,6 +1887,7 @@ end
 api_instance = Repull::VRBOApi.new
 id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
 opts = {
+  source: 'stored', # String | `stored` (default): Repull's copy, in milliseconds. `live`: read Vrbo now (seconds) and refresh the copy.
   vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
 }
 
@@ -993,6 +1923,7 @@ end
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
+| **source** | **String** | &#x60;stored&#x60; (default): Repull&#39;s copy, in milliseconds. &#x60;live&#x60;: read Vrbo now (seconds) and refresh the copy. | [optional][default to &#39;stored&#39;] |
 | **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
 
 ### Return type
@@ -1015,7 +1946,7 @@ end
 
 Get the Vrbo base pricing
 
-Base nightly rate per weekday, weekly and monthly discounts, default minimum stay, rate limits.  Read live from the listing's Vrbo listing in the host's connected Vrbo account. **Cost:** 1 Vrbo call on Vrbo, spaced ~3 s apart per account — a few seconds. Vrbo is read live on every request (nothing is cached), so read the section you need rather than polling.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
+Base nightly rate per weekday, weekly and monthly discounts, default minimum stay, rate limits.  Answers from Repull's stored copy of the listing's Vrbo content, like the Airbnb endpoints (`dataFreshness.lastSyncedAt` says when it was read from Vrbo). The first read of a section reads Vrbo and stores it; a copy over 24 h old answers and is refreshed in the background (`reason: refreshing`); every write through Repull stores what Vrbo has after it. `?source=live` reads Vrbo now. **Cost:** from the copy, milliseconds. A live read is 1 Vrbo call on Vrbo, spaced ~3 s apart per account — a few seconds.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
 
 ### Examples
 
@@ -1031,7 +1962,8 @@ end
 api_instance = Repull::VRBOApi.new
 id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
 opts = {
-  vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+  vrbo_listing_number: 'vrbo_listing_number_example', # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+  source: 'stored' # String | `stored` (default): Repull's copy, in milliseconds. `live`: read Vrbo now (seconds) and refresh the copy.
 }
 
 begin
@@ -1067,83 +1999,11 @@ end
 | ---- | ---- | ----------- | ----- |
 | **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
 | **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
+| **source** | **String** | &#x60;stored&#x60; (default): Repull&#39;s copy, in milliseconds. &#x60;live&#x60;: read Vrbo now (seconds) and refresh the copy. | [optional][default to &#39;stored&#39;] |
 
 ### Return type
 
 [**GetVrboListingPricing200Response**](GetVrboListingPricing200Response.md)
-
-### Authorization
-
-[bearerAuth](../README.md#bearerAuth)
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
-
-
-## get_vrbo_listing_property
-
-> <GetVrboListingProperty200Response> get_vrbo_listing_property(id, opts)
-
-Get the Vrbo property details
-
-Property type (and the types Vrbo offers), internal name, interior size, seniors-only and long-term-renter flags.  Read live from the listing's Vrbo listing in the host's connected Vrbo account. **Cost:** 1 Vrbo call on Vrbo, spaced ~3 s apart per account — a few seconds. Vrbo is read live on every request (nothing is cached), so read the section you need rather than polling.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
-
-### Examples
-
-```ruby
-require 'time'
-require 'repull'
-# setup authorization
-Repull.configure do |config|
-  # Configure Bearer authorization (API Key): bearerAuth
-  config.access_token = 'YOUR_BEARER_TOKEN'
-end
-
-api_instance = Repull::VRBOApi.new
-id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
-opts = {
-  vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
-}
-
-begin
-  # Get the Vrbo property details
-  result = api_instance.get_vrbo_listing_property(id, opts)
-  p result
-rescue Repull::ApiError => e
-  puts "Error when calling VRBOApi->get_vrbo_listing_property: #{e}"
-end
-```
-
-#### Using the get_vrbo_listing_property_with_http_info variant
-
-This returns an Array which contains the response data, status code and headers.
-
-> <Array(<GetVrboListingProperty200Response>, Integer, Hash)> get_vrbo_listing_property_with_http_info(id, opts)
-
-```ruby
-begin
-  # Get the Vrbo property details
-  data, status_code, headers = api_instance.get_vrbo_listing_property_with_http_info(id, opts)
-  p status_code # => 2xx
-  p headers # => { ... }
-  p data # => <GetVrboListingProperty200Response>
-rescue Repull::ApiError => e
-  puts "Error when calling VRBOApi->get_vrbo_listing_property_with_http_info: #{e}"
-end
-```
-
-### Parameters
-
-| Name | Type | Description | Notes |
-| ---- | ---- | ----------- | ----- |
-| **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
-| **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
-
-### Return type
-
-[**GetVrboListingProperty200Response**](GetVrboListingProperty200Response.md)
 
 ### Authorization
 
@@ -1161,7 +2021,7 @@ end
 
 Get the Vrbo damage protection
 
-Refundable damage deposit and damage protection.  Read live from the listing's Vrbo listing in the host's connected Vrbo account. **Cost:** 1 Vrbo call on Vrbo, spaced ~3 s apart per account — a few seconds. Vrbo is read live on every request (nothing is cached), so read the section you need rather than polling.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
+Refundable damage deposit and damage protection.  Answers from Repull's stored copy of the listing's Vrbo content, like the Airbnb endpoints (`dataFreshness.lastSyncedAt` says when it was read from Vrbo). The first read of a section reads Vrbo and stores it; a copy over 24 h old answers and is refreshed in the background (`reason: refreshing`); every write through Repull stores what Vrbo has after it. `?source=live` reads Vrbo now. **Cost:** from the copy, milliseconds. A live read is 1 Vrbo call on Vrbo, spaced ~3 s apart per account — a few seconds.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
 
 ### Examples
 
@@ -1177,7 +2037,8 @@ end
 api_instance = Repull::VRBOApi.new
 id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
 opts = {
-  vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+  vrbo_listing_number: 'vrbo_listing_number_example', # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+  source: 'stored' # String | `stored` (default): Repull's copy, in milliseconds. `live`: read Vrbo now (seconds) and refresh the copy.
 }
 
 begin
@@ -1213,6 +2074,7 @@ end
 | ---- | ---- | ----------- | ----- |
 | **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
 | **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
+| **source** | **String** | &#x60;stored&#x60; (default): Repull&#39;s copy, in milliseconds. &#x60;live&#x60;: read Vrbo now (seconds) and refresh the copy. | [optional][default to &#39;stored&#39;] |
 
 ### Return type
 
@@ -1234,7 +2096,7 @@ end
 
 Get the Vrbo rates and stay discounts
 
-Per night over a date range: the nightly rate, its weekday, the weekly (7–27 nights) and monthly (28+ nights) discounts and the minimum stay. Vrbo offers only these two stay discounts, saved per night with the weekday prices.  Read live from the listing's Vrbo listing in the host's connected Vrbo account. **Cost:** 1 Vrbo calendar call (`?start=&end=`, default today + 13 days) on Vrbo, spaced ~3 s apart per account — a few seconds. Vrbo is read live on every request (nothing is cached), so read the section you need rather than polling.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
+Per night over a date range: the nightly rate, its weekday, the weekly (7–27 nights) and monthly (28+ nights) discounts and the minimum stay. Vrbo offers only these two stay discounts, saved per night with the weekday prices.  Read live from Vrbo on every request (a date range). **Cost:** 1 Vrbo calendar call (`?start=&end=`, default today + 13 days) on Vrbo, spaced ~3 s apart per account.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
 
 ### Examples
 
@@ -1305,86 +2167,13 @@ end
 - **Accept**: application/json
 
 
-## get_vrbo_listing_registration
-
-> <GetVrboListingRegistration200Response> get_vrbo_listing_registration(id, opts)
-
-Get the Vrbo registration / licence
-
-The local registration or licence fields Vrbo asks for in the listing's jurisdiction, and their status.  Read live from the listing's Vrbo listing in the host's connected Vrbo account. **Cost:** 1 Vrbo call on Vrbo, spaced ~3 s apart per account — a few seconds. Vrbo is read live on every request (nothing is cached), so read the section you need rather than polling.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
-
-### Examples
-
-```ruby
-require 'time'
-require 'repull'
-# setup authorization
-Repull.configure do |config|
-  # Configure Bearer authorization (API Key): bearerAuth
-  config.access_token = 'YOUR_BEARER_TOKEN'
-end
-
-api_instance = Repull::VRBOApi.new
-id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
-opts = {
-  vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
-}
-
-begin
-  # Get the Vrbo registration / licence
-  result = api_instance.get_vrbo_listing_registration(id, opts)
-  p result
-rescue Repull::ApiError => e
-  puts "Error when calling VRBOApi->get_vrbo_listing_registration: #{e}"
-end
-```
-
-#### Using the get_vrbo_listing_registration_with_http_info variant
-
-This returns an Array which contains the response data, status code and headers.
-
-> <Array(<GetVrboListingRegistration200Response>, Integer, Hash)> get_vrbo_listing_registration_with_http_info(id, opts)
-
-```ruby
-begin
-  # Get the Vrbo registration / licence
-  data, status_code, headers = api_instance.get_vrbo_listing_registration_with_http_info(id, opts)
-  p status_code # => 2xx
-  p headers # => { ... }
-  p data # => <GetVrboListingRegistration200Response>
-rescue Repull::ApiError => e
-  puts "Error when calling VRBOApi->get_vrbo_listing_registration_with_http_info: #{e}"
-end
-```
-
-### Parameters
-
-| Name | Type | Description | Notes |
-| ---- | ---- | ----------- | ----- |
-| **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
-| **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
-
-### Return type
-
-[**GetVrboListingRegistration200Response**](GetVrboListingRegistration200Response.md)
-
-### Authorization
-
-[bearerAuth](../README.md#bearerAuth)
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
-
-
 ## get_vrbo_listing_rooms
 
 > <GetVrboListingRooms200Response> get_vrbo_listing_rooms(id, opts)
 
-Get the Vrbo rooms and spaces
+Get the Vrbo rooms
 
-Bedrooms, bathrooms, living rooms and other spaces with their beds and room amenities; the space, bed and bathroom types Vrbo offers.  Read live from the listing's Vrbo listing in the host's connected Vrbo account. **Cost:** 1 Vrbo call + 1 per room on Vrbo, spaced ~3 s apart per account — a few seconds. Vrbo is read live on every request (nothing is cached), so read the section you need rather than polling.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
+Bedrooms, bathrooms, living rooms and other spaces with their beds and room amenities; the space, bed and bathroom types Vrbo offers.  Answers from Repull's stored copy of the listing's Vrbo content, like the Airbnb endpoints (`dataFreshness.lastSyncedAt` says when it was read from Vrbo). The first read of a section reads Vrbo and stores it; a copy over 24 h old answers and is refreshed in the background (`reason: refreshing`); every write through Repull stores what Vrbo has after it. `?source=live` reads Vrbo now. **Cost:** from the copy, milliseconds. A live read is 1 Vrbo call + 1 per room on Vrbo, spaced ~3 s apart per account — a few seconds.
 
 ### Examples
 
@@ -1400,11 +2189,12 @@ end
 api_instance = Repull::VRBOApi.new
 id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
 opts = {
+  source: 'stored', # String | `stored` (default): Repull's copy, in milliseconds. `live`: read Vrbo now (seconds) and refresh the copy.
   vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
 }
 
 begin
-  # Get the Vrbo rooms and spaces
+  # Get the Vrbo rooms
   result = api_instance.get_vrbo_listing_rooms(id, opts)
   p result
 rescue Repull::ApiError => e
@@ -1420,7 +2210,7 @@ This returns an Array which contains the response data, status code and headers.
 
 ```ruby
 begin
-  # Get the Vrbo rooms and spaces
+  # Get the Vrbo rooms
   data, status_code, headers = api_instance.get_vrbo_listing_rooms_with_http_info(id, opts)
   p status_code # => 2xx
   p headers # => { ... }
@@ -1435,11 +2225,87 @@ end
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
+| **source** | **String** | &#x60;stored&#x60; (default): Repull&#39;s copy, in milliseconds. &#x60;live&#x60;: read Vrbo now (seconds) and refresh the copy. | [optional][default to &#39;stored&#39;] |
 | **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
 
 ### Return type
 
 [**GetVrboListingRooms200Response**](GetVrboListingRooms200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## get_vrbo_listing_safety_disclosures
+
+> <GetVrboListingSafetyDisclosures200Response> get_vrbo_listing_safety_disclosures(id, opts)
+
+Get the Vrbo safety disclosures
+
+What the listing tells guests about safety: Vrbo's home-safety (`homeSafety`: e.g. pool or hot tub without a gate, nearby water, heights) and safety-device (`safetyDevices`: smoke and carbon-monoxide detectors, fire extinguisher, first aid) amenities, field by field like GET …/amenities.  Answers from Repull's stored copy of the listing's Vrbo content, like the Airbnb endpoints (`dataFreshness.lastSyncedAt` says when it was read from Vrbo). The first read of a section reads Vrbo and stores it; a copy over 24 h old answers and is refreshed in the background (`reason: refreshing`); every write through Repull stores what Vrbo has after it. `?source=live` reads Vrbo now. **Cost:** from the copy, milliseconds; a live read is 2 Vrbo calls.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::VRBOApi.new
+id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
+opts = {
+  source: 'stored', # String | `stored` (default): Repull's copy, in milliseconds. `live`: read Vrbo now (seconds) and refresh the copy.
+  vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+}
+
+begin
+  # Get the Vrbo safety disclosures
+  result = api_instance.get_vrbo_listing_safety_disclosures(id, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->get_vrbo_listing_safety_disclosures: #{e}"
+end
+```
+
+#### Using the get_vrbo_listing_safety_disclosures_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<GetVrboListingSafetyDisclosures200Response>, Integer, Hash)> get_vrbo_listing_safety_disclosures_with_http_info(id, opts)
+
+```ruby
+begin
+  # Get the Vrbo safety disclosures
+  data, status_code, headers = api_instance.get_vrbo_listing_safety_disclosures_with_http_info(id, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <GetVrboListingSafetyDisclosures200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->get_vrbo_listing_safety_disclosures_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
+| **source** | **String** | &#x60;stored&#x60; (default): Repull&#39;s copy, in milliseconds. &#x60;live&#x60;: read Vrbo now (seconds) and refresh the copy. | [optional][default to &#39;stored&#39;] |
+| **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
+
+### Return type
+
+[**GetVrboListingSafetyDisclosures200Response**](GetVrboListingSafetyDisclosures200Response.md)
 
 ### Authorization
 
@@ -1457,7 +2323,7 @@ end
 
 Get the Vrbo host story
 
-\"Your story\" on the listing: about you, why this property, what makes it unique.  Read live from the listing's Vrbo listing in the host's connected Vrbo account. **Cost:** 1 Vrbo call on Vrbo, spaced ~3 s apart per account — a few seconds. Vrbo is read live on every request (nothing is cached), so read the section you need rather than polling.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
+\"Your story\" on the listing: about you, why this property, what makes it unique.  Answers from Repull's stored copy of the listing's Vrbo content, like the Airbnb endpoints (`dataFreshness.lastSyncedAt` says when it was read from Vrbo). The first read of a section reads Vrbo and stores it; a copy over 24 h old answers and is refreshed in the background (`reason: refreshing`); every write through Repull stores what Vrbo has after it. `?source=live` reads Vrbo now. **Cost:** from the copy, milliseconds. A live read is 1 Vrbo call on Vrbo, spaced ~3 s apart per account — a few seconds.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
 
 ### Examples
 
@@ -1473,7 +2339,8 @@ end
 api_instance = Repull::VRBOApi.new
 id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
 opts = {
-  vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+  vrbo_listing_number: 'vrbo_listing_number_example', # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+  source: 'stored' # String | `stored` (default): Repull's copy, in milliseconds. `live`: read Vrbo now (seconds) and refresh the copy.
 }
 
 begin
@@ -1509,6 +2376,7 @@ end
 | ---- | ---- | ----------- | ----- |
 | **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
 | **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
+| **source** | **String** | &#x60;stored&#x60; (default): Repull&#39;s copy, in milliseconds. &#x60;live&#x60;: read Vrbo now (seconds) and refresh the copy. | [optional][default to &#39;stored&#39;] |
 
 ### Return type
 
@@ -1530,7 +2398,7 @@ end
 
 Get the Vrbo taxes
 
-Who collects tax and the rules that apply. Where Vrbo collects (e.g. British Columbia) the rules are read-only.  Read live from the listing's Vrbo listing in the host's connected Vrbo account. **Cost:** 1 Vrbo call on Vrbo, spaced ~3 s apart per account — a few seconds. Vrbo is read live on every request (nothing is cached), so read the section you need rather than polling.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
+Who collects tax and the rules that apply. Where Vrbo collects (e.g. British Columbia) the rules are read-only.  Answers from Repull's stored copy of the listing's Vrbo content, like the Airbnb endpoints (`dataFreshness.lastSyncedAt` says when it was read from Vrbo). The first read of a section reads Vrbo and stores it; a copy over 24 h old answers and is refreshed in the background (`reason: refreshing`); every write through Repull stores what Vrbo has after it. `?source=live` reads Vrbo now. **Cost:** from the copy, milliseconds. A live read is 1 Vrbo call on Vrbo, spaced ~3 s apart per account — a few seconds.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
 
 ### Examples
 
@@ -1546,7 +2414,8 @@ end
 api_instance = Repull::VRBOApi.new
 id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
 opts = {
-  vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+  vrbo_listing_number: 'vrbo_listing_number_example', # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+  source: 'stored' # String | `stored` (default): Repull's copy, in milliseconds. `live`: read Vrbo now (seconds) and refresh the copy.
 }
 
 begin
@@ -1582,83 +2451,11 @@ end
 | ---- | ---- | ----------- | ----- |
 | **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
 | **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
+| **source** | **String** | &#x60;stored&#x60; (default): Repull&#39;s copy, in milliseconds. &#x60;live&#x60;: read Vrbo now (seconds) and refresh the copy. | [optional][default to &#39;stored&#39;] |
 
 ### Return type
 
 [**GetVrboListingTaxes200Response**](GetVrboListingTaxes200Response.md)
-
-### Authorization
-
-[bearerAuth](../README.md#bearerAuth)
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
-
-
-## get_vrbo_listing_translations
-
-> <GetVrboListingTranslations200Response> get_vrbo_listing_translations(id, opts)
-
-Get the Vrbo manual translations
-
-Headline and description written per language (they replace Vrbo's automatic translation), and the languages Vrbo offers.  Read live from the listing's Vrbo listing in the host's connected Vrbo account. **Cost:** 1 Vrbo call + 1 per language on Vrbo, spaced ~3 s apart per account — a few seconds. Vrbo is read live on every request (nothing is cached), so read the section you need rather than polling.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
-
-### Examples
-
-```ruby
-require 'time'
-require 'repull'
-# setup authorization
-Repull.configure do |config|
-  # Configure Bearer authorization (API Key): bearerAuth
-  config.access_token = 'YOUR_BEARER_TOKEN'
-end
-
-api_instance = Repull::VRBOApi.new
-id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
-opts = {
-  vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
-}
-
-begin
-  # Get the Vrbo manual translations
-  result = api_instance.get_vrbo_listing_translations(id, opts)
-  p result
-rescue Repull::ApiError => e
-  puts "Error when calling VRBOApi->get_vrbo_listing_translations: #{e}"
-end
-```
-
-#### Using the get_vrbo_listing_translations_with_http_info variant
-
-This returns an Array which contains the response data, status code and headers.
-
-> <Array(<GetVrboListingTranslations200Response>, Integer, Hash)> get_vrbo_listing_translations_with_http_info(id, opts)
-
-```ruby
-begin
-  # Get the Vrbo manual translations
-  data, status_code, headers = api_instance.get_vrbo_listing_translations_with_http_info(id, opts)
-  p status_code # => 2xx
-  p headers # => { ... }
-  p data # => <GetVrboListingTranslations200Response>
-rescue Repull::ApiError => e
-  puts "Error when calling VRBOApi->get_vrbo_listing_translations_with_http_info: #{e}"
-end
-```
-
-### Parameters
-
-| Name | Type | Description | Notes |
-| ---- | ---- | ----------- | ----- |
-| **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
-| **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
-
-### Return type
-
-[**GetVrboListingTranslations200Response**](GetVrboListingTranslations200Response.md)
 
 ### Authorization
 
@@ -1676,7 +2473,7 @@ end
 
 Get the Vrbo videos
 
-The listing's videos with their file name, Vrbo's processing and review status, player and thumbnail URLs, upload time and any reasons Vrbo rejected them.  Read live from the listing's Vrbo listing in the host's connected Vrbo account. **Cost:** 1 Vrbo call on Vrbo, spaced ~3 s apart per account — a few seconds. Vrbo is read live on every request (nothing is cached), so read the section you need rather than polling.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
+The listing's videos with their file name, Vrbo's processing and review status, player and thumbnail URLs, upload time and any reasons Vrbo rejected them.  Answers from Repull's stored copy of the listing's Vrbo content, like the Airbnb endpoints (`dataFreshness.lastSyncedAt` says when it was read from Vrbo). The first read of a section reads Vrbo and stores it; a copy over 24 h old answers and is refreshed in the background (`reason: refreshing`); every write through Repull stores what Vrbo has after it. `?source=live` reads Vrbo now. **Cost:** from the copy, milliseconds. A live read is 1 Vrbo call on Vrbo, spaced ~3 s apart per account — a few seconds.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
 
 ### Examples
 
@@ -1692,7 +2489,8 @@ end
 api_instance = Repull::VRBOApi.new
 id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
 opts = {
-  vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+  vrbo_listing_number: 'vrbo_listing_number_example', # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+  source: 'stored' # String | `stored` (default): Repull's copy, in milliseconds. `live`: read Vrbo now (seconds) and refresh the copy.
 }
 
 begin
@@ -1728,83 +2526,11 @@ end
 | ---- | ---- | ----------- | ----- |
 | **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
 | **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
+| **source** | **String** | &#x60;stored&#x60; (default): Repull&#39;s copy, in milliseconds. &#x60;live&#x60;: read Vrbo now (seconds) and refresh the copy. | [optional][default to &#39;stored&#39;] |
 
 ### Return type
 
 [**GetVrboListingVideos200Response**](GetVrboListingVideos200Response.md)
-
-### Authorization
-
-[bearerAuth](../README.md#bearerAuth)
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
-
-
-## get_vrbo_listing_welcome_guide
-
-> <GetVrboListingWelcomeGuide200Response> get_vrbo_listing_welcome_guide(id, opts)
-
-Get the Vrbo welcome guide
-
-What guests receive before arrival: check-in and check-out instructions, driving and parking directions, access (type, code), wifi, per-amenity instructions, contacts.  Read live from the listing's Vrbo listing in the host's connected Vrbo account. **Cost:** 1 Vrbo call on Vrbo, spaced ~3 s apart per account — a few seconds. Vrbo is read live on every request (nothing is cached), so read the section you need rather than polling.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
-
-### Examples
-
-```ruby
-require 'time'
-require 'repull'
-# setup authorization
-Repull.configure do |config|
-  # Configure Bearer authorization (API Key): bearerAuth
-  config.access_token = 'YOUR_BEARER_TOKEN'
-end
-
-api_instance = Repull::VRBOApi.new
-id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
-opts = {
-  vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
-}
-
-begin
-  # Get the Vrbo welcome guide
-  result = api_instance.get_vrbo_listing_welcome_guide(id, opts)
-  p result
-rescue Repull::ApiError => e
-  puts "Error when calling VRBOApi->get_vrbo_listing_welcome_guide: #{e}"
-end
-```
-
-#### Using the get_vrbo_listing_welcome_guide_with_http_info variant
-
-This returns an Array which contains the response data, status code and headers.
-
-> <Array(<GetVrboListingWelcomeGuide200Response>, Integer, Hash)> get_vrbo_listing_welcome_guide_with_http_info(id, opts)
-
-```ruby
-begin
-  # Get the Vrbo welcome guide
-  data, status_code, headers = api_instance.get_vrbo_listing_welcome_guide_with_http_info(id, opts)
-  p status_code # => 2xx
-  p headers # => { ... }
-  p data # => <GetVrboListingWelcomeGuide200Response>
-rescue Repull::ApiError => e
-  puts "Error when calling VRBOApi->get_vrbo_listing_welcome_guide_with_http_info: #{e}"
-end
-```
-
-### Parameters
-
-| Name | Type | Description | Notes |
-| ---- | ---- | ----------- | ----- |
-| **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
-| **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
-
-### Return type
-
-[**GetVrboListingWelcomeGuide200Response**](GetVrboListingWelcomeGuide200Response.md)
 
 ### Authorization
 
@@ -1964,13 +2690,232 @@ end
 - **Accept**: application/json
 
 
+## map_vrbo_listing
+
+> <MapVrboListing200Response> map_vrbo_listing(map_vrbo_listing_request)
+
+Link a Vrbo listing to a Repull listing
+
+Link a Vrbo unit that is already on the host's connected Vrbo account to a Repull listing — the Vrbo counterpart of `POST /v1/channels/airbnb/listings/map`. Send `listingId` to link it to that listing, or `create: true` to create a Repull listing from what Vrbo shows. Once linked, the unit's bookings and messages are imported (upcoming ones and the last 30 days first).  `accountId` names the Vrbo account when the workspace has several (`GET /v1/connect/vrbo-login`). `syncEnabled: true` also sends the listing's calendar to Vrbo (full access; refused with `409 calendar_managed_elsewhere` while another tool manages the account's calendar).  The same write as `POST /v1/connections/{id}/mappings`, for one unit.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::VRBOApi.new
+map_vrbo_listing_request = Repull::MapVrboListingRequest.new({vrbo_listing_number: '5506023'}) # MapVrboListingRequest | 
+
+begin
+  # Link a Vrbo listing to a Repull listing
+  result = api_instance.map_vrbo_listing(map_vrbo_listing_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->map_vrbo_listing: #{e}"
+end
+```
+
+#### Using the map_vrbo_listing_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<MapVrboListing200Response>, Integer, Hash)> map_vrbo_listing_with_http_info(map_vrbo_listing_request)
+
+```ruby
+begin
+  # Link a Vrbo listing to a Repull listing
+  data, status_code, headers = api_instance.map_vrbo_listing_with_http_info(map_vrbo_listing_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <MapVrboListing200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->map_vrbo_listing_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **map_vrbo_listing_request** | [**MapVrboListingRequest**](MapVrboListingRequest.md) |  |  |
+
+### Return type
+
+[**MapVrboListing200Response**](MapVrboListing200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## reorder_vrbo_listing_photos
+
+> <AddVrboListingPhotos200Response> reorder_vrbo_listing_photos(id, reorder_vrbo_listing_photos_request, opts)
+
+Reorder the Vrbo photos
+
+Put the photos in this order, first photo first. Photos left out keep their order after the ones sent. Photo ids are the `id`s of GET …/photos.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data`. A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::VRBOApi.new
+id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
+reorder_vrbo_listing_photos_request = Repull::ReorderVrboListingPhotosRequest.new({photo_ids: ['photo_ids_example']}) # ReorderVrboListingPhotosRequest | 
+opts = {
+  vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+}
+
+begin
+  # Reorder the Vrbo photos
+  result = api_instance.reorder_vrbo_listing_photos(id, reorder_vrbo_listing_photos_request, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->reorder_vrbo_listing_photos: #{e}"
+end
+```
+
+#### Using the reorder_vrbo_listing_photos_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<AddVrboListingPhotos200Response>, Integer, Hash)> reorder_vrbo_listing_photos_with_http_info(id, reorder_vrbo_listing_photos_request, opts)
+
+```ruby
+begin
+  # Reorder the Vrbo photos
+  data, status_code, headers = api_instance.reorder_vrbo_listing_photos_with_http_info(id, reorder_vrbo_listing_photos_request, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <AddVrboListingPhotos200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->reorder_vrbo_listing_photos_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
+| **reorder_vrbo_listing_photos_request** | [**ReorderVrboListingPhotosRequest**](ReorderVrboListingPhotosRequest.md) |  |  |
+| **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
+
+### Return type
+
+[**AddVrboListingPhotos200Response**](AddVrboListingPhotos200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## set_vrbo_listing_cover_photo
+
+> <AddVrboListingPhotos200Response> set_vrbo_listing_cover_photo(id, set_vrbo_listing_cover_photo_request, opts)
+
+Set the Vrbo cover photo
+
+Make one photo the first, the one guests see in search. Photo ids are the `id`s of GET …/photos.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data`. A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::VRBOApi.new
+id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
+set_vrbo_listing_cover_photo_request = Repull::SetVrboListingCoverPhotoRequest.new({photo_id: 'photo_id_example'}) # SetVrboListingCoverPhotoRequest | 
+opts = {
+  vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+}
+
+begin
+  # Set the Vrbo cover photo
+  result = api_instance.set_vrbo_listing_cover_photo(id, set_vrbo_listing_cover_photo_request, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->set_vrbo_listing_cover_photo: #{e}"
+end
+```
+
+#### Using the set_vrbo_listing_cover_photo_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<AddVrboListingPhotos200Response>, Integer, Hash)> set_vrbo_listing_cover_photo_with_http_info(id, set_vrbo_listing_cover_photo_request, opts)
+
+```ruby
+begin
+  # Set the Vrbo cover photo
+  data, status_code, headers = api_instance.set_vrbo_listing_cover_photo_with_http_info(id, set_vrbo_listing_cover_photo_request, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <AddVrboListingPhotos200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->set_vrbo_listing_cover_photo_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
+| **set_vrbo_listing_cover_photo_request** | [**SetVrboListingCoverPhotoRequest**](SetVrboListingCoverPhotoRequest.md) |  |  |
+| **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
+
+### Return type
+
+[**AddVrboListingPhotos200Response**](AddVrboListingPhotos200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
 ## update_vrbo_listing_additional_info
 
 > <UpdateVrboListingAdditionalInfo200Response> update_vrbo_listing_additional_info(id, update_vrbo_listing_additional_info_request, opts)
 
 Update the Vrbo additional details
 
-Change the additional details of the listing's existing Vrbo listing. **Partial:** send only the fields to change; a field you leave out is never changed on Vrbo, and a field sent as `null` means \"none\" (where the field can be cleared). Fields Vrbo can change but never empty once set are refused with `422 invalid_params` when sent empty or `null`, rather than answering OK while Vrbo keeps the old value. Any of `property`, `bedrooms`, `bathrooms`.  **Cost:** 1 call + 2 to read back on Vrbo, spaced ~3 s apart per account. The answer comes once Vrbo has saved and the section has been read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data` (fields Vrbo accepted in the same request are saved). A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
+Change the additional details of the listing's existing Vrbo listing. **Partial:** send only the fields to change; a field you leave out is never changed on Vrbo, and a field sent as `null` means \"none\" (where the field can be cleared). Fields Vrbo can change but never empty once set are refused with `422 invalid_params` when sent empty or `null`, rather than answering OK while Vrbo keeps the old value. Any of `property`, `bedrooms`, `bathrooms`.  **Cost:** 1 call + 2 to read back on Vrbo, spaced ~3 s apart per account. The answer comes once Vrbo has saved and the section has been read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data`. A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
 
 ### Examples
 
@@ -2045,7 +2990,7 @@ end
 
 Update the Vrbo amenities
 
-Change the amenities of the listing's existing Vrbo listing. **Partial:** send only the fields to change; a field you leave out is never changed on Vrbo, and a field sent as `null` means \"none\" (where the field can be cleared). Fields Vrbo can change but never empty once set are refused with `422 invalid_params` when sent empty or `null`, rather than answering OK while Vrbo keeps the old value. `groups: {<group>: {values: {<field id>: value}}}`. Checkbox `true`/`false`; choice one of the field's `options`; text and numbers as such. Setting a parent to \"no\" clears its children, as Vrbo's own form does.  **Cost:** 1 call per group written + the read back of those groups on Vrbo, spaced ~3 s apart per account. The answer comes once Vrbo has saved and the section has been read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data` (fields Vrbo accepted in the same request are saved). A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
+Change the amenities of the listing's existing Vrbo listing. **Partial:** send only the fields to change; a field you leave out is never changed on Vrbo, and a field sent as `null` means \"none\" (where the field can be cleared). Fields Vrbo can change but never empty once set are refused with `422 invalid_params` when sent empty or `null`, rather than answering OK while Vrbo keeps the old value. `groups: {<group>: {values: {<field id>: value}}}`. Checkbox `true`/`false`; choice one of the field's `options`; text and numbers as such. Setting a parent to \"no\" clears its children, as Vrbo's own form does.  **Cost:** 1 call per group written + the read back of those groups on Vrbo, spaced ~3 s apart per account. The answer comes once Vrbo has saved and the section has been read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data`. A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
 
 ### Examples
 
@@ -2114,13 +3059,88 @@ end
 - **Accept**: application/json
 
 
+## update_vrbo_listing_availability
+
+> <UpdateVrboListingAvailability202Response> update_vrbo_listing_availability(id, update_vrbo_listing_availability_request, opts)
+
+Update the Vrbo calendar
+
+Write nights to Vrbo only — the counterpart of `PUT /v1/channels/airbnb/listings/{id}/availability` with `type: \"calendar\"`, with its operation fields: `daily_price`, `availability`, `min_nights`, `closed_to_arrival`, `closed_to_departure`.  The writes are queued with the account's other Vrbo calendar writes, which Vrbo takes at a pace of its own, so this answers `202` with a `jobId`: read its status with `GET …/availability?jobId=`. The listing's own calendar is not changed, and its next push for the same nights puts its own values back (as on Airbnb). For a change on every channel use `PUT /v1/availability/{propertyId}`.  Listing-level stay rules (default minimum stay, notice, booking window) are Vrbo's booking settings: `PUT /v1/channels/vrbo/listings/{id}/booking-settings` (`type: \"rules\"` is refused with that pointer). Nights up to 730 days ahead. Needs full access (`403 vrbo_messaging_access`); `409 calendar_managed_elsewhere` while another tool manages the account's calendar on Vrbo.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::VRBOApi.new
+id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
+update_vrbo_listing_availability_request = Repull::UpdateVrboListingAvailabilityRequest.new({operations: [Repull::UpdateVrboListingAvailabilityRequestOperationsInner.new]}) # UpdateVrboListingAvailabilityRequest | 
+opts = {
+  vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number, when the listing is linked to more than one Vrbo unit.
+}
+
+begin
+  # Update the Vrbo calendar
+  result = api_instance.update_vrbo_listing_availability(id, update_vrbo_listing_availability_request, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->update_vrbo_listing_availability: #{e}"
+end
+```
+
+#### Using the update_vrbo_listing_availability_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<UpdateVrboListingAvailability202Response>, Integer, Hash)> update_vrbo_listing_availability_with_http_info(id, update_vrbo_listing_availability_request, opts)
+
+```ruby
+begin
+  # Update the Vrbo calendar
+  data, status_code, headers = api_instance.update_vrbo_listing_availability_with_http_info(id, update_vrbo_listing_availability_request, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <UpdateVrboListingAvailability202Response>
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->update_vrbo_listing_availability_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
+| **update_vrbo_listing_availability_request** | [**UpdateVrboListingAvailabilityRequest**](UpdateVrboListingAvailabilityRequest.md) |  |  |
+| **vrbo_listing_number** | **String** | The Vrbo listing number, when the listing is linked to more than one Vrbo unit. | [optional] |
+
+### Return type
+
+[**UpdateVrboListingAvailability202Response**](UpdateVrboListingAvailability202Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
 ## update_vrbo_listing_booking_settings
 
 > <UpdateVrboListingBookingSettings200Response> update_vrbo_listing_booking_settings(id, update_vrbo_listing_booking_settings_request, opts)
 
 Update the Vrbo booking settings
 
-Change the booking settings of the listing's existing Vrbo listing. **Partial:** send only the fields to change; a field you leave out is never changed on Vrbo, and a field sent as `null` means \"none\" (where the field can be cleared). Fields Vrbo can change but never empty once set are refused with `422 invalid_params` when sent empty or `null`, rather than answering OK while Vrbo keeps the old value. Any of `bookingType` (`INSTANT`|`QUOTEHOLD`), `minNights`, `minDaysBeforeBooking`, `maxMonthsBeforeBooking` (6, 9, 12, 18 or 24), `maxLengthOfStay`, `accessType`. Values must be ones the read lists. None of these can be cleared once set — **including `accessType`**: Vrbo keeps the last access type, so it can be changed to another but not removed.  **Cost:** 1–3 calls + 2 to read back on Vrbo, spaced ~3 s apart per account. The answer comes once Vrbo has saved and the section has been read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data` (fields Vrbo accepted in the same request are saved). A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
+Change the booking settings of the listing's existing Vrbo listing. **Partial:** send only the fields to change; a field you leave out is never changed on Vrbo, and a field sent as `null` means \"none\" (where the field can be cleared). Fields Vrbo can change but never empty once set are refused with `422 invalid_params` when sent empty or `null`, rather than answering OK while Vrbo keeps the old value. Any of `bookingType` (`INSTANT`|`QUOTEHOLD`), `minNights`, `minDaysBeforeBooking`, `maxMonthsBeforeBooking` (6, 9, 12, 18 or 24), `maxLengthOfStay`, `accessType`. Values must be ones the read lists. None of these can be cleared once set — **including `accessType`**: Vrbo keeps the last access type, so it can be changed to another but not removed.  **Cost:** 1–3 calls + 2 to read back on Vrbo, spaced ~3 s apart per account. The answer comes once Vrbo has saved and the section has been read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data`. A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
 
 ### Examples
 
@@ -2195,7 +3215,7 @@ end
 
 Update the Vrbo cancellation policy
 
-Change the cancellation policy of the listing's existing Vrbo listing. **Partial:** send only the fields to change; a field you leave out is never changed on Vrbo, and a field sent as `null` means \"none\" (where the field can be cleared). Fields Vrbo can change but never empty once set are refused with `422 invalid_params` when sent empty or `null`, rather than answering OK while Vrbo keeps the old value. `policyType` (e.g. `POLICY_TYPE_VR_RELAXED`, `_MODERATE`, `_FIRM`, `_STRICT`, or `POLICY_TYPE_CUSTOM` with `tiers: [{daysBefore, refundPercent}]`). Seasonal overrides are kept.  **Cost:** 2 calls + 1 to read back on Vrbo, spaced ~3 s apart per account. The answer comes once Vrbo has saved and the section has been read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data` (fields Vrbo accepted in the same request are saved). A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
+Change the cancellation policy of the listing's existing Vrbo listing. **Partial:** send only the fields to change; a field you leave out is never changed on Vrbo, and a field sent as `null` means \"none\" (where the field can be cleared). Fields Vrbo can change but never empty once set are refused with `422 invalid_params` when sent empty or `null`, rather than answering OK while Vrbo keeps the old value. `policyType` (e.g. `POLICY_TYPE_VR_RELAXED`, `_MODERATE`, `_FIRM`, `_STRICT`, or `POLICY_TYPE_CUSTOM` with `tiers: [{daysBefore, refundPercent}]`). Seasonal overrides are kept.  **Cost:** 2 calls + 1 to read back on Vrbo, spaced ~3 s apart per account. The answer comes once Vrbo has saved and the section has been read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data`. A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
 
 ### Examples
 
@@ -2264,13 +3284,13 @@ end
 - **Accept**: application/json
 
 
-## update_vrbo_listing_description
+## update_vrbo_listing_checkin_guide
 
-> <UpdateVrboListingDescription200Response> update_vrbo_listing_description(id, update_vrbo_listing_description_request, opts)
+> <UpdateVrboListingCheckinGuide200Response> update_vrbo_listing_checkin_guide(id, update_vrbo_listing_checkin_guide_request, opts)
 
-Update the Vrbo headline and description
+Update the Vrbo welcome guide
 
-Change the headline and description of the listing's existing Vrbo listing. **Partial:** send only the fields to change; a field you leave out is never changed on Vrbo, and a field sent as `null` means \"none\" (where the field can be cleared). Fields Vrbo can change but never empty once set are refused with `422 invalid_params` when sent empty or `null`, rather than answering OK while Vrbo keeps the old value. `headline` and/or `description`. Vrbo refuses some characters and words (`( ) * $ €`, other platforms' names, \"covid\") and says which.  **Cost:** 1 call + 1 to read back on Vrbo, spaced ~3 s apart per account. The answer comes once Vrbo has saved and the section has been read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data` (fields Vrbo accepted in the same request are saved). A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
+Change the welcome guide of the listing's existing Vrbo listing. **Partial:** send only the fields to change; a field you leave out is never changed on Vrbo, and a field sent as `null` means \"none\" (where the field can be cleared). Fields Vrbo can change but never empty once set are refused with `422 invalid_params` when sent empty or `null`, rather than answering OK while Vrbo keeps the old value. Any of `checkIn`, `checkOut`, `drivingDirections`, `parkingDirections` (`{instructions}`), `wifi`, `access`, `amenities` (`{AMENITY_ID: {instructions}}`). **The notes are one-way:** Vrbo has not been shown to remove a note once added, so `null` and empty text are refused — change a note to other text instead.  **Cost:** 1–2 calls per item + the read back on Vrbo, spaced ~3 s apart per account. The answer comes once Vrbo has saved and the section has been read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data`. A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
 
 ### Examples
 
@@ -2285,35 +3305,35 @@ end
 
 api_instance = Repull::VRBOApi.new
 id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
-update_vrbo_listing_description_request = Repull::UpdateVrboListingDescriptionRequest.new # UpdateVrboListingDescriptionRequest | 
+update_vrbo_listing_checkin_guide_request = Repull::UpdateVrboListingCheckinGuideRequest.new # UpdateVrboListingCheckinGuideRequest | 
 opts = {
   vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
 }
 
 begin
-  # Update the Vrbo headline and description
-  result = api_instance.update_vrbo_listing_description(id, update_vrbo_listing_description_request, opts)
+  # Update the Vrbo welcome guide
+  result = api_instance.update_vrbo_listing_checkin_guide(id, update_vrbo_listing_checkin_guide_request, opts)
   p result
 rescue Repull::ApiError => e
-  puts "Error when calling VRBOApi->update_vrbo_listing_description: #{e}"
+  puts "Error when calling VRBOApi->update_vrbo_listing_checkin_guide: #{e}"
 end
 ```
 
-#### Using the update_vrbo_listing_description_with_http_info variant
+#### Using the update_vrbo_listing_checkin_guide_with_http_info variant
 
 This returns an Array which contains the response data, status code and headers.
 
-> <Array(<UpdateVrboListingDescription200Response>, Integer, Hash)> update_vrbo_listing_description_with_http_info(id, update_vrbo_listing_description_request, opts)
+> <Array(<UpdateVrboListingCheckinGuide200Response>, Integer, Hash)> update_vrbo_listing_checkin_guide_with_http_info(id, update_vrbo_listing_checkin_guide_request, opts)
 
 ```ruby
 begin
-  # Update the Vrbo headline and description
-  data, status_code, headers = api_instance.update_vrbo_listing_description_with_http_info(id, update_vrbo_listing_description_request, opts)
+  # Update the Vrbo welcome guide
+  data, status_code, headers = api_instance.update_vrbo_listing_checkin_guide_with_http_info(id, update_vrbo_listing_checkin_guide_request, opts)
   p status_code # => 2xx
   p headers # => { ... }
-  p data # => <UpdateVrboListingDescription200Response>
+  p data # => <UpdateVrboListingCheckinGuide200Response>
 rescue Repull::ApiError => e
-  puts "Error when calling VRBOApi->update_vrbo_listing_description_with_http_info: #{e}"
+  puts "Error when calling VRBOApi->update_vrbo_listing_checkin_guide_with_http_info: #{e}"
 end
 ```
 
@@ -2322,12 +3342,162 @@ end
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
-| **update_vrbo_listing_description_request** | [**UpdateVrboListingDescriptionRequest**](UpdateVrboListingDescriptionRequest.md) |  |  |
+| **update_vrbo_listing_checkin_guide_request** | [**UpdateVrboListingCheckinGuideRequest**](UpdateVrboListingCheckinGuideRequest.md) |  |  |
 | **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
 
 ### Return type
 
-[**UpdateVrboListingDescription200Response**](UpdateVrboListingDescription200Response.md)
+[**UpdateVrboListingCheckinGuide200Response**](UpdateVrboListingCheckinGuide200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## update_vrbo_listing_descriptions
+
+> <UpdateVrboListingDescriptions200Response> update_vrbo_listing_descriptions(id, update_vrbo_listing_descriptions_request, opts)
+
+Update the Vrbo headline and description
+
+Change the headline and/or description. Without `locale` this is the listing's own language; with `locale` (one of `languages`) it writes that language's translation by hand — a field left out keeps the text Vrbo has for it. Vrbo refuses some characters and words (`( ) * $ €`, other platforms' names, \"covid\") and says which.  The answer is every language, as GET returns it.  **Cost:** 1 Vrbo call + 1 to read back (a translation with one field: +1 to read the other).  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data`. A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::VRBOApi.new
+id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
+update_vrbo_listing_descriptions_request = Repull::UpdateVrboListingDescriptionsRequest.new # UpdateVrboListingDescriptionsRequest | 
+opts = {
+  vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+}
+
+begin
+  # Update the Vrbo headline and description
+  result = api_instance.update_vrbo_listing_descriptions(id, update_vrbo_listing_descriptions_request, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->update_vrbo_listing_descriptions: #{e}"
+end
+```
+
+#### Using the update_vrbo_listing_descriptions_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<UpdateVrboListingDescriptions200Response>, Integer, Hash)> update_vrbo_listing_descriptions_with_http_info(id, update_vrbo_listing_descriptions_request, opts)
+
+```ruby
+begin
+  # Update the Vrbo headline and description
+  data, status_code, headers = api_instance.update_vrbo_listing_descriptions_with_http_info(id, update_vrbo_listing_descriptions_request, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <UpdateVrboListingDescriptions200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->update_vrbo_listing_descriptions_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
+| **update_vrbo_listing_descriptions_request** | [**UpdateVrboListingDescriptionsRequest**](UpdateVrboListingDescriptionsRequest.md) |  |  |
+| **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
+
+### Return type
+
+[**UpdateVrboListingDescriptions200Response**](UpdateVrboListingDescriptions200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## update_vrbo_listing_details
+
+> <UpdateVrboListingDetails200Response> update_vrbo_listing_details(id, update_vrbo_listing_details_request, opts)
+
+Update the Vrbo property details
+
+Change the property details of the listing's existing Vrbo listing. **Partial:** send only the fields to change; a field you leave out is never changed on Vrbo, and a field sent as `null` means \"none\" (where the field can be cleared). Fields Vrbo can change but never empty once set are refused with `422 invalid_params` when sent empty or `null`, rather than answering OK while Vrbo keeps the old value. Any of `propertyType` (one of `propertyTypeOptions`), `propertyName`, `interiorSize` `{value, unit: sqft|sqm}`, `seniorsOnly`, `longTermRentersWelcome`. `propertyType` and `propertyName` can be changed but not cleared.  **Cost:** 1 call + 1 to read back on Vrbo, spaced ~3 s apart per account. The answer comes once Vrbo has saved and the section has been read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data`. A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::VRBOApi.new
+id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
+update_vrbo_listing_details_request = Repull::UpdateVrboListingDetailsRequest.new # UpdateVrboListingDetailsRequest | 
+opts = {
+  vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+}
+
+begin
+  # Update the Vrbo property details
+  result = api_instance.update_vrbo_listing_details(id, update_vrbo_listing_details_request, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->update_vrbo_listing_details: #{e}"
+end
+```
+
+#### Using the update_vrbo_listing_details_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<UpdateVrboListingDetails200Response>, Integer, Hash)> update_vrbo_listing_details_with_http_info(id, update_vrbo_listing_details_request, opts)
+
+```ruby
+begin
+  # Update the Vrbo property details
+  data, status_code, headers = api_instance.update_vrbo_listing_details_with_http_info(id, update_vrbo_listing_details_request, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <UpdateVrboListingDetails200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->update_vrbo_listing_details_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
+| **update_vrbo_listing_details_request** | [**UpdateVrboListingDetailsRequest**](UpdateVrboListingDetailsRequest.md) |  |  |
+| **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
+
+### Return type
+
+[**UpdateVrboListingDetails200Response**](UpdateVrboListingDetails200Response.md)
 
 ### Authorization
 
@@ -2345,7 +3515,7 @@ end
 
 Update the Vrbo fees
 
-Change the fees of the listing's existing Vrbo listing. **Partial:** send only the fields to change; a field you leave out is never changed on Vrbo, and a field sent as `null` means \"none\" (where the field can be cleared). Fields Vrbo can change but never empty once set are refused with `422 invalid_params` when sent empty or `null`, rather than answering OK while Vrbo keeps the old value. Any of `cleaning`, `pets`, `extraGuests`, `custom`. `null` clears a fee; `custom` replaces the custom-fee list (`[]` removes them all), each `{productCode, amount, type?, taxable?, taxRate?}` with `productCode` one of the read's `customFeeCodes`.  **Cost:** 2 calls + 1 to read back on Vrbo, spaced ~3 s apart per account. The answer comes once Vrbo has saved and the section has been read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data` (fields Vrbo accepted in the same request are saved). A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
+Change the fees of the listing's existing Vrbo listing. **Partial:** send only the fields to change; a field you leave out is never changed on Vrbo, and a field sent as `null` means \"none\" (where the field can be cleared). Fields Vrbo can change but never empty once set are refused with `422 invalid_params` when sent empty or `null`, rather than answering OK while Vrbo keeps the old value. Any of `cleaning`, `pets`, `extraGuests`, `custom`. `null` clears a fee; `custom` replaces the custom-fee list (`[]` removes them all), each `{productCode, amount, type?, taxable?, taxRate?}` with `productCode` one of the read's `customFeeCodes`.  **Cost:** 2 calls + 1 to read back on Vrbo, spaced ~3 s apart per account. The answer comes once Vrbo has saved and the section has been read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data`. A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
 
 ### Examples
 
@@ -2420,7 +3590,7 @@ end
 
 Update the Vrbo house rules
 
-Change the house rules of the listing's existing Vrbo listing. **Partial:** send only the fields to change; a field you leave out is never changed on Vrbo, and a field sent as `null` means \"none\" (where the field can be cleared). Fields Vrbo can change but never empty once set are refused with `422 invalid_params` when sent empty or `null`, rather than answering OK while Vrbo keeps the old value. Any of `checkInTime`/`checkOutTime` (`Flexible` or `HH:MM` on the half hour), `maxGuests`, `maxAdults`, `occupancyNote`, `minimumAge`, `minimumAgeNote`, `children`, `pets`, `smoking`, `events`, `customRules` (at most 3). `maxAdults` may not exceed `maxGuests`: when lowering `maxGuests`, send `maxAdults` with it. `maxGuests` cannot be cleared; `minimumAge: null` removes the minimum age.  **Cost:** 2 calls + 1 to read back on Vrbo, spaced ~3 s apart per account. The answer comes once Vrbo has saved and the section has been read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data` (fields Vrbo accepted in the same request are saved). A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
+Change the house rules of the listing's existing Vrbo listing. **Partial:** send only the fields to change; a field you leave out is never changed on Vrbo, and a field sent as `null` means \"none\" (where the field can be cleared). Fields Vrbo can change but never empty once set are refused with `422 invalid_params` when sent empty or `null`, rather than answering OK while Vrbo keeps the old value. Any of `checkInTime`/`checkOutTime` (`Flexible` or `HH:MM` on the half hour), `maxGuests`, `maxAdults`, `occupancyNote`, `minimumAge`, `minimumAgeNote`, `children`, `pets`, `smoking`, `events`, `customRules` (at most 3). `maxAdults` may not exceed `maxGuests`: when lowering `maxGuests`, send `maxAdults` with it. `maxGuests` cannot be cleared; `minimumAge: null` removes the minimum age.  **Cost:** 2 calls + 1 to read back on Vrbo, spaced ~3 s apart per account. The answer comes once Vrbo has saved and the section has been read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data`. A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
 
 ### Examples
 
@@ -2495,7 +3665,7 @@ end
 
 Update the Vrbo map setting
 
-Change the map setting of the listing's existing Vrbo listing. **Partial:** send only the fields to change; a field you leave out is never changed on Vrbo, and a field sent as `null` means \"none\" (where the field can be cleared). Fields Vrbo can change but never empty once set are refused with `422 invalid_params` when sent empty or `null`, rather than answering OK while Vrbo keeps the old value. `showExactLocation: true|false`.  **Cost:** 1 call + 1 to read back on Vrbo, spaced ~3 s apart per account. The answer comes once Vrbo has saved and the section has been read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data` (fields Vrbo accepted in the same request are saved). A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
+Change the map setting of the listing's existing Vrbo listing. **Partial:** send only the fields to change; a field you leave out is never changed on Vrbo, and a field sent as `null` means \"none\" (where the field can be cleared). Fields Vrbo can change but never empty once set are refused with `422 invalid_params` when sent empty or `null`, rather than answering OK while Vrbo keeps the old value. `showExactLocation: true|false`.  **Cost:** 1 call + 1 to read back on Vrbo, spaced ~3 s apart per account. The answer comes once Vrbo has saved and the section has been read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data`. A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
 
 ### Examples
 
@@ -2570,7 +3740,7 @@ end
 
 Update the Vrbo payment terms
 
-Change the payment terms of the listing's existing Vrbo listing. **Partial:** send only the fields to change; a field you leave out is never changed on Vrbo, and a field sent as `null` means \"none\" (where the field can be cleared). Fields Vrbo can change but never empty once set are refused with `422 invalid_params` when sent empty or `null`, rather than answering OK while Vrbo keeps the old value. `percentDueNow` and `payments: [{percent, daysBeforeArrival}]`, adding up to 100.  **Cost:** 1 call + 1 to read back on Vrbo, spaced ~3 s apart per account. The answer comes once Vrbo has saved and the section has been read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data` (fields Vrbo accepted in the same request are saved). A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
+Change the payment terms of the listing's existing Vrbo listing. **Partial:** send only the fields to change; a field you leave out is never changed on Vrbo, and a field sent as `null` means \"none\" (where the field can be cleared). Fields Vrbo can change but never empty once set are refused with `422 invalid_params` when sent empty or `null`, rather than answering OK while Vrbo keeps the old value. `percentDueNow` and `payments: [{percent, daysBeforeArrival}]`, adding up to 100.  **Cost:** 1 call + 1 to read back on Vrbo, spaced ~3 s apart per account. The answer comes once Vrbo has saved and the section has been read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data`. A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
 
 ### Examples
 
@@ -2639,13 +3809,13 @@ end
 - **Accept**: application/json
 
 
-## update_vrbo_listing_photos
+## update_vrbo_listing_permits
 
-> <UpdateVrboListingPhotos200Response> update_vrbo_listing_photos(id, update_vrbo_listing_photos_request, opts)
+> <UpdateVrboListingPermits200Response> update_vrbo_listing_permits(id, update_vrbo_listing_permits_request, opts)
 
-Update the Vrbo photos
+Update the Vrbo registration / licence
 
-Change the photos of the listing's existing Vrbo listing. **Partial:** send only the fields to change; a field you leave out is never changed on Vrbo, and a field sent as `null` means \"none\" (where the field can be cleared). Fields Vrbo can change but never empty once set are refused with `422 invalid_params` when sent empty or `null`, rather than answering OK while Vrbo keeps the old value. `add: [{url, caption?}]` (https URLs Vrbo downloads), `delete: [id]`, `captions: {id: caption}`, `order: [id…]`, `cover: id`. Applied in that order. `order` may list only the first photos; the rest keep their order, and every photo is sent with its new position (as Vrbo's own page does). **Captions are one-way:** Vrbo has not been shown to clear a caption once set, so an empty caption is refused. Each `add` uploads a photo again — it is the one write that is not idempotent.  **Cost:** about 2 calls per photo added, 1 per delete/caption/reorder, plus reads on Vrbo, spaced ~3 s apart per account. The answer comes once Vrbo has saved and the section has been read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data` (fields Vrbo accepted in the same request are saved). A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
+Change the registration / licence of the listing's existing Vrbo listing. **Partial:** send only the fields to change; a field you leave out is never changed on Vrbo, and a field sent as `null` means \"none\" (where the field can be cleared). Fields Vrbo can change but never empty once set are refused with `422 invalid_params` when sent empty or `null`, rather than answering OK while Vrbo keeps the old value. `settings: [{name, value}]` with the `name`s the read lists (they differ per city). Vrbo checks them against the registry.  **Cost:** 1 call + 1 to read back on Vrbo, spaced ~3 s apart per account. The answer comes once Vrbo has saved and the section has been read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data`. A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
 
 ### Examples
 
@@ -2660,35 +3830,35 @@ end
 
 api_instance = Repull::VRBOApi.new
 id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
-update_vrbo_listing_photos_request = Repull::UpdateVrboListingPhotosRequest.new # UpdateVrboListingPhotosRequest | 
+update_vrbo_listing_permits_request = Repull::UpdateVrboListingPermitsRequest.new({settings: [Repull::UpdateVrboListingPermitsRequestSettingsInner.new({name: 'name_example', value: nil})]}) # UpdateVrboListingPermitsRequest | 
 opts = {
   vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
 }
 
 begin
-  # Update the Vrbo photos
-  result = api_instance.update_vrbo_listing_photos(id, update_vrbo_listing_photos_request, opts)
+  # Update the Vrbo registration / licence
+  result = api_instance.update_vrbo_listing_permits(id, update_vrbo_listing_permits_request, opts)
   p result
 rescue Repull::ApiError => e
-  puts "Error when calling VRBOApi->update_vrbo_listing_photos: #{e}"
+  puts "Error when calling VRBOApi->update_vrbo_listing_permits: #{e}"
 end
 ```
 
-#### Using the update_vrbo_listing_photos_with_http_info variant
+#### Using the update_vrbo_listing_permits_with_http_info variant
 
 This returns an Array which contains the response data, status code and headers.
 
-> <Array(<UpdateVrboListingPhotos200Response>, Integer, Hash)> update_vrbo_listing_photos_with_http_info(id, update_vrbo_listing_photos_request, opts)
+> <Array(<UpdateVrboListingPermits200Response>, Integer, Hash)> update_vrbo_listing_permits_with_http_info(id, update_vrbo_listing_permits_request, opts)
 
 ```ruby
 begin
-  # Update the Vrbo photos
-  data, status_code, headers = api_instance.update_vrbo_listing_photos_with_http_info(id, update_vrbo_listing_photos_request, opts)
+  # Update the Vrbo registration / licence
+  data, status_code, headers = api_instance.update_vrbo_listing_permits_with_http_info(id, update_vrbo_listing_permits_request, opts)
   p status_code # => 2xx
   p headers # => { ... }
-  p data # => <UpdateVrboListingPhotos200Response>
+  p data # => <UpdateVrboListingPermits200Response>
 rescue Repull::ApiError => e
-  puts "Error when calling VRBOApi->update_vrbo_listing_photos_with_http_info: #{e}"
+  puts "Error when calling VRBOApi->update_vrbo_listing_permits_with_http_info: #{e}"
 end
 ```
 
@@ -2697,12 +3867,87 @@ end
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
-| **update_vrbo_listing_photos_request** | [**UpdateVrboListingPhotosRequest**](UpdateVrboListingPhotosRequest.md) |  |  |
+| **update_vrbo_listing_permits_request** | [**UpdateVrboListingPermitsRequest**](UpdateVrboListingPermitsRequest.md) |  |  |
 | **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
 
 ### Return type
 
-[**UpdateVrboListingPhotos200Response**](UpdateVrboListingPhotos200Response.md)
+[**UpdateVrboListingPermits200Response**](UpdateVrboListingPermits200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## update_vrbo_listing_photo
+
+> <AddVrboListingPhotos200Response> update_vrbo_listing_photo(id, update_vrbo_listing_photo_request, opts)
+
+Update a Vrbo photo
+
+Change one photo's `caption` and/or its position (`sort_order`, 1 = first). Photo ids are the `id`s of GET …/photos. Vrbo cannot clear a caption once set.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data`. A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::VRBOApi.new
+id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
+update_vrbo_listing_photo_request = Repull::UpdateVrboListingPhotoRequest.new({photo_id: 'photo_id_example'}) # UpdateVrboListingPhotoRequest | 
+opts = {
+  vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+}
+
+begin
+  # Update a Vrbo photo
+  result = api_instance.update_vrbo_listing_photo(id, update_vrbo_listing_photo_request, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->update_vrbo_listing_photo: #{e}"
+end
+```
+
+#### Using the update_vrbo_listing_photo_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<AddVrboListingPhotos200Response>, Integer, Hash)> update_vrbo_listing_photo_with_http_info(id, update_vrbo_listing_photo_request, opts)
+
+```ruby
+begin
+  # Update a Vrbo photo
+  data, status_code, headers = api_instance.update_vrbo_listing_photo_with_http_info(id, update_vrbo_listing_photo_request, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <AddVrboListingPhotos200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->update_vrbo_listing_photo_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
+| **update_vrbo_listing_photo_request** | [**UpdateVrboListingPhotoRequest**](UpdateVrboListingPhotoRequest.md) |  |  |
+| **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
+
+### Return type
+
+[**AddVrboListingPhotos200Response**](AddVrboListingPhotos200Response.md)
 
 ### Authorization
 
@@ -2720,7 +3965,7 @@ end
 
 Update the Vrbo base pricing
 
-Change the base pricing of the listing's existing Vrbo listing. **Partial:** send only the fields to change; a field you leave out is never changed on Vrbo, and a field sent as `null` means \"none\" (where the field can be cleared). Fields Vrbo can change but never empty once set are refused with `422 invalid_params` when sent empty or `null`, rather than answering OK while Vrbo keeps the old value. `baseRate`. The answer comes once Vrbo shows the new rate. Nightly prices per date come from the listing calendar (`PUT /v1/availability/{propertyId}`), which Vrbo shows over the base rate. Uses Vrbo's calendar quota: while the listing's calendar push is writing, the answer is `409 vrbo_calendar_busy` with `retry_after` and nothing is changed.  **Cost:** 2 calls + 1 to read back on Vrbo, spaced ~3 s apart per account. The answer comes once Vrbo has saved and the section has been read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data` (fields Vrbo accepted in the same request are saved). A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
+Change the base pricing of the listing's existing Vrbo listing. **Partial:** send only the fields to change; a field you leave out is never changed on Vrbo, and a field sent as `null` means \"none\" (where the field can be cleared). Fields Vrbo can change but never empty once set are refused with `422 invalid_params` when sent empty or `null`, rather than answering OK while Vrbo keeps the old value. `baseRate`. The answer comes once Vrbo shows the new rate. Nightly prices per date come from the listing calendar (`PUT /v1/availability/{propertyId}`), which Vrbo shows over the base rate. Uses Vrbo's calendar quota: while the listing's calendar push is writing, the answer is `409 vrbo_calendar_busy` with `retry_after` and nothing is changed.  **Cost:** 2 calls + 1 to read back on Vrbo, spaced ~3 s apart per account. The answer comes once Vrbo has saved and the section has been read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data`. A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
 
 ### Examples
 
@@ -2789,88 +4034,13 @@ end
 - **Accept**: application/json
 
 
-## update_vrbo_listing_property
-
-> <UpdateVrboListingProperty200Response> update_vrbo_listing_property(id, update_vrbo_listing_property_request, opts)
-
-Update the Vrbo property details
-
-Change the property details of the listing's existing Vrbo listing. **Partial:** send only the fields to change; a field you leave out is never changed on Vrbo, and a field sent as `null` means \"none\" (where the field can be cleared). Fields Vrbo can change but never empty once set are refused with `422 invalid_params` when sent empty or `null`, rather than answering OK while Vrbo keeps the old value. Any of `propertyType` (one of `propertyTypeOptions`), `propertyName`, `interiorSize` `{value, unit: sqft|sqm}`, `seniorsOnly`, `longTermRentersWelcome`. `propertyType` and `propertyName` can be changed but not cleared.  **Cost:** 1 call + 1 to read back on Vrbo, spaced ~3 s apart per account. The answer comes once Vrbo has saved and the section has been read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data` (fields Vrbo accepted in the same request are saved). A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
-
-### Examples
-
-```ruby
-require 'time'
-require 'repull'
-# setup authorization
-Repull.configure do |config|
-  # Configure Bearer authorization (API Key): bearerAuth
-  config.access_token = 'YOUR_BEARER_TOKEN'
-end
-
-api_instance = Repull::VRBOApi.new
-id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
-update_vrbo_listing_property_request = Repull::UpdateVrboListingPropertyRequest.new # UpdateVrboListingPropertyRequest | 
-opts = {
-  vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
-}
-
-begin
-  # Update the Vrbo property details
-  result = api_instance.update_vrbo_listing_property(id, update_vrbo_listing_property_request, opts)
-  p result
-rescue Repull::ApiError => e
-  puts "Error when calling VRBOApi->update_vrbo_listing_property: #{e}"
-end
-```
-
-#### Using the update_vrbo_listing_property_with_http_info variant
-
-This returns an Array which contains the response data, status code and headers.
-
-> <Array(<UpdateVrboListingProperty200Response>, Integer, Hash)> update_vrbo_listing_property_with_http_info(id, update_vrbo_listing_property_request, opts)
-
-```ruby
-begin
-  # Update the Vrbo property details
-  data, status_code, headers = api_instance.update_vrbo_listing_property_with_http_info(id, update_vrbo_listing_property_request, opts)
-  p status_code # => 2xx
-  p headers # => { ... }
-  p data # => <UpdateVrboListingProperty200Response>
-rescue Repull::ApiError => e
-  puts "Error when calling VRBOApi->update_vrbo_listing_property_with_http_info: #{e}"
-end
-```
-
-### Parameters
-
-| Name | Type | Description | Notes |
-| ---- | ---- | ----------- | ----- |
-| **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
-| **update_vrbo_listing_property_request** | [**UpdateVrboListingPropertyRequest**](UpdateVrboListingPropertyRequest.md) |  |  |
-| **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
-
-### Return type
-
-[**UpdateVrboListingProperty200Response**](UpdateVrboListingProperty200Response.md)
-
-### Authorization
-
-[bearerAuth](../README.md#bearerAuth)
-
-### HTTP request headers
-
-- **Content-Type**: application/json
-- **Accept**: application/json
-
-
 ## update_vrbo_listing_protection
 
 > <UpdateVrboListingProtection200Response> update_vrbo_listing_protection(id, update_vrbo_listing_protection_request, opts)
 
 Update the Vrbo damage protection
 
-Change the damage protection of the listing's existing Vrbo listing. **Partial:** send only the fields to change; a field you leave out is never changed on Vrbo, and a field sent as `null` means \"none\" (where the field can be cleared). Fields Vrbo can change but never empty once set are refused with `422 invalid_params` when sent empty or `null`, rather than answering OK while Vrbo keeps the old value. Any of `damageDeposit` (`{amount}` or `null`), `damageProtection`.  **Cost:** 1 call + 1 to read back on Vrbo, spaced ~3 s apart per account. The answer comes once Vrbo has saved and the section has been read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data` (fields Vrbo accepted in the same request are saved). A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
+Change the damage protection of the listing's existing Vrbo listing. **Partial:** send only the fields to change; a field you leave out is never changed on Vrbo, and a field sent as `null` means \"none\" (where the field can be cleared). Fields Vrbo can change but never empty once set are refused with `422 invalid_params` when sent empty or `null`, rather than answering OK while Vrbo keeps the old value. Any of `damageDeposit` (`{amount}` or `null`), `damageProtection`.  **Cost:** 1 call + 1 to read back on Vrbo, spaced ~3 s apart per account. The answer comes once Vrbo has saved and the section has been read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data`. A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
 
 ### Examples
 
@@ -2945,7 +4115,7 @@ end
 
 Update the Vrbo rates and stay discounts
 
-Change the rates and stay discounts of the listing's existing Vrbo listing. **Partial:** send only the fields to change; a field you leave out is never changed on Vrbo, and a field sent as `null` means \"none\" (where the field can be cleared). Fields Vrbo can change but never empty once set are refused with `422 invalid_params` when sent empty or `null`, rather than answering OK while Vrbo keeps the old value. `startDate`, `endDate` (at most 3 years) and any of `nightlyRate` (one price), `nightlyRates` (`{sunday…saturday}`), `weeklyDiscountPercent`, `monthlyDiscountPercent` (0–99). A discount-only write keeps the current prices when each weekday has one price in the range; otherwise send `nightlyRates`. Nightly prices belong to the listing calendar (`PUT /v1/availability/{propertyId}`), whose push to Vrbo may put back a price set here; use this for the discounts and for prices on nights the calendar does not manage. While the listing's calendar push is writing, the answer is `409 vrbo_calendar_busy` with `retry_after` and nothing is changed.  **Cost:** 1–2 calendar calls + 1 to read back (Vrbo's calendar quota, the one price pushes use) on Vrbo, spaced ~3 s apart per account. The answer comes once Vrbo has saved and the section has been read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data` (fields Vrbo accepted in the same request are saved). A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
+Change the rates and stay discounts of the listing's existing Vrbo listing. **Partial:** send only the fields to change; a field you leave out is never changed on Vrbo, and a field sent as `null` means \"none\" (where the field can be cleared). Fields Vrbo can change but never empty once set are refused with `422 invalid_params` when sent empty or `null`, rather than answering OK while Vrbo keeps the old value. `startDate`, `endDate` (at most 3 years) and any of `nightlyRate` (one price), `nightlyRates` (`{sunday…saturday}`), `weeklyDiscountPercent`, `monthlyDiscountPercent` (0–99). A discount-only write keeps the current prices when each weekday has one price in the range; otherwise send `nightlyRates`. Nightly prices belong to the listing calendar (`PUT /v1/availability/{propertyId}`), whose push to Vrbo may put back a price set here; use this for the discounts and for prices on nights the calendar does not manage. While the listing's calendar push is writing, the answer is `409 vrbo_calendar_busy` with `retry_after` and nothing is changed.  **Cost:** 1–2 calendar calls + 1 to read back (Vrbo's calendar quota, the one price pushes use) on Vrbo, spaced ~3 s apart per account. The answer comes once Vrbo has saved and the section has been read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data`. A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
 
 ### Examples
 
@@ -3014,13 +4184,13 @@ end
 - **Accept**: application/json
 
 
-## update_vrbo_listing_registration
+## update_vrbo_listing_room
 
-> <UpdateVrboListingRegistration200Response> update_vrbo_listing_registration(id, update_vrbo_listing_registration_request, opts)
+> <UpdateVrboListingRoom200Response> update_vrbo_listing_room(id, room_id, update_vrbo_listing_room_request, opts)
 
-Update the Vrbo registration / licence
+Update a Vrbo room
 
-Change the registration / licence of the listing's existing Vrbo listing. **Partial:** send only the fields to change; a field you leave out is never changed on Vrbo, and a field sent as `null` means \"none\" (where the field can be cleared). Fields Vrbo can change but never empty once set are refused with `422 invalid_params` when sent empty or `null`, rather than answering OK while Vrbo keeps the old value. `settings: [{name, value}]` with the `name`s the read lists (they differ per city). Vrbo checks them against the registry.  **Cost:** 1 call + 1 to read back on Vrbo, spaced ~3 s apart per account. The answer comes once Vrbo has saved and the section has been read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data` (fields Vrbo accepted in the same request are saved). A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
+Change a room's name, description, bathroom type, beds or room amenities. Vrbo cannot change the type of a room: delete it and add one. `beds` replaces the room's beds.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data`. A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
 
 ### Examples
 
@@ -3035,35 +4205,36 @@ end
 
 api_instance = Repull::VRBOApi.new
 id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
-update_vrbo_listing_registration_request = Repull::UpdateVrboListingRegistrationRequest.new({settings: [Repull::UpdateVrboListingRegistrationRequestSettingsInner.new({name: 'name_example', value: nil})]}) # UpdateVrboListingRegistrationRequest | 
+room_id = 'd342a2ab-0cf2-4032-a962-bb1c0e35648c' # String | The room's `spaceId` from GET …/rooms.
+update_vrbo_listing_room_request = Repull::UpdateVrboListingRoomRequest.new # UpdateVrboListingRoomRequest | 
 opts = {
   vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
 }
 
 begin
-  # Update the Vrbo registration / licence
-  result = api_instance.update_vrbo_listing_registration(id, update_vrbo_listing_registration_request, opts)
+  # Update a Vrbo room
+  result = api_instance.update_vrbo_listing_room(id, room_id, update_vrbo_listing_room_request, opts)
   p result
 rescue Repull::ApiError => e
-  puts "Error when calling VRBOApi->update_vrbo_listing_registration: #{e}"
+  puts "Error when calling VRBOApi->update_vrbo_listing_room: #{e}"
 end
 ```
 
-#### Using the update_vrbo_listing_registration_with_http_info variant
+#### Using the update_vrbo_listing_room_with_http_info variant
 
 This returns an Array which contains the response data, status code and headers.
 
-> <Array(<UpdateVrboListingRegistration200Response>, Integer, Hash)> update_vrbo_listing_registration_with_http_info(id, update_vrbo_listing_registration_request, opts)
+> <Array(<UpdateVrboListingRoom200Response>, Integer, Hash)> update_vrbo_listing_room_with_http_info(id, room_id, update_vrbo_listing_room_request, opts)
 
 ```ruby
 begin
-  # Update the Vrbo registration / licence
-  data, status_code, headers = api_instance.update_vrbo_listing_registration_with_http_info(id, update_vrbo_listing_registration_request, opts)
+  # Update a Vrbo room
+  data, status_code, headers = api_instance.update_vrbo_listing_room_with_http_info(id, room_id, update_vrbo_listing_room_request, opts)
   p status_code # => 2xx
   p headers # => { ... }
-  p data # => <UpdateVrboListingRegistration200Response>
+  p data # => <UpdateVrboListingRoom200Response>
 rescue Repull::ApiError => e
-  puts "Error when calling VRBOApi->update_vrbo_listing_registration_with_http_info: #{e}"
+  puts "Error when calling VRBOApi->update_vrbo_listing_room_with_http_info: #{e}"
 end
 ```
 
@@ -3072,12 +4243,13 @@ end
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
-| **update_vrbo_listing_registration_request** | [**UpdateVrboListingRegistrationRequest**](UpdateVrboListingRegistrationRequest.md) |  |  |
+| **room_id** | **String** | The room&#39;s &#x60;spaceId&#x60; from GET …/rooms. |  |
+| **update_vrbo_listing_room_request** | [**UpdateVrboListingRoomRequest**](UpdateVrboListingRoomRequest.md) |  |  |
 | **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
 
 ### Return type
 
-[**UpdateVrboListingRegistration200Response**](UpdateVrboListingRegistration200Response.md)
+[**UpdateVrboListingRoom200Response**](UpdateVrboListingRoom200Response.md)
 
 ### Authorization
 
@@ -3089,13 +4261,13 @@ end
 - **Accept**: application/json
 
 
-## update_vrbo_listing_rooms
+## update_vrbo_listing_safety_disclosures
 
-> <UpdateVrboListingRooms200Response> update_vrbo_listing_rooms(id, update_vrbo_listing_rooms_request, opts)
+> <UpdateVrboListingSafetyDisclosures200Response> update_vrbo_listing_safety_disclosures(id, update_vrbo_listing_safety_disclosures_request, opts)
 
-Update the Vrbo rooms and spaces
+Update the Vrbo safety disclosures
 
-Change the rooms and spaces of the listing's existing Vrbo listing. **Partial:** send only the fields to change; a field you leave out is never changed on Vrbo, and a field sent as `null` means \"none\" (where the field can be cleared). Fields Vrbo can change but never empty once set are refused with `422 invalid_params` when sent empty or `null`, rather than answering OK while Vrbo keeps the old value. `add: [{type, name?, subType?, description?, beds?, amenities?}]`, `update: [{spaceId, …}]`, `delete: [spaceId]`. Beds `{type, size?, quantity 1–99}`: `type` one of the read's `bedTypes`, and `size` is required where that bed type lists `sizes` (bunk, sofa…). **A room description can be replaced but not cleared** (Vrbo never saves an empty one), so an empty `description` is refused.  **Cost:** 1 call per room changed + the read back on Vrbo, spaced ~3 s apart per account. The answer comes once Vrbo has saved and the section has been read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data` (fields Vrbo accepted in the same request are saved). A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
+Set safety values field by field, as PUT …/amenities does for these two groups: `{\"groups\": {\"safetyDevices\": {\"values\": {\"<fieldId>\": true}}}}`. Field ids are in the read.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data`. A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
 
 ### Examples
 
@@ -3110,35 +4282,35 @@ end
 
 api_instance = Repull::VRBOApi.new
 id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
-update_vrbo_listing_rooms_request = Repull::UpdateVrboListingRoomsRequest.new # UpdateVrboListingRoomsRequest | 
+update_vrbo_listing_safety_disclosures_request = Repull::UpdateVrboListingSafetyDisclosuresRequest.new({groups: Repull::UpdateVrboListingSafetyDisclosuresRequestGroups.new}) # UpdateVrboListingSafetyDisclosuresRequest | 
 opts = {
   vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
 }
 
 begin
-  # Update the Vrbo rooms and spaces
-  result = api_instance.update_vrbo_listing_rooms(id, update_vrbo_listing_rooms_request, opts)
+  # Update the Vrbo safety disclosures
+  result = api_instance.update_vrbo_listing_safety_disclosures(id, update_vrbo_listing_safety_disclosures_request, opts)
   p result
 rescue Repull::ApiError => e
-  puts "Error when calling VRBOApi->update_vrbo_listing_rooms: #{e}"
+  puts "Error when calling VRBOApi->update_vrbo_listing_safety_disclosures: #{e}"
 end
 ```
 
-#### Using the update_vrbo_listing_rooms_with_http_info variant
+#### Using the update_vrbo_listing_safety_disclosures_with_http_info variant
 
 This returns an Array which contains the response data, status code and headers.
 
-> <Array(<UpdateVrboListingRooms200Response>, Integer, Hash)> update_vrbo_listing_rooms_with_http_info(id, update_vrbo_listing_rooms_request, opts)
+> <Array(<UpdateVrboListingSafetyDisclosures200Response>, Integer, Hash)> update_vrbo_listing_safety_disclosures_with_http_info(id, update_vrbo_listing_safety_disclosures_request, opts)
 
 ```ruby
 begin
-  # Update the Vrbo rooms and spaces
-  data, status_code, headers = api_instance.update_vrbo_listing_rooms_with_http_info(id, update_vrbo_listing_rooms_request, opts)
+  # Update the Vrbo safety disclosures
+  data, status_code, headers = api_instance.update_vrbo_listing_safety_disclosures_with_http_info(id, update_vrbo_listing_safety_disclosures_request, opts)
   p status_code # => 2xx
   p headers # => { ... }
-  p data # => <UpdateVrboListingRooms200Response>
+  p data # => <UpdateVrboListingSafetyDisclosures200Response>
 rescue Repull::ApiError => e
-  puts "Error when calling VRBOApi->update_vrbo_listing_rooms_with_http_info: #{e}"
+  puts "Error when calling VRBOApi->update_vrbo_listing_safety_disclosures_with_http_info: #{e}"
 end
 ```
 
@@ -3147,12 +4319,12 @@ end
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
-| **update_vrbo_listing_rooms_request** | [**UpdateVrboListingRoomsRequest**](UpdateVrboListingRoomsRequest.md) |  |  |
+| **update_vrbo_listing_safety_disclosures_request** | [**UpdateVrboListingSafetyDisclosuresRequest**](UpdateVrboListingSafetyDisclosuresRequest.md) |  |  |
 | **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
 
 ### Return type
 
-[**UpdateVrboListingRooms200Response**](UpdateVrboListingRooms200Response.md)
+[**UpdateVrboListingSafetyDisclosures200Response**](UpdateVrboListingSafetyDisclosures200Response.md)
 
 ### Authorization
 
@@ -3170,7 +4342,7 @@ end
 
 Update the Vrbo host story
 
-Change the host story of the listing's existing Vrbo listing. **Partial:** send only the fields to change; a field you leave out is never changed on Vrbo, and a field sent as `null` means \"none\" (where the field can be cleared). Fields Vrbo can change but never empty once set are refused with `422 invalid_params` when sent empty or `null`, rather than answering OK while Vrbo keeps the old value. Any of `aboutYou`, `whyThisProperty`, `uniqueBenefits`.  **Cost:** 1 call + 1 to read back on Vrbo, spaced ~3 s apart per account. The answer comes once Vrbo has saved and the section has been read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data` (fields Vrbo accepted in the same request are saved). A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
+Change the host story of the listing's existing Vrbo listing. **Partial:** send only the fields to change; a field you leave out is never changed on Vrbo, and a field sent as `null` means \"none\" (where the field can be cleared). Fields Vrbo can change but never empty once set are refused with `422 invalid_params` when sent empty or `null`, rather than answering OK while Vrbo keeps the old value. Any of `aboutYou`, `whyThisProperty`, `uniqueBenefits`.  **Cost:** 1 call + 1 to read back on Vrbo, spaced ~3 s apart per account. The answer comes once Vrbo has saved and the section has been read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data`. A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
 
 ### Examples
 
@@ -3245,7 +4417,7 @@ end
 
 Update the Vrbo taxes
 
-Change the taxes of the listing's existing Vrbo listing. **Partial:** send only the fields to change; a field you leave out is never changed on Vrbo, and a field sent as `null` means \"none\" (where the field can be cleared). Fields Vrbo can change but never empty once set are refused with `422 invalid_params` when sent empty or `null`, rather than answering OK while Vrbo keeps the old value. `tax`, `stayTax` or `partnerTaxSettings`, in Vrbo's shape (see the read's `raw`).  **Cost:** 2 calls + 1 to read back on Vrbo, spaced ~3 s apart per account. The answer comes once Vrbo has saved and the section has been read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data` (fields Vrbo accepted in the same request are saved). A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
+Change the taxes of the listing's existing Vrbo listing. **Partial:** send only the fields to change; a field you leave out is never changed on Vrbo, and a field sent as `null` means \"none\" (where the field can be cleared). Fields Vrbo can change but never empty once set are refused with `422 invalid_params` when sent empty or `null`, rather than answering OK while Vrbo keeps the old value. `tax`, `stayTax` or `partnerTaxSettings`, in Vrbo's shape (see the read's `raw`).  **Cost:** 2 calls + 1 to read back on Vrbo, spaced ~3 s apart per account. The answer comes once Vrbo has saved and the section has been read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data`. A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
 
 ### Examples
 
@@ -3314,88 +4486,13 @@ end
 - **Accept**: application/json
 
 
-## update_vrbo_listing_translations
+## vrbo_listing_action
 
-> <UpdateVrboListingTranslations200Response> update_vrbo_listing_translations(id, update_vrbo_listing_translations_request, opts)
+> <VrboListingAction200Response> vrbo_listing_action(id, vrbo_listing_action_request)
 
-Update the Vrbo manual translations
+Act on the Vrbo listing
 
-Change the manual translations of the listing's existing Vrbo listing. **Partial:** send only the fields to change; a field you leave out is never changed on Vrbo, and a field sent as `null` means \"none\" (where the field can be cleared). Fields Vrbo can change but never empty once set are refused with `422 invalid_params` when sent empty or `null`, rather than answering OK while Vrbo keeps the old value. `set: [{locale, headline, description}]` and/or `delete: [locale]`.  **Cost:** 1 call per language + the read back on Vrbo, spaced ~3 s apart per account. The answer comes once Vrbo has saved and the section has been read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data` (fields Vrbo accepted in the same request are saved). A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
-
-### Examples
-
-```ruby
-require 'time'
-require 'repull'
-# setup authorization
-Repull.configure do |config|
-  # Configure Bearer authorization (API Key): bearerAuth
-  config.access_token = 'YOUR_BEARER_TOKEN'
-end
-
-api_instance = Repull::VRBOApi.new
-id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
-update_vrbo_listing_translations_request = Repull::UpdateVrboListingTranslationsRequest.new # UpdateVrboListingTranslationsRequest | 
-opts = {
-  vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
-}
-
-begin
-  # Update the Vrbo manual translations
-  result = api_instance.update_vrbo_listing_translations(id, update_vrbo_listing_translations_request, opts)
-  p result
-rescue Repull::ApiError => e
-  puts "Error when calling VRBOApi->update_vrbo_listing_translations: #{e}"
-end
-```
-
-#### Using the update_vrbo_listing_translations_with_http_info variant
-
-This returns an Array which contains the response data, status code and headers.
-
-> <Array(<UpdateVrboListingTranslations200Response>, Integer, Hash)> update_vrbo_listing_translations_with_http_info(id, update_vrbo_listing_translations_request, opts)
-
-```ruby
-begin
-  # Update the Vrbo manual translations
-  data, status_code, headers = api_instance.update_vrbo_listing_translations_with_http_info(id, update_vrbo_listing_translations_request, opts)
-  p status_code # => 2xx
-  p headers # => { ... }
-  p data # => <UpdateVrboListingTranslations200Response>
-rescue Repull::ApiError => e
-  puts "Error when calling VRBOApi->update_vrbo_listing_translations_with_http_info: #{e}"
-end
-```
-
-### Parameters
-
-| Name | Type | Description | Notes |
-| ---- | ---- | ----------- | ----- |
-| **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
-| **update_vrbo_listing_translations_request** | [**UpdateVrboListingTranslationsRequest**](UpdateVrboListingTranslationsRequest.md) |  |  |
-| **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
-
-### Return type
-
-[**UpdateVrboListingTranslations200Response**](UpdateVrboListingTranslations200Response.md)
-
-### Authorization
-
-[bearerAuth](../README.md#bearerAuth)
-
-### HTTP request headers
-
-- **Content-Type**: application/json
-- **Accept**: application/json
-
-
-## update_vrbo_listing_welcome_guide
-
-> <UpdateVrboListingWelcomeGuide200Response> update_vrbo_listing_welcome_guide(id, update_vrbo_listing_welcome_guide_request, opts)
-
-Update the Vrbo welcome guide
-
-Change the welcome guide of the listing's existing Vrbo listing. **Partial:** send only the fields to change; a field you leave out is never changed on Vrbo, and a field sent as `null` means \"none\" (where the field can be cleared). Fields Vrbo can change but never empty once set are refused with `422 invalid_params` when sent empty or `null`, rather than answering OK while Vrbo keeps the old value. Any of `checkIn`, `checkOut`, `drivingDirections`, `parkingDirections` (`{instructions}`), `wifi`, `access`, `amenities` (`{AMENITY_ID: {instructions}}`). **The notes are one-way:** Vrbo has not been shown to remove a note once added, so `null` and empty text are refused — change a note to other text instead.  **Cost:** 1–2 calls per item + the read back on Vrbo, spaced ~3 s apart per account. The answer comes once Vrbo has saved and the section has been read back.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data` (fields Vrbo accepted in the same request are saved). A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
+Airbnb's listing actions, on Vrbo:  - `push` / `publish` — push the listing's content onto its Vrbo listing: the same job as `POST /v1/listings/{id}/publish/vrbo` (`202`, poll `GET /v1/listings/{id}/publish/vrbo?jobId=`). Optional `sections` and `vrboListingNumber`. - `unlist` — Vrbo's \"Hide listing\": out of Vrbo search, no new bookings. Read back from Vrbo before answering. - `relist` — Vrbo's \"Reactivate\". - `delete` — deactivate the Repull record (local; the Vrbo listing is not touched — use `unlist` for that).  `unlist` / `relist` act on every Vrbo unit of the listing, or the one named with `vrboListingNumber`. Needs full access. See https://repull.dev/docs/channels/vrbo/listing-content.
 
 ### Examples
 
@@ -3409,36 +4506,33 @@ Repull.configure do |config|
 end
 
 api_instance = Repull::VRBOApi.new
-id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
-update_vrbo_listing_welcome_guide_request = Repull::UpdateVrboListingWelcomeGuideRequest.new # UpdateVrboListingWelcomeGuideRequest | 
-opts = {
-  vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
-}
+id = 'id_example' # String | Repull listing id (numeric string).
+vrbo_listing_action_request = Repull::VrboListingActionRequest.new({action: 'push'}) # VrboListingActionRequest | 
 
 begin
-  # Update the Vrbo welcome guide
-  result = api_instance.update_vrbo_listing_welcome_guide(id, update_vrbo_listing_welcome_guide_request, opts)
+  # Act on the Vrbo listing
+  result = api_instance.vrbo_listing_action(id, vrbo_listing_action_request)
   p result
 rescue Repull::ApiError => e
-  puts "Error when calling VRBOApi->update_vrbo_listing_welcome_guide: #{e}"
+  puts "Error when calling VRBOApi->vrbo_listing_action: #{e}"
 end
 ```
 
-#### Using the update_vrbo_listing_welcome_guide_with_http_info variant
+#### Using the vrbo_listing_action_with_http_info variant
 
 This returns an Array which contains the response data, status code and headers.
 
-> <Array(<UpdateVrboListingWelcomeGuide200Response>, Integer, Hash)> update_vrbo_listing_welcome_guide_with_http_info(id, update_vrbo_listing_welcome_guide_request, opts)
+> <Array(<VrboListingAction200Response>, Integer, Hash)> vrbo_listing_action_with_http_info(id, vrbo_listing_action_request)
 
 ```ruby
 begin
-  # Update the Vrbo welcome guide
-  data, status_code, headers = api_instance.update_vrbo_listing_welcome_guide_with_http_info(id, update_vrbo_listing_welcome_guide_request, opts)
+  # Act on the Vrbo listing
+  data, status_code, headers = api_instance.vrbo_listing_action_with_http_info(id, vrbo_listing_action_request)
   p status_code # => 2xx
   p headers # => { ... }
-  p data # => <UpdateVrboListingWelcomeGuide200Response>
+  p data # => <VrboListingAction200Response>
 rescue Repull::ApiError => e
-  puts "Error when calling VRBOApi->update_vrbo_listing_welcome_guide_with_http_info: #{e}"
+  puts "Error when calling VRBOApi->vrbo_listing_action_with_http_info: #{e}"
 end
 ```
 
@@ -3446,13 +4540,12 @@ end
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
-| **update_vrbo_listing_welcome_guide_request** | [**UpdateVrboListingWelcomeGuideRequest**](UpdateVrboListingWelcomeGuideRequest.md) |  |  |
-| **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
+| **id** | **String** | Repull listing id (numeric string). |  |
+| **vrbo_listing_action_request** | [**VrboListingActionRequest**](VrboListingActionRequest.md) |  |  |
 
 ### Return type
 
-[**UpdateVrboListingWelcomeGuide200Response**](UpdateVrboListingWelcomeGuide200Response.md)
+[**VrboListingAction200Response**](VrboListingAction200Response.md)
 
 ### Authorization
 
