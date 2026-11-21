@@ -55,7 +55,7 @@ module Repull
     # Update only: each section pushed, in order, with what was sent, Vrbo's refusals and what Vrbo has stored after the write.
     attr_accessor :sections
 
-    # Update only: sections the push leaves as they are on Vrbo, and why (rooms, photos, registration, or no value in the listing content).
+    # Update only: sections the push leaves as they are on Vrbo, and why (rooms, photos, permits, or no value in the listing content).
     attr_accessor :skipped
 
     # Update only.

@@ -14,7 +14,7 @@ require 'date'
 require 'time'
 
 module Repull
-  # What Vrbo has stored for the section, read back after the write.
+  # What Vrbo has after the write, read back from Vrbo.
   class UpdateVrboListingStory200ResponseData < ApiModelBase
     attr_accessor :about_you
 

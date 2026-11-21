@@ -14,7 +14,7 @@ require 'date'
 require 'time'
 
 module Repull
-  # What Vrbo has stored for the section, read back after the write.
+  # What Vrbo has after the write, read back from Vrbo.
   class UpdateVrboListingAmenities200ResponseData < ApiModelBase
     # Keyed by group: essentials, internet, climateControl, general, office, kitchenAndDining, parking, poolAndSpa, sustainability, entertainment, outdoor, onsiteService, accessibility, homeSafety, safetyDevices, enhancedCleaning, locationAndView, localAttractionsAndActivities, checkoutInstructions.
     attr_accessor :groups

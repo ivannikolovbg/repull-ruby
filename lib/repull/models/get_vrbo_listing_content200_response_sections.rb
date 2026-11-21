@@ -14,17 +14,15 @@ require 'date'
 require 'time'
 
 module Repull
-  # Keyed by section; each is the data of `GET /v1/channels/vrbo/listings/{id}/{section}`, or `{ error: { code, message } }` when that section failed.
+  # Keyed by section; each is the `data` of `GET /v1/channels/vrbo/listings/{id}/{section}`, or `{ error: { code, message } }` when that section failed.
   class GetVrboListingContent200ResponseSections < ApiModelBase
-    attr_accessor :description
+    attr_accessor :descriptions
 
-    attr_accessor :property
+    attr_accessor :details
 
     attr_accessor :story
 
     attr_accessor :additional_info
-
-    attr_accessor :translations
 
     attr_accessor :photos
 
@@ -44,28 +42,25 @@ module Repull
 
     attr_accessor :pricing
 
-    attr_accessor :rates
-
     attr_accessor :payment_terms
 
     attr_accessor :protection
 
     attr_accessor :taxes
 
-    attr_accessor :registration
+    attr_accessor :permits
 
-    attr_accessor :welcome_guide
+    attr_accessor :checkin_guide
 
     attr_accessor :videos
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'description' => :'description',
-        :'property' => :'property',
+        :'descriptions' => :'descriptions',
+        :'details' => :'details',
         :'story' => :'story',
         :'additional_info' => :'additional-info',
-        :'translations' => :'translations',
         :'photos' => :'photos',
         :'amenities' => :'amenities',
         :'rooms' => :'rooms',
@@ -75,12 +70,11 @@ module Repull
         :'cancellation' => :'cancellation',
         :'fees' => :'fees',
         :'pricing' => :'pricing',
-        :'rates' => :'rates',
         :'payment_terms' => :'payment-terms',
         :'protection' => :'protection',
         :'taxes' => :'taxes',
-        :'registration' => :'registration',
-        :'welcome_guide' => :'welcome-guide',
+        :'permits' => :'permits',
+        :'checkin_guide' => :'checkin-guide',
         :'videos' => :'videos'
       }
     end
@@ -98,11 +92,10 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'description' => :'GetVrboListingContent200ResponseSectionsDescription',
-        :'property' => :'GetVrboListingContent200ResponseSectionsProperty',
+        :'descriptions' => :'Array<GetVrboListingContent200ResponseSectionsDescriptionsInner>',
+        :'details' => :'GetVrboListingContent200ResponseSectionsDetails',
         :'story' => :'GetVrboListingContent200ResponseSectionsStory',
         :'additional_info' => :'GetVrboListingContent200ResponseSectionsAdditionalInfo',
-        :'translations' => :'GetVrboListingContent200ResponseSectionsTranslations',
         :'photos' => :'GetVrboListingContent200ResponseSectionsPhotos',
         :'amenities' => :'GetVrboListingContent200ResponseSectionsAmenities',
         :'rooms' => :'GetVrboListingContent200ResponseSectionsRooms',
@@ -112,12 +105,11 @@ module Repull
         :'cancellation' => :'GetVrboListingContent200ResponseSectionsCancellation',
         :'fees' => :'GetVrboListingContent200ResponseSectionsFees',
         :'pricing' => :'GetVrboListingContent200ResponseSectionsPricing',
-        :'rates' => :'GetVrboListingContent200ResponseSectionsRates',
         :'payment_terms' => :'GetVrboListingContent200ResponseSectionsPaymentTerms',
         :'protection' => :'GetVrboListingContent200ResponseSectionsProtection',
         :'taxes' => :'GetVrboListingContent200ResponseSectionsTaxes',
-        :'registration' => :'GetVrboListingContent200ResponseSectionsRegistration',
-        :'welcome_guide' => :'GetVrboListingContent200ResponseSectionsWelcomeGuide',
+        :'permits' => :'GetVrboListingContent200ResponseSectionsPermits',
+        :'checkin_guide' => :'GetVrboListingContent200ResponseSectionsCheckinGuide',
         :'videos' => :'GetVrboListingContent200ResponseSectionsVideos'
       }
     end
@@ -144,12 +136,14 @@ module Repull
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'description')
-        self.description = attributes[:'description']
+      if attributes.key?(:'descriptions')
+        if (value = attributes[:'descriptions']).is_a?(Array)
+          self.descriptions = value
+        end
       end
 
-      if attributes.key?(:'property')
-        self.property = attributes[:'property']
+      if attributes.key?(:'details')
+        self.details = attributes[:'details']
       end
 
       if attributes.key?(:'story')
@@ -158,10 +152,6 @@ module Repull
 
       if attributes.key?(:'additional_info')
         self.additional_info = attributes[:'additional_info']
-      end
-
-      if attributes.key?(:'translations')
-        self.translations = attributes[:'translations']
       end
 
       if attributes.key?(:'photos')
@@ -200,10 +190,6 @@ module Repull
         self.pricing = attributes[:'pricing']
       end
 
-      if attributes.key?(:'rates')
-        self.rates = attributes[:'rates']
-      end
-
       if attributes.key?(:'payment_terms')
         self.payment_terms = attributes[:'payment_terms']
       end
@@ -216,12 +202,12 @@ module Repull
         self.taxes = attributes[:'taxes']
       end
 
-      if attributes.key?(:'registration')
-        self.registration = attributes[:'registration']
+      if attributes.key?(:'permits')
+        self.permits = attributes[:'permits']
       end
 
-      if attributes.key?(:'welcome_guide')
-        self.welcome_guide = attributes[:'welcome_guide']
+      if attributes.key?(:'checkin_guide')
+        self.checkin_guide = attributes[:'checkin_guide']
       end
 
       if attributes.key?(:'videos')
@@ -249,11 +235,10 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          description == o.description &&
-          property == o.property &&
+          descriptions == o.descriptions &&
+          details == o.details &&
           story == o.story &&
           additional_info == o.additional_info &&
-          translations == o.translations &&
           photos == o.photos &&
           amenities == o.amenities &&
           rooms == o.rooms &&
@@ -263,12 +248,11 @@ module Repull
           cancellation == o.cancellation &&
           fees == o.fees &&
           pricing == o.pricing &&
-          rates == o.rates &&
           payment_terms == o.payment_terms &&
           protection == o.protection &&
           taxes == o.taxes &&
-          registration == o.registration &&
-          welcome_guide == o.welcome_guide &&
+          permits == o.permits &&
+          checkin_guide == o.checkin_guide &&
           videos == o.videos
     end
 
@@ -281,7 +265,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [description, property, story, additional_info, translations, photos, amenities, rooms, location, house_rules, booking_settings, cancellation, fees, pricing, rates, payment_terms, protection, taxes, registration, welcome_guide, videos].hash
+      [descriptions, details, story, additional_info, photos, amenities, rooms, location, house_rules, booking_settings, cancellation, fees, pricing, payment_terms, protection, taxes, permits, checkin_guide, videos].hash
     end
 
     # Builds the object from hash

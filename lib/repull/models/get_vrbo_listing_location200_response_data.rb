@@ -14,7 +14,7 @@ require 'date'
 require 'time'
 
 module Repull
-  # The section as Vrbo has it now.
+  # The section as Vrbo has it.
   class GetVrboListingLocation200ResponseData < ApiModelBase
     # The address (read-only: Vrbo changes it only through its support).
     attr_accessor :address

@@ -18,7 +18,7 @@
 | **adjustments** | **Array&lt;String&gt;** | POST only: where the Vrbo listing departs from the listing&#39;s content because of a Vrbo rule. | [optional] |
 | **resumed_property_id** | **String** | POST only: set when an unfinished Vrbo property of this listing is completed instead of starting a new one. | [optional] |
 | **sections** | [**Array&lt;GetVrboPublishJob200ResponseJobSectionsInner&gt;**](GetVrboPublishJob200ResponseJobSectionsInner.md) | Update only: each section pushed, in order, with what was sent, Vrbo&#39;s refusals and what Vrbo has stored after the write. | [optional] |
-| **skipped** | [**Array&lt;GetVrboPublishJob200ResponseJobSkippedInner&gt;**](GetVrboPublishJob200ResponseJobSkippedInner.md) | Update only: sections the push leaves as they are on Vrbo, and why (rooms, photos, registration, or no value in the listing content). | [optional] |
+| **skipped** | [**Array&lt;GetVrboPublishJob200ResponseJobSkippedInner&gt;**](GetVrboPublishJob200ResponseJobSkippedInner.md) | Update only: sections the push leaves as they are on Vrbo, and why (rooms, photos, permits, or no value in the listing content). | [optional] |
 | **started_at** | **Time** | Update only. | [optional] |
 | **finished_at** | **Time** | Update only. | [optional] |
 

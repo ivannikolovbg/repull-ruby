@@ -14,7 +14,7 @@ require 'date'
 require 'time'
 
 module Repull
-  # The section as Vrbo has it now.
+  # The section as Vrbo has it.
   class GetVrboListingProtection200ResponseData < ApiModelBase
     attr_accessor :currency
 

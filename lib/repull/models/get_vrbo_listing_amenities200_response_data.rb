@@ -14,7 +14,7 @@ require 'date'
 require 'time'
 
 module Repull
-  # The section as Vrbo has it now.
+  # The section as Vrbo has it.
   class GetVrboListingAmenities200ResponseData < ApiModelBase
     # Keyed by group: essentials, internet, climateControl, general, office, kitchenAndDining, parking, poolAndSpa, sustainability, entertainment, outdoor, onsiteService, accessibility, homeSafety, safetyDevices, enhancedCleaning, locationAndView, localAttractionsAndActivities, checkoutInstructions.
     attr_accessor :groups

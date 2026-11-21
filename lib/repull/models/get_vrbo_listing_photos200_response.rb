@@ -15,25 +15,19 @@ require 'time'
 
 module Repull
   class GetVrboListingPhotos200Response < ApiModelBase
-    attr_accessor :listing_id
-
-    attr_accessor :vrbo_listing_number
-
-    # Vrbo's property id for the unit.
-    attr_accessor :property_id
-
-    attr_accessor :section
-
     attr_accessor :data
+
+    attr_accessor :data_freshness
+
+    # The Vrbo listing number this is about.
+    attr_accessor :vrbo_listing_number
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'listing_id' => :'listingId',
-        :'vrbo_listing_number' => :'vrboListingNumber',
-        :'property_id' => :'propertyId',
-        :'section' => :'section',
-        :'data' => :'data'
+        :'data' => :'data',
+        :'data_freshness' => :'dataFreshness',
+        :'vrbo_listing_number' => :'vrboListingNumber'
       }
     end
 
@@ -50,11 +44,9 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'listing_id' => :'String',
-        :'vrbo_listing_number' => :'String',
-        :'property_id' => :'String',
-        :'section' => :'String',
-        :'data' => :'GetVrboListingPhotos200ResponseData'
+        :'data' => :'GetVrboListingPhotos200ResponseData',
+        :'data_freshness' => :'GetVrboListingAdditionalInfo200ResponseDataFreshness',
+        :'vrbo_listing_number' => :'String'
       }
     end
 
@@ -80,34 +72,22 @@ module Repull
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'listing_id')
-        self.listing_id = attributes[:'listing_id']
+      if attributes.key?(:'data')
+        self.data = attributes[:'data']
       else
-        self.listing_id = nil
+        self.data = nil
+      end
+
+      if attributes.key?(:'data_freshness')
+        self.data_freshness = attributes[:'data_freshness']
+      else
+        self.data_freshness = nil
       end
 
       if attributes.key?(:'vrbo_listing_number')
         self.vrbo_listing_number = attributes[:'vrbo_listing_number']
       else
         self.vrbo_listing_number = nil
-      end
-
-      if attributes.key?(:'property_id')
-        self.property_id = attributes[:'property_id']
-      else
-        self.property_id = nil
-      end
-
-      if attributes.key?(:'section')
-        self.section = attributes[:'section']
-      else
-        self.section = nil
-      end
-
-      if attributes.key?(:'data')
-        self.data = attributes[:'data']
-      else
-        self.data = nil
       end
     end
 
@@ -116,24 +96,16 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
-      if @listing_id.nil?
-        invalid_properties.push('invalid value for "listing_id", listing_id cannot be nil.')
+      if @data.nil?
+        invalid_properties.push('invalid value for "data", data cannot be nil.')
+      end
+
+      if @data_freshness.nil?
+        invalid_properties.push('invalid value for "data_freshness", data_freshness cannot be nil.')
       end
 
       if @vrbo_listing_number.nil?
         invalid_properties.push('invalid value for "vrbo_listing_number", vrbo_listing_number cannot be nil.')
-      end
-
-      if @property_id.nil?
-        invalid_properties.push('invalid value for "property_id", property_id cannot be nil.')
-      end
-
-      if @section.nil?
-        invalid_properties.push('invalid value for "section", section cannot be nil.')
-      end
-
-      if @data.nil?
-        invalid_properties.push('invalid value for "data", data cannot be nil.')
       end
 
       invalid_properties
@@ -143,52 +115,10 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
-      return false if @listing_id.nil?
-      return false if @vrbo_listing_number.nil?
-      return false if @property_id.nil?
-      return false if @section.nil?
       return false if @data.nil?
+      return false if @data_freshness.nil?
+      return false if @vrbo_listing_number.nil?
       true
-    end
-
-    # Custom attribute writer method with validation
-    # @param [Object] listing_id Value to be assigned
-    def listing_id=(listing_id)
-      if listing_id.nil?
-        fail ArgumentError, 'listing_id cannot be nil'
-      end
-
-      @listing_id = listing_id
-    end
-
-    # Custom attribute writer method with validation
-    # @param [Object] vrbo_listing_number Value to be assigned
-    def vrbo_listing_number=(vrbo_listing_number)
-      if vrbo_listing_number.nil?
-        fail ArgumentError, 'vrbo_listing_number cannot be nil'
-      end
-
-      @vrbo_listing_number = vrbo_listing_number
-    end
-
-    # Custom attribute writer method with validation
-    # @param [Object] property_id Value to be assigned
-    def property_id=(property_id)
-      if property_id.nil?
-        fail ArgumentError, 'property_id cannot be nil'
-      end
-
-      @property_id = property_id
-    end
-
-    # Custom attribute writer method with validation
-    # @param [Object] section Value to be assigned
-    def section=(section)
-      if section.nil?
-        fail ArgumentError, 'section cannot be nil'
-      end
-
-      @section = section
     end
 
     # Custom attribute writer method with validation
@@ -201,16 +131,34 @@ module Repull
       @data = data
     end
 
+    # Custom attribute writer method with validation
+    # @param [Object] data_freshness Value to be assigned
+    def data_freshness=(data_freshness)
+      if data_freshness.nil?
+        fail ArgumentError, 'data_freshness cannot be nil'
+      end
+
+      @data_freshness = data_freshness
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] vrbo_listing_number Value to be assigned
+    def vrbo_listing_number=(vrbo_listing_number)
+      if vrbo_listing_number.nil?
+        fail ArgumentError, 'vrbo_listing_number cannot be nil'
+      end
+
+      @vrbo_listing_number = vrbo_listing_number
+    end
+
     # Checks equality by comparing each attribute.
     # @param [Object] Object to be compared
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          listing_id == o.listing_id &&
-          vrbo_listing_number == o.vrbo_listing_number &&
-          property_id == o.property_id &&
-          section == o.section &&
-          data == o.data
+          data == o.data &&
+          data_freshness == o.data_freshness &&
+          vrbo_listing_number == o.vrbo_listing_number
     end
 
     # @see the `==` method
@@ -222,7 +170,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [listing_id, vrbo_listing_number, property_id, section, data].hash
+      [data, data_freshness, vrbo_listing_number].hash
     end
 
     # Builds the object from hash
