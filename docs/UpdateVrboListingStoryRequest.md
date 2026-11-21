@@ -1,0 +1,22 @@
+# Repull::UpdateVrboListingStoryRequest
+
+## Properties
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **about_you** | **String** |  | [optional] |
+| **why_this_property** | **String** |  | [optional] |
+| **unique_benefits** | **String** |  | [optional] |
+
+## Example
+
+```ruby
+require 'repull'
+
+instance = Repull::UpdateVrboListingStoryRequest.new(
+  about_you: null,
+  why_this_property: null,
+  unique_benefits: null
+)
+```
+

@@ -15,8 +15,11 @@ require 'time'
 
 module Repull
   class GetVrboPublishJob200ResponseJob < ApiModelBase
-    # Pass to `GET /v1/listings/{id}/publish/vrbo?jobId=`.
+    # Pass to `GET /v1/listings/{id}/publish/vrbo?jobId=`. A creation is `vrbo_<n>_<n>`, a push onto an existing Vrbo listing `vrbo_push_<n>_<n>`.
     attr_accessor :job_id
+
+    # `create`: the listing is being created on Vrbo. `update`: it was already on Vrbo and its content is being pushed onto that listing.
+    attr_accessor :mode
 
     attr_accessor :status
 
@@ -49,6 +52,18 @@ module Repull
     # POST only: set when an unfinished Vrbo property of this listing is completed instead of starting a new one.
     attr_accessor :resumed_property_id
 
+    # Update only: each section pushed, in order, with what was sent, Vrbo's refusals and what Vrbo has stored after the write.
+    attr_accessor :sections
+
+    # Update only: sections the push leaves as they are on Vrbo, and why (rooms, photos, registration, or no value in the listing content).
+    attr_accessor :skipped
+
+    # Update only.
+    attr_accessor :started_at
+
+    # Update only.
+    attr_accessor :finished_at
+
     class EnumAttributeValidator
       attr_reader :datatype
       attr_reader :allowable_values
@@ -75,6 +90,7 @@ module Repull
     def self.attribute_map
       {
         :'job_id' => :'jobId',
+        :'mode' => :'mode',
         :'status' => :'status',
         :'listing_id' => :'listingId',
         :'account_id' => :'accountId',
@@ -85,7 +101,11 @@ module Repull
         :'linked' => :'linked',
         :'rejected_photos' => :'rejectedPhotos',
         :'adjustments' => :'adjustments',
-        :'resumed_property_id' => :'resumedPropertyId'
+        :'resumed_property_id' => :'resumedPropertyId',
+        :'sections' => :'sections',
+        :'skipped' => :'skipped',
+        :'started_at' => :'startedAt',
+        :'finished_at' => :'finishedAt'
       }
     end
 
@@ -103,6 +123,7 @@ module Repull
     def self.openapi_types
       {
         :'job_id' => :'String',
+        :'mode' => :'String',
         :'status' => :'String',
         :'listing_id' => :'Integer',
         :'account_id' => :'String',
@@ -113,7 +134,11 @@ module Repull
         :'linked' => :'Boolean',
         :'rejected_photos' => :'Array<GetVrboPublishJob200ResponseJobRejectedPhotosInner>',
         :'adjustments' => :'Array<String>',
-        :'resumed_property_id' => :'String'
+        :'resumed_property_id' => :'String',
+        :'sections' => :'Array<GetVrboPublishJob200ResponseJobSectionsInner>',
+        :'skipped' => :'Array<GetVrboPublishJob200ResponseJobSkippedInner>',
+        :'started_at' => :'Time',
+        :'finished_at' => :'Time'
       }
     end
 
@@ -124,7 +149,8 @@ module Repull
         :'error',
         :'vrbo_listing_number',
         :'property_id',
-        :'resumed_property_id'
+        :'resumed_property_id',
+        :'finished_at'
       ])
     end
 
@@ -146,6 +172,10 @@ module Repull
 
       if attributes.key?(:'job_id')
         self.job_id = attributes[:'job_id']
+      end
+
+      if attributes.key?(:'mode')
+        self.mode = attributes[:'mode']
       end
 
       if attributes.key?(:'status')
@@ -197,6 +227,26 @@ module Repull
       if attributes.key?(:'resumed_property_id')
         self.resumed_property_id = attributes[:'resumed_property_id']
       end
+
+      if attributes.key?(:'sections')
+        if (value = attributes[:'sections']).is_a?(Array)
+          self.sections = value
+        end
+      end
+
+      if attributes.key?(:'skipped')
+        if (value = attributes[:'skipped']).is_a?(Array)
+          self.skipped = value
+        end
+      end
+
+      if attributes.key?(:'started_at')
+        self.started_at = attributes[:'started_at']
+      end
+
+      if attributes.key?(:'finished_at')
+        self.finished_at = attributes[:'finished_at']
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -211,9 +261,21 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
+      mode_validator = EnumAttributeValidator.new('String', ["create", "update"])
+      return false unless mode_validator.valid?(@mode)
       status_validator = EnumAttributeValidator.new('String', ["running", "done", "failed"])
       return false unless status_validator.valid?(@status)
       true
+    end
+
+    # Custom attribute writer method checking allowed values (enum).
+    # @param [Object] mode Object to be assigned
+    def mode=(mode)
+      validator = EnumAttributeValidator.new('String', ["create", "update"])
+      unless validator.valid?(mode)
+        fail ArgumentError, "invalid value for \"mode\", must be one of #{validator.allowable_values}."
+      end
+      @mode = mode
     end
 
     # Custom attribute writer method checking allowed values (enum).
@@ -232,6 +294,7 @@ module Repull
       return true if self.equal?(o)
       self.class == o.class &&
           job_id == o.job_id &&
+          mode == o.mode &&
           status == o.status &&
           listing_id == o.listing_id &&
           account_id == o.account_id &&
@@ -242,7 +305,11 @@ module Repull
           linked == o.linked &&
           rejected_photos == o.rejected_photos &&
           adjustments == o.adjustments &&
-          resumed_property_id == o.resumed_property_id
+          resumed_property_id == o.resumed_property_id &&
+          sections == o.sections &&
+          skipped == o.skipped &&
+          started_at == o.started_at &&
+          finished_at == o.finished_at
     end
 
     # @see the `==` method
@@ -254,7 +321,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [job_id, status, listing_id, account_id, steps, error, vrbo_listing_number, property_id, linked, rejected_photos, adjustments, resumed_property_id].hash
+      [job_id, mode, status, listing_id, account_id, steps, error, vrbo_listing_number, property_id, linked, rejected_photos, adjustments, resumed_property_id, sections, skipped, started_at, finished_at].hash
     end
 
     # Builds the object from hash

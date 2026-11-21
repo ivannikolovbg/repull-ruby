@@ -19,6 +19,8 @@ module Repull
 
     attr_accessor :channel
 
+    attr_accessor :mode
+
     attr_accessor :job
 
     class EnumAttributeValidator
@@ -48,6 +50,7 @@ module Repull
       {
         :'listing_id' => :'listingId',
         :'channel' => :'channel',
+        :'mode' => :'mode',
         :'job' => :'job'
       }
     end
@@ -67,6 +70,7 @@ module Repull
       {
         :'listing_id' => :'Integer',
         :'channel' => :'String',
+        :'mode' => :'String',
         :'job' => :'GetVrboPublishJob200ResponseJob'
       }
     end
@@ -101,6 +105,10 @@ module Repull
         self.channel = attributes[:'channel']
       end
 
+      if attributes.key?(:'mode')
+        self.mode = attributes[:'mode']
+      end
+
       if attributes.key?(:'job')
         self.job = attributes[:'job']
       end
@@ -120,6 +128,8 @@ module Repull
       warn '[DEPRECATED] the `valid?` method is obsolete'
       channel_validator = EnumAttributeValidator.new('String', ["vrbo"])
       return false unless channel_validator.valid?(@channel)
+      mode_validator = EnumAttributeValidator.new('String', ["create", "update"])
+      return false unless mode_validator.valid?(@mode)
       true
     end
 
@@ -133,6 +143,16 @@ module Repull
       @channel = channel
     end
 
+    # Custom attribute writer method checking allowed values (enum).
+    # @param [Object] mode Object to be assigned
+    def mode=(mode)
+      validator = EnumAttributeValidator.new('String', ["create", "update"])
+      unless validator.valid?(mode)
+        fail ArgumentError, "invalid value for \"mode\", must be one of #{validator.allowable_values}."
+      end
+      @mode = mode
+    end
+
     # Checks equality by comparing each attribute.
     # @param [Object] Object to be compared
     def ==(o)
@@ -140,6 +160,7 @@ module Repull
       self.class == o.class &&
           listing_id == o.listing_id &&
           channel == o.channel &&
+          mode == o.mode &&
           job == o.job
     end
 
@@ -152,7 +173,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [listing_id, channel, job].hash
+      [listing_id, channel, mode, job].hash
     end
 
     # Builds the object from hash

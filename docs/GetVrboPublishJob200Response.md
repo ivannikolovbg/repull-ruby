@@ -6,6 +6,7 @@
 | ---- | ---- | ----------- | ----- |
 | **listing_id** | **Integer** |  | [optional] |
 | **channel** | **String** |  | [optional] |
+| **mode** | **String** |  | [optional] |
 | **job** | [**GetVrboPublishJob200ResponseJob**](GetVrboPublishJob200ResponseJob.md) |  | [optional] |
 
 ## Example
@@ -16,6 +17,7 @@ require 'repull'
 instance = Repull::GetVrboPublishJob200Response.new(
   listing_id: null,
   channel: null,
+  mode: null,
   job: null
 )
 ```

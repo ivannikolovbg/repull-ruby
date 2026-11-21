@@ -14,13 +14,13 @@ All URIs are relative to *https://api.repull.dev*
 | [**get_listing_ical**](ListingsApi.md#get_listing_ical) | **GET** /v1/listings/{id}/ical | Repull iCal backup feed |
 | [**get_listing_markups**](ListingsApi.md#get_listing_markups) | **GET** /v1/listings/{id}/markups | Get a listing&#39;s channel markups |
 | [**get_listing_publish_status**](ListingsApi.md#get_listing_publish_status) | **GET** /v1/listings/{id}/publish-status | Per-channel publish status |
-| [**get_vrbo_publish_job**](ListingsApi.md#get_vrbo_publish_job) | **GET** /v1/listings/{id}/publish/vrbo | Progress of a Vrbo listing creation |
+| [**get_vrbo_publish_job**](ListingsApi.md#get_vrbo_publish_job) | **GET** /v1/listings/{id}/publish/vrbo | Progress of a Vrbo listing creation or update |
 | [**list_listing_photos**](ListingsApi.md#list_listing_photos) | **GET** /v1/listings/{id}/photos | List a listing&#39;s stored photos |
 | [**list_listing_units**](ListingsApi.md#list_listing_units) | **GET** /v1/listings/{id}/units | List a listing&#39;s units |
 | [**list_listings**](ListingsApi.md#list_listings) | **GET** /v1/listings | List listings |
 | [**publish_listing_to_airbnb**](ListingsApi.md#publish_listing_to_airbnb) | **POST** /v1/listings/{id}/publish/airbnb | Publish a listing to Airbnb |
 | [**publish_listing_to_booking**](ListingsApi.md#publish_listing_to_booking) | **POST** /v1/listings/{id}/publish/booking | Publish a listing to Booking.com |
-| [**publish_listing_to_vrbo**](ListingsApi.md#publish_listing_to_vrbo) | **POST** /v1/listings/{id}/publish/vrbo | Create a listing on Vrbo |
+| [**publish_listing_to_vrbo**](ListingsApi.md#publish_listing_to_vrbo) | **POST** /v1/listings/{id}/publish/vrbo | Create or update a listing on Vrbo |
 | [**pull_listing_from_airbnb**](ListingsApi.md#pull_listing_from_airbnb) | **POST** /v1/listings/{id}/pull/airbnb | Refresh a listing from Airbnb |
 | [**set_listing_markup**](ListingsApi.md#set_listing_markup) | **PUT** /v1/listings/{id}/markups | Set a listing&#39;s markup on a channel |
 | [**set_listings_status**](ListingsApi.md#set_listings_status) | **POST** /v1/listings/status | Activate or deactivate listings in bulk |
@@ -738,9 +738,9 @@ end
 
 > <GetVrboPublishJob200Response> get_vrbo_publish_job(id, job_id)
 
-Progress of a Vrbo listing creation
+Progress of a Vrbo listing creation or update
 
-Each step Vrbo has finished, Vrbo's reason when it failed, the new Vrbo listing number once published, and photos Vrbo's review refused. When Vrbo has published the listing, this read links the new unit to the listing with calendar sync on and queues the whole calendar — poll until `linked` is true. A job is remembered while it runs and for a while after; an unknown job is `404` (publish again to resume).
+For a push onto an existing Vrbo listing (`vrbo_push_…` job): each section with its status, Vrbo's refusals and what Vrbo stored; pushes are kept for a day. For a creation: each step Vrbo has finished, Vrbo's reason when it failed, the new Vrbo listing number once published, and photos Vrbo's review refused. When Vrbo has published the listing, this read links the new unit to the listing with calendar sync on and queues the whole calendar — poll until `linked` is true. A job is remembered while it runs and for a while after; an unknown job is `404` (publish again to resume).
 
 ### Examples
 
@@ -758,7 +758,7 @@ id = 56 # Integer | Repull listing id
 job_id = 'job_id_example' # String | `job.jobId` from the POST.
 
 begin
-  # Progress of a Vrbo listing creation
+  # Progress of a Vrbo listing creation or update
   result = api_instance.get_vrbo_publish_job(id, job_id)
   p result
 rescue Repull::ApiError => e
@@ -774,7 +774,7 @@ This returns an Array which contains the response data, status code and headers.
 
 ```ruby
 begin
-  # Progress of a Vrbo listing creation
+  # Progress of a Vrbo listing creation or update
   data, status_code, headers = api_instance.get_vrbo_publish_job_with_http_info(id, job_id)
   p status_code # => 2xx
   p headers # => { ... }
@@ -1182,9 +1182,9 @@ end
 
 > <GetVrboPublishJob200Response> publish_listing_to_vrbo(id, opts)
 
-Create a listing on Vrbo
+Create or update a listing on Vrbo
 
-Creates the listing on Vrbo in the host's connected Vrbo account, from the listing's content: title and description, property type, rooms and beds, amenities, photos, house rules (guests, minimum age, children, pets, smoking, events), check-in and check-out times, minimum stay, advance notice and booking window, the nightly price, cleaning, pet and extra-guest fees, the cancellation policy and the licence number. Vrbo's automatic new-listing discount is turned off so the listing sells at your prices.  **It is a job.** Vrbo's onboarding takes 5–15 minutes (photos go up one at a time), so this answers `202` with `job.jobId`. Poll `GET /v1/listings/{id}/publish/vrbo?jobId=` for each finished step. When Vrbo has published the listing, that read links the new Vrbo unit to the listing with calendar sync on and queues the whole calendar (prices, availability, minimum stay) to Vrbo: **keep polling until `linked` is true.**  **Which account.** A workspace with one Vrbo account needs nothing. With several, name it with `accountId` (`\"vrbo:13\"`, as the connection id). An account connected with messaging access is refused with `403 vrbo_messaging_access`.  **Missing content** (street address, city, photos, nightly price, description) is refused with `422 listing_incomplete` naming what is missing. A listing already linked to a Vrbo unit is `409 listing_already_on_vrbo`. A run that failed part-way leaves an unpublished Vrbo property: publishing again completes it instead of creating a second one.  This creates a Vrbo listing. Prices, availability and minimum stay on an existing one change through `PUT /v1/availability/{propertyId}`; other content of an existing Vrbo listing is edited on Vrbo.
+**A listing not yet on Vrbo** is created there; **a listing already linked to a Vrbo listing** gets its content pushed onto that listing (`mode: update`, below).  Creates the listing on Vrbo in the host's connected Vrbo account, from the listing's content: title and description, property type, rooms and beds, amenities, photos, house rules (guests, minimum age, children, pets, smoking, events), check-in and check-out times, minimum stay, advance notice and booking window, the nightly price, cleaning, pet and extra-guest fees, the cancellation policy and the licence number. Vrbo's automatic new-listing discount is turned off so the listing sells at your prices.  **It is a job.** Vrbo's onboarding takes 5–15 minutes (photos go up one at a time), so this answers `202` with `job.jobId`. Poll `GET /v1/listings/{id}/publish/vrbo?jobId=` for each finished step. When Vrbo has published the listing, that read links the new Vrbo unit to the listing with calendar sync on and queues the whole calendar (prices, availability, minimum stay) to Vrbo: **keep polling until `linked` is true.**  **Which account.** A workspace with one Vrbo account needs nothing. With several, name it with `accountId` (`\"vrbo:13\"`, as the connection id). An account connected with messaging access is refused with `403 vrbo_messaging_access`.  **Missing content** (street address, city, photos, nightly price, description) is refused with `422 listing_incomplete` naming what is missing. A run that failed part-way leaves an unpublished Vrbo property: publishing again completes it instead of creating a second one.  **Update (listing already on Vrbo).** Write the content with `PUT /v1/listings/{id}/content`, then publish: the listing's content is pushed onto its existing Vrbo listing, section by section — headline and description, property type, amenities, house rules (check-in/out, guests, children, pets, smoking, events), booking settings (instant book, minimum stay, notice, booking window), cancellation policy, cleaning/pet/extra-guest fees, the base rate (with the unit's markup) and the weekly and monthly stay discounts over the booking window (`rates`; the nights keep the prices Vrbo has). Rates and the base rate share Vrbo's calendar quota with the listing's calendar push: when it is writing, those steps wait for it (up to 3 minutes) and try once more, else they end `failed` with `vrbo_calendar_busy` — publish again later. Each write is partial (a field the content has no value for is left alone) and is read back from Vrbo. Rooms, photos and registration are not replaced on an existing listing (`skipped` says so): edit them with `PUT /v1/channels/vrbo/listings/{id}/{section}`. It is a job too (a few minutes: Vrbo calls are spaced ~3 s apart per account): poll `GET ?jobId=` — each entry of `job.sections` has its `status`, Vrbo's refusals and what Vrbo stored. Limit it with `sections` (e.g. `[\"description\", \"fees\"]`); name the Vrbo listing with `vrboListingNumber` when the listing is linked to several. One push per listing at a time (`409 vrbo_push_running`). Needs full access (`403 vrbo_messaging_access` otherwise).  Prices, availability and minimum stay per night always go through the calendar: `PUT /v1/availability/{propertyId}`.
 
 ### Examples
 
@@ -1204,7 +1204,7 @@ opts = {
 }
 
 begin
-  # Create a listing on Vrbo
+  # Create or update a listing on Vrbo
   result = api_instance.publish_listing_to_vrbo(id, opts)
   p result
 rescue Repull::ApiError => e
@@ -1220,7 +1220,7 @@ This returns an Array which contains the response data, status code and headers.
 
 ```ruby
 begin
-  # Create a listing on Vrbo
+  # Create or update a listing on Vrbo
   data, status_code, headers = api_instance.publish_listing_to_vrbo_with_http_info(id, opts)
   p status_code # => 2xx
   p headers # => { ... }

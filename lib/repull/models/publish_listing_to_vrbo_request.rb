@@ -21,11 +21,41 @@ module Repull
     # Finish this unpublished Vrbo property (from a failed run's `job.propertyId`) instead of starting a new one.
     attr_accessor :property_id
 
+    # Update only: push just these sections (default: all of them).
+    attr_accessor :sections
+
+    # Update only: the Vrbo listing to push to, when the listing is linked to several.
+    attr_accessor :vrbo_listing_number
+
+    class EnumAttributeValidator
+      attr_reader :datatype
+      attr_reader :allowable_values
+
+      def initialize(datatype, allowable_values)
+        @allowable_values = allowable_values.map do |value|
+          case datatype.to_s
+          when /Integer/i
+            value.to_i
+          when /Float/i
+            value.to_f
+          else
+            value
+          end
+        end
+      end
+
+      def valid?(value)
+        !value || allowable_values.include?(value)
+      end
+    end
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
         :'account_id' => :'accountId',
-        :'property_id' => :'propertyId'
+        :'property_id' => :'propertyId',
+        :'sections' => :'sections',
+        :'vrbo_listing_number' => :'vrboListingNumber'
       }
     end
 
@@ -43,7 +73,9 @@ module Repull
     def self.openapi_types
       {
         :'account_id' => :'String',
-        :'property_id' => :'String'
+        :'property_id' => :'String',
+        :'sections' => :'Array<String>',
+        :'vrbo_listing_number' => :'String'
       }
     end
 
@@ -76,6 +108,16 @@ module Repull
       if attributes.key?(:'property_id')
         self.property_id = attributes[:'property_id']
       end
+
+      if attributes.key?(:'sections')
+        if (value = attributes[:'sections']).is_a?(Array)
+          self.sections = value
+        end
+      end
+
+      if attributes.key?(:'vrbo_listing_number')
+        self.vrbo_listing_number = attributes[:'vrbo_listing_number']
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -99,7 +141,9 @@ module Repull
       return true if self.equal?(o)
       self.class == o.class &&
           account_id == o.account_id &&
-          property_id == o.property_id
+          property_id == o.property_id &&
+          sections == o.sections &&
+          vrbo_listing_number == o.vrbo_listing_number
     end
 
     # @see the `==` method
@@ -111,7 +155,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [account_id, property_id].hash
+      [account_id, property_id, sections, vrbo_listing_number].hash
     end
 
     # Builds the object from hash
