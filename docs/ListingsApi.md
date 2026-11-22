@@ -22,6 +22,7 @@ All URIs are relative to *https://api.repull.dev*
 | [**publish_listing_to_booking**](ListingsApi.md#publish_listing_to_booking) | **POST** /v1/listings/{id}/publish/booking | Publish a listing to Booking.com |
 | [**publish_listing_to_vrbo**](ListingsApi.md#publish_listing_to_vrbo) | **POST** /v1/listings/{id}/publish/vrbo | Create or update a listing on Vrbo |
 | [**pull_listing_from_airbnb**](ListingsApi.md#pull_listing_from_airbnb) | **POST** /v1/listings/{id}/pull/airbnb | Refresh a listing from Airbnb |
+| [**pull_listing_from_vrbo**](ListingsApi.md#pull_listing_from_vrbo) | **POST** /v1/listings/{id}/pull/vrbo | Refresh a listing from Vrbo |
 | [**set_listing_markup**](ListingsApi.md#set_listing_markup) | **PUT** /v1/listings/{id}/markups | Set a listing&#39;s markup on a channel |
 | [**set_listings_status**](ListingsApi.md#set_listings_status) | **POST** /v1/listings/status | Activate or deactivate listings in bulk |
 | [**take_listing_offline**](ListingsApi.md#take_listing_offline) | **POST** /v1/listings/{id}/offline | Take a listing off the market |
@@ -1313,6 +1314,79 @@ end
 ### Return type
 
 [**ListingPullResponse**](ListingPullResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## pull_listing_from_vrbo
+
+> <PullListingFromVrbo200Response> pull_listing_from_vrbo(id, opts)
+
+Refresh a listing from Vrbo
+
+Re-read every content section of the listing's Vrbo listing from Vrbo and keep it as Repull's copy, then report what was refreshed and when — the counterpart of `POST /v1/listings/{id}/pull/airbnb`. Use it after the host changed something on Vrbo, so the `/v1/channels/vrbo/listings/{id}/…` reads answer with what Vrbo holds now.  **What it refreshes:** descriptions, details, story, additional-info, photos, amenities, rooms, location, house-rules, booking-settings, cancellation, fees, pricing, payment-terms, protection, taxes, permits, checkin-guide, videos. **Not** the calendar, rates per night, bookings, messages, reviews or payouts — those arrive through the channel's own sync.  **Runs synchronously:** about 45 Vrbo calls spaced ~3 s apart per account, **around 2.5 minutes**. A section Vrbo fails to return is listed in `failedSections`; the others are refreshed.  **One pull per listing per 15 minutes**, as on Airbnb: a second call inside the window returns `429 rate_limit_exceeded` with `Retry-After` and `nextPullAvailableAt`, and makes no Vrbo calls.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ListingsApi.new
+id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
+opts = {
+  pull_listing_from_vrbo_request: Repull::PullListingFromVrboRequest.new # PullListingFromVrboRequest | 
+}
+
+begin
+  # Refresh a listing from Vrbo
+  result = api_instance.pull_listing_from_vrbo(id, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ListingsApi->pull_listing_from_vrbo: #{e}"
+end
+```
+
+#### Using the pull_listing_from_vrbo_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<PullListingFromVrbo200Response>, Integer, Hash)> pull_listing_from_vrbo_with_http_info(id, opts)
+
+```ruby
+begin
+  # Refresh a listing from Vrbo
+  data, status_code, headers = api_instance.pull_listing_from_vrbo_with_http_info(id, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <PullListingFromVrbo200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ListingsApi->pull_listing_from_vrbo_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
+| **pull_listing_from_vrbo_request** | [**PullListingFromVrboRequest**](PullListingFromVrboRequest.md) |  | [optional] |
+
+### Return type
+
+[**PullListingFromVrbo200Response**](PullListingFromVrbo200Response.md)
 
 ### Authorization
 

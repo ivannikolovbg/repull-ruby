@@ -1130,6 +1130,69 @@ module Repull
       return data, status_code, headers
     end
 
+    # Get Airbnb house rules
+    # The listing's house rules under the names Vrbo's `GET /v1/channels/vrbo/listings/{id}/house-rules` uses: check-in and check-out times, guest capacity, whether children, infants, pets, smoking and events are allowed, Airbnb's \"things to know\" (`expectations`), and the written rules per language. **Repull's stored copy**, like every Airbnb read: check `dataFreshness` before treating a value as current. `POST /v1/listings/{id}/pull/airbnb` refreshes it from Airbnb.  Returns `404` when the listing has no Airbnb connection in this workspace, and `403 listing_inactive` when the listing is inactive.
+    # @param id [String] Repull listing id (numeric string), not the Airbnb listing id.
+    # @param [Hash] opts the optional parameters
+    # @return [GetAirbnbHouseRules200Response]
+    def get_airbnb_house_rules(id, opts = {})
+      data, _status_code, _headers = get_airbnb_house_rules_with_http_info(id, opts)
+      data
+    end
+
+    # Get Airbnb house rules
+    # The listing&#39;s house rules under the names Vrbo&#39;s &#x60;GET /v1/channels/vrbo/listings/{id}/house-rules&#x60; uses: check-in and check-out times, guest capacity, whether children, infants, pets, smoking and events are allowed, Airbnb&#39;s \&quot;things to know\&quot; (&#x60;expectations&#x60;), and the written rules per language. **Repull&#39;s stored copy**, like every Airbnb read: check &#x60;dataFreshness&#x60; before treating a value as current. &#x60;POST /v1/listings/{id}/pull/airbnb&#x60; refreshes it from Airbnb.  Returns &#x60;404&#x60; when the listing has no Airbnb connection in this workspace, and &#x60;403 listing_inactive&#x60; when the listing is inactive.
+    # @param id [String] Repull listing id (numeric string), not the Airbnb listing id.
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(GetAirbnbHouseRules200Response, Integer, Hash)>] GetAirbnbHouseRules200Response data, response status code and response headers
+    def get_airbnb_house_rules_with_http_info(id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: AirbnbApi.get_airbnb_house_rules ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling AirbnbApi.get_airbnb_house_rules"
+      end
+      # resource path
+      local_var_path = '/v1/channels/airbnb/listings/{id}/house-rules'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'GetAirbnbHouseRules200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"AirbnbApi.get_airbnb_house_rules",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: AirbnbApi#get_airbnb_house_rules\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # Get Airbnb listing
     # Fetch all Airbnb connection rows for a single Repull listing id. A property may be linked from multiple Airbnb hosts — every match is returned. Pass `?include=amenities` to enrich each row with its current Airbnb amenities.  Each row carries `syncCategory` — Airbnb's own per-listing API sync decision (`sync_all`, `sync_rates_and_availability`, or `none`) — and `writable`, which is `false` exactly when that category is `none`, meaning Airbnb refuses every write to the listing and Repull returns `403 listing_not_api_connected` without sending anything. `GET /v1/channels/airbnb/listings` reports both fields for the whole portfolio in one call.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] 
@@ -1259,6 +1322,69 @@ module Repull
       return data, status_code, headers
     end
 
+    # Get the Airbnb cancellation policy
+    # The short-stay and long-stay cancellation policies and the non-refundable option — the same section as `GET /v1/channels/vrbo/listings/{id}/cancellation`, and the `cancellation` of `GET …/booking-settings`. **Repull's stored copy**, like every Airbnb read: check `dataFreshness` before treating a value as current. `POST /v1/listings/{id}/pull/airbnb` refreshes it from Airbnb.  Returns `404` when the listing has no Airbnb connection in this workspace, and `403 listing_inactive` when the listing is inactive.
+    # @param id [String] Repull listing id (numeric string), not the Airbnb listing id.
+    # @param [Hash] opts the optional parameters
+    # @return [GetAirbnbListingCancellation200Response]
+    def get_airbnb_listing_cancellation(id, opts = {})
+      data, _status_code, _headers = get_airbnb_listing_cancellation_with_http_info(id, opts)
+      data
+    end
+
+    # Get the Airbnb cancellation policy
+    # The short-stay and long-stay cancellation policies and the non-refundable option — the same section as &#x60;GET /v1/channels/vrbo/listings/{id}/cancellation&#x60;, and the &#x60;cancellation&#x60; of &#x60;GET …/booking-settings&#x60;. **Repull&#39;s stored copy**, like every Airbnb read: check &#x60;dataFreshness&#x60; before treating a value as current. &#x60;POST /v1/listings/{id}/pull/airbnb&#x60; refreshes it from Airbnb.  Returns &#x60;404&#x60; when the listing has no Airbnb connection in this workspace, and &#x60;403 listing_inactive&#x60; when the listing is inactive.
+    # @param id [String] Repull listing id (numeric string), not the Airbnb listing id.
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(GetAirbnbListingCancellation200Response, Integer, Hash)>] GetAirbnbListingCancellation200Response data, response status code and response headers
+    def get_airbnb_listing_cancellation_with_http_info(id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: AirbnbApi.get_airbnb_listing_cancellation ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling AirbnbApi.get_airbnb_listing_cancellation"
+      end
+      # resource path
+      local_var_path = '/v1/channels/airbnb/listings/{id}/cancellation'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'GetAirbnbListingCancellation200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"AirbnbApi.get_airbnb_listing_cancellation",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: AirbnbApi#get_airbnb_listing_cancellation\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # Get Airbnb listing details
     # What kind of property Airbnb thinks this is — property type group and category, room type, capacity — plus the check-in method (`checkInOption`), whether the listing is live (`hasAvailability`), and **`lockedFields`: the attributes Airbnb refuses to change on this listing**.  **Pure DB read** from the local mirror, one entry per Airbnb connection.  Read `lockedFields` before a content write. Airbnb does not refuse a write to a locked attribute: it returns 200, reports the attribute as locked, and applies nothing — which is why a write can look successful and change nothing. 1,180 of 5,917 synced listings carry at least one locked attribute.  Returns `404` when the listing has no Airbnb connection in this workspace, and `403 listing_inactive` when the listing is inactive.
     # @param id [String] Repull listing id (numeric string).
@@ -1318,6 +1444,69 @@ module Repull
       data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: AirbnbApi#get_airbnb_listing_details\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Get Airbnb fees
+    # The listing's Airbnb fees (cleaning, pets, extra guests, management, linens, …) — the same section as `GET /v1/channels/vrbo/listings/{id}/fees`, and the `fees` of `GET …/pricing`. **Repull's stored copy**, like every Airbnb read: check `dataFreshness` before treating a value as current. `POST /v1/listings/{id}/pull/airbnb` refreshes it from Airbnb.  Returns `404` when the listing has no Airbnb connection in this workspace, and `403 listing_inactive` when the listing is inactive.
+    # @param id [String] Repull listing id (numeric string), not the Airbnb listing id.
+    # @param [Hash] opts the optional parameters
+    # @return [GetAirbnbListingFees200Response]
+    def get_airbnb_listing_fees(id, opts = {})
+      data, _status_code, _headers = get_airbnb_listing_fees_with_http_info(id, opts)
+      data
+    end
+
+    # Get Airbnb fees
+    # The listing&#39;s Airbnb fees (cleaning, pets, extra guests, management, linens, …) — the same section as &#x60;GET /v1/channels/vrbo/listings/{id}/fees&#x60;, and the &#x60;fees&#x60; of &#x60;GET …/pricing&#x60;. **Repull&#39;s stored copy**, like every Airbnb read: check &#x60;dataFreshness&#x60; before treating a value as current. &#x60;POST /v1/listings/{id}/pull/airbnb&#x60; refreshes it from Airbnb.  Returns &#x60;404&#x60; when the listing has no Airbnb connection in this workspace, and &#x60;403 listing_inactive&#x60; when the listing is inactive.
+    # @param id [String] Repull listing id (numeric string), not the Airbnb listing id.
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(GetAirbnbListingFees200Response, Integer, Hash)>] GetAirbnbListingFees200Response data, response status code and response headers
+    def get_airbnb_listing_fees_with_http_info(id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: AirbnbApi.get_airbnb_listing_fees ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling AirbnbApi.get_airbnb_listing_fees"
+      end
+      # resource path
+      local_var_path = '/v1/channels/airbnb/listings/{id}/fees'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'GetAirbnbListingFees200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"AirbnbApi.get_airbnb_listing_fees",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: AirbnbApi#get_airbnb_listing_fees\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end
@@ -1521,6 +1710,132 @@ module Repull
       data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: AirbnbApi#get_airbnb_listing_settings\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Get Airbnb taxes
+    # The listing's taxes — host-remitted pass-through taxes and the taxes Airbnb collects itself, each with `source` (`pass_through` | `airbnb_collected`) — the same section as `GET /v1/channels/vrbo/listings/{id}/taxes`, and the `taxes` of `GET …/pricing`. Read-only here: Airbnb's pass-through taxes are part of its pricing settings (`PUT …/pricing` `{ \"type\": \"standard\" }`). **Repull's stored copy**, like every Airbnb read: check `dataFreshness` before treating a value as current. `POST /v1/listings/{id}/pull/airbnb` refreshes it from Airbnb.  Returns `404` when the listing has no Airbnb connection in this workspace, and `403 listing_inactive` when the listing is inactive.
+    # @param id [String] Repull listing id (numeric string), not the Airbnb listing id.
+    # @param [Hash] opts the optional parameters
+    # @return [GetAirbnbListingTaxes200Response]
+    def get_airbnb_listing_taxes(id, opts = {})
+      data, _status_code, _headers = get_airbnb_listing_taxes_with_http_info(id, opts)
+      data
+    end
+
+    # Get Airbnb taxes
+    # The listing&#39;s taxes — host-remitted pass-through taxes and the taxes Airbnb collects itself, each with &#x60;source&#x60; (&#x60;pass_through&#x60; | &#x60;airbnb_collected&#x60;) — the same section as &#x60;GET /v1/channels/vrbo/listings/{id}/taxes&#x60;, and the &#x60;taxes&#x60; of &#x60;GET …/pricing&#x60;. Read-only here: Airbnb&#39;s pass-through taxes are part of its pricing settings (&#x60;PUT …/pricing&#x60; &#x60;{ \&quot;type\&quot;: \&quot;standard\&quot; }&#x60;). **Repull&#39;s stored copy**, like every Airbnb read: check &#x60;dataFreshness&#x60; before treating a value as current. &#x60;POST /v1/listings/{id}/pull/airbnb&#x60; refreshes it from Airbnb.  Returns &#x60;404&#x60; when the listing has no Airbnb connection in this workspace, and &#x60;403 listing_inactive&#x60; when the listing is inactive.
+    # @param id [String] Repull listing id (numeric string), not the Airbnb listing id.
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(GetAirbnbListingTaxes200Response, Integer, Hash)>] GetAirbnbListingTaxes200Response data, response status code and response headers
+    def get_airbnb_listing_taxes_with_http_info(id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: AirbnbApi.get_airbnb_listing_taxes ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling AirbnbApi.get_airbnb_listing_taxes"
+      end
+      # resource path
+      local_var_path = '/v1/channels/airbnb/listings/{id}/taxes'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'GetAirbnbListingTaxes200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"AirbnbApi.get_airbnb_listing_taxes",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: AirbnbApi#get_airbnb_listing_taxes\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Get the Airbnb location
+    # The listing's address, map pin, directions and whether guests see the exact location — the same section as `GET /v1/channels/vrbo/listings/{id}/location`. Read-only: Airbnb changes a listed address only in its own flow in the host app (`addressEditable: false`). **Repull's stored copy**, like every Airbnb read: check `dataFreshness` before treating a value as current. `POST /v1/listings/{id}/pull/airbnb` refreshes it from Airbnb.  Returns `404` when the listing has no Airbnb connection in this workspace, and `403 listing_inactive` when the listing is inactive.
+    # @param id [String] Repull listing id (numeric string), not the Airbnb listing id.
+    # @param [Hash] opts the optional parameters
+    # @return [GetAirbnbLocation200Response]
+    def get_airbnb_location(id, opts = {})
+      data, _status_code, _headers = get_airbnb_location_with_http_info(id, opts)
+      data
+    end
+
+    # Get the Airbnb location
+    # The listing&#39;s address, map pin, directions and whether guests see the exact location — the same section as &#x60;GET /v1/channels/vrbo/listings/{id}/location&#x60;. Read-only: Airbnb changes a listed address only in its own flow in the host app (&#x60;addressEditable: false&#x60;). **Repull&#39;s stored copy**, like every Airbnb read: check &#x60;dataFreshness&#x60; before treating a value as current. &#x60;POST /v1/listings/{id}/pull/airbnb&#x60; refreshes it from Airbnb.  Returns &#x60;404&#x60; when the listing has no Airbnb connection in this workspace, and &#x60;403 listing_inactive&#x60; when the listing is inactive.
+    # @param id [String] Repull listing id (numeric string), not the Airbnb listing id.
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(GetAirbnbLocation200Response, Integer, Hash)>] GetAirbnbLocation200Response data, response status code and response headers
+    def get_airbnb_location_with_http_info(id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: AirbnbApi.get_airbnb_location ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling AirbnbApi.get_airbnb_location"
+      end
+      # resource path
+      local_var_path = '/v1/channels/airbnb/listings/{id}/location'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'GetAirbnbLocation200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"AirbnbApi.get_airbnb_location",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: AirbnbApi#get_airbnb_location\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end
@@ -2480,7 +2795,7 @@ module Repull
     end
 
     # List Airbnb message threads
-    # List Airbnb message threads (one per guest conversation). Cursor-paginated. Each thread includes a preview of the latest message.  Threads on inactive listings are left out; they keep syncing and reappear once the listing is activated. Filtering by an inactive listing (`listing_id`) returns `403 listing_inactive`.  **Several Airbnb accounts?** A workspace can connect more than one. By default this returns every connected account's rows; pass `?account_id=<airbnb host id>` to scope to one. Every row carries `accountId` + `accountName` either way, and `dataFreshness.accounts[]` reports each account's freshness separately, so one disconnected host no longer marks the whole response stale.
+    # List Airbnb message threads (one per guest conversation), newest activity first (up to 200). Only Airbnb threads: conversations from other channels are on their own channel routes (`GET /v1/channels/vrbo/messaging`) or `GET /v1/conversations`.  Threads on inactive listings are left out; they keep syncing and reappear once the listing is activated. Filtering by an inactive listing (`listing_id`) returns `403 listing_inactive`.  **Several Airbnb accounts?** A workspace can connect more than one. By default this returns every connected account's rows; pass `?account_id=<airbnb host id>` to scope to one. Every row carries `accountId` + `accountName` either way, and `dataFreshness.accounts[]` reports each account's freshness separately, so one disconnected host no longer marks the whole response stale.
     # @param [Hash] opts the optional parameters
     # @option opts [String] :account_id Scope the response to ONE connected Airbnb account. The value is the Airbnb host id — the same &#x60;accounts[].externalAccountId&#x60; that &#x60;GET /v1/connect/airbnb&#x60; returns and &#x60;DELETE /v1/connect/airbnb?accountId&#x3D;&#x60; accepts.  A workspace can connect several Airbnb accounts. Omit this and you get every account&#39;s rows (the default, unchanged). Every row carries &#x60;accountId&#x60; + &#x60;accountName&#x60; either way, so you can group without a second call.  An id that is not connected to THIS workspace returns &#x60;404 not_found&#x60; with your own ids in &#x60;valid_values&#x60; — we do not distinguish \&quot;no such host\&quot; from \&quot;someone else&#39;s host\&quot;, because confirming the latter would leak another workspace&#39;s account.  Note this is NOT the &#x60;X-Account-Id&#x60; header, which carries a connection id and cannot tell two Airbnb hosts apart.
     # @return [AirbnbThreadListResponse]
@@ -2490,7 +2805,7 @@ module Repull
     end
 
     # List Airbnb message threads
-    # List Airbnb message threads (one per guest conversation). Cursor-paginated. Each thread includes a preview of the latest message.  Threads on inactive listings are left out; they keep syncing and reappear once the listing is activated. Filtering by an inactive listing (&#x60;listing_id&#x60;) returns &#x60;403 listing_inactive&#x60;.  **Several Airbnb accounts?** A workspace can connect more than one. By default this returns every connected account&#39;s rows; pass &#x60;?account_id&#x3D;&lt;airbnb host id&gt;&#x60; to scope to one. Every row carries &#x60;accountId&#x60; + &#x60;accountName&#x60; either way, and &#x60;dataFreshness.accounts[]&#x60; reports each account&#39;s freshness separately, so one disconnected host no longer marks the whole response stale.
+    # List Airbnb message threads (one per guest conversation), newest activity first (up to 200). Only Airbnb threads: conversations from other channels are on their own channel routes (&#x60;GET /v1/channels/vrbo/messaging&#x60;) or &#x60;GET /v1/conversations&#x60;.  Threads on inactive listings are left out; they keep syncing and reappear once the listing is activated. Filtering by an inactive listing (&#x60;listing_id&#x60;) returns &#x60;403 listing_inactive&#x60;.  **Several Airbnb accounts?** A workspace can connect more than one. By default this returns every connected account&#39;s rows; pass &#x60;?account_id&#x3D;&lt;airbnb host id&gt;&#x60; to scope to one. Every row carries &#x60;accountId&#x60; + &#x60;accountName&#x60; either way, and &#x60;dataFreshness.accounts[]&#x60; reports each account&#39;s freshness separately, so one disconnected host no longer marks the whole response stale.
     # @param [Hash] opts the optional parameters
     # @option opts [String] :account_id Scope the response to ONE connected Airbnb account. The value is the Airbnb host id — the same &#x60;accounts[].externalAccountId&#x60; that &#x60;GET /v1/connect/airbnb&#x60; returns and &#x60;DELETE /v1/connect/airbnb?accountId&#x3D;&#x60; accepts.  A workspace can connect several Airbnb accounts. Omit this and you get every account&#39;s rows (the default, unchanged). Every row carries &#x60;accountId&#x60; + &#x60;accountName&#x60; either way, so you can group without a second call.  An id that is not connected to THIS workspace returns &#x60;404 not_found&#x60; with your own ids in &#x60;valid_values&#x60; — we do not distinguish \&quot;no such host\&quot; from \&quot;someone else&#39;s host\&quot;, because confirming the latter would leak another workspace&#39;s account.  Note this is NOT the &#x60;X-Account-Id&#x60; header, which carries a connection id and cannot tell two Airbnb hosts apart.
     # @return [Array<(AirbnbThreadListResponse, Integer, Hash)>] AirbnbThreadListResponse data, response status code and response headers
@@ -3271,6 +3586,80 @@ module Repull
       return data, status_code, headers
     end
 
+    # Update Airbnb house rules
+    # Write the house rules text for one language — the same write as `PUT …/descriptions` `{ locale, description: { house_rules } }`, with the same answer (`written`, `blockedFields`). On Airbnb the check-in and check-out times are booking settings: set them with `PUT …/booking-settings`. Whether pets, smoking, events or children are allowed is set in the Airbnb app.  Returns `404` when the listing has no Airbnb connection in this workspace, and `403 listing_inactive` when the listing is inactive.
+    # @param id [String] Repull listing id (numeric string), not the Airbnb listing id.
+    # @param update_airbnb_house_rules_request [UpdateAirbnbHouseRulesRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [UpdateAirbnbHouseRules200Response]
+    def update_airbnb_house_rules(id, update_airbnb_house_rules_request, opts = {})
+      data, _status_code, _headers = update_airbnb_house_rules_with_http_info(id, update_airbnb_house_rules_request, opts)
+      data
+    end
+
+    # Update Airbnb house rules
+    # Write the house rules text for one language — the same write as &#x60;PUT …/descriptions&#x60; &#x60;{ locale, description: { house_rules } }&#x60;, with the same answer (&#x60;written&#x60;, &#x60;blockedFields&#x60;). On Airbnb the check-in and check-out times are booking settings: set them with &#x60;PUT …/booking-settings&#x60;. Whether pets, smoking, events or children are allowed is set in the Airbnb app.  Returns &#x60;404&#x60; when the listing has no Airbnb connection in this workspace, and &#x60;403 listing_inactive&#x60; when the listing is inactive.
+    # @param id [String] Repull listing id (numeric string), not the Airbnb listing id.
+    # @param update_airbnb_house_rules_request [UpdateAirbnbHouseRulesRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(UpdateAirbnbHouseRules200Response, Integer, Hash)>] UpdateAirbnbHouseRules200Response data, response status code and response headers
+    def update_airbnb_house_rules_with_http_info(id, update_airbnb_house_rules_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: AirbnbApi.update_airbnb_house_rules ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling AirbnbApi.update_airbnb_house_rules"
+      end
+      # verify the required parameter 'update_airbnb_house_rules_request' is set
+      if @api_client.config.client_side_validation && update_airbnb_house_rules_request.nil?
+        fail ArgumentError, "Missing the required parameter 'update_airbnb_house_rules_request' when calling AirbnbApi.update_airbnb_house_rules"
+      end
+      # resource path
+      local_var_path = '/v1/channels/airbnb/listings/{id}/house-rules'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(update_airbnb_house_rules_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'UpdateAirbnbHouseRules200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"AirbnbApi.update_airbnb_house_rules",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:PUT, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: AirbnbApi#update_airbnb_house_rules\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # Update Airbnb amenities
     # Set amenities on an Airbnb listing. **Write-side** — calls Airbnb upstream.  **Partial by design**: only the amenities you name change, so turning one off is a one-line body and nothing else on the listing moves. Ids are the `id` values `GET /amenities` returns (e.g. `wireless_internet`, `ac`, `kitchen`); case is ignored. Airbnb refuses ids outside its vocabulary — that comes back as `422 airbnb_rejected` carrying Airbnb's own message.  `accessibility_amenities` go to Airbnb's separate accessibility resource, which has **no read side at all** — Airbnb offers no endpoint to fetch them back, and the combined amenities GET 404s on production listings. What you can read back is our own copy: this endpoint updates it on success, and `GET /amenities` returns it under `accessibilityAmenities`. Airbnb may also hold an accessibility claim for review until photo evidence is attached; pass `photo_ids` to supply it.  Our Airbnb copy is updated on success so a read straight after this write returns the new values. The platform-neutral copy behind `GET /v1/listings/{id}?include=amenities` uses a different amenity vocabulary and is refreshed by the next sync, except where an id happens to be identical in both.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [String] Repull listing id (numeric string).
@@ -3415,6 +3804,80 @@ module Repull
       data, status_code, headers = @api_client.call_api(:PUT, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: AirbnbApi#update_airbnb_listing_availability\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Update the Airbnb cancellation policy
+    # Set any of `shortStayPolicy`, `longStayPolicy`, `nonRefundable` (`{ enabled, discountPercent }`, 0–30%). The same write as `PUT …/booking-settings` `{ \"cancellation\": … }`; the answer is the policy Airbnb holds after it.  Returns `404` when the listing has no Airbnb connection in this workspace, and `403 listing_inactive` when the listing is inactive.
+    # @param id [String] Repull listing id (numeric string), not the Airbnb listing id.
+    # @param update_airbnb_listing_cancellation_request [UpdateAirbnbListingCancellationRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [UpdateAirbnbListingCancellation200Response]
+    def update_airbnb_listing_cancellation(id, update_airbnb_listing_cancellation_request, opts = {})
+      data, _status_code, _headers = update_airbnb_listing_cancellation_with_http_info(id, update_airbnb_listing_cancellation_request, opts)
+      data
+    end
+
+    # Update the Airbnb cancellation policy
+    # Set any of &#x60;shortStayPolicy&#x60;, &#x60;longStayPolicy&#x60;, &#x60;nonRefundable&#x60; (&#x60;{ enabled, discountPercent }&#x60;, 0–30%). The same write as &#x60;PUT …/booking-settings&#x60; &#x60;{ \&quot;cancellation\&quot;: … }&#x60;; the answer is the policy Airbnb holds after it.  Returns &#x60;404&#x60; when the listing has no Airbnb connection in this workspace, and &#x60;403 listing_inactive&#x60; when the listing is inactive.
+    # @param id [String] Repull listing id (numeric string), not the Airbnb listing id.
+    # @param update_airbnb_listing_cancellation_request [UpdateAirbnbListingCancellationRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(UpdateAirbnbListingCancellation200Response, Integer, Hash)>] UpdateAirbnbListingCancellation200Response data, response status code and response headers
+    def update_airbnb_listing_cancellation_with_http_info(id, update_airbnb_listing_cancellation_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: AirbnbApi.update_airbnb_listing_cancellation ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling AirbnbApi.update_airbnb_listing_cancellation"
+      end
+      # verify the required parameter 'update_airbnb_listing_cancellation_request' is set
+      if @api_client.config.client_side_validation && update_airbnb_listing_cancellation_request.nil?
+        fail ArgumentError, "Missing the required parameter 'update_airbnb_listing_cancellation_request' when calling AirbnbApi.update_airbnb_listing_cancellation"
+      end
+      # resource path
+      local_var_path = '/v1/channels/airbnb/listings/{id}/cancellation'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(update_airbnb_listing_cancellation_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'UpdateAirbnbListingCancellation200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"AirbnbApi.update_airbnb_listing_cancellation",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:PUT, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: AirbnbApi#update_airbnb_listing_cancellation\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end
@@ -3577,6 +4040,80 @@ module Repull
       data, status_code, headers = @api_client.call_api(:PUT, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: AirbnbApi#update_airbnb_listing_details\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Update Airbnb fees
+    # Set Airbnb fees by type: each fee you send replaces that type, the others are kept. The same write as `PUT …/pricing` `{ \"type\": \"fees\", \"fees\": […] }`; `amount: null` removes a fee. `fee_type` is Airbnb's (`PASS_THROUGH_CLEANING_FEE`, `PASS_THROUGH_PET_FEE`, `PASS_THROUGH_SHORT_TERM_CLEANING_FEE`, …).  Returns `404` when the listing has no Airbnb connection in this workspace, and `403 listing_inactive` when the listing is inactive.
+    # @param id [String] Repull listing id (numeric string), not the Airbnb listing id.
+    # @param update_airbnb_listing_fees_request [UpdateAirbnbListingFeesRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [UpdateAirbnbListingFees200Response]
+    def update_airbnb_listing_fees(id, update_airbnb_listing_fees_request, opts = {})
+      data, _status_code, _headers = update_airbnb_listing_fees_with_http_info(id, update_airbnb_listing_fees_request, opts)
+      data
+    end
+
+    # Update Airbnb fees
+    # Set Airbnb fees by type: each fee you send replaces that type, the others are kept. The same write as &#x60;PUT …/pricing&#x60; &#x60;{ \&quot;type\&quot;: \&quot;fees\&quot;, \&quot;fees\&quot;: […] }&#x60;; &#x60;amount: null&#x60; removes a fee. &#x60;fee_type&#x60; is Airbnb&#39;s (&#x60;PASS_THROUGH_CLEANING_FEE&#x60;, &#x60;PASS_THROUGH_PET_FEE&#x60;, &#x60;PASS_THROUGH_SHORT_TERM_CLEANING_FEE&#x60;, …).  Returns &#x60;404&#x60; when the listing has no Airbnb connection in this workspace, and &#x60;403 listing_inactive&#x60; when the listing is inactive.
+    # @param id [String] Repull listing id (numeric string), not the Airbnb listing id.
+    # @param update_airbnb_listing_fees_request [UpdateAirbnbListingFeesRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(UpdateAirbnbListingFees200Response, Integer, Hash)>] UpdateAirbnbListingFees200Response data, response status code and response headers
+    def update_airbnb_listing_fees_with_http_info(id, update_airbnb_listing_fees_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: AirbnbApi.update_airbnb_listing_fees ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling AirbnbApi.update_airbnb_listing_fees"
+      end
+      # verify the required parameter 'update_airbnb_listing_fees_request' is set
+      if @api_client.config.client_side_validation && update_airbnb_listing_fees_request.nil?
+        fail ArgumentError, "Missing the required parameter 'update_airbnb_listing_fees_request' when calling AirbnbApi.update_airbnb_listing_fees"
+      end
+      # resource path
+      local_var_path = '/v1/channels/airbnb/listings/{id}/fees'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(update_airbnb_listing_fees_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'UpdateAirbnbListingFees200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"AirbnbApi.update_airbnb_listing_fees",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:PUT, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: AirbnbApi#update_airbnb_listing_fees\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end

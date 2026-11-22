@@ -1276,6 +1276,76 @@ module Repull
       return data, status_code, headers
     end
 
+    # Refresh a listing from Vrbo
+    # Re-read every content section of the listing's Vrbo listing from Vrbo and keep it as Repull's copy, then report what was refreshed and when — the counterpart of `POST /v1/listings/{id}/pull/airbnb`. Use it after the host changed something on Vrbo, so the `/v1/channels/vrbo/listings/{id}/…` reads answer with what Vrbo holds now.  **What it refreshes:** descriptions, details, story, additional-info, photos, amenities, rooms, location, house-rules, booking-settings, cancellation, fees, pricing, payment-terms, protection, taxes, permits, checkin-guide, videos. **Not** the calendar, rates per night, bookings, messages, reviews or payouts — those arrive through the channel's own sync.  **Runs synchronously:** about 45 Vrbo calls spaced ~3 s apart per account, **around 2.5 minutes**. A section Vrbo fails to return is listed in `failedSections`; the others are refreshed.  **One pull per listing per 15 minutes**, as on Airbnb: a second call inside the window returns `429 rate_limit_exceeded` with `Retry-After` and `nextPullAvailableAt`, and makes no Vrbo calls.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
+    # @param id [String] Repull listing id (numeric string) of a listing linked to Vrbo.
+    # @param [Hash] opts the optional parameters
+    # @option opts [PullListingFromVrboRequest] :pull_listing_from_vrbo_request 
+    # @return [PullListingFromVrbo200Response]
+    def pull_listing_from_vrbo(id, opts = {})
+      data, _status_code, _headers = pull_listing_from_vrbo_with_http_info(id, opts)
+      data
+    end
+
+    # Refresh a listing from Vrbo
+    # Re-read every content section of the listing&#39;s Vrbo listing from Vrbo and keep it as Repull&#39;s copy, then report what was refreshed and when — the counterpart of &#x60;POST /v1/listings/{id}/pull/airbnb&#x60;. Use it after the host changed something on Vrbo, so the &#x60;/v1/channels/vrbo/listings/{id}/…&#x60; reads answer with what Vrbo holds now.  **What it refreshes:** descriptions, details, story, additional-info, photos, amenities, rooms, location, house-rules, booking-settings, cancellation, fees, pricing, payment-terms, protection, taxes, permits, checkin-guide, videos. **Not** the calendar, rates per night, bookings, messages, reviews or payouts — those arrive through the channel&#39;s own sync.  **Runs synchronously:** about 45 Vrbo calls spaced ~3 s apart per account, **around 2.5 minutes**. A section Vrbo fails to return is listed in &#x60;failedSections&#x60;; the others are refreshed.  **One pull per listing per 15 minutes**, as on Airbnb: a second call inside the window returns &#x60;429 rate_limit_exceeded&#x60; with &#x60;Retry-After&#x60; and &#x60;nextPullAvailableAt&#x60;, and makes no Vrbo calls.  Works with messaging or full access. Returns &#x60;404&#x60; when the listing is not linked to Vrbo, and &#x60;403 listing_inactive&#x60; when the listing is inactive.
+    # @param id [String] Repull listing id (numeric string) of a listing linked to Vrbo.
+    # @param [Hash] opts the optional parameters
+    # @option opts [PullListingFromVrboRequest] :pull_listing_from_vrbo_request 
+    # @return [Array<(PullListingFromVrbo200Response, Integer, Hash)>] PullListingFromVrbo200Response data, response status code and response headers
+    def pull_listing_from_vrbo_with_http_info(id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ListingsApi.pull_listing_from_vrbo ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling ListingsApi.pull_listing_from_vrbo"
+      end
+      # resource path
+      local_var_path = '/v1/listings/{id}/pull/vrbo'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(opts[:'pull_listing_from_vrbo_request'])
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'PullListingFromVrbo200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"ListingsApi.pull_listing_from_vrbo",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ListingsApi#pull_listing_from_vrbo\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # Set a listing's markup on a channel
     # Set the markup one channel adds to this listing's price. When the value changes, the affected listings' prices are re-sent to that channel straight away (`pricesResent`); nothing else is sent.  A listing's price on a channel is its own nightly price plus the channel's markup: a $200 night with a 35% Airbnb markup is sent to Airbnb as $270. The calendar keeps the listing's own price (`GET /v1/availability/{propertyId}` returns it); the markup is added only when a price is sent to the channel.  - **Airbnb** — one markup per listing. - **Booking.com** — one markup per **property**, shared by every listing priced through it (`listingIds` names them). - **Vrbo** — one markup per connected **Vrbo account**, shared by every listing linked on it (`listingIds` names them). Prices reach Vrbo through its calendar queue.  Returns `404 not_found` for a listing that does not exist or is not in this workspace, and `403 listing_inactive` for an inactive one.  On Booking.com the markup belongs to the property, so setting it reprices every listing on that property (`affectedListingIds`). A listing on more than one property must name one with `hotelId`; without it the request is refused with `409 ambiguous_booking_mapping` listing the candidates, rather than repricing a property it guessed.  On Vrbo the markup belongs to the connected Vrbo account, so setting it reprices every listing linked on that account (`affectedListingIds`). A listing linked on more than one account names one with `accountId`, else `409 ambiguous_vrbo_account`; a listing not linked to Vrbo is `409 listing_not_on_vrbo`.  `markupPercent` is a percentage — `15` for 15%. A value between 0 and 1 is refused as a probable fraction, with the number to send instead.
     # @param id [String] Repull listing id.

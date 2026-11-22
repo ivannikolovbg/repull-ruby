@@ -20,7 +20,7 @@ module Repull
 
     attr_accessor :listing_id
 
-    # The number in the Vrbo URL (vrbo.com/5506023).
+    # The number in the Vrbo URL (vrbo.com/4512345).
     attr_accessor :vrbo_listing_number
 
     attr_accessor :unit_id

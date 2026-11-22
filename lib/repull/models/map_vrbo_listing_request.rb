@@ -15,7 +15,7 @@ require 'time'
 
 module Repull
   class MapVrboListingRequest < ApiModelBase
-    # The number in the Vrbo URL (vrbo.com/5506023).
+    # The number in the Vrbo URL (vrbo.com/4512345).
     attr_accessor :vrbo_listing_number
 
     # The Repull listing to link it to. Or `create: true`.

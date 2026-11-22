@@ -20,12 +20,17 @@ All URIs are relative to *https://api.repull.dev*
 | [**get_airbnb_checkin_guide**](AirbnbApi.md#get_airbnb_checkin_guide) | **GET** /v1/channels/airbnb/listings/{id}/checkin-guide | Get Airbnb check-in guide |
 | [**get_airbnb_checkout_guide**](AirbnbApi.md#get_airbnb_checkout_guide) | **GET** /v1/channels/airbnb/listings/{id}/checkout-guide | Get Airbnb checkout guide |
 | [**get_airbnb_connection**](AirbnbApi.md#get_airbnb_connection) | **GET** /v1/channels/airbnb/connection | Get Airbnb connection state |
+| [**get_airbnb_house_rules**](AirbnbApi.md#get_airbnb_house_rules) | **GET** /v1/channels/airbnb/listings/{id}/house-rules | Get Airbnb house rules |
 | [**get_airbnb_listing**](AirbnbApi.md#get_airbnb_listing) | **GET** /v1/channels/airbnb/listings/{id} | Get Airbnb listing |
 | [**get_airbnb_listing_availability**](AirbnbApi.md#get_airbnb_listing_availability) | **GET** /v1/channels/airbnb/listings/{id}/availability | Get Airbnb availability |
+| [**get_airbnb_listing_cancellation**](AirbnbApi.md#get_airbnb_listing_cancellation) | **GET** /v1/channels/airbnb/listings/{id}/cancellation | Get the Airbnb cancellation policy |
 | [**get_airbnb_listing_details**](AirbnbApi.md#get_airbnb_listing_details) | **GET** /v1/channels/airbnb/listings/{id}/details | Get Airbnb listing details |
+| [**get_airbnb_listing_fees**](AirbnbApi.md#get_airbnb_listing_fees) | **GET** /v1/channels/airbnb/listings/{id}/fees | Get Airbnb fees |
 | [**get_airbnb_listing_pricing**](AirbnbApi.md#get_airbnb_listing_pricing) | **GET** /v1/channels/airbnb/listings/{id}/pricing | Get Airbnb pricing |
 | [**get_airbnb_listing_quality**](AirbnbApi.md#get_airbnb_listing_quality) | **GET** /v1/channels/airbnb/listings/{id}/quality | Get Airbnb listing quality |
 | [**get_airbnb_listing_settings**](AirbnbApi.md#get_airbnb_listing_settings) | **GET** /v1/channels/airbnb/listings/{id}/settings | Get Airbnb listing settings |
+| [**get_airbnb_listing_taxes**](AirbnbApi.md#get_airbnb_listing_taxes) | **GET** /v1/channels/airbnb/listings/{id}/taxes | Get Airbnb taxes |
+| [**get_airbnb_location**](AirbnbApi.md#get_airbnb_location) | **GET** /v1/channels/airbnb/listings/{id}/location | Get the Airbnb location |
 | [**get_airbnb_offer**](AirbnbApi.md#get_airbnb_offer) | **GET** /v1/channels/airbnb/offers | Get Airbnb special offer |
 | [**get_airbnb_reservation**](AirbnbApi.md#get_airbnb_reservation) | **GET** /v1/channels/airbnb/reservations/{code} | Get Airbnb reservation |
 | [**get_airbnb_thread**](AirbnbApi.md#get_airbnb_thread) | **GET** /v1/channels/airbnb/messaging/{threadId} | Get Airbnb thread |
@@ -51,10 +56,13 @@ All URIs are relative to *https://api.repull.dev*
 | [**sync_airbnb_transactions**](AirbnbApi.md#sync_airbnb_transactions) | **POST** /v1/channels/airbnb/transactions | Refresh Airbnb transactions |
 | [**update_airbnb_booking_settings**](AirbnbApi.md#update_airbnb_booking_settings) | **PUT** /v1/channels/airbnb/listings/{id}/booking-settings | Update Airbnb booking settings |
 | [**update_airbnb_checkin_guide**](AirbnbApi.md#update_airbnb_checkin_guide) | **PUT** /v1/channels/airbnb/listings/{id}/checkin-guide | Replace the steps of an Airbnb check-in guide |
+| [**update_airbnb_house_rules**](AirbnbApi.md#update_airbnb_house_rules) | **PUT** /v1/channels/airbnb/listings/{id}/house-rules | Update Airbnb house rules |
 | [**update_airbnb_listing_amenities**](AirbnbApi.md#update_airbnb_listing_amenities) | **PUT** /v1/channels/airbnb/listings/{id}/amenities | Update Airbnb amenities |
 | [**update_airbnb_listing_availability**](AirbnbApi.md#update_airbnb_listing_availability) | **PUT** /v1/channels/airbnb/listings/{id}/availability | Update Airbnb availability |
+| [**update_airbnb_listing_cancellation**](AirbnbApi.md#update_airbnb_listing_cancellation) | **PUT** /v1/channels/airbnb/listings/{id}/cancellation | Update the Airbnb cancellation policy |
 | [**update_airbnb_listing_description**](AirbnbApi.md#update_airbnb_listing_description) | **PUT** /v1/channels/airbnb/listings/{id}/descriptions | Update an Airbnb description for one locale |
 | [**update_airbnb_listing_details**](AirbnbApi.md#update_airbnb_listing_details) | **PUT** /v1/channels/airbnb/listings/{id}/details | Update property type, quiet hours, check-in method, house manual, directions or Wi-Fi |
+| [**update_airbnb_listing_fees**](AirbnbApi.md#update_airbnb_listing_fees) | **PUT** /v1/channels/airbnb/listings/{id}/fees | Update Airbnb fees |
 | [**update_airbnb_listing_permits**](AirbnbApi.md#update_airbnb_listing_permits) | **PUT** /v1/channels/airbnb/listings/{id}/permits | Answer Airbnb permit questions |
 | [**update_airbnb_listing_photo**](AirbnbApi.md#update_airbnb_listing_photo) | **PATCH** /v1/channels/airbnb/listings/{id}/photos | Update an Airbnb photo |
 | [**update_airbnb_listing_pricing**](AirbnbApi.md#update_airbnb_listing_pricing) | **PUT** /v1/channels/airbnb/listings/{id}/pricing | Update Airbnb pricing |
@@ -1202,6 +1210,75 @@ This endpoint does not need any parameter.
 - **Accept**: application/json
 
 
+## get_airbnb_house_rules
+
+> <GetAirbnbHouseRules200Response> get_airbnb_house_rules(id)
+
+Get Airbnb house rules
+
+The listing's house rules under the names Vrbo's `GET /v1/channels/vrbo/listings/{id}/house-rules` uses: check-in and check-out times, guest capacity, whether children, infants, pets, smoking and events are allowed, Airbnb's \"things to know\" (`expectations`), and the written rules per language. **Repull's stored copy**, like every Airbnb read: check `dataFreshness` before treating a value as current. `POST /v1/listings/{id}/pull/airbnb` refreshes it from Airbnb.  Returns `404` when the listing has no Airbnb connection in this workspace, and `403 listing_inactive` when the listing is inactive.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::AirbnbApi.new
+id = 'id_example' # String | Repull listing id (numeric string), not the Airbnb listing id.
+
+begin
+  # Get Airbnb house rules
+  result = api_instance.get_airbnb_house_rules(id)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->get_airbnb_house_rules: #{e}"
+end
+```
+
+#### Using the get_airbnb_house_rules_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<GetAirbnbHouseRules200Response>, Integer, Hash)> get_airbnb_house_rules_with_http_info(id)
+
+```ruby
+begin
+  # Get Airbnb house rules
+  data, status_code, headers = api_instance.get_airbnb_house_rules_with_http_info(id)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <GetAirbnbHouseRules200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->get_airbnb_house_rules_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string), not the Airbnb listing id. |  |
+
+### Return type
+
+[**GetAirbnbHouseRules200Response**](GetAirbnbHouseRules200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
 ## get_airbnb_listing
 
 > <AirbnbListing> get_airbnb_listing(id, opts)
@@ -1343,6 +1420,75 @@ nil (empty response body)
 - **Accept**: application/json
 
 
+## get_airbnb_listing_cancellation
+
+> <GetAirbnbListingCancellation200Response> get_airbnb_listing_cancellation(id)
+
+Get the Airbnb cancellation policy
+
+The short-stay and long-stay cancellation policies and the non-refundable option — the same section as `GET /v1/channels/vrbo/listings/{id}/cancellation`, and the `cancellation` of `GET …/booking-settings`. **Repull's stored copy**, like every Airbnb read: check `dataFreshness` before treating a value as current. `POST /v1/listings/{id}/pull/airbnb` refreshes it from Airbnb.  Returns `404` when the listing has no Airbnb connection in this workspace, and `403 listing_inactive` when the listing is inactive.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::AirbnbApi.new
+id = 'id_example' # String | Repull listing id (numeric string), not the Airbnb listing id.
+
+begin
+  # Get the Airbnb cancellation policy
+  result = api_instance.get_airbnb_listing_cancellation(id)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->get_airbnb_listing_cancellation: #{e}"
+end
+```
+
+#### Using the get_airbnb_listing_cancellation_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<GetAirbnbListingCancellation200Response>, Integer, Hash)> get_airbnb_listing_cancellation_with_http_info(id)
+
+```ruby
+begin
+  # Get the Airbnb cancellation policy
+  data, status_code, headers = api_instance.get_airbnb_listing_cancellation_with_http_info(id)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <GetAirbnbListingCancellation200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->get_airbnb_listing_cancellation_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string), not the Airbnb listing id. |  |
+
+### Return type
+
+[**GetAirbnbListingCancellation200Response**](GetAirbnbListingCancellation200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
 ## get_airbnb_listing_details
 
 > <GetAirbnbListingDetails200Response> get_airbnb_listing_details(id)
@@ -1401,6 +1547,75 @@ end
 ### Return type
 
 [**GetAirbnbListingDetails200Response**](GetAirbnbListingDetails200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## get_airbnb_listing_fees
+
+> <GetAirbnbListingFees200Response> get_airbnb_listing_fees(id)
+
+Get Airbnb fees
+
+The listing's Airbnb fees (cleaning, pets, extra guests, management, linens, …) — the same section as `GET /v1/channels/vrbo/listings/{id}/fees`, and the `fees` of `GET …/pricing`. **Repull's stored copy**, like every Airbnb read: check `dataFreshness` before treating a value as current. `POST /v1/listings/{id}/pull/airbnb` refreshes it from Airbnb.  Returns `404` when the listing has no Airbnb connection in this workspace, and `403 listing_inactive` when the listing is inactive.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::AirbnbApi.new
+id = 'id_example' # String | Repull listing id (numeric string), not the Airbnb listing id.
+
+begin
+  # Get Airbnb fees
+  result = api_instance.get_airbnb_listing_fees(id)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->get_airbnb_listing_fees: #{e}"
+end
+```
+
+#### Using the get_airbnb_listing_fees_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<GetAirbnbListingFees200Response>, Integer, Hash)> get_airbnb_listing_fees_with_http_info(id)
+
+```ruby
+begin
+  # Get Airbnb fees
+  data, status_code, headers = api_instance.get_airbnb_listing_fees_with_http_info(id)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <GetAirbnbListingFees200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->get_airbnb_listing_fees_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string), not the Airbnb listing id. |  |
+
+### Return type
+
+[**GetAirbnbListingFees200Response**](GetAirbnbListingFees200Response.md)
 
 ### Authorization
 
@@ -1615,6 +1830,144 @@ end
 ### Return type
 
 [**GetAirbnbListingSettings200Response**](GetAirbnbListingSettings200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## get_airbnb_listing_taxes
+
+> <GetAirbnbListingTaxes200Response> get_airbnb_listing_taxes(id)
+
+Get Airbnb taxes
+
+The listing's taxes — host-remitted pass-through taxes and the taxes Airbnb collects itself, each with `source` (`pass_through` | `airbnb_collected`) — the same section as `GET /v1/channels/vrbo/listings/{id}/taxes`, and the `taxes` of `GET …/pricing`. Read-only here: Airbnb's pass-through taxes are part of its pricing settings (`PUT …/pricing` `{ \"type\": \"standard\" }`). **Repull's stored copy**, like every Airbnb read: check `dataFreshness` before treating a value as current. `POST /v1/listings/{id}/pull/airbnb` refreshes it from Airbnb.  Returns `404` when the listing has no Airbnb connection in this workspace, and `403 listing_inactive` when the listing is inactive.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::AirbnbApi.new
+id = 'id_example' # String | Repull listing id (numeric string), not the Airbnb listing id.
+
+begin
+  # Get Airbnb taxes
+  result = api_instance.get_airbnb_listing_taxes(id)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->get_airbnb_listing_taxes: #{e}"
+end
+```
+
+#### Using the get_airbnb_listing_taxes_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<GetAirbnbListingTaxes200Response>, Integer, Hash)> get_airbnb_listing_taxes_with_http_info(id)
+
+```ruby
+begin
+  # Get Airbnb taxes
+  data, status_code, headers = api_instance.get_airbnb_listing_taxes_with_http_info(id)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <GetAirbnbListingTaxes200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->get_airbnb_listing_taxes_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string), not the Airbnb listing id. |  |
+
+### Return type
+
+[**GetAirbnbListingTaxes200Response**](GetAirbnbListingTaxes200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## get_airbnb_location
+
+> <GetAirbnbLocation200Response> get_airbnb_location(id)
+
+Get the Airbnb location
+
+The listing's address, map pin, directions and whether guests see the exact location — the same section as `GET /v1/channels/vrbo/listings/{id}/location`. Read-only: Airbnb changes a listed address only in its own flow in the host app (`addressEditable: false`). **Repull's stored copy**, like every Airbnb read: check `dataFreshness` before treating a value as current. `POST /v1/listings/{id}/pull/airbnb` refreshes it from Airbnb.  Returns `404` when the listing has no Airbnb connection in this workspace, and `403 listing_inactive` when the listing is inactive.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::AirbnbApi.new
+id = 'id_example' # String | Repull listing id (numeric string), not the Airbnb listing id.
+
+begin
+  # Get the Airbnb location
+  result = api_instance.get_airbnb_location(id)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->get_airbnb_location: #{e}"
+end
+```
+
+#### Using the get_airbnb_location_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<GetAirbnbLocation200Response>, Integer, Hash)> get_airbnb_location_with_http_info(id)
+
+```ruby
+begin
+  # Get the Airbnb location
+  data, status_code, headers = api_instance.get_airbnb_location_with_http_info(id)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <GetAirbnbLocation200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->get_airbnb_location_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string), not the Airbnb listing id. |  |
+
+### Return type
+
+[**GetAirbnbLocation200Response**](GetAirbnbLocation200Response.md)
 
 ### Authorization
 
@@ -2645,7 +2998,7 @@ end
 
 List Airbnb message threads
 
-List Airbnb message threads (one per guest conversation). Cursor-paginated. Each thread includes a preview of the latest message.  Threads on inactive listings are left out; they keep syncing and reappear once the listing is activated. Filtering by an inactive listing (`listing_id`) returns `403 listing_inactive`.  **Several Airbnb accounts?** A workspace can connect more than one. By default this returns every connected account's rows; pass `?account_id=<airbnb host id>` to scope to one. Every row carries `accountId` + `accountName` either way, and `dataFreshness.accounts[]` reports each account's freshness separately, so one disconnected host no longer marks the whole response stale.
+List Airbnb message threads (one per guest conversation), newest activity first (up to 200). Only Airbnb threads: conversations from other channels are on their own channel routes (`GET /v1/channels/vrbo/messaging`) or `GET /v1/conversations`.  Threads on inactive listings are left out; they keep syncing and reappear once the listing is activated. Filtering by an inactive listing (`listing_id`) returns `403 listing_inactive`.  **Several Airbnb accounts?** A workspace can connect more than one. By default this returns every connected account's rows; pass `?account_id=<airbnb host id>` to scope to one. Every row carries `accountId` + `accountName` either way, and `dataFreshness.accounts[]` reports each account's freshness separately, so one disconnected host no longer marks the whole response stale.
 
 ### Examples
 
@@ -3430,6 +3783,77 @@ end
 - **Accept**: application/json
 
 
+## update_airbnb_house_rules
+
+> <UpdateAirbnbHouseRules200Response> update_airbnb_house_rules(id, update_airbnb_house_rules_request)
+
+Update Airbnb house rules
+
+Write the house rules text for one language — the same write as `PUT …/descriptions` `{ locale, description: { house_rules } }`, with the same answer (`written`, `blockedFields`). On Airbnb the check-in and check-out times are booking settings: set them with `PUT …/booking-settings`. Whether pets, smoking, events or children are allowed is set in the Airbnb app.  Returns `404` when the listing has no Airbnb connection in this workspace, and `403 listing_inactive` when the listing is inactive.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::AirbnbApi.new
+id = 'id_example' # String | Repull listing id (numeric string), not the Airbnb listing id.
+update_airbnb_house_rules_request = Repull::UpdateAirbnbHouseRulesRequest.new({locale: 'en', house_rules: 'house_rules_example'}) # UpdateAirbnbHouseRulesRequest | 
+
+begin
+  # Update Airbnb house rules
+  result = api_instance.update_airbnb_house_rules(id, update_airbnb_house_rules_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->update_airbnb_house_rules: #{e}"
+end
+```
+
+#### Using the update_airbnb_house_rules_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<UpdateAirbnbHouseRules200Response>, Integer, Hash)> update_airbnb_house_rules_with_http_info(id, update_airbnb_house_rules_request)
+
+```ruby
+begin
+  # Update Airbnb house rules
+  data, status_code, headers = api_instance.update_airbnb_house_rules_with_http_info(id, update_airbnb_house_rules_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <UpdateAirbnbHouseRules200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->update_airbnb_house_rules_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string), not the Airbnb listing id. |  |
+| **update_airbnb_house_rules_request** | [**UpdateAirbnbHouseRulesRequest**](UpdateAirbnbHouseRulesRequest.md) |  |  |
+
+### Return type
+
+[**UpdateAirbnbHouseRules200Response**](UpdateAirbnbHouseRules200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
 ## update_airbnb_listing_amenities
 
 > <UpdateAirbnbListingAmenities200Response> update_airbnb_listing_amenities(id, update_airbnb_listing_amenities_request)
@@ -3560,6 +3984,77 @@ end
 ### Return type
 
 nil (empty response body)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## update_airbnb_listing_cancellation
+
+> <UpdateAirbnbListingCancellation200Response> update_airbnb_listing_cancellation(id, update_airbnb_listing_cancellation_request)
+
+Update the Airbnb cancellation policy
+
+Set any of `shortStayPolicy`, `longStayPolicy`, `nonRefundable` (`{ enabled, discountPercent }`, 0–30%). The same write as `PUT …/booking-settings` `{ \"cancellation\": … }`; the answer is the policy Airbnb holds after it.  Returns `404` when the listing has no Airbnb connection in this workspace, and `403 listing_inactive` when the listing is inactive.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::AirbnbApi.new
+id = 'id_example' # String | Repull listing id (numeric string), not the Airbnb listing id.
+update_airbnb_listing_cancellation_request = Repull::UpdateAirbnbListingCancellationRequest.new # UpdateAirbnbListingCancellationRequest | 
+
+begin
+  # Update the Airbnb cancellation policy
+  result = api_instance.update_airbnb_listing_cancellation(id, update_airbnb_listing_cancellation_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->update_airbnb_listing_cancellation: #{e}"
+end
+```
+
+#### Using the update_airbnb_listing_cancellation_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<UpdateAirbnbListingCancellation200Response>, Integer, Hash)> update_airbnb_listing_cancellation_with_http_info(id, update_airbnb_listing_cancellation_request)
+
+```ruby
+begin
+  # Update the Airbnb cancellation policy
+  data, status_code, headers = api_instance.update_airbnb_listing_cancellation_with_http_info(id, update_airbnb_listing_cancellation_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <UpdateAirbnbListingCancellation200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->update_airbnb_listing_cancellation_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string), not the Airbnb listing id. |  |
+| **update_airbnb_listing_cancellation_request** | [**UpdateAirbnbListingCancellationRequest**](UpdateAirbnbListingCancellationRequest.md) |  |  |
+
+### Return type
+
+[**UpdateAirbnbListingCancellation200Response**](UpdateAirbnbListingCancellation200Response.md)
 
 ### Authorization
 
@@ -3710,6 +4205,77 @@ end
 ### Return type
 
 [**AirbnbContentWriteResponse**](AirbnbContentWriteResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## update_airbnb_listing_fees
+
+> <UpdateAirbnbListingFees200Response> update_airbnb_listing_fees(id, update_airbnb_listing_fees_request)
+
+Update Airbnb fees
+
+Set Airbnb fees by type: each fee you send replaces that type, the others are kept. The same write as `PUT …/pricing` `{ \"type\": \"fees\", \"fees\": […] }`; `amount: null` removes a fee. `fee_type` is Airbnb's (`PASS_THROUGH_CLEANING_FEE`, `PASS_THROUGH_PET_FEE`, `PASS_THROUGH_SHORT_TERM_CLEANING_FEE`, …).  Returns `404` when the listing has no Airbnb connection in this workspace, and `403 listing_inactive` when the listing is inactive.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::AirbnbApi.new
+id = 'id_example' # String | Repull listing id (numeric string), not the Airbnb listing id.
+update_airbnb_listing_fees_request = Repull::UpdateAirbnbListingFeesRequest.new({fees: [Repull::GetAirbnbListingFees200ResponseDataInner.new]}) # UpdateAirbnbListingFeesRequest | 
+
+begin
+  # Update Airbnb fees
+  result = api_instance.update_airbnb_listing_fees(id, update_airbnb_listing_fees_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->update_airbnb_listing_fees: #{e}"
+end
+```
+
+#### Using the update_airbnb_listing_fees_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<UpdateAirbnbListingFees200Response>, Integer, Hash)> update_airbnb_listing_fees_with_http_info(id, update_airbnb_listing_fees_request)
+
+```ruby
+begin
+  # Update Airbnb fees
+  data, status_code, headers = api_instance.update_airbnb_listing_fees_with_http_info(id, update_airbnb_listing_fees_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <UpdateAirbnbListingFees200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling AirbnbApi->update_airbnb_listing_fees_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string), not the Airbnb listing id. |  |
+| **update_airbnb_listing_fees_request** | [**UpdateAirbnbListingFeesRequest**](UpdateAirbnbListingFeesRequest.md) |  |  |
+
+### Return type
+
+[**UpdateAirbnbListingFees200Response**](UpdateAirbnbListingFees200Response.md)
 
 ### Authorization
 

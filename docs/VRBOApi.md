@@ -8,6 +8,7 @@ All URIs are relative to *https://api.repull.dev*
 | [**add_vrbo_listing_room**](VRBOApi.md#add_vrbo_listing_room) | **POST** /v1/channels/vrbo/listings/{id}/rooms | Add a room to the Vrbo listing |
 | [**add_vrbo_listing_video**](VRBOApi.md#add_vrbo_listing_video) | **POST** /v1/channels/vrbo/listings/{id}/videos | Add a video to the Vrbo listing |
 | [**create_vrbo_alteration**](VRBOApi.md#create_vrbo_alteration) | **POST** /v1/channels/vrbo/alterations | Change a Vrbo reservation |
+| [**create_vrbo_offer**](VRBOApi.md#create_vrbo_offer) | **POST** /v1/channels/vrbo/offers | Pre-approve or quote a Vrbo inquiry |
 | [**delete_vrbo_listing_description**](VRBOApi.md#delete_vrbo_listing_description) | **DELETE** /v1/channels/vrbo/listings/{id}/descriptions | Remove a Vrbo translation |
 | [**delete_vrbo_listing_photos**](VRBOApi.md#delete_vrbo_listing_photos) | **DELETE** /v1/channels/vrbo/listings/{id}/photos | Remove Vrbo photos |
 | [**delete_vrbo_listing_room**](VRBOApi.md#delete_vrbo_listing_room) | **DELETE** /v1/channels/vrbo/listings/{id}/rooms | Remove a Vrbo room |
@@ -35,16 +36,24 @@ All URIs are relative to *https://api.repull.dev*
 | [**get_vrbo_listing_rates**](VRBOApi.md#get_vrbo_listing_rates) | **GET** /v1/channels/vrbo/listings/{id}/rates | Get the Vrbo rates and stay discounts |
 | [**get_vrbo_listing_rooms**](VRBOApi.md#get_vrbo_listing_rooms) | **GET** /v1/channels/vrbo/listings/{id}/rooms | Get the Vrbo rooms |
 | [**get_vrbo_listing_safety_disclosures**](VRBOApi.md#get_vrbo_listing_safety_disclosures) | **GET** /v1/channels/vrbo/listings/{id}/safety-disclosures | Get the Vrbo safety disclosures |
+| [**get_vrbo_listing_settings**](VRBOApi.md#get_vrbo_listing_settings) | **GET** /v1/channels/vrbo/listings/{id}/settings | Get Vrbo listing settings |
 | [**get_vrbo_listing_story**](VRBOApi.md#get_vrbo_listing_story) | **GET** /v1/channels/vrbo/listings/{id}/story | Get the Vrbo host story |
 | [**get_vrbo_listing_taxes**](VRBOApi.md#get_vrbo_listing_taxes) | **GET** /v1/channels/vrbo/listings/{id}/taxes | Get the Vrbo taxes |
 | [**get_vrbo_listing_videos**](VRBOApi.md#get_vrbo_listing_videos) | **GET** /v1/channels/vrbo/listings/{id}/videos | Get the Vrbo videos |
+| [**get_vrbo_offer**](VRBOApi.md#get_vrbo_offer) | **GET** /v1/channels/vrbo/offers | Get the Vrbo quote |
 | [**get_vrbo_reservation**](VRBOApi.md#get_vrbo_reservation) | **GET** /v1/channels/vrbo/reservations/{code} | Get a Vrbo reservation |
+| [**get_vrbo_thread**](VRBOApi.md#get_vrbo_thread) | **GET** /v1/channels/vrbo/messaging/{threadId} | Get a Vrbo message thread |
 | [**list_vrbo_listings**](VRBOApi.md#list_vrbo_listings) | **GET** /v1/channels/vrbo/listings | List VRBO listings |
 | [**list_vrbo_reservations**](VRBOApi.md#list_vrbo_reservations) | **GET** /v1/channels/vrbo/reservations | List VRBO reservations |
+| [**list_vrbo_reviews**](VRBOApi.md#list_vrbo_reviews) | **GET** /v1/channels/vrbo/reviews | List Vrbo reviews |
+| [**list_vrbo_thread_messages**](VRBOApi.md#list_vrbo_thread_messages) | **GET** /v1/channels/vrbo/messaging/{threadId}/messages | Get Vrbo messages |
+| [**list_vrbo_threads**](VRBOApi.md#list_vrbo_threads) | **GET** /v1/channels/vrbo/messaging | List Vrbo message threads |
 | [**list_vrbo_transactions**](VRBOApi.md#list_vrbo_transactions) | **GET** /v1/channels/vrbo/transactions | List Vrbo transactions (payout ledger) |
 | [**map_vrbo_listing**](VRBOApi.md#map_vrbo_listing) | **POST** /v1/channels/vrbo/listings/map | Link a Vrbo listing to a Repull listing |
 | [**reorder_vrbo_listing_photos**](VRBOApi.md#reorder_vrbo_listing_photos) | **PUT** /v1/channels/vrbo/listings/{id}/photos/order | Reorder the Vrbo photos |
+| [**send_vrbo_message**](VRBOApi.md#send_vrbo_message) | **POST** /v1/channels/vrbo/messaging/{threadId}/messages | Send a Vrbo message |
 | [**set_vrbo_listing_cover_photo**](VRBOApi.md#set_vrbo_listing_cover_photo) | **PUT** /v1/channels/vrbo/listings/{id}/photos/cover | Set the Vrbo cover photo |
+| [**submit_vrbo_guest_review**](VRBOApi.md#submit_vrbo_guest_review) | **PUT** /v1/channels/vrbo/reviews/{id} | Rate a Vrbo guest |
 | [**sync_vrbo_transactions**](VRBOApi.md#sync_vrbo_transactions) | **POST** /v1/channels/vrbo/transactions | Refresh the Vrbo payout ledger |
 | [**update_vrbo_listing_additional_info**](VRBOApi.md#update_vrbo_listing_additional_info) | **PUT** /v1/channels/vrbo/listings/{id}/additional-info | Update the Vrbo additional details |
 | [**update_vrbo_listing_amenities**](VRBOApi.md#update_vrbo_listing_amenities) | **PUT** /v1/channels/vrbo/listings/{id}/amenities | Update the Vrbo amenities |
@@ -69,6 +78,7 @@ All URIs are relative to *https://api.repull.dev*
 | [**update_vrbo_listing_taxes**](VRBOApi.md#update_vrbo_listing_taxes) | **PUT** /v1/channels/vrbo/listings/{id}/taxes | Update the Vrbo taxes |
 | [**vrbo_listing_action**](VRBOApi.md#vrbo_listing_action) | **POST** /v1/channels/vrbo/listings/{id} | Act on the Vrbo listing |
 | [**vrbo_reservation_action**](VRBOApi.md#vrbo_reservation_action) | **POST** /v1/channels/vrbo/reservations/{code} | Accept, decline, cancel, charge or refund a Vrbo reservation |
+| [**withdraw_vrbo_offer**](VRBOApi.md#withdraw_vrbo_offer) | **DELETE** /v1/channels/vrbo/offers | Withdraw the Vrbo pre-approval or quote |
 
 
 ## add_vrbo_listing_photos
@@ -354,6 +364,75 @@ end
 ### Return type
 
 [**CreateVrboAlteration200Response**](CreateVrboAlteration200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## create_vrbo_offer
+
+> <CreateVrboOffer201Response> create_vrbo_offer(create_vrbo_offer_request)
+
+Pre-approve or quote a Vrbo inquiry
+
+Answer a Vrbo inquiry — the counterpart of `POST /v1/channels/airbnb/offers`, the same body addressed by the Vrbo conversation. `type: \"preapproval\"` invites the guest to book their dates at the listed price; `type: \"offer\"` sends Vrbo's edited quote.  **Priced by its parts, not a total.** Vrbo adds its taxes and service fee itself, so a quote takes `rental_amount`, `fees` (`[{ type, value }]`, Vrbo fee types such as `CLEANING`, `PET`) and `damage_deposit`; `total_price` is refused. The stay is `start_date` + `nights` and `guest_details`, as on Airbnb; leave them out to keep the guest's own. Both types may carry a `message` to the guest. Vrbo has no instant-book switch on a pre-approval (`block_instant_booking` is refused) and a quote is always for the conversation's property (`listing_id` is refused).  The same as `POST /v1/conversations/{id}/pre-approval` and `/special-offers` on a Vrbo conversation, which take the Repull conversation id. Send `Idempotency-Key`: a retry without it can send the guest two quotes. Returns `403 listing_inactive` when the conversation's listing is inactive.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::VRBOApi.new
+create_vrbo_offer_request = Repull::CreateVrboOfferRequest.new({type: 'preapproval', thread_id: 'thread_id_example'}) # CreateVrboOfferRequest | 
+
+begin
+  # Pre-approve or quote a Vrbo inquiry
+  result = api_instance.create_vrbo_offer(create_vrbo_offer_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->create_vrbo_offer: #{e}"
+end
+```
+
+#### Using the create_vrbo_offer_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<CreateVrboOffer201Response>, Integer, Hash)> create_vrbo_offer_with_http_info(create_vrbo_offer_request)
+
+```ruby
+begin
+  # Pre-approve or quote a Vrbo inquiry
+  data, status_code, headers = api_instance.create_vrbo_offer_with_http_info(create_vrbo_offer_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <CreateVrboOffer201Response>
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->create_vrbo_offer_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **create_vrbo_offer_request** | [**CreateVrboOfferRequest**](CreateVrboOfferRequest.md) |  |  |
+
+### Return type
+
+[**CreateVrboOffer201Response**](CreateVrboOffer201Response.md)
 
 ### Authorization
 
@@ -2391,6 +2470,83 @@ end
 - **Accept**: application/json
 
 
+## get_vrbo_listing_settings
+
+> <GetVrboListingSettings200Response> get_vrbo_listing_settings(id, opts)
+
+Get Vrbo listing settings
+
+The counterpart of `GET /v1/channels/airbnb/listings/{id}/settings`: the languages the listing has a hand-written description in (`locales`), and with `?type=permits` its registration / licence (the `data` of `GET …/permits`). `type=all` (default) returns `{ locales }`, `type=locales` the array.  Vrbo has no co-host roles, so `type=hosts` answers `422 not_available_on_vrbo`: a Vrbo listing belongs to the one Vrbo account it is in (`accountId` on `GET /v1/channels/vrbo/listings`).  Answers from Repull's stored copy of the listing's Vrbo content, like the Airbnb endpoints (`dataFreshness.lastSyncedAt` says when it was read from Vrbo). The first read of a section reads Vrbo and stores it; a copy over 24 h old answers and is refreshed in the background (`reason: refreshing`); every write through Repull stores what Vrbo has after it. `?source=live` reads Vrbo now.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::VRBOApi.new
+id = 'id_example' # String | Repull listing id (numeric string) of a listing linked to Vrbo.
+opts = {
+  type: 'all', # String | Which settings to return. `all` returns `{ locales }`.
+  source: 'stored', # String | `stored` (default): Repull's copy, in milliseconds. `live`: read Vrbo now (seconds) and refresh the copy.
+  vrbo_listing_number: 'vrbo_listing_number_example' # String | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+}
+
+begin
+  # Get Vrbo listing settings
+  result = api_instance.get_vrbo_listing_settings(id, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->get_vrbo_listing_settings: #{e}"
+end
+```
+
+#### Using the get_vrbo_listing_settings_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<GetVrboListingSettings200Response>, Integer, Hash)> get_vrbo_listing_settings_with_http_info(id, opts)
+
+```ruby
+begin
+  # Get Vrbo listing settings
+  data, status_code, headers = api_instance.get_vrbo_listing_settings_with_http_info(id, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <GetVrboListingSettings200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->get_vrbo_listing_settings_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | Repull listing id (numeric string) of a listing linked to Vrbo. |  |
+| **type** | **String** | Which settings to return. &#x60;all&#x60; returns &#x60;{ locales }&#x60;. | [optional][default to &#39;all&#39;] |
+| **source** | **String** | &#x60;stored&#x60; (default): Repull&#39;s copy, in milliseconds. &#x60;live&#x60;: read Vrbo now (seconds) and refresh the copy. | [optional][default to &#39;stored&#39;] |
+| **vrbo_listing_number** | **String** | The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit. | [optional] |
+
+### Return type
+
+[**GetVrboListingSettings200Response**](GetVrboListingSettings200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
 ## get_vrbo_listing_story
 
 > <GetVrboListingStory200Response> get_vrbo_listing_story(id, opts)
@@ -2616,6 +2772,75 @@ end
 - **Accept**: application/json
 
 
+## get_vrbo_offer
+
+> <GetVrboOffer200Response> get_vrbo_offer(thread_id)
+
+Get the Vrbo quote
+
+The conversation's live quote as Vrbo shows it — its parts and Vrbo's guest total. The counterpart of `GET /v1/channels/airbnb/offers`; Vrbo keeps one quote per conversation, so it is read by `thread_id` rather than an offer id.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::VRBOApi.new
+thread_id = 'vrbo:3f2a9c1e-5b7d-4e2a-9c1f-0a1b2c3d4e5f' # String | The Vrbo conversation (`externalThreadId` on `GET /v1/channels/vrbo/messaging`).
+
+begin
+  # Get the Vrbo quote
+  result = api_instance.get_vrbo_offer(thread_id)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->get_vrbo_offer: #{e}"
+end
+```
+
+#### Using the get_vrbo_offer_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<GetVrboOffer200Response>, Integer, Hash)> get_vrbo_offer_with_http_info(thread_id)
+
+```ruby
+begin
+  # Get the Vrbo quote
+  data, status_code, headers = api_instance.get_vrbo_offer_with_http_info(thread_id)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <GetVrboOffer200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->get_vrbo_offer_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **thread_id** | **String** | The Vrbo conversation (&#x60;externalThreadId&#x60; on &#x60;GET /v1/channels/vrbo/messaging&#x60;). |  |
+
+### Return type
+
+[**GetVrboOffer200Response**](GetVrboOffer200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
 ## get_vrbo_reservation
 
 > <GetVrboReservation200Response> get_vrbo_reservation(code, opts)
@@ -2678,6 +2903,75 @@ end
 ### Return type
 
 [**GetVrboReservation200Response**](GetVrboReservation200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## get_vrbo_thread
+
+> <GetVrboThread200Response> get_vrbo_thread(thread_id)
+
+Get a Vrbo message thread
+
+One Vrbo conversation by its Vrbo id — the counterpart of `GET /v1/channels/airbnb/messaging/{threadId}`.  Returns `403 listing_inactive` when the conversation's listing is inactive.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::VRBOApi.new
+thread_id = 'vrbo:3f2a9c1e-5b7d-4e2a-9c1f-0a1b2c3d4e5f' # String | The Vrbo conversation id — `externalThreadId` on `GET /v1/channels/vrbo/messaging` (`vrbo:<uuid>`; the bare uuid works too).
+
+begin
+  # Get a Vrbo message thread
+  result = api_instance.get_vrbo_thread(thread_id)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->get_vrbo_thread: #{e}"
+end
+```
+
+#### Using the get_vrbo_thread_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<GetVrboThread200Response>, Integer, Hash)> get_vrbo_thread_with_http_info(thread_id)
+
+```ruby
+begin
+  # Get a Vrbo message thread
+  data, status_code, headers = api_instance.get_vrbo_thread_with_http_info(thread_id)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <GetVrboThread200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->get_vrbo_thread_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **thread_id** | **String** | The Vrbo conversation id — &#x60;externalThreadId&#x60; on &#x60;GET /v1/channels/vrbo/messaging&#x60; (&#x60;vrbo:&lt;uuid&gt;&#x60;; the bare uuid works too). |  |
+
+### Return type
+
+[**GetVrboThread200Response**](GetVrboThread200Response.md)
 
 ### Authorization
 
@@ -2837,6 +3131,235 @@ end
 - **Accept**: application/json
 
 
+## list_vrbo_reviews
+
+> <ReviewListResponse> list_vrbo_reviews(opts)
+
+List Vrbo reviews
+
+The workspace's Vrbo reviews — the counterpart of `GET /v1/channels/airbnb/reviews`. The same list, filters, paging and review shape as `GET /v1/reviews?platform=vrbo`, with the channel fixed: `reviewerRole=guest` (default) is what guests wrote, `reviewerRole=host` your ratings of guests. Reply to a review with `POST /v1/reviews/{id}/reply`; rate a guest with `PUT /v1/channels/vrbo/reviews/{id}`.  Reviews of inactive listings are left out; `listingId` naming an inactive listing returns `403 listing_inactive`. `platform` other than `vrbo` is refused.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::VRBOApi.new
+opts = {
+  cursor: 'cursor_example', # String | `pagination.nextCursor` from the previous page.
+  limit: 56, # Integer | 
+  listing_id: 'listing_id_example', # String | Repull listing id.
+  status: 'responded', # String | 
+  reviewer_role: 'guest' # String | 
+}
+
+begin
+  # List Vrbo reviews
+  result = api_instance.list_vrbo_reviews(opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->list_vrbo_reviews: #{e}"
+end
+```
+
+#### Using the list_vrbo_reviews_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<ReviewListResponse>, Integer, Hash)> list_vrbo_reviews_with_http_info(opts)
+
+```ruby
+begin
+  # List Vrbo reviews
+  data, status_code, headers = api_instance.list_vrbo_reviews_with_http_info(opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <ReviewListResponse>
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->list_vrbo_reviews_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **cursor** | **String** | &#x60;pagination.nextCursor&#x60; from the previous page. | [optional] |
+| **limit** | **Integer** |  | [optional][default to 20] |
+| **listing_id** | **String** | Repull listing id. | [optional] |
+| **status** | **String** |  | [optional] |
+| **reviewer_role** | **String** |  | [optional][default to &#39;guest&#39;] |
+
+### Return type
+
+[**ReviewListResponse**](ReviewListResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## list_vrbo_thread_messages
+
+> <ListVrboThreadMessages200Response> list_vrbo_thread_messages(thread_id, opts)
+
+Get Vrbo messages
+
+The messages of a Vrbo conversation, as recorded rows — the counterpart of `GET /v1/channels/airbnb/messaging/{threadId}/messages`, same shape. 50 per page, newest first; walk older pages with `?cursor=` until `pagination.hasMore` is `false`. `?all=true` returns up to 1000 oldest first, without `pagination`.  Returns `403 listing_inactive` when the conversation's listing is inactive.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::VRBOApi.new
+thread_id = 'vrbo:3f2a9c1e-5b7d-4e2a-9c1f-0a1b2c3d4e5f' # String | The Vrbo conversation id — `externalThreadId` on `GET /v1/channels/vrbo/messaging` (`vrbo:<uuid>`; the bare uuid works too).
+opts = {
+  cursor: 'cursor_example', # String | `pagination.nextCursor` from the previous page.
+  all: true # Boolean | `true` returns up to 1000 messages oldest first in one response.
+}
+
+begin
+  # Get Vrbo messages
+  result = api_instance.list_vrbo_thread_messages(thread_id, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->list_vrbo_thread_messages: #{e}"
+end
+```
+
+#### Using the list_vrbo_thread_messages_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<ListVrboThreadMessages200Response>, Integer, Hash)> list_vrbo_thread_messages_with_http_info(thread_id, opts)
+
+```ruby
+begin
+  # Get Vrbo messages
+  data, status_code, headers = api_instance.list_vrbo_thread_messages_with_http_info(thread_id, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <ListVrboThreadMessages200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->list_vrbo_thread_messages_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **thread_id** | **String** | The Vrbo conversation id — &#x60;externalThreadId&#x60; on &#x60;GET /v1/channels/vrbo/messaging&#x60; (&#x60;vrbo:&lt;uuid&gt;&#x60;; the bare uuid works too). |  |
+| **cursor** | **String** | &#x60;pagination.nextCursor&#x60; from the previous page. | [optional] |
+| **all** | **Boolean** | &#x60;true&#x60; returns up to 1000 messages oldest first in one response. | [optional] |
+
+### Return type
+
+[**ListVrboThreadMessages200Response**](ListVrboThreadMessages200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## list_vrbo_threads
+
+> <ListVrboThreads200Response> list_vrbo_threads(opts)
+
+List Vrbo message threads
+
+The workspace's Vrbo conversations, newest activity first (up to 200) — the counterpart of `GET /v1/channels/airbnb/messaging`, read from Repull's copy of the Vrbo inbox. Each thread carries the Vrbo account it belongs to (`accountId`, `accountName`). `externalThreadId` (`vrbo:<uuid>`) addresses the thread on these routes; `id` is the Repull conversation id of `/v1/conversations/{id}`.  Only conversations Vrbo itself holds are listed: a Vrbo booking that reached Repull another way (a PMS, iCal) has no Vrbo conversation to message.  Threads on inactive listings are left out. Filtering by an inactive listing (`listing_id`) returns `403 listing_inactive`.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::VRBOApi.new
+opts = {
+  account_id: 'vrbo:7001234', # String | One connected Vrbo account (`vrbo:…`). Omitted: every account. Unknown: `404` with your accounts in `valid_values`.
+  listing_id: 'listing_id_example', # String | Repull listing id.
+  reservation_id: 'reservation_id_example' # String | Repull reservation id.
+}
+
+begin
+  # List Vrbo message threads
+  result = api_instance.list_vrbo_threads(opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->list_vrbo_threads: #{e}"
+end
+```
+
+#### Using the list_vrbo_threads_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<ListVrboThreads200Response>, Integer, Hash)> list_vrbo_threads_with_http_info(opts)
+
+```ruby
+begin
+  # List Vrbo message threads
+  data, status_code, headers = api_instance.list_vrbo_threads_with_http_info(opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <ListVrboThreads200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->list_vrbo_threads_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **account_id** | **String** | One connected Vrbo account (&#x60;vrbo:…&#x60;). Omitted: every account. Unknown: &#x60;404&#x60; with your accounts in &#x60;valid_values&#x60;. | [optional] |
+| **listing_id** | **String** | Repull listing id. | [optional] |
+| **reservation_id** | **String** | Repull reservation id. | [optional] |
+
+### Return type
+
+[**ListVrboThreads200Response**](ListVrboThreads200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
 ## list_vrbo_transactions
 
 > <ListVrboTransactions200Response> list_vrbo_transactions(opts)
@@ -2944,7 +3467,7 @@ Repull.configure do |config|
 end
 
 api_instance = Repull::VRBOApi.new
-map_vrbo_listing_request = Repull::MapVrboListingRequest.new({vrbo_listing_number: '5506023'}) # MapVrboListingRequest | 
+map_vrbo_listing_request = Repull::MapVrboListingRequest.new({vrbo_listing_number: '4512345'}) # MapVrboListingRequest | 
 
 begin
   # Link a Vrbo listing to a Repull listing
@@ -3068,6 +3591,77 @@ end
 - **Accept**: application/json
 
 
+## send_vrbo_message
+
+> <SendMessageResponse> send_vrbo_message(thread_id, send_vrbo_message_request)
+
+Send a Vrbo message
+
+Send a message in a Vrbo conversation through the host's connected Vrbo account — the counterpart of `POST /v1/channels/airbnb/messaging/{threadId}/messages`, with the same body. It is sent the way the dashboard sends it and recorded in the conversation, so it also appears on `GET /v1/conversations/{id}/messages`.  `201` with `status: \"sent\"` when Vrbo took it; `202` with `status: \"queued\"` when Vrbo was slow and the send finishes in the background — do not send it again, watch `conversation.message.status_changed`. Vrbo messages are text: a `mediaUrl` is refused with `422 attachments_not_supported`. Send `Idempotency-Key` to make a retry safe.  Vrbo has no edit, unsend or reaction on a sent message (Airbnb's `PATCH …/messages/{messageId}`).  Returns `403 listing_inactive` when the conversation's listing is inactive.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::VRBOApi.new
+thread_id = 'vrbo:3f2a9c1e-5b7d-4e2a-9c1f-0a1b2c3d4e5f' # String | The Vrbo conversation id — `externalThreadId` on `GET /v1/channels/vrbo/messaging` (`vrbo:<uuid>`; the bare uuid works too).
+send_vrbo_message_request = Repull::SendVrboMessageRequest.new({message: 'message_example'}) # SendVrboMessageRequest | 
+
+begin
+  # Send a Vrbo message
+  result = api_instance.send_vrbo_message(thread_id, send_vrbo_message_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->send_vrbo_message: #{e}"
+end
+```
+
+#### Using the send_vrbo_message_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<SendMessageResponse>, Integer, Hash)> send_vrbo_message_with_http_info(thread_id, send_vrbo_message_request)
+
+```ruby
+begin
+  # Send a Vrbo message
+  data, status_code, headers = api_instance.send_vrbo_message_with_http_info(thread_id, send_vrbo_message_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <SendMessageResponse>
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->send_vrbo_message_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **thread_id** | **String** | The Vrbo conversation id — &#x60;externalThreadId&#x60; on &#x60;GET /v1/channels/vrbo/messaging&#x60; (&#x60;vrbo:&lt;uuid&gt;&#x60;; the bare uuid works too). |  |
+| **send_vrbo_message_request** | [**SendVrboMessageRequest**](SendVrboMessageRequest.md) |  |  |
+
+### Return type
+
+[**SendMessageResponse**](SendMessageResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
 ## set_vrbo_listing_cover_photo
 
 > <AddVrboListingPhotos200Response> set_vrbo_listing_cover_photo(id, set_vrbo_listing_cover_photo_request, opts)
@@ -3132,6 +3726,77 @@ end
 ### Return type
 
 [**AddVrboListingPhotos200Response**](AddVrboListingPhotos200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## submit_vrbo_guest_review
+
+> <SubmitVrboGuestReview200Response> submit_vrbo_guest_review(id, submit_vrbo_guest_review_request)
+
+Rate a Vrbo guest
+
+Rate the guest of a Vrbo stay — Vrbo's \"Rate guest\", the counterpart of `PUT /v1/channels/airbnb/reviews/{id}`, and the same as `POST /v1/reviews/{id}/guest-review` on a Vrbo review. `rating` (overall, 1–5), `categoryRatings` (`cleanliness`, `communication`, `respect_house_rules`) and `isRevieweeRecommended` (would host again). Vrbo's rating has no text: `publicReview` / `privateFeedback` are refused when not empty. Publishing is final.  `{id}` is the review `id` from `GET /v1/channels/vrbo/reviews?reviewerRole=host`; a review from another channel is `404`.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::VRBOApi.new
+id = '181567' # String | The review `id`.
+submit_vrbo_guest_review_request = Repull::SubmitVrboGuestReviewRequest.new # SubmitVrboGuestReviewRequest | 
+
+begin
+  # Rate a Vrbo guest
+  result = api_instance.submit_vrbo_guest_review(id, submit_vrbo_guest_review_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->submit_vrbo_guest_review: #{e}"
+end
+```
+
+#### Using the submit_vrbo_guest_review_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<SubmitVrboGuestReview200Response>, Integer, Hash)> submit_vrbo_guest_review_with_http_info(id, submit_vrbo_guest_review_request)
+
+```ruby
+begin
+  # Rate a Vrbo guest
+  data, status_code, headers = api_instance.submit_vrbo_guest_review_with_http_info(id, submit_vrbo_guest_review_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <SubmitVrboGuestReview200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->submit_vrbo_guest_review_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **String** | The review &#x60;id&#x60;. |  |
+| **submit_vrbo_guest_review_request** | [**SubmitVrboGuestReviewRequest**](SubmitVrboGuestReviewRequest.md) |  |  |
+
+### Return type
+
+[**SubmitVrboGuestReview200Response**](SubmitVrboGuestReview200Response.md)
 
 ### Authorization
 
@@ -4932,5 +5597,74 @@ end
 ### HTTP request headers
 
 - **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## withdraw_vrbo_offer
+
+> <WithdrawVrboOffer200Response> withdraw_vrbo_offer(thread_id)
+
+Withdraw the Vrbo pre-approval or quote
+
+Withdraw the conversation's pre-approval or quote: the guest can no longer book on it. The counterpart of `DELETE /v1/channels/airbnb/offers`, by `thread_id`.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::VRBOApi.new
+thread_id = 'vrbo:3f2a9c1e-5b7d-4e2a-9c1f-0a1b2c3d4e5f' # String | The Vrbo conversation (`externalThreadId` on `GET /v1/channels/vrbo/messaging`).
+
+begin
+  # Withdraw the Vrbo pre-approval or quote
+  result = api_instance.withdraw_vrbo_offer(thread_id)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->withdraw_vrbo_offer: #{e}"
+end
+```
+
+#### Using the withdraw_vrbo_offer_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<WithdrawVrboOffer200Response>, Integer, Hash)> withdraw_vrbo_offer_with_http_info(thread_id)
+
+```ruby
+begin
+  # Withdraw the Vrbo pre-approval or quote
+  data, status_code, headers = api_instance.withdraw_vrbo_offer_with_http_info(thread_id)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <WithdrawVrboOffer200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling VRBOApi->withdraw_vrbo_offer_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **thread_id** | **String** | The Vrbo conversation (&#x60;externalThreadId&#x60; on &#x60;GET /v1/channels/vrbo/messaging&#x60;). |  |
+
+### Return type
+
+[**WithdrawVrboOffer200Response**](WithdrawVrboOffer200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
 - **Accept**: application/json
 

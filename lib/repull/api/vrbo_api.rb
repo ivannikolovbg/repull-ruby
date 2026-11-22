@@ -318,6 +318,74 @@ module Repull
       return data, status_code, headers
     end
 
+    # Pre-approve or quote a Vrbo inquiry
+    # Answer a Vrbo inquiry — the counterpart of `POST /v1/channels/airbnb/offers`, the same body addressed by the Vrbo conversation. `type: \"preapproval\"` invites the guest to book their dates at the listed price; `type: \"offer\"` sends Vrbo's edited quote.  **Priced by its parts, not a total.** Vrbo adds its taxes and service fee itself, so a quote takes `rental_amount`, `fees` (`[{ type, value }]`, Vrbo fee types such as `CLEANING`, `PET`) and `damage_deposit`; `total_price` is refused. The stay is `start_date` + `nights` and `guest_details`, as on Airbnb; leave them out to keep the guest's own. Both types may carry a `message` to the guest. Vrbo has no instant-book switch on a pre-approval (`block_instant_booking` is refused) and a quote is always for the conversation's property (`listing_id` is refused).  The same as `POST /v1/conversations/{id}/pre-approval` and `/special-offers` on a Vrbo conversation, which take the Repull conversation id. Send `Idempotency-Key`: a retry without it can send the guest two quotes. Returns `403 listing_inactive` when the conversation's listing is inactive.
+    # @param create_vrbo_offer_request [CreateVrboOfferRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [CreateVrboOffer201Response]
+    def create_vrbo_offer(create_vrbo_offer_request, opts = {})
+      data, _status_code, _headers = create_vrbo_offer_with_http_info(create_vrbo_offer_request, opts)
+      data
+    end
+
+    # Pre-approve or quote a Vrbo inquiry
+    # Answer a Vrbo inquiry — the counterpart of &#x60;POST /v1/channels/airbnb/offers&#x60;, the same body addressed by the Vrbo conversation. &#x60;type: \&quot;preapproval\&quot;&#x60; invites the guest to book their dates at the listed price; &#x60;type: \&quot;offer\&quot;&#x60; sends Vrbo&#39;s edited quote.  **Priced by its parts, not a total.** Vrbo adds its taxes and service fee itself, so a quote takes &#x60;rental_amount&#x60;, &#x60;fees&#x60; (&#x60;[{ type, value }]&#x60;, Vrbo fee types such as &#x60;CLEANING&#x60;, &#x60;PET&#x60;) and &#x60;damage_deposit&#x60;; &#x60;total_price&#x60; is refused. The stay is &#x60;start_date&#x60; + &#x60;nights&#x60; and &#x60;guest_details&#x60;, as on Airbnb; leave them out to keep the guest&#39;s own. Both types may carry a &#x60;message&#x60; to the guest. Vrbo has no instant-book switch on a pre-approval (&#x60;block_instant_booking&#x60; is refused) and a quote is always for the conversation&#39;s property (&#x60;listing_id&#x60; is refused).  The same as &#x60;POST /v1/conversations/{id}/pre-approval&#x60; and &#x60;/special-offers&#x60; on a Vrbo conversation, which take the Repull conversation id. Send &#x60;Idempotency-Key&#x60;: a retry without it can send the guest two quotes. Returns &#x60;403 listing_inactive&#x60; when the conversation&#39;s listing is inactive.
+    # @param create_vrbo_offer_request [CreateVrboOfferRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(CreateVrboOffer201Response, Integer, Hash)>] CreateVrboOffer201Response data, response status code and response headers
+    def create_vrbo_offer_with_http_info(create_vrbo_offer_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: VRBOApi.create_vrbo_offer ...'
+      end
+      # verify the required parameter 'create_vrbo_offer_request' is set
+      if @api_client.config.client_side_validation && create_vrbo_offer_request.nil?
+        fail ArgumentError, "Missing the required parameter 'create_vrbo_offer_request' when calling VRBOApi.create_vrbo_offer"
+      end
+      # resource path
+      local_var_path = '/v1/channels/vrbo/offers'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(create_vrbo_offer_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'CreateVrboOffer201Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"VRBOApi.create_vrbo_offer",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: VRBOApi#create_vrbo_offer\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # Remove a Vrbo translation
     # Remove the hand-written translation for `locale`; Vrbo goes back to translating that language automatically. The listing's own description cannot be removed, only changed. The answer is every language left.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data`. A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
     # @param id [String] Repull listing id (numeric string) of a listing linked to Vrbo.
@@ -2284,6 +2352,86 @@ module Repull
       return data, status_code, headers
     end
 
+    # Get Vrbo listing settings
+    # The counterpart of `GET /v1/channels/airbnb/listings/{id}/settings`: the languages the listing has a hand-written description in (`locales`), and with `?type=permits` its registration / licence (the `data` of `GET …/permits`). `type=all` (default) returns `{ locales }`, `type=locales` the array.  Vrbo has no co-host roles, so `type=hosts` answers `422 not_available_on_vrbo`: a Vrbo listing belongs to the one Vrbo account it is in (`accountId` on `GET /v1/channels/vrbo/listings`).  Answers from Repull's stored copy of the listing's Vrbo content, like the Airbnb endpoints (`dataFreshness.lastSyncedAt` says when it was read from Vrbo). The first read of a section reads Vrbo and stores it; a copy over 24 h old answers and is refreshed in the background (`reason: refreshing`); every write through Repull stores what Vrbo has after it. `?source=live` reads Vrbo now.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
+    # @param id [String] Repull listing id (numeric string) of a listing linked to Vrbo.
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :type Which settings to return. &#x60;all&#x60; returns &#x60;{ locales }&#x60;. (default to 'all')
+    # @option opts [String] :source &#x60;stored&#x60; (default): Repull&#39;s copy, in milliseconds. &#x60;live&#x60;: read Vrbo now (seconds) and refresh the copy. (default to 'stored')
+    # @option opts [String] :vrbo_listing_number The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+    # @return [GetVrboListingSettings200Response]
+    def get_vrbo_listing_settings(id, opts = {})
+      data, _status_code, _headers = get_vrbo_listing_settings_with_http_info(id, opts)
+      data
+    end
+
+    # Get Vrbo listing settings
+    # The counterpart of &#x60;GET /v1/channels/airbnb/listings/{id}/settings&#x60;: the languages the listing has a hand-written description in (&#x60;locales&#x60;), and with &#x60;?type&#x3D;permits&#x60; its registration / licence (the &#x60;data&#x60; of &#x60;GET …/permits&#x60;). &#x60;type&#x3D;all&#x60; (default) returns &#x60;{ locales }&#x60;, &#x60;type&#x3D;locales&#x60; the array.  Vrbo has no co-host roles, so &#x60;type&#x3D;hosts&#x60; answers &#x60;422 not_available_on_vrbo&#x60;: a Vrbo listing belongs to the one Vrbo account it is in (&#x60;accountId&#x60; on &#x60;GET /v1/channels/vrbo/listings&#x60;).  Answers from Repull&#39;s stored copy of the listing&#39;s Vrbo content, like the Airbnb endpoints (&#x60;dataFreshness.lastSyncedAt&#x60; says when it was read from Vrbo). The first read of a section reads Vrbo and stores it; a copy over 24 h old answers and is refreshed in the background (&#x60;reason: refreshing&#x60;); every write through Repull stores what Vrbo has after it. &#x60;?source&#x3D;live&#x60; reads Vrbo now.  Works with messaging or full access. Returns &#x60;404&#x60; when the listing is not linked to Vrbo, and &#x60;403 listing_inactive&#x60; when the listing is inactive.
+    # @param id [String] Repull listing id (numeric string) of a listing linked to Vrbo.
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :type Which settings to return. &#x60;all&#x60; returns &#x60;{ locales }&#x60;. (default to 'all')
+    # @option opts [String] :source &#x60;stored&#x60; (default): Repull&#39;s copy, in milliseconds. &#x60;live&#x60;: read Vrbo now (seconds) and refresh the copy. (default to 'stored')
+    # @option opts [String] :vrbo_listing_number The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit.
+    # @return [Array<(GetVrboListingSettings200Response, Integer, Hash)>] GetVrboListingSettings200Response data, response status code and response headers
+    def get_vrbo_listing_settings_with_http_info(id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: VRBOApi.get_vrbo_listing_settings ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling VRBOApi.get_vrbo_listing_settings"
+      end
+      allowable_values = ["all", "locales", "permits"]
+      if @api_client.config.client_side_validation && opts[:'type'] && !allowable_values.include?(opts[:'type'])
+        fail ArgumentError, "invalid value for \"type\", must be one of #{allowable_values}"
+      end
+      allowable_values = ["stored", "live"]
+      if @api_client.config.client_side_validation && opts[:'source'] && !allowable_values.include?(opts[:'source'])
+        fail ArgumentError, "invalid value for \"source\", must be one of #{allowable_values}"
+      end
+      # resource path
+      local_var_path = '/v1/channels/vrbo/listings/{id}/settings'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+      query_params[:'type'] = opts[:'type'] if !opts[:'type'].nil?
+      query_params[:'source'] = opts[:'source'] if !opts[:'source'].nil?
+      query_params[:'vrboListingNumber'] = opts[:'vrbo_listing_number'] if !opts[:'vrbo_listing_number'].nil?
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'GetVrboListingSettings200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"VRBOApi.get_vrbo_listing_settings",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: VRBOApi#get_vrbo_listing_settings\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # Get the Vrbo host story
     # \"Your story\" on the listing: about you, why this property, what makes it unique.  Answers from Repull's stored copy of the listing's Vrbo content, like the Airbnb endpoints (`dataFreshness.lastSyncedAt` says when it was read from Vrbo). The first read of a section reads Vrbo and stores it; a copy over 24 h old answers and is refreshed in the background (`reason: refreshing`); every write through Repull stores what Vrbo has after it. `?source=live` reads Vrbo now. **Cost:** from the copy, milliseconds. A live read is 1 Vrbo call on Vrbo, spaced ~3 s apart per account — a few seconds.  Works with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.
     # @param id [String] Repull listing id (numeric string) of a listing linked to Vrbo.
@@ -2503,6 +2651,70 @@ module Repull
       return data, status_code, headers
     end
 
+    # Get the Vrbo quote
+    # The conversation's live quote as Vrbo shows it — its parts and Vrbo's guest total. The counterpart of `GET /v1/channels/airbnb/offers`; Vrbo keeps one quote per conversation, so it is read by `thread_id` rather than an offer id.
+    # @param thread_id [String] The Vrbo conversation (&#x60;externalThreadId&#x60; on &#x60;GET /v1/channels/vrbo/messaging&#x60;).
+    # @param [Hash] opts the optional parameters
+    # @return [GetVrboOffer200Response]
+    def get_vrbo_offer(thread_id, opts = {})
+      data, _status_code, _headers = get_vrbo_offer_with_http_info(thread_id, opts)
+      data
+    end
+
+    # Get the Vrbo quote
+    # The conversation&#39;s live quote as Vrbo shows it — its parts and Vrbo&#39;s guest total. The counterpart of &#x60;GET /v1/channels/airbnb/offers&#x60;; Vrbo keeps one quote per conversation, so it is read by &#x60;thread_id&#x60; rather than an offer id.
+    # @param thread_id [String] The Vrbo conversation (&#x60;externalThreadId&#x60; on &#x60;GET /v1/channels/vrbo/messaging&#x60;).
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(GetVrboOffer200Response, Integer, Hash)>] GetVrboOffer200Response data, response status code and response headers
+    def get_vrbo_offer_with_http_info(thread_id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: VRBOApi.get_vrbo_offer ...'
+      end
+      # verify the required parameter 'thread_id' is set
+      if @api_client.config.client_side_validation && thread_id.nil?
+        fail ArgumentError, "Missing the required parameter 'thread_id' when calling VRBOApi.get_vrbo_offer"
+      end
+      # resource path
+      local_var_path = '/v1/channels/vrbo/offers'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+      query_params[:'thread_id'] = thread_id
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'GetVrboOffer200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"VRBOApi.get_vrbo_offer",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: VRBOApi#get_vrbo_offer\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # Get a Vrbo reservation
     # A Vrbo booking by its confirmation code, as Vrbo shows it now — the counterpart of `GET /v1/channels/airbnb/reservations/{code}`: its state (`Booked`, a request, …), dates, party, the guest's charges (`guestLines`), your deductions and payout (`hostLines`, `payout`), the cancellation policy and the damage deposit, plus `availableActions` — what Vrbo's \"Change or cancel the booking\" menu offers right now.  `?options=cancel|change|decline` returns Vrbo's choices for that action instead: the cancel reasons and message limits; the booking's current dates, times and party with Vrbo's limits (e.g. a pay-later booking's check-in is locked); or the decline reasons of a booking request. Read live from Vrbo (a few seconds).
     # @param code [String] The Vrbo confirmation code (&#x60;HA-…&#x60;), as in &#x60;GET /v1/channels/vrbo/reservations&#x60;.
@@ -2569,6 +2781,69 @@ module Repull
       data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: VRBOApi#get_vrbo_reservation\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Get a Vrbo message thread
+    # One Vrbo conversation by its Vrbo id — the counterpart of `GET /v1/channels/airbnb/messaging/{threadId}`.  Returns `403 listing_inactive` when the conversation's listing is inactive.
+    # @param thread_id [String] The Vrbo conversation id — &#x60;externalThreadId&#x60; on &#x60;GET /v1/channels/vrbo/messaging&#x60; (&#x60;vrbo:&lt;uuid&gt;&#x60;; the bare uuid works too).
+    # @param [Hash] opts the optional parameters
+    # @return [GetVrboThread200Response]
+    def get_vrbo_thread(thread_id, opts = {})
+      data, _status_code, _headers = get_vrbo_thread_with_http_info(thread_id, opts)
+      data
+    end
+
+    # Get a Vrbo message thread
+    # One Vrbo conversation by its Vrbo id — the counterpart of &#x60;GET /v1/channels/airbnb/messaging/{threadId}&#x60;.  Returns &#x60;403 listing_inactive&#x60; when the conversation&#39;s listing is inactive.
+    # @param thread_id [String] The Vrbo conversation id — &#x60;externalThreadId&#x60; on &#x60;GET /v1/channels/vrbo/messaging&#x60; (&#x60;vrbo:&lt;uuid&gt;&#x60;; the bare uuid works too).
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(GetVrboThread200Response, Integer, Hash)>] GetVrboThread200Response data, response status code and response headers
+    def get_vrbo_thread_with_http_info(thread_id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: VRBOApi.get_vrbo_thread ...'
+      end
+      # verify the required parameter 'thread_id' is set
+      if @api_client.config.client_side_validation && thread_id.nil?
+        fail ArgumentError, "Missing the required parameter 'thread_id' when calling VRBOApi.get_vrbo_thread"
+      end
+      # resource path
+      local_var_path = '/v1/channels/vrbo/messaging/{threadId}'.sub('{threadId}', CGI.escape(thread_id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'GetVrboThread200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"VRBOApi.get_vrbo_thread",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: VRBOApi#get_vrbo_thread\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end
@@ -2718,6 +2993,225 @@ module Repull
       data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: VRBOApi#list_vrbo_reservations\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # List Vrbo reviews
+    # The workspace's Vrbo reviews — the counterpart of `GET /v1/channels/airbnb/reviews`. The same list, filters, paging and review shape as `GET /v1/reviews?platform=vrbo`, with the channel fixed: `reviewerRole=guest` (default) is what guests wrote, `reviewerRole=host` your ratings of guests. Reply to a review with `POST /v1/reviews/{id}/reply`; rate a guest with `PUT /v1/channels/vrbo/reviews/{id}`.  Reviews of inactive listings are left out; `listingId` naming an inactive listing returns `403 listing_inactive`. `platform` other than `vrbo` is refused.
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :cursor &#x60;pagination.nextCursor&#x60; from the previous page.
+    # @option opts [Integer] :limit  (default to 20)
+    # @option opts [String] :listing_id Repull listing id.
+    # @option opts [String] :status 
+    # @option opts [String] :reviewer_role  (default to 'guest')
+    # @return [ReviewListResponse]
+    def list_vrbo_reviews(opts = {})
+      data, _status_code, _headers = list_vrbo_reviews_with_http_info(opts)
+      data
+    end
+
+    # List Vrbo reviews
+    # The workspace&#39;s Vrbo reviews — the counterpart of &#x60;GET /v1/channels/airbnb/reviews&#x60;. The same list, filters, paging and review shape as &#x60;GET /v1/reviews?platform&#x3D;vrbo&#x60;, with the channel fixed: &#x60;reviewerRole&#x3D;guest&#x60; (default) is what guests wrote, &#x60;reviewerRole&#x3D;host&#x60; your ratings of guests. Reply to a review with &#x60;POST /v1/reviews/{id}/reply&#x60;; rate a guest with &#x60;PUT /v1/channels/vrbo/reviews/{id}&#x60;.  Reviews of inactive listings are left out; &#x60;listingId&#x60; naming an inactive listing returns &#x60;403 listing_inactive&#x60;. &#x60;platform&#x60; other than &#x60;vrbo&#x60; is refused.
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :cursor &#x60;pagination.nextCursor&#x60; from the previous page.
+    # @option opts [Integer] :limit  (default to 20)
+    # @option opts [String] :listing_id Repull listing id.
+    # @option opts [String] :status 
+    # @option opts [String] :reviewer_role  (default to 'guest')
+    # @return [Array<(ReviewListResponse, Integer, Hash)>] ReviewListResponse data, response status code and response headers
+    def list_vrbo_reviews_with_http_info(opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: VRBOApi.list_vrbo_reviews ...'
+      end
+      if @api_client.config.client_side_validation && !opts[:'limit'].nil? && opts[:'limit'] > 100
+        fail ArgumentError, 'invalid value for "opts[:"limit"]" when calling VRBOApi.list_vrbo_reviews, must be smaller than or equal to 100.'
+      end
+
+      allowable_values = ["responded", "unanswered", "all"]
+      if @api_client.config.client_side_validation && opts[:'status'] && !allowable_values.include?(opts[:'status'])
+        fail ArgumentError, "invalid value for \"status\", must be one of #{allowable_values}"
+      end
+      allowable_values = ["guest", "host", "all"]
+      if @api_client.config.client_side_validation && opts[:'reviewer_role'] && !allowable_values.include?(opts[:'reviewer_role'])
+        fail ArgumentError, "invalid value for \"reviewer_role\", must be one of #{allowable_values}"
+      end
+      # resource path
+      local_var_path = '/v1/channels/vrbo/reviews'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+      query_params[:'cursor'] = opts[:'cursor'] if !opts[:'cursor'].nil?
+      query_params[:'limit'] = opts[:'limit'] if !opts[:'limit'].nil?
+      query_params[:'listingId'] = opts[:'listing_id'] if !opts[:'listing_id'].nil?
+      query_params[:'status'] = opts[:'status'] if !opts[:'status'].nil?
+      query_params[:'reviewerRole'] = opts[:'reviewer_role'] if !opts[:'reviewer_role'].nil?
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'ReviewListResponse'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"VRBOApi.list_vrbo_reviews",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: VRBOApi#list_vrbo_reviews\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Get Vrbo messages
+    # The messages of a Vrbo conversation, as recorded rows — the counterpart of `GET /v1/channels/airbnb/messaging/{threadId}/messages`, same shape. 50 per page, newest first; walk older pages with `?cursor=` until `pagination.hasMore` is `false`. `?all=true` returns up to 1000 oldest first, without `pagination`.  Returns `403 listing_inactive` when the conversation's listing is inactive.
+    # @param thread_id [String] The Vrbo conversation id — &#x60;externalThreadId&#x60; on &#x60;GET /v1/channels/vrbo/messaging&#x60; (&#x60;vrbo:&lt;uuid&gt;&#x60;; the bare uuid works too).
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :cursor &#x60;pagination.nextCursor&#x60; from the previous page.
+    # @option opts [Boolean] :all &#x60;true&#x60; returns up to 1000 messages oldest first in one response.
+    # @return [ListVrboThreadMessages200Response]
+    def list_vrbo_thread_messages(thread_id, opts = {})
+      data, _status_code, _headers = list_vrbo_thread_messages_with_http_info(thread_id, opts)
+      data
+    end
+
+    # Get Vrbo messages
+    # The messages of a Vrbo conversation, as recorded rows — the counterpart of &#x60;GET /v1/channels/airbnb/messaging/{threadId}/messages&#x60;, same shape. 50 per page, newest first; walk older pages with &#x60;?cursor&#x3D;&#x60; until &#x60;pagination.hasMore&#x60; is &#x60;false&#x60;. &#x60;?all&#x3D;true&#x60; returns up to 1000 oldest first, without &#x60;pagination&#x60;.  Returns &#x60;403 listing_inactive&#x60; when the conversation&#39;s listing is inactive.
+    # @param thread_id [String] The Vrbo conversation id — &#x60;externalThreadId&#x60; on &#x60;GET /v1/channels/vrbo/messaging&#x60; (&#x60;vrbo:&lt;uuid&gt;&#x60;; the bare uuid works too).
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :cursor &#x60;pagination.nextCursor&#x60; from the previous page.
+    # @option opts [Boolean] :all &#x60;true&#x60; returns up to 1000 messages oldest first in one response.
+    # @return [Array<(ListVrboThreadMessages200Response, Integer, Hash)>] ListVrboThreadMessages200Response data, response status code and response headers
+    def list_vrbo_thread_messages_with_http_info(thread_id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: VRBOApi.list_vrbo_thread_messages ...'
+      end
+      # verify the required parameter 'thread_id' is set
+      if @api_client.config.client_side_validation && thread_id.nil?
+        fail ArgumentError, "Missing the required parameter 'thread_id' when calling VRBOApi.list_vrbo_thread_messages"
+      end
+      # resource path
+      local_var_path = '/v1/channels/vrbo/messaging/{threadId}/messages'.sub('{threadId}', CGI.escape(thread_id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+      query_params[:'cursor'] = opts[:'cursor'] if !opts[:'cursor'].nil?
+      query_params[:'all'] = opts[:'all'] if !opts[:'all'].nil?
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'ListVrboThreadMessages200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"VRBOApi.list_vrbo_thread_messages",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: VRBOApi#list_vrbo_thread_messages\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # List Vrbo message threads
+    # The workspace's Vrbo conversations, newest activity first (up to 200) — the counterpart of `GET /v1/channels/airbnb/messaging`, read from Repull's copy of the Vrbo inbox. Each thread carries the Vrbo account it belongs to (`accountId`, `accountName`). `externalThreadId` (`vrbo:<uuid>`) addresses the thread on these routes; `id` is the Repull conversation id of `/v1/conversations/{id}`.  Only conversations Vrbo itself holds are listed: a Vrbo booking that reached Repull another way (a PMS, iCal) has no Vrbo conversation to message.  Threads on inactive listings are left out. Filtering by an inactive listing (`listing_id`) returns `403 listing_inactive`.
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :account_id One connected Vrbo account (&#x60;vrbo:…&#x60;). Omitted: every account. Unknown: &#x60;404&#x60; with your accounts in &#x60;valid_values&#x60;.
+    # @option opts [String] :listing_id Repull listing id.
+    # @option opts [String] :reservation_id Repull reservation id.
+    # @return [ListVrboThreads200Response]
+    def list_vrbo_threads(opts = {})
+      data, _status_code, _headers = list_vrbo_threads_with_http_info(opts)
+      data
+    end
+
+    # List Vrbo message threads
+    # The workspace&#39;s Vrbo conversations, newest activity first (up to 200) — the counterpart of &#x60;GET /v1/channels/airbnb/messaging&#x60;, read from Repull&#39;s copy of the Vrbo inbox. Each thread carries the Vrbo account it belongs to (&#x60;accountId&#x60;, &#x60;accountName&#x60;). &#x60;externalThreadId&#x60; (&#x60;vrbo:&lt;uuid&gt;&#x60;) addresses the thread on these routes; &#x60;id&#x60; is the Repull conversation id of &#x60;/v1/conversations/{id}&#x60;.  Only conversations Vrbo itself holds are listed: a Vrbo booking that reached Repull another way (a PMS, iCal) has no Vrbo conversation to message.  Threads on inactive listings are left out. Filtering by an inactive listing (&#x60;listing_id&#x60;) returns &#x60;403 listing_inactive&#x60;.
+    # @param [Hash] opts the optional parameters
+    # @option opts [String] :account_id One connected Vrbo account (&#x60;vrbo:…&#x60;). Omitted: every account. Unknown: &#x60;404&#x60; with your accounts in &#x60;valid_values&#x60;.
+    # @option opts [String] :listing_id Repull listing id.
+    # @option opts [String] :reservation_id Repull reservation id.
+    # @return [Array<(ListVrboThreads200Response, Integer, Hash)>] ListVrboThreads200Response data, response status code and response headers
+    def list_vrbo_threads_with_http_info(opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: VRBOApi.list_vrbo_threads ...'
+      end
+      # resource path
+      local_var_path = '/v1/channels/vrbo/messaging'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+      query_params[:'account_id'] = opts[:'account_id'] if !opts[:'account_id'].nil?
+      query_params[:'listing_id'] = opts[:'listing_id'] if !opts[:'listing_id'].nil?
+      query_params[:'reservation_id'] = opts[:'reservation_id'] if !opts[:'reservation_id'].nil?
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'ListVrboThreads200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"VRBOApi.list_vrbo_threads",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: VRBOApi#list_vrbo_threads\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end
@@ -2959,6 +3453,80 @@ module Repull
       return data, status_code, headers
     end
 
+    # Send a Vrbo message
+    # Send a message in a Vrbo conversation through the host's connected Vrbo account — the counterpart of `POST /v1/channels/airbnb/messaging/{threadId}/messages`, with the same body. It is sent the way the dashboard sends it and recorded in the conversation, so it also appears on `GET /v1/conversations/{id}/messages`.  `201` with `status: \"sent\"` when Vrbo took it; `202` with `status: \"queued\"` when Vrbo was slow and the send finishes in the background — do not send it again, watch `conversation.message.status_changed`. Vrbo messages are text: a `mediaUrl` is refused with `422 attachments_not_supported`. Send `Idempotency-Key` to make a retry safe.  Vrbo has no edit, unsend or reaction on a sent message (Airbnb's `PATCH …/messages/{messageId}`).  Returns `403 listing_inactive` when the conversation's listing is inactive.
+    # @param thread_id [String] The Vrbo conversation id — &#x60;externalThreadId&#x60; on &#x60;GET /v1/channels/vrbo/messaging&#x60; (&#x60;vrbo:&lt;uuid&gt;&#x60;; the bare uuid works too).
+    # @param send_vrbo_message_request [SendVrboMessageRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [SendMessageResponse]
+    def send_vrbo_message(thread_id, send_vrbo_message_request, opts = {})
+      data, _status_code, _headers = send_vrbo_message_with_http_info(thread_id, send_vrbo_message_request, opts)
+      data
+    end
+
+    # Send a Vrbo message
+    # Send a message in a Vrbo conversation through the host&#39;s connected Vrbo account — the counterpart of &#x60;POST /v1/channels/airbnb/messaging/{threadId}/messages&#x60;, with the same body. It is sent the way the dashboard sends it and recorded in the conversation, so it also appears on &#x60;GET /v1/conversations/{id}/messages&#x60;.  &#x60;201&#x60; with &#x60;status: \&quot;sent\&quot;&#x60; when Vrbo took it; &#x60;202&#x60; with &#x60;status: \&quot;queued\&quot;&#x60; when Vrbo was slow and the send finishes in the background — do not send it again, watch &#x60;conversation.message.status_changed&#x60;. Vrbo messages are text: a &#x60;mediaUrl&#x60; is refused with &#x60;422 attachments_not_supported&#x60;. Send &#x60;Idempotency-Key&#x60; to make a retry safe.  Vrbo has no edit, unsend or reaction on a sent message (Airbnb&#39;s &#x60;PATCH …/messages/{messageId}&#x60;).  Returns &#x60;403 listing_inactive&#x60; when the conversation&#39;s listing is inactive.
+    # @param thread_id [String] The Vrbo conversation id — &#x60;externalThreadId&#x60; on &#x60;GET /v1/channels/vrbo/messaging&#x60; (&#x60;vrbo:&lt;uuid&gt;&#x60;; the bare uuid works too).
+    # @param send_vrbo_message_request [SendVrboMessageRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(SendMessageResponse, Integer, Hash)>] SendMessageResponse data, response status code and response headers
+    def send_vrbo_message_with_http_info(thread_id, send_vrbo_message_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: VRBOApi.send_vrbo_message ...'
+      end
+      # verify the required parameter 'thread_id' is set
+      if @api_client.config.client_side_validation && thread_id.nil?
+        fail ArgumentError, "Missing the required parameter 'thread_id' when calling VRBOApi.send_vrbo_message"
+      end
+      # verify the required parameter 'send_vrbo_message_request' is set
+      if @api_client.config.client_side_validation && send_vrbo_message_request.nil?
+        fail ArgumentError, "Missing the required parameter 'send_vrbo_message_request' when calling VRBOApi.send_vrbo_message"
+      end
+      # resource path
+      local_var_path = '/v1/channels/vrbo/messaging/{threadId}/messages'.sub('{threadId}', CGI.escape(thread_id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(send_vrbo_message_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'SendMessageResponse'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"VRBOApi.send_vrbo_message",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: VRBOApi#send_vrbo_message\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # Set the Vrbo cover photo
     # Make one photo the first, the one guests see in search. Photo ids are the `id`s of GET …/photos.  **When Vrbo refuses** a value the answer is `422 vrbo_rejected` with Vrbo's own message, the refused fields in `errors` and what Vrbo has now in `data`. A malformed body is `422 invalid_params` naming the field, and nothing is sent to Vrbo.  Needs a Vrbo account connected with full access: one connected with messaging access answers `403 vrbo_messaging_access`. Returns `403 listing_inactive` when the listing is inactive.
     # @param id [String] Repull listing id (numeric string) of a listing linked to Vrbo.
@@ -3032,6 +3600,80 @@ module Repull
       data, status_code, headers = @api_client.call_api(:PUT, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: VRBOApi#set_vrbo_listing_cover_photo\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Rate a Vrbo guest
+    # Rate the guest of a Vrbo stay — Vrbo's \"Rate guest\", the counterpart of `PUT /v1/channels/airbnb/reviews/{id}`, and the same as `POST /v1/reviews/{id}/guest-review` on a Vrbo review. `rating` (overall, 1–5), `categoryRatings` (`cleanliness`, `communication`, `respect_house_rules`) and `isRevieweeRecommended` (would host again). Vrbo's rating has no text: `publicReview` / `privateFeedback` are refused when not empty. Publishing is final.  `{id}` is the review `id` from `GET /v1/channels/vrbo/reviews?reviewerRole=host`; a review from another channel is `404`.
+    # @param id [String] The review &#x60;id&#x60;.
+    # @param submit_vrbo_guest_review_request [SubmitVrboGuestReviewRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [SubmitVrboGuestReview200Response]
+    def submit_vrbo_guest_review(id, submit_vrbo_guest_review_request, opts = {})
+      data, _status_code, _headers = submit_vrbo_guest_review_with_http_info(id, submit_vrbo_guest_review_request, opts)
+      data
+    end
+
+    # Rate a Vrbo guest
+    # Rate the guest of a Vrbo stay — Vrbo&#39;s \&quot;Rate guest\&quot;, the counterpart of &#x60;PUT /v1/channels/airbnb/reviews/{id}&#x60;, and the same as &#x60;POST /v1/reviews/{id}/guest-review&#x60; on a Vrbo review. &#x60;rating&#x60; (overall, 1–5), &#x60;categoryRatings&#x60; (&#x60;cleanliness&#x60;, &#x60;communication&#x60;, &#x60;respect_house_rules&#x60;) and &#x60;isRevieweeRecommended&#x60; (would host again). Vrbo&#39;s rating has no text: &#x60;publicReview&#x60; / &#x60;privateFeedback&#x60; are refused when not empty. Publishing is final.  &#x60;{id}&#x60; is the review &#x60;id&#x60; from &#x60;GET /v1/channels/vrbo/reviews?reviewerRole&#x3D;host&#x60;; a review from another channel is &#x60;404&#x60;.
+    # @param id [String] The review &#x60;id&#x60;.
+    # @param submit_vrbo_guest_review_request [SubmitVrboGuestReviewRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(SubmitVrboGuestReview200Response, Integer, Hash)>] SubmitVrboGuestReview200Response data, response status code and response headers
+    def submit_vrbo_guest_review_with_http_info(id, submit_vrbo_guest_review_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: VRBOApi.submit_vrbo_guest_review ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling VRBOApi.submit_vrbo_guest_review"
+      end
+      # verify the required parameter 'submit_vrbo_guest_review_request' is set
+      if @api_client.config.client_side_validation && submit_vrbo_guest_review_request.nil?
+        fail ArgumentError, "Missing the required parameter 'submit_vrbo_guest_review_request' when calling VRBOApi.submit_vrbo_guest_review"
+      end
+      # resource path
+      local_var_path = '/v1/channels/vrbo/reviews/{id}'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(submit_vrbo_guest_review_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'SubmitVrboGuestReview200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"VRBOApi.submit_vrbo_guest_review",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:PUT, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: VRBOApi#submit_vrbo_guest_review\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end
@@ -4871,6 +5513,70 @@ module Repull
       data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: VRBOApi#vrbo_reservation_action\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Withdraw the Vrbo pre-approval or quote
+    # Withdraw the conversation's pre-approval or quote: the guest can no longer book on it. The counterpart of `DELETE /v1/channels/airbnb/offers`, by `thread_id`.
+    # @param thread_id [String] The Vrbo conversation (&#x60;externalThreadId&#x60; on &#x60;GET /v1/channels/vrbo/messaging&#x60;).
+    # @param [Hash] opts the optional parameters
+    # @return [WithdrawVrboOffer200Response]
+    def withdraw_vrbo_offer(thread_id, opts = {})
+      data, _status_code, _headers = withdraw_vrbo_offer_with_http_info(thread_id, opts)
+      data
+    end
+
+    # Withdraw the Vrbo pre-approval or quote
+    # Withdraw the conversation&#39;s pre-approval or quote: the guest can no longer book on it. The counterpart of &#x60;DELETE /v1/channels/airbnb/offers&#x60;, by &#x60;thread_id&#x60;.
+    # @param thread_id [String] The Vrbo conversation (&#x60;externalThreadId&#x60; on &#x60;GET /v1/channels/vrbo/messaging&#x60;).
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(WithdrawVrboOffer200Response, Integer, Hash)>] WithdrawVrboOffer200Response data, response status code and response headers
+    def withdraw_vrbo_offer_with_http_info(thread_id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: VRBOApi.withdraw_vrbo_offer ...'
+      end
+      # verify the required parameter 'thread_id' is set
+      if @api_client.config.client_side_validation && thread_id.nil?
+        fail ArgumentError, "Missing the required parameter 'thread_id' when calling VRBOApi.withdraw_vrbo_offer"
+      end
+      # resource path
+      local_var_path = '/v1/channels/vrbo/offers'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+      query_params[:'thread_id'] = thread_id
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'WithdrawVrboOffer200Response'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"VRBOApi.withdraw_vrbo_offer",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:DELETE, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: VRBOApi#withdraw_vrbo_offer\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end

@@ -24405,7 +24405,7 @@
       "get": {
         "operationId": "list_airbnb_threads",
         "summary": "List Airbnb message threads",
-        "description": "List Airbnb message threads (one per guest conversation). Cursor-paginated. Each thread includes a preview of the latest message.\n\nThreads on inactive listings are left out; they keep syncing and reappear once the listing is activated. Filtering by an inactive listing (`listing_id`) returns `403 listing_inactive`.\n\n**Several Airbnb accounts?** A workspace can connect more than one. By default this returns every connected account's rows; pass `?account_id=<airbnb host id>` to scope to one. Every row carries `accountId` + `accountName` either way, and `dataFreshness.accounts[]` reports each account's freshness separately, so one disconnected host no longer marks the whole response stale.",
+        "description": "List Airbnb message threads (one per guest conversation), newest activity first (up to 200). Only Airbnb threads: conversations from other channels are on their own channel routes (`GET /v1/channels/vrbo/messaging`) or `GET /v1/conversations`.\n\nThreads on inactive listings are left out; they keep syncing and reappear once the listing is activated. Filtering by an inactive listing (`listing_id`) returns `403 listing_inactive`.\n\n**Several Airbnb accounts?** A workspace can connect more than one. By default this returns every connected account's rows; pass `?account_id=<airbnb host id>` to scope to one. Every row carries `accountId` + `accountName` either way, and `dataFreshness.accounts[]` reports each account's freshness separately, so one disconnected host no longer marks the whole response stale.",
         "tags": [
           "Airbnb"
         ],
@@ -45109,14 +45109,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -45417,7 +45417,7 @@
                     "value": {
                       "error": {
                         "code": "listing_inactive",
-                        "message": "Listing 4019 is inactive.",
+                        "message": "Listing 98765 is inactive.",
                         "fix": "Activate the listing, then send the request again.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
@@ -45444,14 +45444,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -45852,14 +45852,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -46769,7 +46769,7 @@
                     "value": {
                       "error": {
                         "code": "listing_inactive",
-                        "message": "Listing 4019 is inactive.",
+                        "message": "Listing 98765 is inactive.",
                         "fix": "Activate the listing, then send the request again.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
@@ -46796,14 +46796,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -47175,14 +47175,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -47573,7 +47573,7 @@
                     "value": {
                       "error": {
                         "code": "listing_inactive",
-                        "message": "Listing 4019 is inactive.",
+                        "message": "Listing 98765 is inactive.",
                         "fix": "Activate the listing, then send the request again.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
@@ -47600,14 +47600,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -47948,14 +47948,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -48320,7 +48320,7 @@
                     "value": {
                       "error": {
                         "code": "listing_inactive",
-                        "message": "Listing 4019 is inactive.",
+                        "message": "Listing 98765 is inactive.",
                         "fix": "Activate the listing, then send the request again.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
@@ -48347,14 +48347,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -49916,14 +49916,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -50296,14 +50296,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -50802,7 +50802,7 @@
                     "value": {
                       "error": {
                         "code": "listing_inactive",
-                        "message": "Listing 4019 is inactive.",
+                        "message": "Listing 98765 is inactive.",
                         "fix": "Activate the listing, then send the request again.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
@@ -50829,14 +50829,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -51263,14 +51263,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -51834,7 +51834,7 @@
                     "value": {
                       "error": {
                         "code": "listing_inactive",
-                        "message": "Listing 4019 is inactive.",
+                        "message": "Listing 98765 is inactive.",
                         "fix": "Activate the listing, then send the request again.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
@@ -51861,14 +51861,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -52171,14 +52171,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -52471,7 +52471,7 @@
                     "value": {
                       "error": {
                         "code": "listing_inactive",
-                        "message": "Listing 4019 is inactive.",
+                        "message": "Listing 98765 is inactive.",
                         "fix": "Activate the listing, then send the request again.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
@@ -52498,14 +52498,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -52815,14 +52815,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -53150,7 +53150,7 @@
                     "value": {
                       "error": {
                         "code": "listing_inactive",
-                        "message": "Listing 4019 is inactive.",
+                        "message": "Listing 98765 is inactive.",
                         "fix": "Activate the listing, then send the request again.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
@@ -53177,14 +53177,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -53534,14 +53534,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -53908,7 +53908,7 @@
                     "value": {
                       "error": {
                         "code": "listing_inactive",
-                        "message": "Listing 4019 is inactive.",
+                        "message": "Listing 98765 is inactive.",
                         "fix": "Activate the listing, then send the request again.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
@@ -53935,14 +53935,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -54321,7 +54321,7 @@
                     "value": {
                       "error": {
                         "code": "listing_inactive",
-                        "message": "Listing 4019 is inactive.",
+                        "message": "Listing 98765 is inactive.",
                         "fix": "Activate the listing, then send the request again.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
@@ -54348,14 +54348,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -54712,7 +54712,7 @@
                     "value": {
                       "error": {
                         "code": "listing_inactive",
-                        "message": "Listing 4019 is inactive.",
+                        "message": "Listing 98765 is inactive.",
                         "fix": "Activate the listing, then send the request again.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
@@ -54739,14 +54739,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -55063,14 +55063,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -55379,7 +55379,7 @@
                     "value": {
                       "error": {
                         "code": "listing_inactive",
-                        "message": "Listing 4019 is inactive.",
+                        "message": "Listing 98765 is inactive.",
                         "fix": "Activate the listing, then send the request again.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
@@ -55419,14 +55419,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -55754,14 +55754,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -56099,7 +56099,7 @@
                     "value": {
                       "error": {
                         "code": "listing_inactive",
-                        "message": "Listing 4019 is inactive.",
+                        "message": "Listing 98765 is inactive.",
                         "fix": "Activate the listing, then send the request again.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
@@ -56126,14 +56126,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -56559,14 +56559,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -57066,7 +57066,7 @@
                     "value": {
                       "error": {
                         "code": "listing_inactive",
-                        "message": "Listing 4019 is inactive.",
+                        "message": "Listing 98765 is inactive.",
                         "fix": "Activate the listing, then send the request again.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
@@ -57093,14 +57093,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -57625,7 +57625,7 @@
                     "value": {
                       "error": {
                         "code": "listing_inactive",
-                        "message": "Listing 4019 is inactive.",
+                        "message": "Listing 98765 is inactive.",
                         "fix": "Activate the listing, then send the request again.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
@@ -57652,14 +57652,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -58092,7 +58092,7 @@
                     "value": {
                       "error": {
                         "code": "listing_inactive",
-                        "message": "Listing 4019 is inactive.",
+                        "message": "Listing 98765 is inactive.",
                         "fix": "Activate the listing, then send the request again.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
@@ -58119,14 +58119,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -58434,14 +58434,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -58742,7 +58742,7 @@
                     "value": {
                       "error": {
                         "code": "listing_inactive",
-                        "message": "Listing 4019 is inactive.",
+                        "message": "Listing 98765 is inactive.",
                         "fix": "Activate the listing, then send the request again.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
@@ -58769,14 +58769,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -59106,14 +59106,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -59464,7 +59464,7 @@
                     "value": {
                       "error": {
                         "code": "listing_inactive",
-                        "message": "Listing 4019 is inactive.",
+                        "message": "Listing 98765 is inactive.",
                         "fix": "Activate the listing, then send the request again.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
@@ -59491,14 +59491,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -59826,14 +59826,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -60154,7 +60154,7 @@
                     "value": {
                       "error": {
                         "code": "listing_inactive",
-                        "message": "Listing 4019 is inactive.",
+                        "message": "Listing 98765 is inactive.",
                         "fix": "Activate the listing, then send the request again.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
@@ -60181,14 +60181,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -60523,7 +60523,7 @@
                     "value": {
                       "error": {
                         "code": "listing_inactive",
-                        "message": "Listing 4019 is inactive.",
+                        "message": "Listing 98765 is inactive.",
                         "fix": "Activate the listing, then send the request again.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
@@ -60550,14 +60550,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -60897,14 +60897,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -61298,7 +61298,7 @@
                     "value": {
                       "error": {
                         "code": "listing_inactive",
-                        "message": "Listing 4019 is inactive.",
+                        "message": "Listing 98765 is inactive.",
                         "fix": "Activate the listing, then send the request again.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
@@ -61338,14 +61338,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -61801,14 +61801,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -62350,7 +62350,7 @@
                     "value": {
                       "error": {
                         "code": "listing_inactive",
-                        "message": "Listing 4019 is inactive.",
+                        "message": "Listing 98765 is inactive.",
                         "fix": "Activate the listing, then send the request again.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
@@ -62377,14 +62377,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -62691,14 +62691,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -63042,14 +63042,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -63395,7 +63395,7 @@
                     "value": {
                       "error": {
                         "code": "listing_inactive",
-                        "message": "Listing 4019 is inactive.",
+                        "message": "Listing 98765 is inactive.",
                         "fix": "Activate the listing, then send the request again.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
@@ -63422,14 +63422,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -63783,7 +63783,7 @@
                     "value": {
                       "error": {
                         "code": "listing_inactive",
-                        "message": "Listing 4019 is inactive.",
+                        "message": "Listing 98765 is inactive.",
                         "fix": "Activate the listing, then send the request again.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
@@ -63810,14 +63810,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -64158,14 +64158,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -64529,7 +64529,7 @@
                     "value": {
                       "error": {
                         "code": "listing_inactive",
-                        "message": "Listing 4019 is inactive.",
+                        "message": "Listing 98765 is inactive.",
                         "fix": "Activate the listing, then send the request again.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
@@ -64556,14 +64556,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -64892,14 +64892,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -65251,7 +65251,7 @@
                     "value": {
                       "error": {
                         "code": "listing_inactive",
-                        "message": "Listing 4019 is inactive.",
+                        "message": "Listing 98765 is inactive.",
                         "fix": "Activate the listing, then send the request again.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
@@ -65278,14 +65278,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -65656,7 +65656,7 @@
                     "value": {
                       "error": {
                         "code": "listing_inactive",
-                        "message": "Listing 4019 is inactive.",
+                        "message": "Listing 98765 is inactive.",
                         "fix": "Activate the listing, then send the request again.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
@@ -65683,14 +65683,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -66070,7 +66070,7 @@
                     "value": {
                       "error": {
                         "code": "listing_inactive",
-                        "message": "Listing 4019 is inactive.",
+                        "message": "Listing 98765 is inactive.",
                         "fix": "Activate the listing, then send the request again.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
@@ -66097,14 +66097,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -66495,14 +66495,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -66935,7 +66935,7 @@
                     "value": {
                       "error": {
                         "code": "listing_inactive",
-                        "message": "Listing 4019 is inactive.",
+                        "message": "Listing 98765 is inactive.",
                         "fix": "Activate the listing, then send the request again.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
@@ -66962,14 +66962,14 @@
                     "value": {
                       "error": {
                         "code": "ambiguous_vrbo_unit",
-                        "message": "Listing 4019 is linked to 2 Vrbo listings.",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
                         "fix": "Name one with `?vrboListingNumber=`.",
                         "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
                         "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
                         "field": "vrboListingNumber",
                         "valid_values": [
-                          "5506023",
-                          "5506024"
+                          "4512345",
+                          "4512346"
                         ]
                       }
                     }
@@ -67154,8 +67154,8 @@
                           },
                           "vrboListingNumber": {
                             "type": "string",
-                            "example": "5506023",
-                            "description": "The number in the Vrbo URL (vrbo.com/5506023)."
+                            "example": "4512345",
+                            "description": "The number in the Vrbo URL (vrbo.com/4512345)."
                           },
                           "unitId": {
                             "type": "string",
@@ -67743,12 +67743,12 @@
                 "properties": {
                   "vrboListingNumber": {
                     "type": "string",
-                    "example": "5506023",
-                    "description": "The number in the Vrbo URL (vrbo.com/5506023)."
+                    "example": "4512345",
+                    "description": "The number in the Vrbo URL (vrbo.com/4512345)."
                   },
                   "listingId": {
                     "type": "integer",
-                    "example": 6199,
+                    "example": 98765,
                     "description": "The Repull listing to link it to. Or `create: true`."
                   },
                   "create": {
@@ -67767,8 +67767,8 @@
                 }
               },
               "example": {
-                "vrboListingNumber": "5506023",
-                "listingId": 6199
+                "vrboListingNumber": "4512345",
+                "listingId": 98765
               }
             }
           }
@@ -69862,6 +69862,2799 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/channels/airbnb/listings/{id}/cancellation": {
+      "get": {
+        "operationId": "get_airbnb_listing_cancellation",
+        "summary": "Get the Airbnb cancellation policy",
+        "description": "The short-stay and long-stay cancellation policies and the non-refundable option \u2014 the same section as `GET /v1/channels/vrbo/listings/{id}/cancellation`, and the `cancellation` of `GET \u2026/booking-settings`. **Repull's stored copy**, like every Airbnb read: check `dataFreshness` before treating a value as current. `POST /v1/listings/{id}/pull/airbnb` refreshes it from Airbnb.\n\nReturns `404` when the listing has no Airbnb connection in this workspace, and `403 listing_inactive` when the listing is inactive.",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Repull listing id (numeric string), not the Airbnb listing id."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cancellation policy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "shortStayPolicy": {
+                          "type": "string",
+                          "nullable": true,
+                          "enum": [
+                            "flexible",
+                            "moderate",
+                            "firm",
+                            "strict",
+                            "super_strict"
+                          ],
+                          "description": "Policy for stays under 28 nights."
+                        },
+                        "longStayPolicy": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "Airbnb's long-term-stay policy id (28+ nights)."
+                        },
+                        "nonRefundable": {
+                          "type": "object",
+                          "properties": {
+                            "enabled": {
+                              "type": "boolean",
+                              "nullable": true
+                            },
+                            "discountPercent": {
+                              "type": "integer",
+                              "nullable": true,
+                              "minimum": 0,
+                              "maximum": 30
+                            },
+                            "priceFactor": {
+                              "type": "number",
+                              "nullable": true
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "dataFreshness": {
+                      "$ref": "#/components/schemas/AirbnbDataFreshness"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "dataFreshness"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      },
+      "put": {
+        "operationId": "update_airbnb_listing_cancellation",
+        "summary": "Update the Airbnb cancellation policy",
+        "description": "Set any of `shortStayPolicy`, `longStayPolicy`, `nonRefundable` (`{ enabled, discountPercent }`, 0\u201330%). The same write as `PUT \u2026/booking-settings` `{ \"cancellation\": \u2026 }`; the answer is the policy Airbnb holds after it.\n\nReturns `404` when the listing has no Airbnb connection in this workspace, and `403 listing_inactive` when the listing is inactive.",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Repull listing id (numeric string), not the Airbnb listing id."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "shortStayPolicy": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      "flexible",
+                      "moderate",
+                      "firm",
+                      "strict",
+                      "super_strict"
+                    ]
+                  },
+                  "longStayPolicy": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "nonRefundable": {
+                    "type": "object",
+                    "properties": {
+                      "enabled": {
+                        "type": "boolean",
+                        "nullable": true
+                      },
+                      "discountPercent": {
+                        "type": "integer",
+                        "nullable": true,
+                        "minimum": 0,
+                        "maximum": 30
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false
+              },
+              "example": {
+                "shortStayPolicy": "moderate",
+                "nonRefundable": {
+                  "enabled": true,
+                  "discountPercent": 10
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved on Airbnb",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "applied": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "cancellation": {
+                          "type": "object",
+                          "properties": {
+                            "shortStayPolicy": {
+                              "type": "string",
+                              "nullable": true,
+                              "enum": [
+                                "flexible",
+                                "moderate",
+                                "firm",
+                                "strict",
+                                "super_strict"
+                              ],
+                              "description": "Policy for stays under 28 nights."
+                            },
+                            "longStayPolicy": {
+                              "type": "string",
+                              "nullable": true,
+                              "description": "Airbnb's long-term-stay policy id (28+ nights)."
+                            },
+                            "nonRefundable": {
+                              "type": "object",
+                              "properties": {
+                                "enabled": {
+                                  "type": "boolean",
+                                  "nullable": true
+                                },
+                                "discountPercent": {
+                                  "type": "integer",
+                                  "nullable": true,
+                                  "minimum": 0,
+                                  "maximum": 30
+                                },
+                                "priceFactor": {
+                                  "type": "number",
+                                  "nullable": true
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/AirbnbWriteForbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/AirbnbWriteRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/AirbnbRateLimited"
+          },
+          "502": {
+            "$ref": "#/components/responses/AirbnbUpstreamError"
+          }
+        }
+      }
+    },
+    "/v1/channels/airbnb/listings/{id}/fees": {
+      "get": {
+        "operationId": "get_airbnb_listing_fees",
+        "summary": "Get Airbnb fees",
+        "description": "The listing's Airbnb fees (cleaning, pets, extra guests, management, linens, \u2026) \u2014 the same section as `GET /v1/channels/vrbo/listings/{id}/fees`, and the `fees` of `GET \u2026/pricing`. **Repull's stored copy**, like every Airbnb read: check `dataFreshness` before treating a value as current. `POST /v1/listings/{id}/pull/airbnb` refreshes it from Airbnb.\n\nReturns `404` when the listing has no Airbnb connection in this workspace, and `403 listing_inactive` when the listing is inactive.",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Repull listing id (numeric string), not the Airbnb listing id."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fees",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "fee_type": {
+                            "type": "string",
+                            "example": "PASS_THROUGH_CLEANING_FEE"
+                          },
+                          "amount": {
+                            "type": "number",
+                            "nullable": true
+                          },
+                          "amount_type": {
+                            "type": "string",
+                            "enum": [
+                              "flat",
+                              "percent"
+                            ]
+                          },
+                          "charge_type": {
+                            "type": "string",
+                            "enum": [
+                              "PER_GROUP",
+                              "PER_PERSON",
+                              "PER_PET"
+                            ]
+                          },
+                          "charge_period": {
+                            "type": "string",
+                            "enum": [
+                              "PER_BOOKING",
+                              "PER_NIGHT"
+                            ]
+                          },
+                          "offline": {
+                            "type": "boolean"
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    },
+                    "dataFreshness": {
+                      "$ref": "#/components/schemas/AirbnbDataFreshness"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "dataFreshness"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      },
+      "put": {
+        "operationId": "update_airbnb_listing_fees",
+        "summary": "Update Airbnb fees",
+        "description": "Set Airbnb fees by type: each fee you send replaces that type, the others are kept. The same write as `PUT \u2026/pricing` `{ \"type\": \"fees\", \"fees\": [\u2026] }`; `amount: null` removes a fee. `fee_type` is Airbnb's (`PASS_THROUGH_CLEANING_FEE`, `PASS_THROUGH_PET_FEE`, `PASS_THROUGH_SHORT_TERM_CLEANING_FEE`, \u2026).\n\nReturns `404` when the listing has no Airbnb connection in this workspace, and `403 listing_inactive` when the listing is inactive.",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Repull listing id (numeric string), not the Airbnb listing id."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "fees": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "fee_type": {
+                          "type": "string",
+                          "example": "PASS_THROUGH_CLEANING_FEE"
+                        },
+                        "amount": {
+                          "type": "number",
+                          "nullable": true
+                        },
+                        "amount_type": {
+                          "type": "string",
+                          "enum": [
+                            "flat",
+                            "percent"
+                          ]
+                        },
+                        "charge_type": {
+                          "type": "string",
+                          "enum": [
+                            "PER_GROUP",
+                            "PER_PERSON",
+                            "PER_PET"
+                          ]
+                        },
+                        "charge_period": {
+                          "type": "string",
+                          "enum": [
+                            "PER_BOOKING",
+                            "PER_NIGHT"
+                          ]
+                        },
+                        "offline": {
+                          "type": "boolean"
+                        }
+                      },
+                      "additionalProperties": true
+                    },
+                    "minItems": 1
+                  }
+                },
+                "required": [
+                  "fees"
+                ],
+                "additionalProperties": false
+              },
+              "example": {
+                "fees": [
+                  {
+                    "fee_type": "PASS_THROUGH_CLEANING_FEE",
+                    "amount": 90,
+                    "amount_type": "flat"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved on Airbnb",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Airbnb's pricing settings after the write."
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/AirbnbWriteForbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/AirbnbWriteRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/AirbnbRateLimited"
+          },
+          "502": {
+            "$ref": "#/components/responses/AirbnbUpstreamError"
+          }
+        }
+      }
+    },
+    "/v1/channels/airbnb/listings/{id}/house-rules": {
+      "get": {
+        "operationId": "get_airbnb_house_rules",
+        "summary": "Get Airbnb house rules",
+        "description": "The listing's house rules under the names Vrbo's `GET /v1/channels/vrbo/listings/{id}/house-rules` uses: check-in and check-out times, guest capacity, whether children, infants, pets, smoking and events are allowed, Airbnb's \"things to know\" (`expectations`), and the written rules per language. **Repull's stored copy**, like every Airbnb read: check `dataFreshness` before treating a value as current. `POST /v1/listings/{id}/pull/airbnb` refreshes it from Airbnb.\n\nReturns `404` when the listing has no Airbnb connection in this workspace, and `403 listing_inactive` when the listing is inactive.",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Repull listing id (numeric string), not the Airbnb listing id."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "House rules",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "checkInTime": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "16:00",
+                          "description": "Earliest check-in, `HH:00` or `FLEXIBLE`."
+                        },
+                        "checkInTimeEnd": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "22:00",
+                          "description": "Latest check-in (Airbnb only)."
+                        },
+                        "checkOutTime": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "11:00"
+                        },
+                        "maxGuests": {
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "children": {
+                          "type": "object",
+                          "properties": {
+                            "allowed": {
+                              "type": "boolean",
+                              "nullable": true
+                            }
+                          }
+                        },
+                        "infants": {
+                          "type": "object",
+                          "properties": {
+                            "allowed": {
+                              "type": "boolean",
+                              "nullable": true
+                            }
+                          }
+                        },
+                        "pets": {
+                          "type": "object",
+                          "properties": {
+                            "allowed": {
+                              "type": "boolean",
+                              "nullable": true
+                            }
+                          }
+                        },
+                        "smoking": {
+                          "type": "object",
+                          "properties": {
+                            "allowed": {
+                              "type": "boolean",
+                              "nullable": true
+                            }
+                          }
+                        },
+                        "events": {
+                          "type": "object",
+                          "properties": {
+                            "allowed": {
+                              "type": "boolean",
+                              "nullable": true
+                            }
+                          }
+                        },
+                        "expectations": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": true
+                          }
+                        },
+                        "houseRules": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "locale": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "text": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "additionalRules": {
+                                "nullable": true
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "dataFreshness": {
+                      "$ref": "#/components/schemas/AirbnbDataFreshness"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "dataFreshness"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      },
+      "put": {
+        "operationId": "update_airbnb_house_rules",
+        "summary": "Update Airbnb house rules",
+        "description": "Write the house rules text for one language \u2014 the same write as `PUT \u2026/descriptions` `{ locale, description: { house_rules } }`, with the same answer (`written`, `blockedFields`). On Airbnb the check-in and check-out times are booking settings: set them with `PUT \u2026/booking-settings`. Whether pets, smoking, events or children are allowed is set in the Airbnb app.\n\nReturns `404` when the listing has no Airbnb connection in this workspace, and `403 listing_inactive` when the listing is inactive.",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Repull listing id (numeric string), not the Airbnb listing id."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "locale": {
+                    "type": "string",
+                    "example": "en"
+                  },
+                  "houseRules": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 5000
+                  }
+                },
+                "required": [
+                  "locale",
+                  "houseRules"
+                ],
+                "additionalProperties": false
+              },
+              "example": {
+                "locale": "en",
+                "houseRules": "No parties. Quiet hours 22:00\u201308:00."
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved on Airbnb",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "listingId": {
+                      "type": "string"
+                    },
+                    "airbnbListingId": {
+                      "type": "string"
+                    },
+                    "locale": {
+                      "type": "string"
+                    },
+                    "written": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "blockedFields": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/AirbnbWriteForbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/AirbnbWriteRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/AirbnbRateLimited"
+          },
+          "502": {
+            "$ref": "#/components/responses/AirbnbUpstreamError"
+          }
+        }
+      }
+    },
+    "/v1/channels/airbnb/listings/{id}/location": {
+      "get": {
+        "operationId": "get_airbnb_location",
+        "summary": "Get the Airbnb location",
+        "description": "The listing's address, map pin, directions and whether guests see the exact location \u2014 the same section as `GET /v1/channels/vrbo/listings/{id}/location`. Read-only: Airbnb changes a listed address only in its own flow in the host app (`addressEditable: false`). **Repull's stored copy**, like every Airbnb read: check `dataFreshness` before treating a value as current. `POST /v1/listings/{id}/pull/airbnb` refreshes it from Airbnb.\n\nReturns `404` when the listing has no Airbnb connection in this workspace, and `403 listing_inactive` when the listing is inactive.",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Repull listing id (numeric string), not the Airbnb listing id."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Location",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "address": {
+                          "type": "object",
+                          "properties": {
+                            "apt": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "street": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "city": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "state": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "postalCode": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "countryCode": {
+                              "type": "string",
+                              "nullable": true
+                            }
+                          },
+                          "nullable": true
+                        },
+                        "addressEditable": {
+                          "type": "boolean"
+                        },
+                        "lat": {
+                          "type": "number",
+                          "nullable": true
+                        },
+                        "lng": {
+                          "type": "number",
+                          "nullable": true
+                        },
+                        "showExactLocation": {
+                          "type": "boolean",
+                          "nullable": true
+                        },
+                        "directions": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      }
+                    },
+                    "dataFreshness": {
+                      "$ref": "#/components/schemas/AirbnbDataFreshness"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "dataFreshness"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/channels/airbnb/listings/{id}/taxes": {
+      "get": {
+        "operationId": "get_airbnb_listing_taxes",
+        "summary": "Get Airbnb taxes",
+        "description": "The listing's taxes \u2014 host-remitted pass-through taxes and the taxes Airbnb collects itself, each with `source` (`pass_through` | `airbnb_collected`) \u2014 the same section as `GET /v1/channels/vrbo/listings/{id}/taxes`, and the `taxes` of `GET \u2026/pricing`. Read-only here: Airbnb's pass-through taxes are part of its pricing settings (`PUT \u2026/pricing` `{ \"type\": \"standard\" }`). **Repull's stored copy**, like every Airbnb read: check `dataFreshness` before treating a value as current. `POST /v1/listings/{id}/pull/airbnb` refreshes it from Airbnb.\n\nReturns `404` when the listing has no Airbnb connection in this workspace, and `403 listing_inactive` when the listing is inactive.",
+        "tags": [
+          "Airbnb"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Repull listing id (numeric string), not the Airbnb listing id."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Taxes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "source": {
+                            "type": "string",
+                            "enum": [
+                              "pass_through",
+                              "airbnb_collected"
+                            ]
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    },
+                    "dataFreshness": {
+                      "$ref": "#/components/schemas/AirbnbDataFreshness"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "dataFreshness"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/channels/vrbo/listings/{id}/settings": {
+      "get": {
+        "operationId": "getVrboListingSettings",
+        "summary": "Get Vrbo listing settings",
+        "description": "The counterpart of `GET /v1/channels/airbnb/listings/{id}/settings`: the languages the listing has a hand-written description in (`locales`), and with `?type=permits` its registration / licence (the `data` of `GET \u2026/permits`). `type=all` (default) returns `{ locales }`, `type=locales` the array.\n\nVrbo has no co-host roles, so `type=hosts` answers `422 not_available_on_vrbo`: a Vrbo listing belongs to the one Vrbo account it is in (`accountId` on `GET /v1/channels/vrbo/listings`).\n\nAnswers from Repull's stored copy of the listing's Vrbo content, like the Airbnb endpoints (`dataFreshness.lastSyncedAt` says when it was read from Vrbo). The first read of a section reads Vrbo and stores it; a copy over 24 h old answers and is refreshed in the background (`reason: refreshing`); every write through Repull stores what Vrbo has after it. `?source=live` reads Vrbo now.\n\nWorks with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.",
+        "tags": [
+          "VRBO"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Repull listing id (numeric string) of a listing linked to Vrbo."
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "locales",
+                "permits"
+              ],
+              "default": "all"
+            },
+            "description": "Which settings to return. `all` returns `{ locales }`."
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "stored",
+                "live"
+              ],
+              "default": "stored"
+            },
+            "description": "`stored` (default): Repull's copy, in milliseconds. `live`: read Vrbo now (seconds) and refresh the copy."
+          },
+          {
+            "name": "vrboListingNumber",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The Vrbo listing number to work on, when the listing is linked to more than one Vrbo unit."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "description": "The section as Vrbo has it.",
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "locales": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "status": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "fields": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "label": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "value": {
+                                    "nullable": true
+                                  },
+                                  "options": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "value": {
+                                          "type": "string"
+                                        },
+                                        "label": {
+                                          "type": "string",
+                                          "nullable": true
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "dataFreshness": {
+                      "type": "object",
+                      "properties": {
+                        "lastSyncedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "When this data was read from Vrbo."
+                        },
+                        "stale": {
+                          "type": "boolean"
+                        },
+                        "reason": {
+                          "type": "string",
+                          "enum": [
+                            "ok",
+                            "refreshing",
+                            "reconnect_required"
+                          ],
+                          "description": "`refreshing`: the copy is over 24 h old and is being refreshed now \u2014 the next read has the new one. `reconnect_required`: Vrbo signed the account out; reconnect it (`fixUrl`)."
+                        },
+                        "fixUrl": {
+                          "type": "string"
+                        },
+                        "source": {
+                          "type": "string",
+                          "enum": [
+                            "stored",
+                            "live"
+                          ],
+                          "description": "`stored`: Repull's copy. `live`: read from Vrbo for this request."
+                        },
+                        "accounts": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "accountId": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "accountName": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "lastSyncedAt": {
+                                "type": "string"
+                              },
+                              "stale": {
+                                "type": "boolean"
+                              },
+                              "reason": {
+                                "type": "string"
+                              },
+                              "fixUrl": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "required": [
+                        "lastSyncedAt",
+                        "stale",
+                        "reason",
+                        "source",
+                        "accounts"
+                      ]
+                    },
+                    "vrboListingNumber": {
+                      "type": "string",
+                      "description": "The Vrbo listing number this is about."
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "dataFreshness",
+                    "vrboListingNumber"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "description": "The listing is linked to several Vrbo units (name one), the property is not on the account any more, or the account was signed out.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "ambiguous": {
+                    "summary": "Several Vrbo units",
+                    "value": {
+                      "error": {
+                        "code": "ambiguous_vrbo_unit",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
+                        "fix": "Name one with `?vrboListingNumber=`.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "field": "vrboListingNumber",
+                        "valid_values": [
+                          "4512345",
+                          "4512346"
+                        ]
+                      }
+                    }
+                  },
+                  "sessionExpired": {
+                    "summary": "Signed out",
+                    "value": {
+                      "error": {
+                        "code": "vrbo_session_expired",
+                        "message": "Vrbo signed this account out \u2014 reconnect it.",
+                        "fix": "Reconnect the Vrbo account (POST /v1/connect, provider `vrbo-login`), then send the request again.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "description": "Vrbo did not complete the request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Vrbo error",
+                    "value": {
+                      "error": {
+                        "code": "vrbo_error",
+                        "message": "Vrbo did not answer.",
+                        "fix": "Vrbo did not complete the request. Retry in a few minutes.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Vrbo asked us to slow down for this account (`retry_after` seconds). Calendar and messages keep working.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "busy": {
+                    "summary": "Paused by Vrbo",
+                    "value": {
+                      "error": {
+                        "code": "vrbo_busy",
+                        "message": "Vrbo asked us to slow down for this account.",
+                        "fix": "Retry after 60 seconds. Calendar and messages keep working meanwhile.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "retry_after": 60
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Vrbo did not answer in time. A write may still have landed: read the section first.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "timeout": {
+                    "summary": "Timed out",
+                    "value": {
+                      "error": {
+                        "code": "vrbo_timeout",
+                        "message": "Vrbo did not answer in time.",
+                        "fix": "A write may still have landed: read the section before sending it again.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/channels/vrbo/messaging": {
+      "get": {
+        "operationId": "list_vrbo_threads",
+        "summary": "List Vrbo message threads",
+        "description": "The workspace's Vrbo conversations, newest activity first (up to 200) \u2014 the counterpart of `GET /v1/channels/airbnb/messaging`, read from Repull's copy of the Vrbo inbox. Each thread carries the Vrbo account it belongs to (`accountId`, `accountName`). `externalThreadId` (`vrbo:<uuid>`) addresses the thread on these routes; `id` is the Repull conversation id of `/v1/conversations/{id}`.\n\nOnly conversations Vrbo itself holds are listed: a Vrbo booking that reached Repull another way (a PMS, iCal) has no Vrbo conversation to message.\n\nThreads on inactive listings are left out. Filtering by an inactive listing (`listing_id`) returns `403 listing_inactive`.",
+        "tags": [
+          "VRBO"
+        ],
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "vrbo:7001234"
+            },
+            "description": "One connected Vrbo account (`vrbo:\u2026`). Omitted: every account. Unknown: `404` with your accounts in `valid_values`."
+          },
+          {
+            "name": "listing_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Repull listing id."
+          },
+          {
+            "name": "reservation_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Repull reservation id."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Vrbo message threads",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "Repull conversation id \u2014 the `{id}` of `/v1/conversations/{id}`."
+                          },
+                          "externalThreadId": {
+                            "type": "string",
+                            "description": "The Vrbo conversation id (`vrbo:<uuid>`), the `{threadId}` of these routes."
+                          },
+                          "listingId": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "reservationId": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "accountId": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "The Vrbo account the conversation belongs to (`vrbo:\u2026`)."
+                          },
+                          "accountName": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "updatedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    },
+                    "pagination": {
+                      "type": "object",
+                      "additionalProperties": true
+                    },
+                    "dataFreshness": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "When this workspace's Vrbo data was last synced (`lastSyncedAt`, `stale`, `accounts[]`)."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/channels/vrbo/messaging/{threadId}": {
+      "get": {
+        "operationId": "get_vrbo_thread",
+        "summary": "Get a Vrbo message thread",
+        "description": "One Vrbo conversation by its Vrbo id \u2014 the counterpart of `GET /v1/channels/airbnb/messaging/{threadId}`.\n\nReturns `403 listing_inactive` when the conversation's listing is inactive.",
+        "tags": [
+          "VRBO"
+        ],
+        "parameters": [
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "vrbo:3f2a9c1e-5b7d-4e2a-9c1f-0a1b2c3d4e5f"
+            },
+            "description": "The Vrbo conversation id \u2014 `externalThreadId` on `GET /v1/channels/vrbo/messaging` (`vrbo:<uuid>`; the bare uuid works too)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The thread",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "Repull conversation id \u2014 the `{id}` of `/v1/conversations/{id}`."
+                        },
+                        "externalThreadId": {
+                          "type": "string",
+                          "description": "The Vrbo conversation id (`vrbo:<uuid>`), the `{threadId}` of these routes."
+                        },
+                        "listingId": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "reservationId": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "accountId": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "The Vrbo account the conversation belongs to (`vrbo:\u2026`)."
+                        },
+                        "accountName": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": true
+                    },
+                    "dataFreshness": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "When this workspace's Vrbo data was last synced (`lastSyncedAt`, `stale`, `accounts[]`)."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "description": "No Vrbo conversation with this id in the workspace.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "notFound": {
+                    "summary": "Unknown thread",
+                    "value": {
+                      "error": {
+                        "code": "not_found",
+                        "message": "No Vrbo thread found for id vrbo:3f2a9c1e-5b7d-4e2a-9c1f-0a1b2c3d4e5f",
+                        "fix": "Use a Vrbo conversation id (`vrbo:<uuid>`) from `GET /v1/channels/vrbo/messaging`.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/messaging",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/channels/vrbo/messaging/{threadId}/messages": {
+      "get": {
+        "operationId": "list_vrbo_thread_messages",
+        "summary": "Get Vrbo messages",
+        "description": "The messages of a Vrbo conversation, as recorded rows \u2014 the counterpart of `GET /v1/channels/airbnb/messaging/{threadId}/messages`, same shape. 50 per page, newest first; walk older pages with `?cursor=` until `pagination.hasMore` is `false`. `?all=true` returns up to 1000 oldest first, without `pagination`.\n\nReturns `403 listing_inactive` when the conversation's listing is inactive.",
+        "tags": [
+          "VRBO"
+        ],
+        "parameters": [
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "vrbo:3f2a9c1e-5b7d-4e2a-9c1f-0a1b2c3d4e5f"
+            },
+            "description": "The Vrbo conversation id \u2014 `externalThreadId` on `GET /v1/channels/vrbo/messaging` (`vrbo:<uuid>`; the bare uuid works too)."
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "`pagination.nextCursor` from the previous page."
+          },
+          {
+            "name": "all",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "`true` returns up to 1000 messages oldest first in one response."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Messages",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "Repull message id."
+                          },
+                          "externalMessageId": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "threadId": {
+                            "type": "string",
+                            "description": "The Vrbo conversation id."
+                          },
+                          "message": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "channel": {
+                            "type": "string",
+                            "nullable": true,
+                            "example": "vrbo"
+                          },
+                          "senderType": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "`guest`, `host`, `system`, \u2026"
+                          },
+                          "reservationId": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "externalCreatedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "attachments": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/ConversationMessageAttachment"
+                            }
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    },
+                    "pagination": {
+                      "type": "object",
+                      "properties": {
+                        "nextCursor": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "hasMore": {
+                          "type": "boolean"
+                        }
+                      },
+                      "description": "Absent when `?all=true`."
+                    },
+                    "dataFreshness": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "When this workspace's Vrbo data was last synced (`lastSyncedAt`, `stale`, `accounts[]`)."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "description": "No Vrbo conversation with this id in the workspace.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "notFound": {
+                    "summary": "Unknown thread",
+                    "value": {
+                      "error": {
+                        "code": "not_found",
+                        "message": "No Vrbo thread found for id vrbo:3f2a9c1e-5b7d-4e2a-9c1f-0a1b2c3d4e5f",
+                        "fix": "Use a Vrbo conversation id (`vrbo:<uuid>`) from `GET /v1/channels/vrbo/messaging`.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/messaging",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "send_vrbo_message",
+        "summary": "Send a Vrbo message",
+        "description": "Send a message in a Vrbo conversation through the host's connected Vrbo account \u2014 the counterpart of `POST /v1/channels/airbnb/messaging/{threadId}/messages`, with the same body. It is sent the way the dashboard sends it and recorded in the conversation, so it also appears on `GET /v1/conversations/{id}/messages`.\n\n`201` with `status: \"sent\"` when Vrbo took it; `202` with `status: \"queued\"` when Vrbo was slow and the send finishes in the background \u2014 do not send it again, watch `conversation.message.status_changed`. Vrbo messages are text: a `mediaUrl` is refused with `422 attachments_not_supported`. Send `Idempotency-Key` to make a retry safe.\n\nVrbo has no edit, unsend or reaction on a sent message (Airbnb's `PATCH \u2026/messages/{messageId}`).\n\nReturns `403 listing_inactive` when the conversation's listing is inactive.",
+        "tags": [
+          "VRBO"
+        ],
+        "parameters": [
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "vrbo:3f2a9c1e-5b7d-4e2a-9c1f-0a1b2c3d4e5f"
+            },
+            "description": "The Vrbo conversation id \u2014 `externalThreadId` on `GET /v1/channels/vrbo/messaging` (`vrbo:<uuid>`; the bare uuid works too)."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "message": {
+                    "type": "string",
+                    "description": "The text to send to the guest."
+                  },
+                  "mediaUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "nullable": true,
+                    "description": "Accepted for the same body as Airbnb; Vrbo carries no files, so a send with one is refused (`attachments_not_supported`)."
+                  },
+                  "mediaType": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "message"
+                ],
+                "additionalProperties": false
+              },
+              "example": {
+                "message": "Hi Anna \u2014 the hot tub is ready for your arrival."
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Sent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SendMessageResponse"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Queued: Vrbo was slow; the send finishes in the background",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SendMessageResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "description": "No Vrbo conversation with this id in the workspace.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "notFound": {
+                    "summary": "Unknown thread",
+                    "value": {
+                      "error": {
+                        "code": "not_found",
+                        "message": "No Vrbo thread found for id vrbo:3f2a9c1e-5b7d-4e2a-9c1f-0a1b2c3d4e5f",
+                        "fix": "Use a Vrbo conversation id (`vrbo:<uuid>`) from `GET /v1/channels/vrbo/messaging`.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/messaging",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "description": "Vrbo did not take the message.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "failed": {
+                    "summary": "Not sent",
+                    "value": {
+                      "error": {
+                        "code": "message_not_sent",
+                        "message": "Vrbo did not take the message.",
+                        "fix": "Retry with the same `Idempotency-Key`.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/messaging",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/channels/vrbo/offers": {
+      "post": {
+        "operationId": "create_vrbo_offer",
+        "summary": "Pre-approve or quote a Vrbo inquiry",
+        "description": "Answer a Vrbo inquiry \u2014 the counterpart of `POST /v1/channels/airbnb/offers`, the same body addressed by the Vrbo conversation. `type: \"preapproval\"` invites the guest to book their dates at the listed price; `type: \"offer\"` sends Vrbo's edited quote.\n\n**Priced by its parts, not a total.** Vrbo adds its taxes and service fee itself, so a quote takes `rental_amount`, `fees` (`[{ type, value }]`, Vrbo fee types such as `CLEANING`, `PET`) and `damage_deposit`; `total_price` is refused. The stay is `start_date` + `nights` and `guest_details`, as on Airbnb; leave them out to keep the guest's own. Both types may carry a `message` to the guest. Vrbo has no instant-book switch on a pre-approval (`block_instant_booking` is refused) and a quote is always for the conversation's property (`listing_id` is refused).\n\nThe same as `POST /v1/conversations/{id}/pre-approval` and `/special-offers` on a Vrbo conversation, which take the Repull conversation id. Send `Idempotency-Key`: a retry without it can send the guest two quotes. Returns `403 listing_inactive` when the conversation's listing is inactive.",
+        "tags": [
+          "VRBO"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "preapproval",
+                      "offer"
+                    ]
+                  },
+                  "thread_id": {
+                    "type": "string",
+                    "description": "The Vrbo conversation (`vrbo:<uuid>`). `threadId` is accepted too."
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "A note Vrbo shows the guest with the pre-approval or quote."
+                  },
+                  "start_date": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Offer: first night. With `nights`."
+                  },
+                  "nights": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Offer: number of nights. With `start_date`."
+                  },
+                  "guest_details": {
+                    "type": "object",
+                    "properties": {
+                      "number_of_adults": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "number_of_guests": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "number_of_children": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "number_of_infants": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "number_of_pets": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    }
+                  },
+                  "rental_amount": {
+                    "type": "number",
+                    "description": "Offer: the rent for the stay, before fees and taxes."
+                  },
+                  "fees": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "example": "CLEANING"
+                        },
+                        "value": {
+                          "type": "number",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "value"
+                      ]
+                    }
+                  },
+                  "damage_deposit": {
+                    "type": "number",
+                    "nullable": true,
+                    "minimum": 0,
+                    "description": "Offer: refundable damage deposit; `null` for none."
+                  }
+                },
+                "required": [
+                  "type",
+                  "thread_id"
+                ],
+                "additionalProperties": false
+              },
+              "examples": {
+                "preapproval": {
+                  "summary": "Pre-approve",
+                  "value": {
+                    "type": "preapproval",
+                    "thread_id": "vrbo:3f2a9c1e-5b7d-4e2a-9c1f-0a1b2c3d4e5f",
+                    "message": "Those dates are free \u2014 book whenever you are ready."
+                  }
+                },
+                "offer": {
+                  "summary": "Send a quote",
+                  "value": {
+                    "type": "offer",
+                    "thread_id": "vrbo:3f2a9c1e-5b7d-4e2a-9c1f-0a1b2c3d4e5f",
+                    "start_date": "2026-11-06",
+                    "nights": 3,
+                    "guest_details": {
+                      "number_of_adults": 4
+                    },
+                    "rental_amount": 780,
+                    "fees": [
+                      {
+                        "type": "CLEANING",
+                        "value": 120
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Pre-approved, or the quote sent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "conversationId": {
+                          "type": "string"
+                        },
+                        "channel": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "example": "pre_approved"
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": true
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "example": "current",
+                          "description": "Vrbo keeps one live quote per conversation: always `current`."
+                        },
+                        "conversationId": {
+                          "type": "string"
+                        },
+                        "channel": {
+                          "type": "string",
+                          "example": "vrbo"
+                        },
+                        "status": {
+                          "type": "string",
+                          "example": "sent"
+                        },
+                        "checkIn": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "checkOut": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "nights": {
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "guests": {
+                          "type": "object",
+                          "nullable": true,
+                          "additionalProperties": true
+                        },
+                        "totalPrice": {
+                          "type": "number",
+                          "nullable": true,
+                          "description": "Vrbo's guest total (with its taxes and service fee)."
+                        },
+                        "currency": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "rentalAmount": {
+                          "type": "number",
+                          "nullable": true
+                        },
+                        "fees": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string"
+                              },
+                              "value": {
+                                "type": "number"
+                              },
+                              "label": {
+                                "type": "string",
+                                "nullable": true
+                              }
+                            }
+                          }
+                        },
+                        "damageDeposit": {
+                          "type": "number",
+                          "nullable": true
+                        },
+                        "lines": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": true
+                          }
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": true
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "description": "No Vrbo conversation with this id in the workspace.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "notFound": {
+                    "summary": "Unknown thread",
+                    "value": {
+                      "error": {
+                        "code": "not_found",
+                        "message": "No Vrbo thread found for id vrbo:3f2a9c1e-5b7d-4e2a-9c1f-0a1b2c3d4e5f",
+                        "fix": "Use a Vrbo conversation id (`vrbo:<uuid>`) from `GET /v1/channels/vrbo/messaging`.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/messaging",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The inquiry moved on (booked, expired, withdrawn): do not retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "closed": {
+                    "summary": "Inquiry closed",
+                    "value": {
+                      "error": {
+                        "code": "inquiry_no_longer_open",
+                        "message": "This inquiry is no longer open on Vrbo.",
+                        "fix": "Read the conversation to see where it stands.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/inquiries-and-offers",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "502": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      },
+      "get": {
+        "operationId": "get_vrbo_offer",
+        "summary": "Get the Vrbo quote",
+        "description": "The conversation's live quote as Vrbo shows it \u2014 its parts and Vrbo's guest total. The counterpart of `GET /v1/channels/airbnb/offers`; Vrbo keeps one quote per conversation, so it is read by `thread_id` rather than an offer id.",
+        "tags": [
+          "VRBO"
+        ],
+        "parameters": [
+          {
+            "name": "thread_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "vrbo:3f2a9c1e-5b7d-4e2a-9c1f-0a1b2c3d4e5f"
+            },
+            "description": "The Vrbo conversation (`externalThreadId` on `GET /v1/channels/vrbo/messaging`)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The quote",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "example": "current",
+                      "description": "Vrbo keeps one live quote per conversation: always `current`."
+                    },
+                    "conversationId": {
+                      "type": "string"
+                    },
+                    "channel": {
+                      "type": "string",
+                      "example": "vrbo"
+                    },
+                    "status": {
+                      "type": "string",
+                      "example": "sent"
+                    },
+                    "checkIn": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "checkOut": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "nights": {
+                      "type": "integer",
+                      "nullable": true
+                    },
+                    "guests": {
+                      "type": "object",
+                      "nullable": true,
+                      "additionalProperties": true
+                    },
+                    "totalPrice": {
+                      "type": "number",
+                      "nullable": true,
+                      "description": "Vrbo's guest total (with its taxes and service fee)."
+                    },
+                    "currency": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "rentalAmount": {
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "fees": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "type": "number"
+                          },
+                          "label": {
+                            "type": "string",
+                            "nullable": true
+                          }
+                        }
+                      }
+                    },
+                    "damageDeposit": {
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "lines": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    },
+                    "message": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "description": "No Vrbo conversation with this id in the workspace.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "notFound": {
+                    "summary": "Unknown thread",
+                    "value": {
+                      "error": {
+                        "code": "not_found",
+                        "message": "No Vrbo thread found for id vrbo:3f2a9c1e-5b7d-4e2a-9c1f-0a1b2c3d4e5f",
+                        "fix": "Use a Vrbo conversation id (`vrbo:<uuid>`) from `GET /v1/channels/vrbo/messaging`.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/messaging",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "502": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "withdraw_vrbo_offer",
+        "summary": "Withdraw the Vrbo pre-approval or quote",
+        "description": "Withdraw the conversation's pre-approval or quote: the guest can no longer book on it. The counterpart of `DELETE /v1/channels/airbnb/offers`, by `thread_id`.",
+        "tags": [
+          "VRBO"
+        ],
+        "parameters": [
+          {
+            "name": "thread_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "vrbo:3f2a9c1e-5b7d-4e2a-9c1f-0a1b2c3d4e5f"
+            },
+            "description": "The Vrbo conversation (`externalThreadId` on `GET /v1/channels/vrbo/messaging`)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Withdrawn",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "conversationId": {
+                      "type": "string"
+                    },
+                    "channel": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "example": "withdrawn"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "description": "No Vrbo conversation with this id in the workspace.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "notFound": {
+                    "summary": "Unknown thread",
+                    "value": {
+                      "error": {
+                        "code": "not_found",
+                        "message": "No Vrbo thread found for id vrbo:3f2a9c1e-5b7d-4e2a-9c1f-0a1b2c3d4e5f",
+                        "fix": "Use a Vrbo conversation id (`vrbo:<uuid>`) from `GET /v1/channels/vrbo/messaging`.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/messaging",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The inquiry moved on (booked, expired, withdrawn): do not retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "closed": {
+                    "summary": "Inquiry closed",
+                    "value": {
+                      "error": {
+                        "code": "inquiry_no_longer_open",
+                        "message": "This inquiry is no longer open on Vrbo.",
+                        "fix": "Read the conversation to see where it stands.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/inquiries-and-offers",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "502": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/channels/vrbo/reviews": {
+      "get": {
+        "operationId": "list_vrbo_reviews",
+        "summary": "List Vrbo reviews",
+        "description": "The workspace's Vrbo reviews \u2014 the counterpart of `GET /v1/channels/airbnb/reviews`. The same list, filters, paging and review shape as `GET /v1/reviews?platform=vrbo`, with the channel fixed: `reviewerRole=guest` (default) is what guests wrote, `reviewerRole=host` your ratings of guests. Reply to a review with `POST /v1/reviews/{id}/reply`; rate a guest with `PUT /v1/channels/vrbo/reviews/{id}`.\n\nReviews of inactive listings are left out; `listingId` naming an inactive listing returns `403 listing_inactive`. `platform` other than `vrbo` is refused.",
+        "tags": [
+          "VRBO"
+        ],
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "`pagination.nextCursor` from the previous page."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "listingId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Repull listing id."
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "responded",
+                "unanswered",
+                "all"
+              ]
+            }
+          },
+          {
+            "name": "reviewerRole",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "guest",
+                "host",
+                "all"
+              ],
+              "default": "guest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Vrbo reviews",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/channels/vrbo/reviews/{id}": {
+      "put": {
+        "operationId": "submit_vrbo_guest_review",
+        "summary": "Rate a Vrbo guest",
+        "description": "Rate the guest of a Vrbo stay \u2014 Vrbo's \"Rate guest\", the counterpart of `PUT /v1/channels/airbnb/reviews/{id}`, and the same as `POST /v1/reviews/{id}/guest-review` on a Vrbo review. `rating` (overall, 1\u20135), `categoryRatings` (`cleanliness`, `communication`, `respect_house_rules`) and `isRevieweeRecommended` (would host again). Vrbo's rating has no text: `publicReview` / `privateFeedback` are refused when not empty. Publishing is final.\n\n`{id}` is the review `id` from `GET /v1/channels/vrbo/reviews?reviewerRole=host`; a review from another channel is `404`.",
+        "tags": [
+          "VRBO"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "181567"
+            },
+            "description": "The review `id`."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "rating": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5
+                  },
+                  "categoryRatings": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "category": {
+                          "type": "string",
+                          "enum": [
+                            "cleanliness",
+                            "communication",
+                            "respect_house_rules"
+                          ]
+                        },
+                        "rating": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 5
+                        }
+                      }
+                    }
+                  },
+                  "isRevieweeRecommended": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "example": {
+                "rating": 5,
+                "categoryRatings": [
+                  {
+                    "category": "cleanliness",
+                    "rating": 5
+                  }
+                ],
+                "isRevieweeRecommended": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Rated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "submitted": {
+                      "type": "boolean"
+                    },
+                    "platform": {
+                      "type": "string",
+                      "example": "vrbo"
+                    },
+                    "rating": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "502": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/listings/{id}/pull/vrbo": {
+      "post": {
+        "operationId": "pullListingFromVrbo",
+        "summary": "Refresh a listing from Vrbo",
+        "description": "Re-read every content section of the listing's Vrbo listing from Vrbo and keep it as Repull's copy, then report what was refreshed and when \u2014 the counterpart of `POST /v1/listings/{id}/pull/airbnb`. Use it after the host changed something on Vrbo, so the `/v1/channels/vrbo/listings/{id}/\u2026` reads answer with what Vrbo holds now.\n\n**What it refreshes:** descriptions, details, story, additional-info, photos, amenities, rooms, location, house-rules, booking-settings, cancellation, fees, pricing, payment-terms, protection, taxes, permits, checkin-guide, videos. **Not** the calendar, rates per night, bookings, messages, reviews or payouts \u2014 those arrive through the channel's own sync.\n\n**Runs synchronously:** about 45 Vrbo calls spaced ~3 s apart per account, **around 2.5 minutes**. A section Vrbo fails to return is listed in `failedSections`; the others are refreshed.\n\n**One pull per listing per 15 minutes**, as on Airbnb: a second call inside the window returns `429 rate_limit_exceeded` with `Retry-After` and `nextPullAvailableAt`, and makes no Vrbo calls.\n\nWorks with messaging or full access. Returns `404` when the listing is not linked to Vrbo, and `403 listing_inactive` when the listing is inactive.",
+        "tags": [
+          "Listings"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Repull listing id (numeric string) of a listing linked to Vrbo."
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "vrboListingNumber": {
+                    "type": "string",
+                    "description": "The Vrbo listing number to pull, when the listing is linked to more than one Vrbo unit."
+                  }
+                },
+                "additionalProperties": false,
+                "description": "Optional. Omit the body to pull the listing's Vrbo listing."
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Refreshed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "listingId": {
+                      "type": "string"
+                    },
+                    "channel": {
+                      "type": "string",
+                      "enum": [
+                        "vrbo"
+                      ]
+                    },
+                    "connectionId": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "The Vrbo account the values came from."
+                    },
+                    "externalId": {
+                      "type": "string",
+                      "description": "The Vrbo listing number."
+                    },
+                    "refreshedFromChannel": {
+                      "type": "boolean",
+                      "description": "True when Vrbo answered and at least one section was refreshed."
+                    },
+                    "sections": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Sections refreshed from Vrbo.",
+                      "example": [
+                        "descriptions",
+                        "house-rules",
+                        "fees"
+                      ]
+                    },
+                    "failedSections": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Sections Vrbo did not return this time; their stored copy is unchanged."
+                    },
+                    "pulledAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "nextPullAvailableAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "Earliest time another pull of this listing is accepted."
+                    },
+                    "minIntervalSeconds": {
+                      "type": "integer",
+                      "example": 900
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "description": "The listing is linked to several Vrbo units (name one), the property is not on the account any more, or the account was signed out.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "ambiguous": {
+                    "summary": "Several Vrbo units",
+                    "value": {
+                      "error": {
+                        "code": "ambiguous_vrbo_unit",
+                        "message": "Listing 98765 is linked to 2 Vrbo listings.",
+                        "fix": "Name one with `?vrboListingNumber=`.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "field": "vrboListingNumber",
+                        "valid_values": [
+                          "4512345",
+                          "4512346"
+                        ]
+                      }
+                    }
+                  },
+                  "sessionExpired": {
+                    "summary": "Signed out",
+                    "value": {
+                      "error": {
+                        "code": "vrbo_session_expired",
+                        "message": "Vrbo signed this account out \u2014 reconnect it.",
+                        "fix": "Reconnect the Vrbo account (POST /v1/connect, provider `vrbo-login`), then send the request again.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "description": "Vrbo did not complete the request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Vrbo error",
+                    "value": {
+                      "error": {
+                        "code": "vrbo_error",
+                        "message": "Vrbo did not answer.",
+                        "fix": "Vrbo did not complete the request. Retry in a few minutes.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Vrbo asked us to slow down for this account (`retry_after` seconds). Calendar and messages keep working.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "busy": {
+                    "summary": "Paused by Vrbo",
+                    "value": {
+                      "error": {
+                        "code": "vrbo_busy",
+                        "message": "Vrbo asked us to slow down for this account.",
+                        "fix": "Retry after 60 seconds. Calendar and messages keep working meanwhile.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678",
+                        "retry_after": 60
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Vrbo did not answer in time. A write may still have landed: read the section first.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "timeout": {
+                    "summary": "Timed out",
+                    "value": {
+                      "error": {
+                        "code": "vrbo_timeout",
+                        "message": "Vrbo did not answer in time.",
+                        "fix": "A write may still have landed: read the section before sending it again.",
+                        "docs_url": "https://repull.dev/docs/channels/vrbo/listing-content",
+                        "request_id": "req_01J5X7Y8Z9ABCDEF12345678"
+                      }
+                    }
+                  }
                 }
               }
             }

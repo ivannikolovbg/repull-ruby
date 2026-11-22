@@ -6,7 +6,7 @@
 | ---- | ---- | ----------- | ----- |
 | **id** | **String** | Repull&#39;s id for this link. | [optional] |
 | **listing_id** | **String** |  | [optional] |
-| **vrbo_listing_number** | **String** | The number in the Vrbo URL (vrbo.com/5506023). | [optional] |
+| **vrbo_listing_number** | **String** | The number in the Vrbo URL (vrbo.com/4512345). | [optional] |
 | **unit_id** | **String** |  | [optional] |
 | **property_id** | **String** | Vrbo&#39;s property id. | [optional] |
 | **advertiser_id** | **String** |  | [optional] |
@@ -51,7 +51,7 @@ require 'repull'
 instance = Repull::GetVrboListing200ResponseDataInner.new(
   id: null,
   listing_id: null,
-  vrbo_listing_number: 5506023,
+  vrbo_listing_number: 4512345,
   unit_id: null,
   property_id: null,
   advertiser_id: null,
