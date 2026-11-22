@@ -2,6 +2,29 @@
 
 All notable changes to the `repull` gem are documented here.
 
+## 0.2.57 — 2026-11-22
+
+- New: `DELETE /v1/channels/vrbo/offers`
+- New: `GET /v1/channels/airbnb/listings/{id}/cancellation`
+- New: `GET /v1/channels/airbnb/listings/{id}/fees`
+- New: `GET /v1/channels/airbnb/listings/{id}/house-rules`
+- New: `GET /v1/channels/airbnb/listings/{id}/location`
+- New: `GET /v1/channels/airbnb/listings/{id}/taxes`
+- New: `GET /v1/channels/vrbo/listings/{id}/settings`
+- New: `GET /v1/channels/vrbo/messaging`
+- New: `GET /v1/channels/vrbo/messaging/{threadId}`
+- New: `GET /v1/channels/vrbo/messaging/{threadId}/messages`
+- New: `GET /v1/channels/vrbo/offers`
+- New: `GET /v1/channels/vrbo/reviews`
+- New: `POST /v1/channels/vrbo/messaging/{threadId}/messages`
+- New: `POST /v1/channels/vrbo/offers`
+- New: `POST /v1/listings/{id}/pull/vrbo`
+- New: `PUT /v1/channels/airbnb/listings/{id}/cancellation`
+- New: `PUT /v1/channels/airbnb/listings/{id}/fees`
+- New: `PUT /v1/channels/airbnb/listings/{id}/house-rules`
+- New: `PUT /v1/channels/vrbo/reviews/{id}`
+- Regenerated from the live spec (automated spec refresh).
+
 ## 0.2.56 — 2026-11-21
 
 Vrbo bookings on Airbnb's reservation endpoints: `GET /v1/channels/vrbo/reservations/{code}` (the booking as Vrbo shows it; `options=cancel|change|decline` for Vrbo's choices), `POST /v1/channels/vrbo/reservations/{code}` (accept, decline, cancel, extra charge, refund — `preview: true` returns Vrbo's own preview) and `POST /v1/channels/vrbo/alterations` (dates, times, guests, pets, price). `POST /v1/reviews/{id}/guest-review` also rates Vrbo guests (same body; Vrbo takes the ratings, not the text). The Vrbo payout ledger: `GET /v1/channels/vrbo/transactions` (every deposit with the bookings it paid, scheduled payouts) and `POST` to refresh it.
