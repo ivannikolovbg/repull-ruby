@@ -150,7 +150,7 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
-      status_validator = EnumAttributeValidator.new('String', ["connected", "otp_required", "pending", "failed"])
+      status_validator = EnumAttributeValidator.new('String', ["connected", "otp_required", "phone_required", "pending", "failed"])
       return false unless status_validator.valid?(@status)
       true
     end
@@ -158,7 +158,7 @@ module Repull
     # Custom attribute writer method checking allowed values (enum).
     # @param [Object] status Object to be assigned
     def status=(status)
-      validator = EnumAttributeValidator.new('String', ["connected", "otp_required", "pending", "failed"])
+      validator = EnumAttributeValidator.new('String', ["connected", "otp_required", "phone_required", "pending", "failed"])
       unless validator.valid?(status)
         fail ArgumentError, "invalid value for \"status\", must be one of #{validator.allowable_values}."
       end

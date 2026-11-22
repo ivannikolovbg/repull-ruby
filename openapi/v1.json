@@ -39763,7 +39763,7 @@
       "post": {
         "operationId": "vrboLogin",
         "summary": "Sign in with a Vrbo host account",
-        "description": "`action: login` checks the email and password and answers in seconds: `connected`, `otp_required` (Vrbo sent a code to `destination`) or `failed` with a `reason` (`bad_credentials`, `blocked`, \u2026). `action: otp` submits the code; a refused code comes back as `otp_required` with `reason: bad_code`. `action: resend` (with `accountId`) signs in again with the details already given, so Vrbo sends a new code.\n\nSigning in imports nothing. `accessType` (`full_access` or `messaging`, when the session did not lock it) is the host's choice of whether mapped listings push the calendar. The import starts when the mapping is confirmed.\n\nCalled by the hosted Connect page. No API key \u2014 the session ID is the capability token.",
+        "description": "`action: login` checks the email and password and answers in seconds: `connected`, `otp_required` (Vrbo sent a code to `destination`) or `failed` with a `reason` (`bad_credentials`, `blocked`, \u2026). `action: otp` submits the code; a refused code comes back as `otp_required` with `reason: bad_code`. `action: resend` (with `accountId`) signs in again with the details already given, so Vrbo sends a new code. `phone_required` means Vrbo accepted the login and its \"complete your profile\" step wants a contact phone: `action: phone` (with `accountId` and `phone`, international format with the country code, any country) fills it in, then answers like the others (`otp_required` when Vrbo texts a code to that number; `phone_required` with `reason: bad_phone` when Vrbo refuses it).\n\nSigning in imports nothing. `accessType` (`full_access` or `messaging`, when the session did not lock it) is the host's choice of whether mapped listings push the calendar. The import starts when the mapping is confirmed.\n\nCalled by the hosted Connect page. No API key \u2014 the session ID is the capability token.",
         "tags": [
           "Connect"
         ],
@@ -39787,7 +39787,8 @@
                     "enum": [
                       "login",
                       "otp",
-                      "resend"
+                      "resend",
+                      "phone"
                     ]
                   },
                   "email": {
@@ -39801,6 +39802,10 @@
                   },
                   "code": {
                     "type": "string"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "description": "`action: phone` \u2014 the contact phone with its country code, e.g. `+373 69 123 456`."
                   },
                   "accessType": {
                     "type": "string",
@@ -39830,6 +39835,7 @@
                       "enum": [
                         "connected",
                         "otp_required",
+                        "phone_required",
                         "pending",
                         "failed"
                       ]

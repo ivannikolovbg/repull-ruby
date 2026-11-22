@@ -27,6 +27,9 @@ module Repull
 
     attr_accessor :code
 
+    # `action: phone` — the contact phone with its country code, e.g. `+373 69 123 456`.
+    attr_accessor :phone
+
     attr_accessor :access_type
 
     class EnumAttributeValidator
@@ -60,6 +63,7 @@ module Repull
         :'password' => :'password',
         :'account_id' => :'accountId',
         :'code' => :'code',
+        :'phone' => :'phone',
         :'access_type' => :'accessType'
       }
     end
@@ -83,6 +87,7 @@ module Repull
         :'password' => :'String',
         :'account_id' => :'Integer',
         :'code' => :'String',
+        :'phone' => :'String',
         :'access_type' => :'String'
       }
     end
@@ -137,6 +142,10 @@ module Repull
         self.code = attributes[:'code']
       end
 
+      if attributes.key?(:'phone')
+        self.phone = attributes[:'phone']
+      end
+
       if attributes.key?(:'access_type')
         self.access_type = attributes[:'access_type']
       end
@@ -164,7 +173,7 @@ module Repull
       warn '[DEPRECATED] the `valid?` method is obsolete'
       return false if @session_id.nil?
       return false if @action.nil?
-      action_validator = EnumAttributeValidator.new('String', ["login", "otp", "resend"])
+      action_validator = EnumAttributeValidator.new('String', ["login", "otp", "resend", "phone"])
       return false unless action_validator.valid?(@action)
       access_type_validator = EnumAttributeValidator.new('String', ["full_access", "messaging"])
       return false unless access_type_validator.valid?(@access_type)
@@ -184,7 +193,7 @@ module Repull
     # Custom attribute writer method checking allowed values (enum).
     # @param [Object] action Object to be assigned
     def action=(action)
-      validator = EnumAttributeValidator.new('String', ["login", "otp", "resend"])
+      validator = EnumAttributeValidator.new('String', ["login", "otp", "resend", "phone"])
       unless validator.valid?(action)
         fail ArgumentError, "invalid value for \"action\", must be one of #{validator.allowable_values}."
       end
@@ -212,6 +221,7 @@ module Repull
           password == o.password &&
           account_id == o.account_id &&
           code == o.code &&
+          phone == o.phone &&
           access_type == o.access_type
     end
 
@@ -224,7 +234,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [session_id, action, email, password, account_id, code, access_type].hash
+      [session_id, action, email, password, account_id, code, phone, access_type].hash
     end
 
     # Builds the object from hash
