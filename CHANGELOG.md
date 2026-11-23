@@ -2,6 +2,12 @@
 
 All notable changes to the `repull` gem are documented here.
 
+## 0.2.58 — 2026-11-23
+
+- New: `GET /v1/connect/pricelabs/session`
+- New: `POST /v1/connect/pricelabs/key`
+- Regenerated from the live spec (automated spec refresh).
+
 ## 0.2.57 — 2026-11-22
 
 - New: `DELETE /v1/channels/vrbo/offers`
