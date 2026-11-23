@@ -42,6 +42,27 @@ module Repull
     # The account's latest import — `status: running` while the first sync (or a later one) is going, then `completed` or `failed`. `null` when no import has been recorded. The same run is announced by the `account.import.*` webhooks; the history is on `GET /v1/connections/{id}/imports`.
     attr_accessor :import
 
+    # Apps (`pricelabs`) only. `workspace`: every listing of the workspace, including listings added later. `listings`: only `listingIds`.
+    attr_accessor :scope
+
+    # Apps only: the listings a `listings`-scoped connection covers; `null` for `workspace`.
+    attr_accessor :listing_ids
+
+    # Apps only: listings the connection covers now.
+    attr_accessor :listing_count
+
+    # Apps only: the key the app uses, masked. The key itself is shown once, when created.
+    attr_accessor :key_masked
+
+    # Apps only: the name given to the key.
+    attr_accessor :label
+
+    # Apps only: when the connection was revoked.
+    attr_accessor :disconnected_at
+
+    # Apps only: how the app is doing on this connection. `null` once disconnected.
+    attr_accessor :health
+
     class EnumAttributeValidator
       attr_reader :datatype
       attr_reader :allowable_values
@@ -76,7 +97,14 @@ module Repull
         :'host' => :'host',
         :'action' => :'action',
         :'fix_url' => :'fixUrl',
-        :'import' => :'import'
+        :'import' => :'import',
+        :'scope' => :'scope',
+        :'listing_ids' => :'listingIds',
+        :'listing_count' => :'listingCount',
+        :'key_masked' => :'keyMasked',
+        :'label' => :'label',
+        :'disconnected_at' => :'disconnectedAt',
+        :'health' => :'health'
       }
     end
 
@@ -102,7 +130,14 @@ module Repull
         :'host' => :'ConnectHost',
         :'action' => :'ConnectionAction',
         :'fix_url' => :'String',
-        :'import' => :'AccountImport'
+        :'import' => :'AccountImport',
+        :'scope' => :'String',
+        :'listing_ids' => :'Array<String>',
+        :'listing_count' => :'Integer',
+        :'key_masked' => :'String',
+        :'label' => :'String',
+        :'disconnected_at' => :'Time',
+        :'health' => :'AppConnectionHealth'
       }
     end
 
@@ -114,7 +149,11 @@ module Repull
         :'host',
         :'action',
         :'fix_url',
-        :'import'
+        :'import',
+        :'listing_ids',
+        :'label',
+        :'disconnected_at',
+        :'health'
       ])
     end
 
@@ -173,6 +212,36 @@ module Repull
       if attributes.key?(:'import')
         self.import = attributes[:'import']
       end
+
+      if attributes.key?(:'scope')
+        self.scope = attributes[:'scope']
+      end
+
+      if attributes.key?(:'listing_ids')
+        if (value = attributes[:'listing_ids']).is_a?(Array)
+          self.listing_ids = value
+        end
+      end
+
+      if attributes.key?(:'listing_count')
+        self.listing_count = attributes[:'listing_count']
+      end
+
+      if attributes.key?(:'key_masked')
+        self.key_masked = attributes[:'key_masked']
+      end
+
+      if attributes.key?(:'label')
+        self.label = attributes[:'label']
+      end
+
+      if attributes.key?(:'disconnected_at')
+        self.disconnected_at = attributes[:'disconnected_at']
+      end
+
+      if attributes.key?(:'health')
+        self.health = attributes[:'health']
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -204,7 +273,14 @@ module Repull
           host == o.host &&
           action == o.action &&
           fix_url == o.fix_url &&
-          import == o.import
+          import == o.import &&
+          scope == o.scope &&
+          listing_ids == o.listing_ids &&
+          listing_count == o.listing_count &&
+          key_masked == o.key_masked &&
+          label == o.label &&
+          disconnected_at == o.disconnected_at &&
+          health == o.health
     end
 
     # @see the `==` method
@@ -216,7 +292,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, provider, status, external_account_id, access_type, created_at, host, action, fix_url, import].hash
+      [id, provider, status, external_account_id, access_type, created_at, host, action, fix_url, import, scope, listing_ids, listing_count, key_masked, label, disconnected_at, health].hash
     end
 
     # Builds the object from hash

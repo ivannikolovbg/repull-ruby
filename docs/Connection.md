@@ -14,6 +14,13 @@
 | **action** | [**ConnectionAction**](ConnectionAction.md) | Set when the host must do something before the connection works (e.g. grant the invited Booking.com Extranet user full access), or has units still to map (&#x60;reason: needs_mapping&#x60; — Booking.com Extranet rooms, Vrbo units; &#x60;required&#x60; is false when only some Vrbo units are left). &#x60;null&#x60; when no action is pending. | [optional] |
 | **fix_url** | **String** | Durable link that reopens the hosted Connect flow bound to this account on the fix screen — send the host here to resolve &#x60;action&#x60;. For &#x60;needs_mapping&#x60; it opens the unit mapping directly (no new sign-in). Present whenever &#x60;action&#x60; is set; &#x60;null&#x60; otherwise. | [optional] |
 | **import** | [**AccountImport**](AccountImport.md) | The account&#39;s latest import — &#x60;status: running&#x60; while the first sync (or a later one) is going, then &#x60;completed&#x60; or &#x60;failed&#x60;. &#x60;null&#x60; when no import has been recorded. The same run is announced by the &#x60;account.import.*&#x60; webhooks; the history is on &#x60;GET /v1/connections/{id}/imports&#x60;. | [optional] |
+| **scope** | **String** | Apps (&#x60;pricelabs&#x60;) only. &#x60;workspace&#x60;: every listing of the workspace, including listings added later. &#x60;listings&#x60;: only &#x60;listingIds&#x60;. | [optional] |
+| **listing_ids** | **Array&lt;String&gt;** | Apps only: the listings a &#x60;listings&#x60;-scoped connection covers; &#x60;null&#x60; for &#x60;workspace&#x60;. | [optional] |
+| **listing_count** | **Integer** | Apps only: listings the connection covers now. | [optional] |
+| **key_masked** | **String** | Apps only: the key the app uses, masked. The key itself is shown once, when created. | [optional] |
+| **label** | **String** | Apps only: the name given to the key. | [optional] |
+| **disconnected_at** | **Time** | Apps only: when the connection was revoked. | [optional] |
+| **health** | [**AppConnectionHealth**](AppConnectionHealth.md) | Apps only: how the app is doing on this connection. &#x60;null&#x60; once disconnected. | [optional] |
 
 ## Example
 
@@ -30,7 +37,14 @@ instance = Repull::Connection.new(
   host: null,
   action: null,
   fix_url: null,
-  import: null
+  import: null,
+  scope: null,
+  listing_ids: null,
+  listing_count: 12,
+  key_masked: sk_live_4eB3...XYZw,
+  label: null,
+  disconnected_at: null,
+  health: null
 )
 ```
 

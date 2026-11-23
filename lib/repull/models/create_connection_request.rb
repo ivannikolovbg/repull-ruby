@@ -28,6 +28,8 @@ module Repull
     # Airbnb + Booking.com — your own correlation token, e.g. your user id (at most 500 characters). Echoed on the redirect back (`&state=`) and in the `connect.session.completed` webhook.
     attr_accessor :state
 
+    attr_accessor :workspace
+
     # Airbnb and Booking.com — optional UI language for the hosted Connect pages. Accepts any supported locale code (currently `en`, `fr`, `de`, `es`, `it`, `nl`); unknown codes are ignored and resolution falls back to the workspace `default_language`, then `Accept-Language`, then `en`.
     attr_accessor :locale
 
@@ -60,6 +62,7 @@ module Repull
         :'access_type' => :'accessType',
         :'reservation_history_months' => :'reservationHistoryMonths',
         :'state' => :'state',
+        :'workspace' => :'workspace',
         :'locale' => :'locale'
       }
     end
@@ -81,6 +84,7 @@ module Repull
         :'access_type' => :'String',
         :'reservation_history_months' => :'Integer',
         :'state' => :'String',
+        :'workspace' => :'CreateConnectionRequestWorkspace',
         :'locale' => :'String'
       }
     end
@@ -124,6 +128,10 @@ module Repull
 
       if attributes.key?(:'state')
         self.state = attributes[:'state']
+      end
+
+      if attributes.key?(:'workspace')
+        self.workspace = attributes[:'workspace']
       end
 
       if attributes.key?(:'locale')
@@ -195,6 +203,7 @@ module Repull
           access_type == o.access_type &&
           reservation_history_months == o.reservation_history_months &&
           state == o.state &&
+          workspace == o.workspace &&
           locale == o.locale
     end
 
@@ -207,7 +216,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [redirect_url, access_type, reservation_history_months, state, locale].hash
+      [redirect_url, access_type, reservation_history_months, state, workspace, locale].hash
     end
 
     # Builds the object from hash

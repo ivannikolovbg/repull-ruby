@@ -7,11 +7,13 @@ All URIs are relative to *https://api.repull.dev*
 | [**booking_connect_callback**](ConnectApi.md#booking_connect_callback) | **POST** /v1/connect/booking/callback | Booking.com connectivity callback |
 | [**create_connect_session**](ConnectApi.md#create_connect_session) | **POST** /v1/connect | Create a multi-channel Connect picker session |
 | [**create_connection**](ConnectApi.md#create_connection) | **POST** /v1/connect/{provider} | Connect to PMS/OTA provider |
+| [**create_price_labs_key**](ConnectApi.md#create_price_labs_key) | **POST** /v1/connect/pricelabs/key | Create a PriceLabs key (headless) |
 | [**delete_connection**](ConnectApi.md#delete_connection) | **DELETE** /v1/connect/{provider} | Disconnect provider |
 | [**get_booking_extranet_login_config**](ConnectApi.md#get_booking_extranet_login_config) | **GET** /v1/connect/booking-extranet-login/session | Booking.com direct-login config |
 | [**get_booking_extranet_login_status**](ConnectApi.md#get_booking_extranet_login_status) | **GET** /v1/connect/booking-extranet-login/status | Booking.com direct-login status |
 | [**get_connect_status**](ConnectApi.md#get_connect_status) | **GET** /v1/connect/{provider} | Get connection status |
 | [**get_connect_write_policy**](ConnectApi.md#get_connect_write_policy) | **GET** /v1/connect/{provider}/write-policy | Get what the app may change in a PMS |
+| [**get_price_labs_session_status**](ConnectApi.md#get_price_labs_session_status) | **GET** /v1/connect/pricelabs/session | PriceLabs session status |
 | [**get_vrbo_connect_import**](ConnectApi.md#get_vrbo_connect_import) | **GET** /v1/connect/vrbo-login/session | Import progress of the session&#39;s Vrbo account |
 | [**invite_booking_extranet_user**](ConnectApi.md#invite_booking_extranet_user) | **POST** /v1/connect/booking-extranet-login/invite | Connect Booking.com by inviting a user |
 | [**list_connect_booking_rooms**](ConnectApi.md#list_connect_booking_rooms) | **GET** /v1/connect/booking/rooms | List Booking.com rooms imported for a Connect session |
@@ -182,7 +184,7 @@ end
 
 Connect to PMS/OTA provider
 
-Establish a connection to a PMS or OTA platform. Credentials vary by provider — see docs for each provider.  Airbnb-specific: pass `redirectUrl` (where to send the user after consent) and optionally `accessType`. Three tiers: `read_only` grants read-only scopes; `messaging` (shown to hosts as \"Messaging & reviews\") grants read scopes plus message read/send and review writes (reply to guest reviews, submit host reviews — Airbnb's `reviews_write`) but NOT property management, so it can coexist with another app (e.g. an existing PMS) that already holds property management on the same Airbnb account; `full_access` — the default — grants full host scopes including the exclusive property management (only one app per Airbnb account can hold it). The response returns a hosted `url` to redirect the user to.  Booking.com: pass `redirectUrl` (no `accessType`). The response returns a hosted `url` — send the user there to select our connectivity provider in their Booking.com Extranet and paste their Hotel ID. Same response shape as Airbnb (`url`, `sessionId`, `expiresAt`).  PMS providers are not connected by this call: send their credentials to `POST /v1/connect/{provider}/credentials`, or start a hosted session with `POST /v1/connect`.
+Establish a connection to a PMS or OTA platform. Credentials vary by provider — see docs for each provider.  Airbnb-specific: pass `redirectUrl` (where to send the user after consent) and optionally `accessType`. Three tiers: `read_only` grants read-only scopes; `messaging` (shown to hosts as \"Messaging & reviews\") grants read scopes plus message read/send and review writes (reply to guest reviews, submit host reviews — Airbnb's `reviews_write`) but NOT property management, so it can coexist with another app (e.g. an existing PMS) that already holds property management on the same Airbnb account; `full_access` — the default — grants full host scopes including the exclusive property management (only one app per Airbnb account can hold it). The response returns a hosted `url` to redirect the user to.  Booking.com: pass `redirectUrl` (no `accessType`). The response returns a hosted `url` — send the user there to select our connectivity provider in their Booking.com Extranet and paste their Hotel ID. Same response shape as Airbnb (`url`, `sessionId`, `expiresAt`).  PMS providers are not connected by this call: send their credentials to `POST /v1/connect/{provider}/credentials`, or start a hosted session with `POST /v1/connect`.  **PriceLabs (an app).** Pass `redirectUrl` (and optionally `state`, `locale`, `workspace`). The response returns a hosted `url` for the session's workspace: yours, the one `X-Workspace-Id` names, or a new sub-workspace when you send `workspace.name` (its id comes back as `workspaceId`). The page shows the host a key for **every listing of that workspace, including listings added later**, with the steps to paste it into PriceLabs, then waits for PriceLabs' first call and completes like every provider: redirect to `redirectUrl` (`status=connected&connectionId=…`) or the `repull:connect:completed` popup message, and `connect.session.completed`. When PriceLabs first uses the key, `account.created` is sent. To keep PriceLabs away from the rest of an account, put the listings it should price in a sub-workspace and connect PriceLabs there. To issue the key yourself (no hosted page, or only some listings) use `POST /v1/connect/pricelabs/key`.
 
 ### Examples
 
@@ -249,13 +251,84 @@ end
 - **Accept**: application/json
 
 
+## create_price_labs_key
+
+> <CreatePriceLabsKey201Response> create_price_labs_key(opts)
+
+Create a PriceLabs key (headless)
+
+Issue a PriceLabs key without the hosted page, for platforms that show it in their own app. The key is for this workspace, or the one `X-Workspace-Id` names; it is returned once, in `key`, and the host pastes it into PriceLabs (add an integration, choose Repull).  - No `listingIds`: every listing of the workspace, including listings added later. Recommended, with the listings PriceLabs should price in their own sub-workspace. - `listingIds`: only those listings (they must belong to the workspace). Listings added later are not included.  The key works only inside PriceLabs; it is refused on every Repull API endpoint. The connection appears on `GET /v1/connect/pricelabs` with its `health`; `account.created` is sent when PriceLabs first uses the key. Revoke it with `DELETE /v1/connect/pricelabs?id=`.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ConnectApi.new
+opts = {
+  create_price_labs_key_request: Repull::CreatePriceLabsKeyRequest.new # CreatePriceLabsKeyRequest | 
+}
+
+begin
+  # Create a PriceLabs key (headless)
+  result = api_instance.create_price_labs_key(opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->create_price_labs_key: #{e}"
+end
+```
+
+#### Using the create_price_labs_key_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<CreatePriceLabsKey201Response>, Integer, Hash)> create_price_labs_key_with_http_info(opts)
+
+```ruby
+begin
+  # Create a PriceLabs key (headless)
+  data, status_code, headers = api_instance.create_price_labs_key_with_http_info(opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <CreatePriceLabsKey201Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->create_price_labs_key_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **create_price_labs_key_request** | [**CreatePriceLabsKeyRequest**](CreatePriceLabsKeyRequest.md) |  | [optional] |
+
+### Return type
+
+[**CreatePriceLabsKey201Response**](CreatePriceLabsKey201Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
 ## delete_connection
 
 > <DeleteConnection200Response> delete_connection(provider, opts)
 
 Disconnect provider
 
-Disconnect ONE connected account of a provider from this workspace. Supported for `airbnb`, `booking`, `vrbo-login` and every PMS (`guesty`, `hostaway`, `hospitable`, …).  **Which account.** Pass `accountId` — for Airbnb the host id (`accounts[].externalAccountId` from `GET /v1/connect/airbnb`), for Booking.com the hotel id, for `vrbo-login` the sign-in's Vrbo account id (`accounts[].externalAccountId` from `GET /v1/connect/vrbo-login`; the old sign-in id still works until 2027-02-12). It is optional only when the workspace has exactly one account for the provider. With several and no `accountId`, the call returns `422` with the account ids in `valid_values` instead of guessing. An `accountId` that is not connected to this workspace returns `404`. Disconnecting one account leaves the others connected.  **What happens.** The account's stored authorization is removed and it stops syncing. Its listings are **deactivated**, not deleted: they stop counting toward your plan's listing limit, their data is kept, and they are returned in `listingsDeactivated`. A listing that is still connected through another account or channel stays active. Reconnect the account, then activate the listings with `POST /v1/listings/status`.  The change is all or nothing. For Airbnb, the host can also revoke access on Airbnb's side (Account → Privacy & sharing → Connected apps); that alone does not update this workspace, so call this endpoint as well.  **PMS.** A workspace has one connection per PMS, so no `accountId` is needed. Disconnecting stops syncing, clears the stored credentials and deactivates the connection's listings; nothing is deleted, and reservations and messages stay. The response also carries `connectionId`. The PMS's own webhook subscription is left in place, because the same PMS account can be connected to another workspace (such as a Repull Migrate workspace). Reconnect with a new Connect session.  Other providers return `501 not_implemented` with instructions for disconnecting on the provider's side. That answer depends only on the provider, not on your workspace: an unsupported provider returns `501` whether or not you have a connection to it. `404 not_found` on a supported provider means this workspace has no connection to it (or, with `accountId`, that the account is not connected here).
+Disconnect ONE connected account of a provider from this workspace. Supported for `airbnb`, `booking`, `vrbo-login` and every PMS (`guesty`, `hostaway`, `hospitable`, …).  **Which account.** Pass `accountId` — for Airbnb the host id (`accounts[].externalAccountId` from `GET /v1/connect/airbnb`), for Booking.com the hotel id, for `vrbo-login` the sign-in's Vrbo account id (`accounts[].externalAccountId` from `GET /v1/connect/vrbo-login`; the old sign-in id still works until 2027-02-12). It is optional only when the workspace has exactly one account for the provider. With several and no `accountId`, the call returns `422` with the account ids in `valid_values` instead of guessing. An `accountId` that is not connected to this workspace returns `404`. Disconnecting one account leaves the others connected.  **What happens.** The account's stored authorization is removed and it stops syncing. Its listings are **deactivated**, not deleted: they stop counting toward your plan's listing limit, their data is kept, and they are returned in `listingsDeactivated`. A listing that is still connected through another account or channel stays active. Reconnect the account, then activate the listings with `POST /v1/listings/status`.  The change is all or nothing. For Airbnb, the host can also revoke access on Airbnb's side (Account → Privacy & sharing → Connected apps); that alone does not update this workspace, so call this endpoint as well.  **PMS.** A workspace has one connection per PMS, so no `accountId` is needed. Disconnecting stops syncing, clears the stored credentials and deactivates the connection's listings; nothing is deleted, and reservations and messages stay. The response also carries `connectionId`. The PMS's own webhook subscription is left in place, because the same PMS account can be connected to another workspace (such as a Repull Migrate workspace). Reconnect with a new Connect session.  Other providers return `501 not_implemented` with instructions for disconnecting on the provider's side. That answer depends only on the provider, not on your workspace: an unsupported provider returns `501` whether or not you have a connection to it. `404 not_found` on a supported provider means this workspace has no connection to it (or, with `accountId`, that the account is not connected here).  **PriceLabs (an app).** Revokes one PriceLabs connection (its key): PriceLabs loses access at once; nothing it already pushed changes and no listing is deactivated. Pass `id` (an `accounts[].id` from `GET /v1/connect/pricelabs`); it is optional only when the workspace has one connected. Sends `account.disconnected` with reason `manual_disconnect`.
 
 ### Examples
 
@@ -271,7 +344,8 @@ end
 api_instance = Repull::ConnectApi.new
 provider = 'provider_example' # String | PMS provider slug (e.g., hostaway, guesty, ownerrez)
 opts = {
-  account_id: '143778955' # String | The account to disconnect: the Airbnb host id (`accounts[].externalAccountId` on `GET /v1/connect/airbnb`) or the Booking.com hotel id. Required when the workspace has more than one connected account for the provider. Not the same as the `X-Account-Id` header.
+  account_id: '143778955', # String | The account to disconnect: the Airbnb host id (`accounts[].externalAccountId` on `GET /v1/connect/airbnb`) or the Booking.com hotel id. Required when the workspace has more than one connected account for the provider. Not the same as the `X-Account-Id` header.
+  id: '812' # String | PriceLabs only: the connection to revoke (`accounts[].id` on `GET /v1/connect/pricelabs`). Required when the workspace has more than one.
 }
 
 begin
@@ -307,6 +381,7 @@ end
 | ---- | ---- | ----------- | ----- |
 | **provider** | **String** | PMS provider slug (e.g., hostaway, guesty, ownerrez) |  |
 | **account_id** | **String** | The account to disconnect: the Airbnb host id (&#x60;accounts[].externalAccountId&#x60; on &#x60;GET /v1/connect/airbnb&#x60;) or the Booking.com hotel id. Required when the workspace has more than one connected account for the provider. Not the same as the &#x60;X-Account-Id&#x60; header. | [optional] |
+| **id** | **String** | PriceLabs only: the connection to revoke (&#x60;accounts[].id&#x60; on &#x60;GET /v1/connect/pricelabs&#x60;). Required when the workspace has more than one. | [optional] |
 
 ### Return type
 
@@ -458,7 +533,7 @@ No authorization required
 
 Get connection status
 
-Returns the current connection status for a provider, including host metadata (display name + avatar) for Airbnb so clients can render an account-level confirmation UI.  **Access level.** `accessType` says what the connection may do: `read_only`, `messaging` or `full_access` (`null` when unknown). Airbnb reports it per host on `accounts[]` (the tier each host's token was granted with) and at the top level for the host in `externalAccountId`; Vrbo (`vrbo-login`) per account; Booking.com is always `full_access`, the Booking.com Extranet always `messaging`; a PMS is `read_only` when every `writePolicy` switch is off, else `full_access`. See the `ConnectionAccessType` schema for the meaning per provider.
+Returns the current connection status for a provider, including host metadata (display name + avatar) for Airbnb so clients can render an account-level confirmation UI.  **Access level.** `accessType` says what the connection may do: `read_only`, `messaging` or `full_access` (`null` when unknown). Airbnb reports it per host on `accounts[]` (the tier each host's token was granted with) and at the top level for the host in `externalAccountId`; Vrbo (`vrbo-login`) per account; Booking.com is always `full_access`, the Booking.com Extranet always `messaging`; a PMS is `read_only` when every `writePolicy` switch is off, else `full_access`. See the `ConnectionAccessType` schema for the meaning per provider.  **PriceLabs (an app).** `accounts[]` lists every PriceLabs connection of the workspace (each one key), with `scope`, `listingCount`, `keyMasked` and `health`: `status` (`active`, `idle`, `failing`, `never_connected`), last request, last successful price push, pushes per day for 7 days, error rates and the latest errors. Revoked ones stay listed as `disconnected` with `health: null`. `externalAccountId` is `null` (PriceLabs has no account id to give us); `id` is the connection.
 
 ### Examples
 
@@ -583,6 +658,70 @@ end
 ### Authorization
 
 [bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## get_price_labs_session_status
+
+> <GetPriceLabsSessionStatus200Response> get_price_labs_session_status(session_id)
+
+PriceLabs session status
+
+Where a hosted PriceLabs session stands: `pending` (no key issued yet), `waiting` (the key is shown, PriceLabs has not called yet), `connected` (PriceLabs has called with the key; the session is complete) or `expired`. Called by the hosted Connect page while it waits. No API key — the session ID is the capability token.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+
+api_instance = Repull::ConnectApi.new
+session_id = 'session_id_example' # String | 
+
+begin
+  # PriceLabs session status
+  result = api_instance.get_price_labs_session_status(session_id)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->get_price_labs_session_status: #{e}"
+end
+```
+
+#### Using the get_price_labs_session_status_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<GetPriceLabsSessionStatus200Response>, Integer, Hash)> get_price_labs_session_status_with_http_info(session_id)
+
+```ruby
+begin
+  # PriceLabs session status
+  data, status_code, headers = api_instance.get_price_labs_session_status_with_http_info(session_id)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <GetPriceLabsSessionStatus200Response>
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->get_price_labs_session_status_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **session_id** | **String** |  |  |
+
+### Return type
+
+[**GetPriceLabsSessionStatus200Response**](GetPriceLabsSessionStatus200Response.md)
+
+### Authorization
+
+No authorization required
 
 ### HTTP request headers
 

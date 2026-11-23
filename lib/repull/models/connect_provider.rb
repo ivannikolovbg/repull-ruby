@@ -21,10 +21,10 @@ module Repull
 
     attr_accessor :display_name
 
-    # Channel category — OTAs are listing marketplaces; PMSes are property management systems.
+    # Category — OTAs are listing marketplaces; PMSes are property management systems; apps are tools that work on the workspace's data (PriceLabs).
     attr_accessor :category
 
-    # How the host is connected. `oauth`: provider-side consent screen. `credentials`: hosted form collects API keys. `activation`: push-only handshake. `claim`: connectivity-provider designation in the channel's Extranet (Booking.com). `extranet`: the host signs in with their Booking.com Extranet user.
+    # How the host is connected. `oauth`: provider-side consent screen. `credentials`: hosted form collects API keys. `activation`: push-only handshake. `claim`: connectivity-provider designation in the channel's Extranet (Booking.com). `extranet`: the host signs in with their Booking.com Extranet user. `key`: an app — the hosted page shows a key the host pastes into the app, and the session completes on the app's first call.
     attr_accessor :connect_pattern
 
     # Pickers should hide / disable `coming-soon` cards. `beta` cards are clickable but show a Beta pill. `request-only` is a PMS Repull doesn't connect yet, listed only with `includeRequestOnly`: picking it collects the host's access details for the Repull team, and the session ends as `requested` instead of connecting.
