@@ -7,7 +7,7 @@
 | **transaction_id** | **String** | Stable id. A Payout row: Airbnb&#39;s payout id. A settled line: &#x60;&lt;payoutId&gt;:&lt;type&gt;:&lt;confirmationCode&gt;:&lt;n&gt;&#x60;. An upcoming line: &#x60;upcoming:&lt;accountId&gt;:&lt;type&gt;:&lt;confirmationCode&gt;:&lt;date&gt;:&lt;n&gt;&#x60;. Identical on every refresh; upsert on it. |  |
 | **account_id** | **String** | The connected Airbnb account (host id, as a string — they exceed 2^53). | [optional] |
 | **account_name** | **String** |  | [optional] |
-| **status** | **String** | &#x60;COMPLETED&#x60;: settled in a payout. &#x60;UPCOMING&#x60;: expected, not paid out yet. |  |
+| **status** | **String** | &#x60;COMPLETED&#x60;: settled in a payout. &#x60;RELEASED&#x60;: Airbnb released it (its date has passed) but has not paid it out yet — the payout is held, or accumulating toward the host&#39;s next one; it becomes &#x60;COMPLETED&#x60; under its payout when paid. &#x60;UPCOMING&#x60;: expected, not released yet. |  |
 | **type** | **String** | Airbnb&#39;s line type, verbatim: &#x60;Payout&#x60;, &#x60;Reservation&#x60;, &#x60;Adjustment&#x60;, &#x60;Resolution Payout&#x60;, &#x60;Resolution Adjustment&#x60;, &#x60;Cancellation Fee&#x60;, &#x60;Pass Through Tot&#x60;, … |  |
 | **is_payout** | **Boolean** | &#x60;true&#x60; on the Payout row itself. |  |
 | **date** | **Date** | The line&#39;s date as Airbnb reports it. Can be the day before its payout&#39;s date. | [optional] |

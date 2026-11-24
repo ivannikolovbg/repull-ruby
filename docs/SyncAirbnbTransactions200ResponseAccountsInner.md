@@ -7,7 +7,7 @@
 | **account_id** | **String** | Airbnb host id. |  |
 | **count** | **Integer** |  |  |
 | **payouts** | **Integer** | Payouts in the refreshed window. |  |
-| **upcoming_removed** | **Integer** | UPCOMING lines Airbnb no longer lists (paid out or cancelled) and were removed. |  |
+| **upcoming_removed** | **Integer** | Unpaid (RELEASED / UPCOMING) lines Airbnb no longer lists (paid out or cancelled) and were removed. |  |
 | **error** | [**SyncAirbnbTransactions200ResponseAccountsInnerError**](SyncAirbnbTransactions200ResponseAccountsInnerError.md) |  | [optional] |
 
 ## Example

@@ -24,7 +24,7 @@ module Repull
 
     attr_accessor :account_name
 
-    # `COMPLETED`: settled in a payout. `UPCOMING`: expected, not paid out yet.
+    # `COMPLETED`: settled in a payout. `RELEASED`: Airbnb released it (its date has passed) but has not paid it out yet — the payout is held, or accumulating toward the host's next one; it becomes `COMPLETED` under its payout when paid. `UPCOMING`: expected, not released yet.
     attr_accessor :status
 
     # Airbnb's line type, verbatim: `Payout`, `Reservation`, `Adjustment`, `Resolution Payout`, `Resolution Adjustment`, `Cancellation Fee`, `Pass Through Tot`, …

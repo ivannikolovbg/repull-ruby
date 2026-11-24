@@ -9,7 +9,7 @@ All URIs are relative to *https://api.repull.dev*
 | [**list_connection_imports**](ConnectionsApi.md#list_connection_imports) | **GET** /v1/connections/{id}/imports | List a connection&#39;s imports |
 | [**list_connection_units**](ConnectionsApi.md#list_connection_units) | **GET** /v1/connections/{id}/units | List a connection&#39;s mappable units |
 | [**search_connection_listing_options**](ConnectionsApi.md#search_connection_listing_options) | **GET** /v1/connections/{id}/listing-options | Search listings a unit can be mapped to |
-| [**start_connection_import**](ConnectionsApi.md#start_connection_import) | **POST** /v1/connections/{id}/imports | Refresh a connection&#39;s listings |
+| [**start_connection_import**](ConnectionsApi.md#start_connection_import) | **POST** /v1/connections/{id}/imports | Refresh a connection&#39;s listings or reservations |
 
 
 ## apply_connection_mappings
@@ -385,9 +385,9 @@ end
 
 > <StartConnectionImport202Response> start_connection_import(id, opts)
 
-Refresh a connection's listings
+Refresh a connection's listings or reservations
 
-Refresh listings: picks up listings you've added on Airbnb since you connected. Re-reads the connected account's listings now: a new property comes in as a new listing, together with its calendar (pricing and availability), and existing listings are refreshed. On a full-access connection Repull is the source of your calendars, so the calendars of listings already in Repull are not re-read from Airbnb; on read-only and messaging connections they are. Nothing else is re-imported: no reservations, conversations, reviews or payouts.  The same import runs on its own once a day for every connected Airbnb account, and when the host reconnects. Call this when you know a property was just added and do not want to wait.  New listings obey your plan's active-listing limit: past it, and when the property is unlisted on Airbnb, they arrive inactive. Existing listings keep their status.  The import runs in the background (`202`). It is recorded like any other import (trigger `resync`, one `listings` stage): follow it on `GET /v1/connections/{id}/imports` or wait for `account.import.completed`, then read the new listings with `GET /v1/listings`.  Airbnb connections only for now. Returns `409 conflict` while a listings import of the account is already running, and `409 connection_reauth_required` when the account is disconnected.
+Two scopes: `listings` (the default) and `reservations`.  **`listings`** — picks up listings you've added on Airbnb since you connected. Re-reads the connected account's listings now: a new property comes in as a new listing, together with its calendar (pricing and availability), and existing listings are refreshed. On a full-access connection Repull is the source of your calendars, so the calendars of listings already in Repull are not re-read from Airbnb; on read-only and messaging connections they are. Nothing else is re-imported: no reservations, conversations, reviews or payouts. The same import runs on its own once a day for every connected Airbnb account, and when the host reconnects. Call this when you know a property was just added and do not want to wait.  **`reservations`** — re-reads the account's reservations from Airbnb (stays from the last month and every future one) and applies anything that differs, firing the usual `reservation.*` webhooks for it. You do not need it to stay current: Airbnb notifies Repull of every new booking, change and cancellation as it happens, on every access level (read-only included), and Repull fires `reservation.created` / `reservation.updated` / `reservation.cancelled` within about a minute. Use it as a catch-up — for example after your own webhook endpoint was down — or to confirm a stay right now.  New listings obey your plan's active-listing limit: past it, and when the property is unlisted on Airbnb, they arrive inactive. Existing listings keep their status.  Both run in the background (`202`) and are recorded like any other import (trigger `resync`, one `listings` or `reservations` stage): follow it on `GET /v1/connections/{id}/imports` or wait for `account.import.completed`, then read the result with `GET /v1/listings` or `GET /v1/reservations`.  Airbnb connections only for now. Returns `409 conflict` while a listings import of the account is already running, and `409 connection_reauth_required` when the account is disconnected. Two reservations refreshes of one account in the same minute are one refresh.
 
 ### Examples
 
@@ -407,7 +407,7 @@ opts = {
 }
 
 begin
-  # Refresh a connection's listings
+  # Refresh a connection's listings or reservations
   result = api_instance.start_connection_import(id, opts)
   p result
 rescue Repull::ApiError => e
@@ -423,7 +423,7 @@ This returns an Array which contains the response data, status code and headers.
 
 ```ruby
 begin
-  # Refresh a connection's listings
+  # Refresh a connection's listings or reservations
   data, status_code, headers = api_instance.start_connection_import_with_http_info(id, opts)
   p status_code # => 2xx
   p headers # => { ... }

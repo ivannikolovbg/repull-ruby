@@ -15,7 +15,7 @@ require 'time'
 
 module Repull
   class StartConnectionImportRequest < ApiModelBase
-    # What to import. `listings` = the account's listings. New listings come in with their calendar (pricing and availability); on a full-access connection, calendars of listings already in Repull are not re-read. The only scope; the full import runs when an account is connected.
+    # What to import. `listings` = the account's listings; new listings come in with their calendar (pricing and availability); on a full-access connection, calendars of listings already in Repull are not re-read. `reservations` = the account's reservations, stays from the last month and every future one. The full import runs when an account is connected.
     attr_accessor :scope
 
     class EnumAttributeValidator
@@ -105,7 +105,7 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
-      scope_validator = EnumAttributeValidator.new('String', ["listings"])
+      scope_validator = EnumAttributeValidator.new('String', ["listings", "reservations"])
       return false unless scope_validator.valid?(@scope)
       true
     end
@@ -113,7 +113,7 @@ module Repull
     # Custom attribute writer method checking allowed values (enum).
     # @param [Object] scope Object to be assigned
     def scope=(scope)
-      validator = EnumAttributeValidator.new('String', ["listings"])
+      validator = EnumAttributeValidator.new('String', ["listings", "reservations"])
       unless validator.valid?(scope)
         fail ArgumentError, "invalid value for \"scope\", must be one of #{validator.allowable_values}."
       end

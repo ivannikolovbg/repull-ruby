@@ -6,7 +6,7 @@
 | ---- | ---- | ----------- | ----- |
 | **start_date** | **Date** | Inclusive lower bound (YYYY-MM-DD). | [optional] |
 | **end_date** | **Date** | Inclusive upper bound (YYYY-MM-DD). | [optional] |
-| **transaction_type** | **String** | Refresh only settled or only upcoming lines. Both when omitted. | [optional] |
+| **transaction_type** | **String** | Airbnb&#39;s two buckets: &#x60;COMPLETED&#x60; refreshes paid-out lines only, &#x60;UPCOMING&#x60; every unpaid line (&#x60;RELEASED&#x60; and &#x60;UPCOMING&#x60;). Both when omitted. | [optional] |
 
 ## Example
 

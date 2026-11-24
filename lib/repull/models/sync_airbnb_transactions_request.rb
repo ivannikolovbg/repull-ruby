@@ -21,7 +21,7 @@ module Repull
     # Inclusive upper bound (YYYY-MM-DD).
     attr_accessor :end_date
 
-    # Refresh only settled or only upcoming lines. Both when omitted.
+    # Airbnb's two buckets: `COMPLETED` refreshes paid-out lines only, `UPCOMING` every unpaid line (`RELEASED` and `UPCOMING`). Both when omitted.
     attr_accessor :transaction_type
 
     class EnumAttributeValidator

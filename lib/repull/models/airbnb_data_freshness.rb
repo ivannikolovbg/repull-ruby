@@ -16,7 +16,7 @@ require 'time'
 module Repull
   # Top-level freshness indicator for any DB-backed Airbnb read. Tells consumers WHY a column may be `null` or stale without sprinkling per-row error envelopes through the response. The endpoint always returns 200 + DB data; this field is the single signal for \"should I prompt the user to reconnect / wait for sync?\".  A workspace can connect several Airbnb accounts, so the answer has two levels. `accounts[]` carries the verdict per account; the top-level fields aggregate it. Scope a request with `?account_id=` and `accounts[]` holds exactly that account, with the top-level fields mirroring it.
   class AirbnbDataFreshness < ApiModelBase
-    # The most recent Airbnb import COMPLETED by any account in scope. `null` when none of them ever has. A run that failed or was rate-limited does not move it.
+    # The most recent Airbnb import COMPLETED by any account in scope — a full re-read of the account, which runs on connect, about once a day, and on `POST /v1/connections/{id}/imports`. `null` when none of them ever has. A run that failed or was rate-limited does not move it. It is not how current reservations and messages are: Airbnb notifies Repull of every new booking, change, cancellation and message as it happens, and those land within seconds between imports, on every access level.
     attr_accessor :last_synced_at
 
     # `true` only when EVERY connected Airbnb account is stale — nothing in this response can be trusted to be current. With one account (the common case) that is the same as it has always been. With several, one disconnected host no longer condemns the other's rows: `stale` stays `false` and `reason` becomes `partial_account_staleness`. Read `accounts[]` for which is which.

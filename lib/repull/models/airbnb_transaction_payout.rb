@@ -15,7 +15,7 @@ require 'time'
 
 module Repull
   class AirbnbTransactionPayout < ApiModelBase
-    # The payout this line was settled in (its own id on a Payout row). `null` on an UPCOMING line.
+    # The payout this line was settled in (its own id on a Payout row). `null` on an unpaid (`RELEASED` / `UPCOMING`) line.
     attr_accessor :payout_id
 
     # `true` when Airbnb sent no payout id (a payout netting to $0.00) and Repull derived a stable one.
@@ -23,7 +23,7 @@ module Repull
 
     attr_accessor :payout_date
 
-    # Position within the payout, from 1. `null` on the Payout row and on UPCOMING lines.
+    # Position within the payout, from 1. `null` on the Payout row and on unpaid lines.
     attr_accessor :line_index
 
     # On the Payout row only: the amount paid out. Its lines sum to it.

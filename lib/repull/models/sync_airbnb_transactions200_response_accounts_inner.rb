@@ -23,7 +23,7 @@ module Repull
     # Payouts in the refreshed window.
     attr_accessor :payouts
 
-    # UPCOMING lines Airbnb no longer lists (paid out or cancelled) and were removed.
+    # Unpaid (RELEASED / UPCOMING) lines Airbnb no longer lists (paid out or cancelled) and were removed.
     attr_accessor :upcoming_removed
 
     attr_accessor :error
