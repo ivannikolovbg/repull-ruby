@@ -177,7 +177,7 @@ module Repull
       warn '[DEPRECATED] the `valid?` method is obsolete'
       return false if @connection.nil?
       return false if @scope.nil?
-      scope_validator = EnumAttributeValidator.new('String', ["listings", "reservations", "full"])
+      scope_validator = EnumAttributeValidator.new('String', ["listings", "full"])
       return false unless scope_validator.valid?(@scope)
       return false if @status.nil?
       status_validator = EnumAttributeValidator.new('String', ["queued"])
@@ -199,7 +199,7 @@ module Repull
     # Custom attribute writer method checking allowed values (enum).
     # @param [Object] scope Object to be assigned
     def scope=(scope)
-      validator = EnumAttributeValidator.new('String', ["listings", "reservations", "full"])
+      validator = EnumAttributeValidator.new('String', ["listings", "full"])
       unless validator.valid?(scope)
         fail ArgumentError, "invalid value for \"scope\", must be one of #{validator.allowable_values}."
       end
