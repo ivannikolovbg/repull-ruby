@@ -1824,20 +1824,20 @@ module Repull
     end
 
     # Submit Hospitable credentials for a Connect session
-    # Completes a credentials-pattern connection for Hospitable. Personal access token from Hospitable → Settings → API.  The credentials are validated against Hospitable before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.  No API key required when called with a `sessionId` — the session is the capability token.
+    # Completes a credentials-pattern connection for Hospitable. Personal access token from Hospitable → Apps → API access → Access tokens.  The credentials are validated against Hospitable before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state. The response carries the connection's `webhook` URL: Hospitable has no API to subscribe webhooks, so show it to the host, who adds it in Hospitable (Apps → Webhooks → + Add new) for instant updates.  No API key required when called with a `sessionId` — the session is the capability token.
     # @param submit_hospitable_credentials_request [SubmitHospitableCredentialsRequest] 
     # @param [Hash] opts the optional parameters
-    # @return [SubmitBeds24Credentials200Response]
+    # @return [SubmitHospitableCredentials200Response]
     def submit_hospitable_credentials(submit_hospitable_credentials_request, opts = {})
       data, _status_code, _headers = submit_hospitable_credentials_with_http_info(submit_hospitable_credentials_request, opts)
       data
     end
 
     # Submit Hospitable credentials for a Connect session
-    # Completes a credentials-pattern connection for Hospitable. Personal access token from Hospitable → Settings → API.  The credentials are validated against Hospitable before anything is persisted, so an invalid pair returns &#x60;invalid_credentials&#x60; rather than creating a dead connection. On success the &#x60;pms_connections&#x60; row is written and the Connect session moves to its terminal state.  No API key required when called with a &#x60;sessionId&#x60; — the session is the capability token.
+    # Completes a credentials-pattern connection for Hospitable. Personal access token from Hospitable → Apps → API access → Access tokens.  The credentials are validated against Hospitable before anything is persisted, so an invalid pair returns &#x60;invalid_credentials&#x60; rather than creating a dead connection. On success the &#x60;pms_connections&#x60; row is written and the Connect session moves to its terminal state. The response carries the connection&#39;s &#x60;webhook&#x60; URL: Hospitable has no API to subscribe webhooks, so show it to the host, who adds it in Hospitable (Apps → Webhooks → + Add new) for instant updates.  No API key required when called with a &#x60;sessionId&#x60; — the session is the capability token.
     # @param submit_hospitable_credentials_request [SubmitHospitableCredentialsRequest] 
     # @param [Hash] opts the optional parameters
-    # @return [Array<(SubmitBeds24Credentials200Response, Integer, Hash)>] SubmitBeds24Credentials200Response data, response status code and response headers
+    # @return [Array<(SubmitHospitableCredentials200Response, Integer, Hash)>] SubmitHospitableCredentials200Response data, response status code and response headers
     def submit_hospitable_credentials_with_http_info(submit_hospitable_credentials_request, opts = {})
       if @api_client.config.debugging
         @api_client.config.logger.debug 'Calling API: ConnectApi.submit_hospitable_credentials ...'
@@ -1869,7 +1869,7 @@ module Repull
       post_body = opts[:debug_body] || @api_client.object_to_http_body(submit_hospitable_credentials_request)
 
       # return_type
-      return_type = opts[:debug_return_type] || 'SubmitBeds24Credentials200Response'
+      return_type = opts[:debug_return_type] || 'SubmitHospitableCredentials200Response'
 
       # auth_names
       auth_names = opts[:debug_auth_names] || ['bearerAuth']

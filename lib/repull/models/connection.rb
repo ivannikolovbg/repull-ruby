@@ -63,6 +63,9 @@ module Repull
     # Apps only: how the app is doing on this connection. `null` once disconnected.
     attr_accessor :health
 
+    # Hospitable only: the webhook URL the host pastes into Hospitable (Apps → Webhooks → + Add new) and whether deliveries are arriving. Show it in your own UI so the host can set it up. Absent for other providers.
+    attr_accessor :webhook
+
     class EnumAttributeValidator
       attr_reader :datatype
       attr_reader :allowable_values
@@ -104,7 +107,8 @@ module Repull
         :'key_masked' => :'keyMasked',
         :'label' => :'label',
         :'disconnected_at' => :'disconnectedAt',
-        :'health' => :'health'
+        :'health' => :'health',
+        :'webhook' => :'webhook'
       }
     end
 
@@ -137,7 +141,8 @@ module Repull
         :'key_masked' => :'String',
         :'label' => :'String',
         :'disconnected_at' => :'Time',
-        :'health' => :'AppConnectionHealth'
+        :'health' => :'AppConnectionHealth',
+        :'webhook' => :'HospitableWebhook'
       }
     end
 
@@ -153,7 +158,8 @@ module Repull
         :'listing_ids',
         :'label',
         :'disconnected_at',
-        :'health'
+        :'health',
+        :'webhook'
       ])
     end
 
@@ -242,6 +248,10 @@ module Repull
       if attributes.key?(:'health')
         self.health = attributes[:'health']
       end
+
+      if attributes.key?(:'webhook')
+        self.webhook = attributes[:'webhook']
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -280,7 +290,8 @@ module Repull
           key_masked == o.key_masked &&
           label == o.label &&
           disconnected_at == o.disconnected_at &&
-          health == o.health
+          health == o.health &&
+          webhook == o.webhook
     end
 
     # @see the `==` method
@@ -292,7 +303,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, provider, status, external_account_id, access_type, created_at, host, action, fix_url, import, scope, listing_ids, listing_count, key_masked, label, disconnected_at, health].hash
+      [id, provider, status, external_account_id, access_type, created_at, host, action, fix_url, import, scope, listing_ids, listing_count, key_masked, label, disconnected_at, health, webhook].hash
     end
 
     # Builds the object from hash

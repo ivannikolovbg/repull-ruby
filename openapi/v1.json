@@ -1925,6 +1925,56 @@
               }
             ],
             "description": "Apps only: how the app is doing on this connection. `null` once disconnected."
+          },
+          "webhook": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HospitableWebhook"
+              }
+            ],
+            "description": "Hospitable only: the webhook URL the host pastes into Hospitable (Apps \u2192 Webhooks \u2192 + Add new) and whether deliveries are arriving. Show it in your own UI so the host can set it up. Absent for other providers."
+          }
+        }
+      },
+      "HospitableWebhook": {
+        "type": "object",
+        "description": "Hospitable only. Hospitable has no API to subscribe webhooks, so the host adds one in Hospitable: **Apps \u2192 Webhooks \u2192 + Add new**, pastes `url`, ticks Reservations, Messages, Properties and Reviews, and saves (Hospitable's **Test** button sends a sample right away). Each connection has its own `url`; a reconnect keeps it. Every delivery is checked against Hospitable's signature before it is used.\n\n**Polling.** While `status` is `receiving` the connection is updated from the webhooks alone and is not polled. When it is `not_configured` or `stale` it is polled every minute, and the first poll after going stale re-reads the whole silent window, so nothing is lost. A quiet account (no bookings or messages for a day) can read `stale` while its webhook still works; the next delivery flips it back to `receiving`.",
+        "required": [
+          "url",
+          "status",
+          "lastReceivedAt"
+        ],
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "The webhook URL to paste into Hospitable. Unique to this connection.",
+            "example": "https://api.repull.dev/webhooks/pms/hospitable?token=4f9c2a7e1b3d5f60a8c9e2b4d6f8a0c1"
+          },
+          "status": {
+            "type": "string",
+            "description": "`not_configured`: no delivery yet (the host has not added the URL). `receiving`: a delivery arrived in the last 24 hours. `stale`: deliveries arrived before, none in the last 24 hours.",
+            "example": "receiving"
+          },
+          "lastReceivedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the last verified delivery arrived; `null` before the first."
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The webhook types to tick in Hospitable.",
+            "example": [
+              "Reservations",
+              "Messages",
+              "Properties",
+              "Reviews"
+            ]
           }
         }
       },
@@ -2795,6 +2845,15 @@
               }
             ],
             "description": "PMS connections only: what the app may change in the PMS. Change it with `PATCH /v1/connect/{provider}/write-policy`."
+          },
+          "webhook": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HospitableWebhook"
+              }
+            ],
+            "description": "Hospitable only (`GET /v1/connect/hospitable`): the webhook URL the host pastes into Hospitable (Apps \u2192 Webhooks \u2192 + Add new) and whether deliveries are arriving."
           },
           "capabilities": {
             "type": "object",
@@ -22351,7 +22410,7 @@
       "post": {
         "operationId": "submitHospitableCredentials",
         "summary": "Submit Hospitable credentials for a Connect session",
-        "description": "Completes a credentials-pattern connection for Hospitable. Personal access token from Hospitable \u2192 Settings \u2192 API.\n\nThe credentials are validated against Hospitable before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.\n\nNo API key required when called with a `sessionId` \u2014 the session is the capability token.",
+        "description": "Completes a credentials-pattern connection for Hospitable. Personal access token from Hospitable \u2192 Apps \u2192 API access \u2192 Access tokens.\n\nThe credentials are validated against Hospitable before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state. The response carries the connection's `webhook` URL: Hospitable has no API to subscribe webhooks, so show it to the host, who adds it in Hospitable (Apps \u2192 Webhooks \u2192 + Add new) for instant updates.\n\nNo API key required when called with a `sessionId` \u2014 the session is the capability token.",
         "tags": [
           "Connect"
         ],
@@ -22393,6 +22452,15 @@
                     "accountInfo": {
                       "type": "object",
                       "additionalProperties": true
+                    },
+                    "webhook": {
+                      "nullable": true,
+                      "allOf": [
+                        {
+                          "$ref": "#/components/schemas/HospitableWebhook"
+                        }
+                      ],
+                      "description": "The webhook URL to show the host: in Hospitable, Apps \u2192 Webhooks \u2192 + Add new, paste it, tick Reservations, Messages, Properties and Reviews. Optional \u2014 without it the connection is polled every minute. `null` if it could not be set up."
                     }
                   }
                 }

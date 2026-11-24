@@ -1860,11 +1860,11 @@ end
 
 ## submit_hospitable_credentials
 
-> <SubmitBeds24Credentials200Response> submit_hospitable_credentials(submit_hospitable_credentials_request)
+> <SubmitHospitableCredentials200Response> submit_hospitable_credentials(submit_hospitable_credentials_request)
 
 Submit Hospitable credentials for a Connect session
 
-Completes a credentials-pattern connection for Hospitable. Personal access token from Hospitable → Settings → API.  The credentials are validated against Hospitable before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state.  No API key required when called with a `sessionId` — the session is the capability token.
+Completes a credentials-pattern connection for Hospitable. Personal access token from Hospitable → Apps → API access → Access tokens.  The credentials are validated against Hospitable before anything is persisted, so an invalid pair returns `invalid_credentials` rather than creating a dead connection. On success the `pms_connections` row is written and the Connect session moves to its terminal state. The response carries the connection's `webhook` URL: Hospitable has no API to subscribe webhooks, so show it to the host, who adds it in Hospitable (Apps → Webhooks → + Add new) for instant updates.  No API key required when called with a `sessionId` — the session is the capability token.
 
 ### Examples
 
@@ -1893,7 +1893,7 @@ end
 
 This returns an Array which contains the response data, status code and headers.
 
-> <Array(<SubmitBeds24Credentials200Response>, Integer, Hash)> submit_hospitable_credentials_with_http_info(submit_hospitable_credentials_request)
+> <Array(<SubmitHospitableCredentials200Response>, Integer, Hash)> submit_hospitable_credentials_with_http_info(submit_hospitable_credentials_request)
 
 ```ruby
 begin
@@ -1901,7 +1901,7 @@ begin
   data, status_code, headers = api_instance.submit_hospitable_credentials_with_http_info(submit_hospitable_credentials_request)
   p status_code # => 2xx
   p headers # => { ... }
-  p data # => <SubmitBeds24Credentials200Response>
+  p data # => <SubmitHospitableCredentials200Response>
 rescue Repull::ApiError => e
   puts "Error when calling ConnectApi->submit_hospitable_credentials_with_http_info: #{e}"
 end
@@ -1915,7 +1915,7 @@ end
 
 ### Return type
 
-[**SubmitBeds24Credentials200Response**](SubmitBeds24Credentials200Response.md)
+[**SubmitHospitableCredentials200Response**](SubmitHospitableCredentials200Response.md)
 
 ### Authorization
 

@@ -21,6 +21,7 @@
 | **label** | **String** | Apps only: the name given to the key. | [optional] |
 | **disconnected_at** | **Time** | Apps only: when the connection was revoked. | [optional] |
 | **health** | [**AppConnectionHealth**](AppConnectionHealth.md) | Apps only: how the app is doing on this connection. &#x60;null&#x60; once disconnected. | [optional] |
+| **webhook** | [**HospitableWebhook**](HospitableWebhook.md) | Hospitable only: the webhook URL the host pastes into Hospitable (Apps → Webhooks → + Add new) and whether deliveries are arriving. Show it in your own UI so the host can set it up. Absent for other providers. | [optional] |
 | **key** | **String** | The key to paste into PriceLabs. Returned only here. |  |
 | **instructions** | [**CreatePriceLabsKey201ResponseAllOfInstructions**](CreatePriceLabsKey201ResponseAllOfInstructions.md) |  |  |
 
@@ -47,6 +48,7 @@ instance = Repull::CreatePriceLabsKey201Response.new(
   label: null,
   disconnected_at: null,
   health: null,
+  webhook: null,
   key: sk_live_YOUR_PRICELABS_KEY,
   instructions: null
 )

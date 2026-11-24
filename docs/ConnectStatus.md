@@ -15,6 +15,7 @@
 | **host** | [**ConnectHost**](ConnectHost.md) | Host metadata, populated for Airbnb when the host row exists. Null for other providers (per-provider enrichment is incremental). | [optional] |
 | **accounts** | [**Array&lt;ConnectStatusAccountsInner&gt;**](ConnectStatusAccountsInner.md) | One entry per connected account, for every provider: Airbnb, every host account connected (including ones since disconnected), each with its own &#x60;accessType&#x60;; Booking.com, every hotel (&#x60;externalAccountId&#x60; is the hotel id); Vrbo, every sign-in; Booking.com Extranet, every hotel login; a PMS, its one account; PriceLabs (an app), every key, each a connection with its &#x60;health&#x60; (see &#x60;Connection&#x60;). Pass &#x60;externalAccountId&#x60; as &#x60;accountId&#x60; to &#x60;DELETE /v1/connect/{provider}&#x60; to disconnect one. The top-level fields describe one record and stay for existing integrations; show &#x60;accounts[]&#x60; to list what is connected. Vrbo sign-ins also carry &#x60;accessType&#x60; and &#x60;import&#x60; (a &#x60;VrboImportStatus&#x60;), with a top-level &#x60;dataFreshness&#x60; on &#x60;GET /v1/connect/vrbo-login&#x60;. | [optional] |
 | **write_policy** | [**PmsWritePolicy**](PmsWritePolicy.md) | PMS connections only: what the app may change in the PMS. Change it with &#x60;PATCH /v1/connect/{provider}/write-policy&#x60;. | [optional] |
+| **webhook** | [**HospitableWebhook**](HospitableWebhook.md) | Hospitable only (&#x60;GET /v1/connect/hospitable&#x60;): the webhook URL the host pastes into Hospitable (Apps → Webhooks → + Add new) and whether deliveries are arriving. | [optional] |
 | **capabilities** | [**ConnectStatusCapabilities**](ConnectStatusCapabilities.md) |  | [optional] |
 | **data_freshness** | **Object** | Vrbo only: the same freshness envelope the Airbnb read endpoints return, per account and in aggregate. Its reason is never_synced until a mapping is confirmed and importing while upcoming bookings come in. | [optional] |
 | **action** | [**ConnectionAction**](ConnectionAction.md) | Smoobu only: set to &#x60;{ required: true, reason: \&quot;reauth_required\&quot;, message }&#x60; when the connection still uses a legacy single API key, which Smoobu stops accepting on October 31, 2026. &#x60;null&#x60; once it is on an API key + secret. | [optional] |
@@ -37,6 +38,7 @@ instance = Repull::ConnectStatus.new(
   host: null,
   accounts: null,
   write_policy: null,
+  webhook: null,
   capabilities: null,
   data_freshness: null,
   action: null,

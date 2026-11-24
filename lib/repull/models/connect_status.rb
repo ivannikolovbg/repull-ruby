@@ -45,6 +45,9 @@ module Repull
     # PMS connections only: what the app may change in the PMS. Change it with `PATCH /v1/connect/{provider}/write-policy`.
     attr_accessor :write_policy
 
+    # Hospitable only (`GET /v1/connect/hospitable`): the webhook URL the host pastes into Hospitable (Apps → Webhooks → + Add new) and whether deliveries are arriving.
+    attr_accessor :webhook
+
     attr_accessor :capabilities
 
     # Vrbo only: the same freshness envelope the Airbnb read endpoints return, per account and in aggregate. Its reason is never_synced until a mapping is confirmed and importing while upcoming bookings come in.
@@ -92,6 +95,7 @@ module Repull
         :'host' => :'host',
         :'accounts' => :'accounts',
         :'write_policy' => :'writePolicy',
+        :'webhook' => :'webhook',
         :'capabilities' => :'capabilities',
         :'data_freshness' => :'dataFreshness',
         :'action' => :'action',
@@ -123,6 +127,7 @@ module Repull
         :'host' => :'ConnectHost',
         :'accounts' => :'Array<ConnectStatusAccountsInner>',
         :'write_policy' => :'PmsWritePolicy',
+        :'webhook' => :'HospitableWebhook',
         :'capabilities' => :'ConnectStatusCapabilities',
         :'data_freshness' => :'Object',
         :'action' => :'ConnectionAction',
@@ -136,6 +141,7 @@ module Repull
         :'external_account_id',
         :'access_type',
         :'host',
+        :'webhook',
         :'action',
         :'fix_url'
       ])
@@ -203,6 +209,10 @@ module Repull
         self.write_policy = attributes[:'write_policy']
       end
 
+      if attributes.key?(:'webhook')
+        self.webhook = attributes[:'webhook']
+      end
+
       if attributes.key?(:'capabilities')
         self.capabilities = attributes[:'capabilities']
       end
@@ -251,6 +261,7 @@ module Repull
           host == o.host &&
           accounts == o.accounts &&
           write_policy == o.write_policy &&
+          webhook == o.webhook &&
           capabilities == o.capabilities &&
           data_freshness == o.data_freshness &&
           action == o.action &&
@@ -266,7 +277,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [connected, provider, id, connection_id, status, external_account_id, created_at, access_type, host, accounts, write_policy, capabilities, data_freshness, action, fix_url].hash
+      [connected, provider, id, connection_id, status, external_account_id, created_at, access_type, host, accounts, write_policy, webhook, capabilities, data_freshness, action, fix_url].hash
     end
 
     # Builds the object from hash
