@@ -26,6 +26,9 @@ module Repull
 
     attr_accessor :account
 
+    # The sub-workspace this event happened in. Present only on events from a sub-workspace your workspace opened (`POST /v1/connect` with `workspace`, or Repull Migrate); omitted on your own workspace's events. It is the same workspace as `workspaceId` on `POST /v1/connect` and `GET /v1/workspaces` and the `X-Workspace-Id` header, but those return it as a string (`\"2042\"`) while the event carries a JSON number (`2042`): compare as strings, e.g. `String(event.workspaceId) === workspace.workspaceId`. The UUID `data.workspaceId` on `account.created` / `account.disconnected` is a different identifier.
+    attr_accessor :workspace_id
+
     attr_accessor :data
 
     # Attribute mapping from ruby-style variable name to JSON key.
@@ -36,6 +39,7 @@ module Repull
         :'api_version' => :'apiVersion',
         :'timestamp' => :'timestamp',
         :'account' => :'account',
+        :'workspace_id' => :'workspaceId',
         :'data' => :'data'
       }
     end
@@ -58,6 +62,7 @@ module Repull
         :'api_version' => :'String',
         :'timestamp' => :'Time',
         :'account' => :'WebhookEventAccount',
+        :'workspace_id' => :'Integer',
         :'data' => :'ChannelDegradedPayload'
       }
     end
@@ -111,6 +116,10 @@ module Repull
 
       if attributes.key?(:'account')
         self.account = attributes[:'account']
+      end
+
+      if attributes.key?(:'workspace_id')
+        self.workspace_id = attributes[:'workspace_id']
       end
 
       if attributes.key?(:'data')
@@ -220,6 +229,7 @@ module Repull
           api_version == o.api_version &&
           timestamp == o.timestamp &&
           account == o.account &&
+          workspace_id == o.workspace_id &&
           data == o.data
     end
 
@@ -232,7 +242,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [event, event_id, api_version, timestamp, account, data].hash
+      [event, event_id, api_version, timestamp, account, workspace_id, data].hash
     end
 
     # Builds the object from hash

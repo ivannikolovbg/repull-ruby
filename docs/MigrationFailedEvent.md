@@ -9,7 +9,7 @@
 | **api_version** | **String** |  |  |
 | **timestamp** | **Time** | When this delivery was built. |  |
 | **account** | [**WebhookEventAccount**](WebhookEventAccount.md) |  | [optional] |
-| **workspace_id** | **Integer** | The migration&#39;s workspace — pass it as &#x60;X-Workspace-Id&#x60;, or to &#x60;GET /v1/migrations/{workspaceId}&#x60;. |  |
+| **workspace_id** | **Integer** | The migration&#39;s workspace — pass it as &#x60;X-Workspace-Id&#x60;, or to &#x60;GET /v1/migrations/{workspaceId}&#x60;. Always present on migration events. A JSON number here; &#x60;POST /v1/connect&#x60; and &#x60;GET /v1/workspaces&#x60; return the same id as a string, so compare as strings. |  |
 | **data** | [**MigrationImportPayload**](MigrationImportPayload.md) |  |  |
 
 ## Example
