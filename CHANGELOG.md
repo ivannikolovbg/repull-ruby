@@ -2,6 +2,10 @@
 
 All notable changes to the `repull` gem are documented here.
 
+## 0.2.59 — 2026-11-24
+
+- Regenerated from the live spec (automated spec refresh).
+
 ## 0.2.58 — 2026-11-23
 
 - New: `GET /v1/connect/pricelabs/session`
