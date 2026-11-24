@@ -14,8 +14,8 @@
 | **email** | **String** | Primary email contact. | [optional] |
 | **total_reservations** | **Integer** | Lifetime reservation count. | [optional] |
 | **total_revenue** | **String** | Decimal-as-string to preserve precision across mixed-currency totals. | [optional] |
-| **last_stayed_at** | **Time** |  | [optional] |
-| **first_stayed_at** | **Time** |  | [optional] |
+| **last_stayed_at** | **Date** | Check-out date of the guest&#39;s most recent stay (YYYY-MM-DD). | [optional] |
+| **first_stayed_at** | **Date** | Check-in date of the guest&#39;s first stay (YYYY-MM-DD). | [optional] |
 | **created_at** | **Time** |  | [optional] |
 
 ## Example
@@ -34,8 +34,8 @@ instance = Repull::Guest.new(
   email: null,
   total_reservations: null,
   total_revenue: 14250.00,
-  last_stayed_at: null,
-  first_stayed_at: null,
+  last_stayed_at: Sun Dec 06 00:00:00 UTC 2026,
+  first_stayed_at: Mon Jan 22 00:00:00 UTC 2024,
   created_at: null
 )
 ```

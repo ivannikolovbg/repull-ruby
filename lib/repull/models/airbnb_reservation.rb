@@ -14,11 +14,22 @@ require 'date'
 require 'time'
 
 module Repull
-  # An Airbnb reservation as returned by the channel API. Use `confirmationCode` to address it in Airbnb operations.
+  # An Airbnb reservation as returned by the channel API. Use `confirmationCode` to address it in Airbnb operations, and `reservationId` to open the same stay on `GET /v1/reservations/{id}`. The fields after `payoutCurrency` are the Airbnb record as stored (Airbnb's raw status, amounts as decimal strings, stay datetimes); they are kept for existing integrations.
   class AirbnbReservation < ApiModelBase
+    # This Airbnb record's id in Repull.
+    attr_accessor :id
+
+    # Airbnb confirmation code.
     attr_accessor :confirmation_code
 
+    # The same stay on the unified reservations API: `GET /v1/reservations/{id}`. Null only while that record is still being created.
+    attr_accessor :reservation_id
+
+    # The Repull listing id (`GET /v1/listings/{id}`).
     attr_accessor :listing_id
+
+    # Airbnb's own listing id — the value `?listing_id=` takes.
+    attr_accessor :airbnb_listing_id
 
     # Which connected Airbnb account this row belongs to — the Airbnb host id, as a string (they exceed 2^53). The same value `?account_id=` accepts and `GET /v1/connect/airbnb` returns as `accounts[].externalAccountId`.
     attr_accessor :account_id
@@ -26,6 +37,7 @@ module Repull
     # Display name of that connected Airbnb account.
     attr_accessor :account_name
 
+    # Normalised status. Airbnb's own value is in `airbnbStatus`.
     attr_accessor :status
 
     attr_accessor :check_in
@@ -36,15 +48,79 @@ module Repull
 
     attr_accessor :guest_count
 
+    # What the guest paid, in `currency`.
     attr_accessor :total_price
 
     attr_accessor :currency
 
+    # What the host is expected to receive, in `payoutCurrency`.
+    attr_accessor :payout
+
+    attr_accessor :payout_currency
+
+    # Internal link id of the Airbnb listing. Use `airbnbListingId` or `listingId` instead.
+    attr_accessor :listing_airbnb_id
+
+    # Same as `confirmationCode`.
+    attr_accessor :airbnb_reservation_id
+
+    # Same as `accountId`.
+    attr_accessor :host_id
+
+    # The guest's Airbnb user id.
+    attr_accessor :guest_airbnb_id
+
+    attr_accessor :guest_first_name
+
+    attr_accessor :guest_last_name
+
+    attr_accessor :guest_profile_picture
+
+    # Airbnb's raw status: `accept`, `pending`, `cancelled_by_guest`, `cancelled_by_host`, `cancelled_by_admin`, `deny`, `failed_verification`, `pending_voided`, `checkpoint_voided`, `timeout`, …
+    attr_accessor :airbnb_status
+
+    attr_accessor :cancellation_policy
+
+    attr_accessor :cancellation_reason
+
+    # `totalPrice` as a decimal string.
+    attr_accessor :total_paid_amount
+
+    attr_accessor :total_paid_currency
+
+    # `payout` as a decimal string.
+    attr_accessor :expected_payout_amount
+
+    attr_accessor :expected_payout_currency
+
+    attr_accessor :canceled_at
+
+    attr_accessor :created_at
+
+    attr_accessor :updated_at
+
+    # Check-in date at 00:00 UTC. Prefer `checkIn`.
+    attr_accessor :check_in_datetime
+
+    # Check-out date at 00:00 UTC. Prefer `checkOut`.
+    attr_accessor :check_out_datetime
+
+    attr_accessor :time_zone
+
+    # Your workspace id.
+    attr_accessor :customer_id
+
+    # The guest on `GET /v1/guests/{id}`.
+    attr_accessor :guest_id
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
+        :'id' => :'id',
         :'confirmation_code' => :'confirmationCode',
+        :'reservation_id' => :'reservationId',
         :'listing_id' => :'listingId',
+        :'airbnb_listing_id' => :'airbnbListingId',
         :'account_id' => :'accountId',
         :'account_name' => :'accountName',
         :'status' => :'status',
@@ -53,7 +129,31 @@ module Repull
         :'guest_name' => :'guestName',
         :'guest_count' => :'guestCount',
         :'total_price' => :'totalPrice',
-        :'currency' => :'currency'
+        :'currency' => :'currency',
+        :'payout' => :'payout',
+        :'payout_currency' => :'payoutCurrency',
+        :'listing_airbnb_id' => :'listingAirbnbId',
+        :'airbnb_reservation_id' => :'airbnbReservationId',
+        :'host_id' => :'hostId',
+        :'guest_airbnb_id' => :'guestAirbnbId',
+        :'guest_first_name' => :'guestFirstName',
+        :'guest_last_name' => :'guestLastName',
+        :'guest_profile_picture' => :'guestProfilePicture',
+        :'airbnb_status' => :'airbnbStatus',
+        :'cancellation_policy' => :'cancellationPolicy',
+        :'cancellation_reason' => :'cancellationReason',
+        :'total_paid_amount' => :'totalPaidAmount',
+        :'total_paid_currency' => :'totalPaidCurrency',
+        :'expected_payout_amount' => :'expectedPayoutAmount',
+        :'expected_payout_currency' => :'expectedPayoutCurrency',
+        :'canceled_at' => :'canceledAt',
+        :'created_at' => :'createdAt',
+        :'updated_at' => :'updatedAt',
+        :'check_in_datetime' => :'checkInDatetime',
+        :'check_out_datetime' => :'checkOutDatetime',
+        :'time_zone' => :'timeZone',
+        :'customer_id' => :'customerId',
+        :'guest_id' => :'guestId'
       }
     end
 
@@ -70,8 +170,11 @@ module Repull
     # Attribute type mapping.
     def self.openapi_types
       {
+        :'id' => :'String',
         :'confirmation_code' => :'String',
+        :'reservation_id' => :'String',
         :'listing_id' => :'String',
+        :'airbnb_listing_id' => :'String',
         :'account_id' => :'String',
         :'account_name' => :'String',
         :'status' => :'String',
@@ -80,19 +183,74 @@ module Repull
         :'guest_name' => :'String',
         :'guest_count' => :'Integer',
         :'total_price' => :'Float',
-        :'currency' => :'String'
+        :'currency' => :'String',
+        :'payout' => :'Float',
+        :'payout_currency' => :'String',
+        :'listing_airbnb_id' => :'String',
+        :'airbnb_reservation_id' => :'String',
+        :'host_id' => :'String',
+        :'guest_airbnb_id' => :'String',
+        :'guest_first_name' => :'String',
+        :'guest_last_name' => :'String',
+        :'guest_profile_picture' => :'String',
+        :'airbnb_status' => :'String',
+        :'cancellation_policy' => :'String',
+        :'cancellation_reason' => :'String',
+        :'total_paid_amount' => :'String',
+        :'total_paid_currency' => :'String',
+        :'expected_payout_amount' => :'String',
+        :'expected_payout_currency' => :'String',
+        :'canceled_at' => :'Time',
+        :'created_at' => :'Time',
+        :'updated_at' => :'Time',
+        :'check_in_datetime' => :'Time',
+        :'check_out_datetime' => :'Time',
+        :'time_zone' => :'String',
+        :'customer_id' => :'String',
+        :'guest_id' => :'String'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'confirmation_code',
+        :'reservation_id',
+        :'listing_id',
+        :'airbnb_listing_id',
         :'account_id',
         :'account_name',
+        :'status',
+        :'check_in',
+        :'check_out',
         :'guest_name',
         :'guest_count',
         :'total_price',
-        :'currency'
+        :'currency',
+        :'payout',
+        :'payout_currency',
+        :'listing_airbnb_id',
+        :'airbnb_reservation_id',
+        :'host_id',
+        :'guest_airbnb_id',
+        :'guest_first_name',
+        :'guest_last_name',
+        :'guest_profile_picture',
+        :'airbnb_status',
+        :'cancellation_policy',
+        :'cancellation_reason',
+        :'total_paid_amount',
+        :'total_paid_currency',
+        :'expected_payout_amount',
+        :'expected_payout_currency',
+        :'canceled_at',
+        :'created_at',
+        :'updated_at',
+        :'check_in_datetime',
+        :'check_out_datetime',
+        :'time_zone',
+        :'customer_id',
+        :'guest_id'
       ])
     end
 
@@ -112,48 +270,188 @@ module Repull
         h[k.to_sym] = v
       }
 
+      if attributes.key?(:'id')
+        self.id = attributes[:'id']
+      else
+        self.id = nil
+      end
+
       if attributes.key?(:'confirmation_code')
         self.confirmation_code = attributes[:'confirmation_code']
+      else
+        self.confirmation_code = nil
+      end
+
+      if attributes.key?(:'reservation_id')
+        self.reservation_id = attributes[:'reservation_id']
+      else
+        self.reservation_id = nil
       end
 
       if attributes.key?(:'listing_id')
         self.listing_id = attributes[:'listing_id']
+      else
+        self.listing_id = nil
+      end
+
+      if attributes.key?(:'airbnb_listing_id')
+        self.airbnb_listing_id = attributes[:'airbnb_listing_id']
+      else
+        self.airbnb_listing_id = nil
       end
 
       if attributes.key?(:'account_id')
         self.account_id = attributes[:'account_id']
+      else
+        self.account_id = nil
       end
 
       if attributes.key?(:'account_name')
         self.account_name = attributes[:'account_name']
+      else
+        self.account_name = nil
       end
 
       if attributes.key?(:'status')
         self.status = attributes[:'status']
+      else
+        self.status = nil
       end
 
       if attributes.key?(:'check_in')
         self.check_in = attributes[:'check_in']
+      else
+        self.check_in = nil
       end
 
       if attributes.key?(:'check_out')
         self.check_out = attributes[:'check_out']
+      else
+        self.check_out = nil
       end
 
       if attributes.key?(:'guest_name')
         self.guest_name = attributes[:'guest_name']
+      else
+        self.guest_name = nil
       end
 
       if attributes.key?(:'guest_count')
         self.guest_count = attributes[:'guest_count']
+      else
+        self.guest_count = nil
       end
 
       if attributes.key?(:'total_price')
         self.total_price = attributes[:'total_price']
+      else
+        self.total_price = nil
       end
 
       if attributes.key?(:'currency')
         self.currency = attributes[:'currency']
+      else
+        self.currency = nil
+      end
+
+      if attributes.key?(:'payout')
+        self.payout = attributes[:'payout']
+      else
+        self.payout = nil
+      end
+
+      if attributes.key?(:'payout_currency')
+        self.payout_currency = attributes[:'payout_currency']
+      else
+        self.payout_currency = nil
+      end
+
+      if attributes.key?(:'listing_airbnb_id')
+        self.listing_airbnb_id = attributes[:'listing_airbnb_id']
+      end
+
+      if attributes.key?(:'airbnb_reservation_id')
+        self.airbnb_reservation_id = attributes[:'airbnb_reservation_id']
+      end
+
+      if attributes.key?(:'host_id')
+        self.host_id = attributes[:'host_id']
+      end
+
+      if attributes.key?(:'guest_airbnb_id')
+        self.guest_airbnb_id = attributes[:'guest_airbnb_id']
+      end
+
+      if attributes.key?(:'guest_first_name')
+        self.guest_first_name = attributes[:'guest_first_name']
+      end
+
+      if attributes.key?(:'guest_last_name')
+        self.guest_last_name = attributes[:'guest_last_name']
+      end
+
+      if attributes.key?(:'guest_profile_picture')
+        self.guest_profile_picture = attributes[:'guest_profile_picture']
+      end
+
+      if attributes.key?(:'airbnb_status')
+        self.airbnb_status = attributes[:'airbnb_status']
+      end
+
+      if attributes.key?(:'cancellation_policy')
+        self.cancellation_policy = attributes[:'cancellation_policy']
+      end
+
+      if attributes.key?(:'cancellation_reason')
+        self.cancellation_reason = attributes[:'cancellation_reason']
+      end
+
+      if attributes.key?(:'total_paid_amount')
+        self.total_paid_amount = attributes[:'total_paid_amount']
+      end
+
+      if attributes.key?(:'total_paid_currency')
+        self.total_paid_currency = attributes[:'total_paid_currency']
+      end
+
+      if attributes.key?(:'expected_payout_amount')
+        self.expected_payout_amount = attributes[:'expected_payout_amount']
+      end
+
+      if attributes.key?(:'expected_payout_currency')
+        self.expected_payout_currency = attributes[:'expected_payout_currency']
+      end
+
+      if attributes.key?(:'canceled_at')
+        self.canceled_at = attributes[:'canceled_at']
+      end
+
+      if attributes.key?(:'created_at')
+        self.created_at = attributes[:'created_at']
+      end
+
+      if attributes.key?(:'updated_at')
+        self.updated_at = attributes[:'updated_at']
+      end
+
+      if attributes.key?(:'check_in_datetime')
+        self.check_in_datetime = attributes[:'check_in_datetime']
+      end
+
+      if attributes.key?(:'check_out_datetime')
+        self.check_out_datetime = attributes[:'check_out_datetime']
+      end
+
+      if attributes.key?(:'time_zone')
+        self.time_zone = attributes[:'time_zone']
+      end
+
+      if attributes.key?(:'customer_id')
+        self.customer_id = attributes[:'customer_id']
+      end
+
+      if attributes.key?(:'guest_id')
+        self.guest_id = attributes[:'guest_id']
       end
     end
 
@@ -162,6 +460,10 @@ module Repull
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
+      if @id.nil?
+        invalid_properties.push('invalid value for "id", id cannot be nil.')
+      end
+
       invalid_properties
     end
 
@@ -169,7 +471,18 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
+      return false if @id.nil?
       true
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] id Value to be assigned
+    def id=(id)
+      if id.nil?
+        fail ArgumentError, 'id cannot be nil'
+      end
+
+      @id = id
     end
 
     # Checks equality by comparing each attribute.
@@ -177,8 +490,11 @@ module Repull
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
+          id == o.id &&
           confirmation_code == o.confirmation_code &&
+          reservation_id == o.reservation_id &&
           listing_id == o.listing_id &&
+          airbnb_listing_id == o.airbnb_listing_id &&
           account_id == o.account_id &&
           account_name == o.account_name &&
           status == o.status &&
@@ -187,7 +503,31 @@ module Repull
           guest_name == o.guest_name &&
           guest_count == o.guest_count &&
           total_price == o.total_price &&
-          currency == o.currency
+          currency == o.currency &&
+          payout == o.payout &&
+          payout_currency == o.payout_currency &&
+          listing_airbnb_id == o.listing_airbnb_id &&
+          airbnb_reservation_id == o.airbnb_reservation_id &&
+          host_id == o.host_id &&
+          guest_airbnb_id == o.guest_airbnb_id &&
+          guest_first_name == o.guest_first_name &&
+          guest_last_name == o.guest_last_name &&
+          guest_profile_picture == o.guest_profile_picture &&
+          airbnb_status == o.airbnb_status &&
+          cancellation_policy == o.cancellation_policy &&
+          cancellation_reason == o.cancellation_reason &&
+          total_paid_amount == o.total_paid_amount &&
+          total_paid_currency == o.total_paid_currency &&
+          expected_payout_amount == o.expected_payout_amount &&
+          expected_payout_currency == o.expected_payout_currency &&
+          canceled_at == o.canceled_at &&
+          created_at == o.created_at &&
+          updated_at == o.updated_at &&
+          check_in_datetime == o.check_in_datetime &&
+          check_out_datetime == o.check_out_datetime &&
+          time_zone == o.time_zone &&
+          customer_id == o.customer_id &&
+          guest_id == o.guest_id
     end
 
     # @see the `==` method
@@ -199,7 +539,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [confirmation_code, listing_id, account_id, account_name, status, check_in, check_out, guest_name, guest_count, total_price, currency].hash
+      [id, confirmation_code, reservation_id, listing_id, airbnb_listing_id, account_id, account_name, status, check_in, check_out, guest_name, guest_count, total_price, currency, payout, payout_currency, listing_airbnb_id, airbnb_reservation_id, host_id, guest_airbnb_id, guest_first_name, guest_last_name, guest_profile_picture, airbnb_status, cancellation_policy, cancellation_reason, total_paid_amount, total_paid_currency, expected_payout_amount, expected_payout_currency, canceled_at, created_at, updated_at, check_in_datetime, check_out_datetime, time_zone, customer_id, guest_id].hash
     end
 
     # Builds the object from hash

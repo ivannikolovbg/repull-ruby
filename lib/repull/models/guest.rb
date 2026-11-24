@@ -45,8 +45,10 @@ module Repull
     # Decimal-as-string to preserve precision across mixed-currency totals.
     attr_accessor :total_revenue
 
+    # Check-out date of the guest's most recent stay (YYYY-MM-DD).
     attr_accessor :last_stayed_at
 
+    # Check-in date of the guest's first stay (YYYY-MM-DD).
     attr_accessor :first_stayed_at
 
     attr_accessor :created_at
@@ -115,8 +117,8 @@ module Repull
         :'email' => :'String',
         :'total_reservations' => :'Integer',
         :'total_revenue' => :'String',
-        :'last_stayed_at' => :'Time',
-        :'first_stayed_at' => :'Time',
+        :'last_stayed_at' => :'Date',
+        :'first_stayed_at' => :'Date',
         :'created_at' => :'Time'
       }
     end

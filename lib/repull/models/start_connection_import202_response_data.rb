@@ -24,6 +24,12 @@ module Repull
 
     attr_accessor :queued_at
 
+    # The import's id on `GET /v1/connections/{id}/imports` and in the `account.import.*` webhooks.
+    attr_accessor :import_id
+
+    # `full` only: an earlier import of this account that no worker had picked up, closed as `failed` (`did_not_start`) and replaced by this one.
+    attr_accessor :replaced_import_id
+
     class EnumAttributeValidator
       attr_reader :datatype
       attr_reader :allowable_values
@@ -52,7 +58,9 @@ module Repull
         :'connection' => :'connection',
         :'scope' => :'scope',
         :'status' => :'status',
-        :'queued_at' => :'queuedAt'
+        :'queued_at' => :'queuedAt',
+        :'import_id' => :'importId',
+        :'replaced_import_id' => :'replacedImportId'
       }
     end
 
@@ -72,13 +80,17 @@ module Repull
         :'connection' => :'String',
         :'scope' => :'String',
         :'status' => :'String',
-        :'queued_at' => :'Time'
+        :'queued_at' => :'Time',
+        :'import_id' => :'String',
+        :'replaced_import_id' => :'String'
       }
     end
 
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'import_id',
+        :'replaced_import_id'
       ])
     end
 
@@ -121,6 +133,18 @@ module Repull
       else
         self.queued_at = nil
       end
+
+      if attributes.key?(:'import_id')
+        self.import_id = attributes[:'import_id']
+      else
+        self.import_id = nil
+      end
+
+      if attributes.key?(:'replaced_import_id')
+        self.replaced_import_id = attributes[:'replaced_import_id']
+      else
+        self.replaced_import_id = nil
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -153,7 +177,7 @@ module Repull
       warn '[DEPRECATED] the `valid?` method is obsolete'
       return false if @connection.nil?
       return false if @scope.nil?
-      scope_validator = EnumAttributeValidator.new('String', ["listings", "reservations"])
+      scope_validator = EnumAttributeValidator.new('String', ["listings", "reservations", "full"])
       return false unless scope_validator.valid?(@scope)
       return false if @status.nil?
       status_validator = EnumAttributeValidator.new('String', ["queued"])
@@ -175,7 +199,7 @@ module Repull
     # Custom attribute writer method checking allowed values (enum).
     # @param [Object] scope Object to be assigned
     def scope=(scope)
-      validator = EnumAttributeValidator.new('String', ["listings", "reservations"])
+      validator = EnumAttributeValidator.new('String', ["listings", "reservations", "full"])
       unless validator.valid?(scope)
         fail ArgumentError, "invalid value for \"scope\", must be one of #{validator.allowable_values}."
       end
@@ -210,7 +234,9 @@ module Repull
           connection == o.connection &&
           scope == o.scope &&
           status == o.status &&
-          queued_at == o.queued_at
+          queued_at == o.queued_at &&
+          import_id == o.import_id &&
+          replaced_import_id == o.replaced_import_id
     end
 
     # @see the `==` method
@@ -222,7 +248,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [connection, scope, status, queued_at].hash
+      [connection, scope, status, queued_at, import_id, replaced_import_id].hash
     end
 
     # Builds the object from hash

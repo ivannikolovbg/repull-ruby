@@ -4,7 +4,7 @@
 
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
-| **scope** | **String** | What to import. &#x60;listings&#x60; &#x3D; the account&#39;s listings; new listings come in with their calendar (pricing and availability); on a full-access connection, calendars of listings already in Repull are not re-read. &#x60;reservations&#x60; &#x3D; the account&#39;s reservations, stays from the last month and every future one. The full import runs when an account is connected. | [optional][default to &#39;listings&#39;] |
+| **scope** | **String** | What to import. &#x60;full&#x60; &#x3D; the first-connect import again (listings, calendars, reservations, payouts, reviews, conversations), for an account that has never fully imported. &#x60;listings&#x60; &#x3D; the account&#39;s listings with their calendars. &#x60;reservations&#x60; &#x3D; the account&#39;s reservations, stays from the last month and every future one. Omit to let Repull choose: &#x60;full&#x60; for an account that has never fully imported, else &#x60;listings&#x60;. | [optional] |
 
 ## Example
 

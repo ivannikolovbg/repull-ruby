@@ -2050,7 +2050,7 @@ end
 
 ## get_airbnb_reservation
 
-> <AirbnbReservation> get_airbnb_reservation(code)
+> <AirbnbReservationDetailResponse> get_airbnb_reservation(code)
 
 Get Airbnb reservation
 
@@ -2083,7 +2083,7 @@ end
 
 This returns an Array which contains the response data, status code and headers.
 
-> <Array(<AirbnbReservation>, Integer, Hash)> get_airbnb_reservation_with_http_info(code)
+> <Array(<AirbnbReservationDetailResponse>, Integer, Hash)> get_airbnb_reservation_with_http_info(code)
 
 ```ruby
 begin
@@ -2091,7 +2091,7 @@ begin
   data, status_code, headers = api_instance.get_airbnb_reservation_with_http_info(code)
   p status_code # => 2xx
   p headers # => { ... }
-  p data # => <AirbnbReservation>
+  p data # => <AirbnbReservationDetailResponse>
 rescue Repull::ApiError => e
   puts "Error when calling AirbnbApi->get_airbnb_reservation_with_http_info: #{e}"
 end
@@ -2105,7 +2105,7 @@ end
 
 ### Return type
 
-[**AirbnbReservation**](AirbnbReservation.md)
+[**AirbnbReservationDetailResponse**](AirbnbReservationDetailResponse.md)
 
 ### Authorization
 
@@ -2765,7 +2765,7 @@ end
 
 List Airbnb reservations
 
-Cursor-paginated list of reservations sourced directly from Airbnb. Use this when you need Airbnb-specific fields (guest payout split, cancellation policy snapshot) that the unified `/v1/reservations` endpoint flattens away.  **Real time.** Airbnb notifies Repull of every new booking, change and cancellation as it happens, on every access level (read-only included): it is here within seconds and fires `reservation.created` / `reservation.updated` / `reservation.cancelled` within about a minute. `dataFreshness.lastSyncedAt` is the last full re-read of the account, not the age of these rows. To re-read an account now, `POST /v1/connections/{id}/imports` with `{\"scope\": \"reservations\"}`.  Walk pages with `?cursor=<pagination.nextCursor>` until `pagination.hasMore` is `false`. The cursor is opaque — never construct or parse it client-side.  `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) — see the `offset` parameter below. Mutually exclusive with `cursor`. Internally this walks upstream Airbnb cursor pages to skip rows, so deep offsets cost N/limit upstream round-trips; cursor remains the better choice for deep pagination.  When `status` is omitted, all statuses are returned (Airbnb defaults to `accepted` only on its own surface, but this endpoint normalises to \"all\"). Pass `?status=accepted` to scope.  Reservations on inactive listings are left out (counts and cursors included); they keep syncing and reappear once the listing is activated. Filtering by an inactive listing (`listing_id`) returns `403 listing_inactive`.  **Several Airbnb accounts?** A workspace can connect more than one. By default this returns every connected account's rows; pass `?account_id=<airbnb host id>` to scope to one. Every row carries `accountId` + `accountName` either way, and `dataFreshness.accounts[]` reports each account's freshness separately, so one disconnected host no longer marks the whole response stale.
+Cursor-paginated list of reservations sourced directly from Airbnb. Use this when you need Airbnb-specific fields (guest payout split, cancellation policy snapshot) that the unified `/v1/reservations` endpoint flattens away.  Each row has the Airbnb `confirmationCode`, the `reservationId` of the same stay on `GET /v1/reservations/{id}`, the Repull `listingId` and Airbnb `airbnbListingId`, a normalised `status`, `checkIn`/`checkOut` dates, `totalPrice` + `currency` (what the guest paid) and `payout` + `payoutCurrency` (what the host receives). Airbnb's own record follows (`airbnbStatus`, `totalPaidAmount`, `expectedPayoutAmount`, …) for integrations already reading it.  **Real time.** Airbnb notifies Repull of every new booking, change and cancellation as it happens, on every access level (read-only included): it is here within seconds and fires `reservation.created` / `reservation.updated` / `reservation.cancelled` within about a minute. `dataFreshness.lastSyncedAt` is the last full re-read of the account, not the age of these rows. To re-read an account now, `POST /v1/connections/{id}/imports` with `{\"scope\": \"reservations\"}`.  Walk pages with `?cursor=<pagination.nextCursor>` until `pagination.hasMore` is `false`. The cursor is opaque — never construct or parse it client-side.  `?offset=` is also accepted as a first-class alias for shallow paging (0..10000) — see the `offset` parameter below. Mutually exclusive with `cursor`. Internally this walks upstream Airbnb cursor pages to skip rows, so deep offsets cost N/limit upstream round-trips; cursor remains the better choice for deep pagination.  When `status` is omitted, all statuses are returned (Airbnb defaults to `accepted` only on its own surface, but this endpoint normalises to \"all\"). Pass `?status=accepted` to scope.  Reservations on inactive listings are left out (counts and cursors included); they keep syncing and reappear once the listing is activated. Filtering by an inactive listing (`listing_id`) returns `403 listing_inactive`.  **Several Airbnb accounts?** A workspace can connect more than one. By default this returns every connected account's rows; pass `?account_id=<airbnb host id>` to scope to one. Every row carries `accountId` + `accountName` either way, and `dataFreshness.accounts[]` reports each account's freshness separately, so one disconnected host no longer marks the whole response stale.
 
 ### Examples
 
@@ -2785,7 +2785,7 @@ opts = {
   offset: 56, # Integer | First-class alias for cursor-based pagination. Mutually exclusive with `cursor` — passing both returns 422. Accepts integers in `[0, 10000]`; deeper walks must use `cursor` (constant per-page cost). The response always includes `pagination.nextCursor` so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying.
   limit: 56, # Integer | Max items per page. Hard cap is 100.
   listing_id: 'listing_id_example', # String | Filter to one Airbnb listing id (numeric string).
-  status: 'pending', # String | Filter by reservation status. Omit to receive all statuses.
+  status: 'pending', # String | Filter by the normalised `status`. `completed` = accepted and already checked out. Airbnb's raw values (`accept`, `cancelled_by_guest`, …) are accepted too. Omit to receive all statuses; an unknown value returns `400 invalid_params`.
   start_date: Date.parse('2013-10-20'), # Date | ISO 8601 (YYYY-MM-DD) lower bound on Airbnb's date range filter.
   end_date: Date.parse('2013-10-20'), # Date | ISO 8601 (YYYY-MM-DD) upper bound on Airbnb's date range filter.
   include_total: true # Boolean | Whether to include `pagination.total`. Always populated when Airbnb returns a total count (effectively always); accepted for shape symmetry with the rest of the API.
@@ -2827,7 +2827,7 @@ end
 | **offset** | **Integer** | First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.nextCursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. | [optional][default to 0] |
 | **limit** | **Integer** | Max items per page. Hard cap is 100. | [optional][default to 50] |
 | **listing_id** | **String** | Filter to one Airbnb listing id (numeric string). | [optional] |
-| **status** | **String** | Filter by reservation status. Omit to receive all statuses. | [optional] |
+| **status** | **String** | Filter by the normalised &#x60;status&#x60;. &#x60;completed&#x60; &#x3D; accepted and already checked out. Airbnb&#39;s raw values (&#x60;accept&#x60;, &#x60;cancelled_by_guest&#x60;, …) are accepted too. Omit to receive all statuses; an unknown value returns &#x60;400 invalid_params&#x60;. | [optional] |
 | **start_date** | **Date** | ISO 8601 (YYYY-MM-DD) lower bound on Airbnb&#39;s date range filter. | [optional] |
 | **end_date** | **Date** | ISO 8601 (YYYY-MM-DD) upper bound on Airbnb&#39;s date range filter. | [optional] |
 | **include_total** | **Boolean** | Whether to include &#x60;pagination.total&#x60;. Always populated when Airbnb returns a total count (effectively always); accepted for shape symmetry with the rest of the API. | [optional][default to true] |

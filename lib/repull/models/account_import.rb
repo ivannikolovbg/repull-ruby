@@ -26,7 +26,7 @@ module Repull
     # `completed` imports only: `partial` when some units failed (see `stages`).
     attr_accessor :outcome
 
-    # `failed` imports only: why it stopped — e.g. `needs_permissions`, `duplicate_account`, `stalled`.
+    # `failed` imports only: why it stopped — e.g. `needs_permissions`, `duplicate_account`, `stalled` (stopped reporting progress), `did_not_start` (queued, but no worker picked it up within 10 minutes: start it again with `POST /v1/connections/{id}/imports`), `queue_failed` (could not be queued).
     attr_accessor :reason
 
     attr_accessor :started_at

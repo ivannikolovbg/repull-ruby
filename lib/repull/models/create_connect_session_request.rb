@@ -15,10 +15,10 @@ require 'time'
 
 module Repull
   class CreateConnectSessionRequest < ApiModelBase
-    # Where to send the user after they finish (or cancel). Status query params are appended.
+    # Where to send the user after they finish (or cancel). Every return to it carries `status` (`connected`, `cancelled`, `error` with a `code`, `expired`, `pending` when the host chose to finish later, or `requested` for a request-only PMS), `sessionId` (the id this call returns) and `state` when you sent one; a connected return adds `connectionId` and `externalAccountId` (and `hostId` for Airbnb). Your existing query string is kept.
     attr_accessor :redirect_url
 
-    # Your own correlation token, e.g. your user id (at most 500 characters). Echoed in this response, on the redirect back (`&state=`), in the popup message, and in the `connect.session.completed` webhook.
+    # Your own correlation token, e.g. your user id (at most 500 characters). Echoed in this response, on every redirect back (`&state=`, whatever the outcome), in the popup message, and in the `connect.session.completed` webhook. Without it, match the return by `sessionId`.
     attr_accessor :state
 
     # Airbnb — how many months of past reservations the first import pulls (1–60). Omit it for the default window. Upcoming stays are always imported. A wider window takes longer to import, because every extra month is more stays to fetch.

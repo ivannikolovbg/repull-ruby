@@ -15,7 +15,7 @@ require 'time'
 
 module Repull
   class StartConnectionImportRequest < ApiModelBase
-    # What to import. `listings` = the account's listings; new listings come in with their calendar (pricing and availability); on a full-access connection, calendars of listings already in Repull are not re-read. `reservations` = the account's reservations, stays from the last month and every future one. The full import runs when an account is connected.
+    # What to import. `full` = the first-connect import again (listings, calendars, reservations, payouts, reviews, conversations), for an account that has never fully imported. `listings` = the account's listings with their calendars. `reservations` = the account's reservations, stays from the last month and every future one. Omit to let Repull choose: `full` for an account that has never fully imported, else `listings`.
     attr_accessor :scope
 
     class EnumAttributeValidator
@@ -88,8 +88,6 @@ module Repull
 
       if attributes.key?(:'scope')
         self.scope = attributes[:'scope']
-      else
-        self.scope = 'listings'
       end
     end
 
@@ -105,7 +103,7 @@ module Repull
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
-      scope_validator = EnumAttributeValidator.new('String', ["listings", "reservations"])
+      scope_validator = EnumAttributeValidator.new('String', ["listings", "reservations", "full"])
       return false unless scope_validator.valid?(@scope)
       true
     end
@@ -113,7 +111,7 @@ module Repull
     # Custom attribute writer method checking allowed values (enum).
     # @param [Object] scope Object to be assigned
     def scope=(scope)
-      validator = EnumAttributeValidator.new('String', ["listings", "reservations"])
+      validator = EnumAttributeValidator.new('String', ["listings", "reservations", "full"])
       unless validator.valid?(scope)
         fail ArgumentError, "invalid value for \"scope\", must be one of #{validator.allowable_values}."
       end

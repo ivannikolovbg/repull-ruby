@@ -180,11 +180,11 @@ end
 
 ## create_connection
 
-> <Connection> create_connection(provider, opts)
+> <ConnectProviderSession> create_connection(provider, opts)
 
 Connect to PMS/OTA provider
 
-Establish a connection to a PMS or OTA platform. Credentials vary by provider — see docs for each provider.  Airbnb-specific: pass `redirectUrl` (where to send the user after consent) and optionally `accessType`. Three tiers: `read_only` grants read-only scopes; `messaging` (shown to hosts as \"Messaging & reviews\") grants read scopes plus message read/send and review writes (reply to guest reviews, submit host reviews — Airbnb's `reviews_write`) but NOT property management, so it can coexist with another app (e.g. an existing PMS) that already holds property management on the same Airbnb account; `full_access` — the default — grants full host scopes including the exclusive property management (only one app per Airbnb account can hold it). The response returns a hosted `url` to redirect the user to.  Booking.com: pass `redirectUrl` (no `accessType`). The response returns a hosted `url` — send the user there to select our connectivity provider in their Booking.com Extranet and paste their Hotel ID. Same response shape as Airbnb (`url`, `sessionId`, `expiresAt`).  PMS providers are not connected by this call: send their credentials to `POST /v1/connect/{provider}/credentials`, or start a hosted session with `POST /v1/connect`.  **PriceLabs (an app).** Pass `redirectUrl` (and optionally `state`, `locale`, `workspace`). The response returns a hosted `url` for the session's workspace: yours, the one `X-Workspace-Id` names, or a new sub-workspace when you send `workspace.name` (its id comes back as `workspaceId`). The page shows the host a key for **every listing of that workspace, including listings added later**, with the steps to paste it into PriceLabs, then waits for PriceLabs' first call and completes like every provider: redirect to `redirectUrl` (`status=connected&connectionId=…`) or the `repull:connect:completed` popup message, and `connect.session.completed`. When PriceLabs first uses the key, `account.created` is sent. To keep PriceLabs away from the rest of an account, put the listings it should price in a sub-workspace and connect PriceLabs there. To issue the key yourself (no hosted page, or only some listings) use `POST /v1/connect/pricelabs/key`.
+Establish a connection to a PMS or OTA platform. Credentials vary by provider — see docs for each provider.  Airbnb-specific: pass `redirectUrl` (where to send the user after consent) and optionally `accessType`. Three tiers: `read_only` grants read-only scopes; `messaging` (shown to hosts as \"Messaging & reviews\") grants read scopes plus message read/send and review writes (reply to guest reviews, submit host reviews — Airbnb's `reviews_write`) but NOT property management, so it can coexist with another app (e.g. an existing PMS) that already holds property management on the same Airbnb account; `full_access` — the default — grants full host scopes including the exclusive property management (only one app per Airbnb account can hold it). The response returns a hosted `url` to redirect the user to.  Booking.com: pass `redirectUrl` (no `accessType`). The response returns a hosted `url` — send the user there to select our connectivity provider in their Booking.com Extranet and paste their Hotel ID. Same response shape as Airbnb (`url`, `sessionId`, `expiresAt`, `state`).  **Returning to your app.** Every return to `redirectUrl` carries `status`, `sessionId` and your `state`, whether the host connected, cancelled, hit an error or let the session expire, so you can always tie it back to the call that started it.  PMS providers are not connected by this call: send their credentials to `POST /v1/connect/{provider}/credentials`, or start a hosted session with `POST /v1/connect`.  **PriceLabs (an app).** Pass `redirectUrl` (and optionally `state`, `locale`, `workspace`). The response returns a hosted `url` for the session's workspace: yours, the one `X-Workspace-Id` names, or a new sub-workspace when you send `workspace.name` (its id comes back as `workspaceId`). The page shows the host a key for **every listing of that workspace, including listings added later**, with the steps to paste it into PriceLabs, then waits for PriceLabs' first call and completes like every provider: redirect to `redirectUrl` (`status=connected&connectionId=…`) or the `repull:connect:completed` popup message, and `connect.session.completed`. When PriceLabs first uses the key, `account.created` is sent. To keep PriceLabs away from the rest of an account, put the listings it should price in a sub-workspace and connect PriceLabs there. To issue the key yourself (no hosted page, or only some listings) use `POST /v1/connect/pricelabs/key`.
 
 ### Examples
 
@@ -216,7 +216,7 @@ end
 
 This returns an Array which contains the response data, status code and headers.
 
-> <Array(<Connection>, Integer, Hash)> create_connection_with_http_info(provider, opts)
+> <Array(<ConnectProviderSession>, Integer, Hash)> create_connection_with_http_info(provider, opts)
 
 ```ruby
 begin
@@ -224,7 +224,7 @@ begin
   data, status_code, headers = api_instance.create_connection_with_http_info(provider, opts)
   p status_code # => 2xx
   p headers # => { ... }
-  p data # => <Connection>
+  p data # => <ConnectProviderSession>
 rescue Repull::ApiError => e
   puts "Error when calling ConnectApi->create_connection_with_http_info: #{e}"
 end
@@ -239,7 +239,7 @@ end
 
 ### Return type
 
-[**Connection**](Connection.md)
+[**ConnectProviderSession**](ConnectProviderSession.md)
 
 ### Authorization
 
