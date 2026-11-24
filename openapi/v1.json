@@ -111,6 +111,10 @@
       "description": "Vrbo channel management \u2014 the listing, its content on the same paths and verbs as Airbnb (descriptions, details, photos, rooms, amenities, house rules, fees, rates, \u2026), listing actions and reservations. Messaging, inquiries, special offers and reviews are on the cross-channel endpoints (`/v1/conversations`, `/v1/reviews`)."
     },
     {
+      "name": "Tiket",
+      "description": "tiket.com channel management \u2014 properties and room types, rates, availability and restrictions (read back after every write), reservations as tiket.com sent them, content publishing and property setup. Connect a property with the hosted Connect flow (`POST /v1/connect` with `allowedProviders: [\"tiket\"]`)."
+    },
+    {
       "name": "AI",
       "description": "AI-powered operations \u2014 guest responses, intent classification, listing generation, pricing suggestions"
     },
@@ -18908,6 +18912,1380 @@
             "nullable": true
           }
         }
+      },
+      "TiketOccupancyPrice": {
+        "type": "object",
+        "description": "Price for a number of guests (Occupancy Based properties).",
+        "required": [
+          "guests",
+          "amount"
+        ],
+        "properties": {
+          "guests": {
+            "type": "integer",
+            "minimum": 1,
+            "example": 2
+          },
+          "amount": {
+            "type": "number",
+            "format": "double",
+            "description": "Price per night for this many guests, tax included, in `currency`.",
+            "example": 850000
+          }
+        }
+      },
+      "TiketChildPrice": {
+        "type": "object",
+        "description": "Price for a child in an age band. The age bands must match the ones set in the tiket.com extranet.",
+        "required": [
+          "minAge",
+          "maxAge",
+          "amount"
+        ],
+        "properties": {
+          "minAge": {
+            "type": "integer",
+            "example": 0
+          },
+          "maxAge": {
+            "type": "integer",
+            "example": 11
+          },
+          "amount": {
+            "type": "number",
+            "format": "double",
+            "example": 100000
+          }
+        }
+      },
+      "TiketAriDay": {
+        "type": "object",
+        "description": "What tiket.com holds for one night of one room type and rate plan. Rooms to sell (`available`, `booked`) belong to the room type and repeat on each of its rate plans; prices and restrictions belong to the rate plan. A field tiket.com returned nothing for is `null`.",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-12-24"
+          },
+          "roomTypeCode": {
+            "type": "string",
+            "description": "tiket.com room type id."
+          },
+          "ratePlanCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "tiket.com rate plan id. `null` on a room type with no rate plan selected."
+          },
+          "available": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Rooms to sell."
+          },
+          "booked": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Rooms tiket.com has sold for the night."
+          },
+          "price": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "Room Based price per night, tax included."
+          },
+          "occupancyPrices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TiketOccupancyPrice"
+            },
+            "description": "Occupancy Based prices. Empty on a Room Based property."
+          },
+          "childPrices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TiketChildPrice"
+            },
+            "description": "Children prices as tiket.com holds them (set in the extranet; see the note on children rates under `PUT /v1/channels/tiket/availability`)."
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true,
+            "example": "IDR"
+          },
+          "minStay": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Minimum nights."
+          },
+          "maxStay": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Maximum nights."
+          },
+          "stopSell": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "`true` when the rate plan is closed for the night."
+          },
+          "closedToArrival": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "closedToDeparture": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "minAdvanceDays": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Minimum days between booking and arrival."
+          },
+          "maxAdvanceDays": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Maximum days between booking and arrival."
+          }
+        },
+        "required": [
+          "date",
+          "roomTypeCode",
+          "ratePlanCode"
+        ]
+      },
+      "TiketAvailabilityResponse": {
+        "type": "object",
+        "description": "Returned by `GET /v1/channels/tiket/availability`.",
+        "required": [
+          "propertyId",
+          "start",
+          "end",
+          "days"
+        ],
+        "properties": {
+          "propertyId": {
+            "type": "string",
+            "description": "tiket.com Hotel ID."
+          },
+          "priceModel": {
+            "type": "string",
+            "nullable": true,
+            "description": "`Room Based` (one `price` per night) or `Occupancy Based` (`occupancyPrices` per number of guests). Set per property in the tiket.com extranet.",
+            "example": "Room Based"
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true,
+            "description": "The property currency.",
+            "example": "IDR"
+          },
+          "start": {
+            "type": "string",
+            "format": "date"
+          },
+          "end": {
+            "type": "string",
+            "format": "date",
+            "description": "Inclusive."
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TiketAriDay"
+            }
+          }
+        }
+      },
+      "TiketListingPricingResponse": {
+        "type": "object",
+        "description": "Returned by `GET /v1/channels/tiket/listings/{id}/pricing`: the listing's tiket.com room, every active rate plan of that room.",
+        "required": [
+          "listingId",
+          "propertyId",
+          "roomTypeCode",
+          "start",
+          "end",
+          "days"
+        ],
+        "properties": {
+          "listingId": {
+            "type": "string"
+          },
+          "propertyId": {
+            "type": "string",
+            "description": "tiket.com Hotel ID."
+          },
+          "roomTypeCode": {
+            "type": "string",
+            "description": "The tiket.com room type the listing is mapped to."
+          },
+          "priceModel": {
+            "type": "string",
+            "nullable": true,
+            "description": "`Room Based` (one `price` per night) or `Occupancy Based` (`occupancyPrices` per number of guests). Set per property in the tiket.com extranet.",
+            "example": "Room Based"
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true,
+            "example": "IDR"
+          },
+          "start": {
+            "type": "string",
+            "format": "date"
+          },
+          "end": {
+            "type": "string",
+            "format": "date",
+            "description": "Inclusive."
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TiketAriDay"
+            }
+          }
+        }
+      },
+      "TiketAriUpdate": {
+        "type": "object",
+        "description": "One date range for one room type (and, for `rates` and `restrictions`, one rate plan). Which fields apply depends on the request's `type`.",
+        "required": [
+          "start",
+          "end"
+        ],
+        "properties": {
+          "roomTypeCode": {
+            "type": "string",
+            "description": "tiket.com room type id. Required on `PUT /v1/channels/tiket/availability`; on the listing route it is always the listing's room."
+          },
+          "ratePlanCode": {
+            "type": "string",
+            "description": "tiket.com rate plan id. Required for `rates` and `restrictions` on `PUT /v1/channels/tiket/availability`; on the listing route it defaults to every rate plan of the room selected for pushes."
+          },
+          "start": {
+            "type": "string",
+            "format": "date",
+            "description": "First night. tiket.com accepts today up to 500 days ahead."
+          },
+          "end": {
+            "type": "string",
+            "format": "date",
+            "description": "Last night, inclusive."
+          },
+          "availableRooms": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "`availability`: rooms to sell."
+          },
+          "price": {
+            "type": "number",
+            "format": "double",
+            "description": "`rates` on a Room Based property: price per night, tax included. Greater than 0."
+          },
+          "occupancyPrices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TiketOccupancyPrice"
+            },
+            "description": "`rates` on an Occupancy Based property. Send `price` or `occupancyPrices`, not both."
+          },
+          "childPrices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TiketChildPrice"
+            },
+            "description": "Children prices. **Children rates are paused.** tiket.com has asked every channel manager not to send children rates until it fixes an issue on its side, so a write that includes `childPrices` is refused with `422 invalid_params` and nothing is sent. Children rates set in the tiket.com extranet still apply. Send `price` or `occupancyPrices` without `childPrices`."
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217. Defaults to the property currency.",
+            "example": "IDR"
+          },
+          "minStay": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 365,
+            "description": "`restrictions`: minimum nights."
+          },
+          "maxStay": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 365,
+            "description": "`restrictions`: maximum nights."
+          },
+          "stopSell": {
+            "type": "boolean",
+            "description": "`restrictions`: close (`true`) or open (`false`) the rate plan. With `availability` and a `ratePlanCode`, also closes that rate plan."
+          },
+          "closedToArrival": {
+            "type": "boolean",
+            "description": "`restrictions`."
+          },
+          "closedToDeparture": {
+            "type": "boolean",
+            "description": "`restrictions`."
+          },
+          "minAdvanceDays": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 500,
+            "description": "`restrictions`: minimum days between booking and arrival."
+          },
+          "maxAdvanceDays": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 500,
+            "description": "`restrictions`: maximum days between booking and arrival."
+          }
+        }
+      },
+      "TiketAvailabilityUpdateRequest": {
+        "type": "object",
+        "required": [
+          "property_id",
+          "type",
+          "updates"
+        ],
+        "properties": {
+          "property_id": {
+            "type": "string",
+            "description": "tiket.com Hotel ID."
+          },
+          "type": {
+            "type": "string",
+            "description": "`availability` \u2014 rooms to sell per room type. `rates` \u2014 prices per room type and rate plan. `restrictions` \u2014 stay and arrival rules per room type and rate plan."
+          },
+          "updates": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/TiketAriUpdate"
+            }
+          },
+          "verify": {
+            "type": "boolean",
+            "default": true,
+            "description": "Read the nights back from tiket.com after the write and report `applied`. `false` skips the read-back (`applied: unverified`)."
+          }
+        }
+      },
+      "TiketListingPricingUpdateRequest": {
+        "type": "object",
+        "required": [
+          "updates"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "`availability` \u2014 rooms to sell per room type. `rates` \u2014 prices per room type and rate plan. `restrictions` \u2014 stay and arrival rules per room type and rate plan.",
+            "default": "rates"
+          },
+          "hotel_id": {
+            "type": "string",
+            "description": "tiket.com Hotel ID \u2014 only needed when the listing is mapped on more than one tiket.com property."
+          },
+          "updates": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/TiketAriUpdate"
+            }
+          },
+          "verify": {
+            "type": "boolean",
+            "default": true,
+            "description": "Read the nights back from tiket.com after the write and report `applied`. `false` skips the read-back (`applied: unverified`)."
+          }
+        }
+      },
+      "TiketAriMismatch": {
+        "type": "object",
+        "description": "A night where what tiket.com holds after the write differs from what was sent.",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "roomTypeCode": {
+            "type": "string"
+          },
+          "ratePlanCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "field": {
+            "type": "string",
+            "example": "price"
+          },
+          "sent": {
+            "description": "The value sent."
+          },
+          "read": {
+            "description": "The value tiket.com returned."
+          }
+        }
+      },
+      "TiketAriWriteResponse": {
+        "type": "object",
+        "description": "Result of a tiket.com rates / availability / restrictions write.",
+        "required": [
+          "propertyId",
+          "type",
+          "updates",
+          "requests",
+          "applied"
+        ],
+        "properties": {
+          "listingId": {
+            "type": "string",
+            "description": "Present on `PUT /v1/channels/tiket/listings/{id}/pricing`."
+          },
+          "propertyId": {
+            "type": "string",
+            "description": "tiket.com Hotel ID."
+          },
+          "roomTypeCode": {
+            "type": "string",
+            "description": "Present on `PUT /v1/channels/tiket/listings/{id}/pricing`."
+          },
+          "type": {
+            "type": "string"
+          },
+          "updates": {
+            "type": "integer",
+            "description": "Update rows sent (on the listing route, one per targeted rate plan)."
+          },
+          "requests": {
+            "type": "integer",
+            "description": "Requests made to tiket.com."
+          },
+          "echoTokens": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "tiket.com's reference for each request. Quote them to tiket.com support."
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "description": "tiket.com's own warnings, verbatim (for example `ARI_PARTIALLY_ERROR` when part of a request was not applied)."
+          },
+          "applied": {
+            "type": "string",
+            "description": "`verified` \u2014 the read-back matches what was sent. `mismatch` \u2014 tiket.com holds something else for at least one night (see `mismatches`). `unverified` \u2014 `verify: false` was sent."
+          },
+          "mismatches": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "$ref": "#/components/schemas/TiketAriMismatch"
+            },
+            "description": "Present when `applied` is `mismatch`. At most 100; `mismatchCount` is the total."
+          },
+          "mismatchCount": {
+            "type": "integer"
+          }
+        }
+      },
+      "TiketRatePlan": {
+        "type": "object",
+        "properties": {
+          "ratePlanId": {
+            "type": "string",
+            "description": "Repull id of the rate plan (used by `set-push-rate-plans`)."
+          },
+          "ratePlanCode": {
+            "type": "string",
+            "description": "tiket.com rate plan id."
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "pushTarget": {
+            "type": "boolean",
+            "description": "Prices and restrictions from the mapped listing's calendar are sent to this rate plan."
+          }
+        }
+      },
+      "TiketRoom": {
+        "type": "object",
+        "description": "A tiket.com room type and the listing it is mapped to.",
+        "properties": {
+          "roomId": {
+            "type": "string",
+            "description": "Repull id of the room (used by the Connect mapping)."
+          },
+          "roomTypeCode": {
+            "type": "string",
+            "description": "tiket.com room type id."
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "maxAdults": {
+            "type": "integer",
+            "nullable": true
+          },
+          "maxChildren": {
+            "type": "integer",
+            "nullable": true
+          },
+          "units": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Rooms of this type at the property."
+          },
+          "listingId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The mapped Repull listing, or `null` when the room is not mapped (or its listing is hidden by `?status=`)."
+          },
+          "listingHidden": {
+            "type": "boolean",
+            "description": "`true` when the room is mapped to a listing that `?status=` hides."
+          },
+          "ratePlans": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TiketRatePlan"
+            }
+          }
+        }
+      },
+      "TiketProperty": {
+        "type": "object",
+        "description": "A tiket.com property connected to this workspace. A property is a hotel or building; its room types are what guests book, and each room type maps to one Repull listing.",
+        "properties": {
+          "propertyId": {
+            "type": "string",
+            "nullable": true,
+            "description": "tiket.com Hotel ID. `null` for a property Repull created that tiket.com has not assigned an id to yet."
+          },
+          "partnerHotelCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Repull's code for a property Repull created on tiket.com."
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true,
+            "example": "IDR"
+          },
+          "priceModel": {
+            "type": "string",
+            "nullable": true,
+            "description": "`Room Based` (one `price` per night) or `Occupancy Based` (`occupancyPrices` per number of guests). Set per property in the tiket.com extranet.",
+            "example": "Room Based"
+          },
+          "activationStatus": {
+            "type": "string",
+            "nullable": true,
+            "description": "Whether tiket.com has activated Repull as the property's channel manager, `awaiting_activation` until tiket.com activates Repull, then `active`; `disconnected` after `disconnect`."
+          },
+          "contentMapped": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "`true` when tiket.com has linked Repull's codes to the property, so `POST /v1/listings/{id}/publish/tiket` can send content."
+          },
+          "syncEnabled": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether calendar changes are sent to tiket.com automatically (`set-sync`)."
+          },
+          "lastProductsAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When room types and rate plans were last read from tiket.com."
+          },
+          "lastError": {
+            "type": "string",
+            "nullable": true
+          },
+          "mappingStatus": {
+            "type": "string",
+            "description": "`mapped` \u2014 every room type has a listing; `partial` \u2014 some do; `unmapped` \u2014 none (a real onboarding state, not an error)."
+          },
+          "listings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "listingId": {
+                  "type": "string"
+                },
+                "roomId": {
+                  "type": "string"
+                },
+                "roomTypeCode": {
+                  "type": "string"
+                },
+                "roomName": {
+                  "type": "string",
+                  "nullable": true
+                }
+              }
+            }
+          },
+          "rooms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TiketRoom"
+            }
+          }
+        }
+      },
+      "TiketPropertyListResponse": {
+        "type": "object",
+        "required": [
+          "properties"
+        ],
+        "properties": {
+          "properties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TiketProperty"
+            }
+          }
+        }
+      },
+      "TiketPropertyRoomsResponse": {
+        "type": "object",
+        "required": [
+          "propertyId",
+          "rooms"
+        ],
+        "properties": {
+          "propertyId": {
+            "type": "string"
+          },
+          "rooms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TiketRoom"
+            }
+          }
+        }
+      },
+      "TiketReservation": {
+        "type": "object",
+        "description": "One booked room of a tiket.com reservation, as tiket.com delivered it.",
+        "properties": {
+          "reservationId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The Repull reservation this room became (`GET /v1/reservations/{id}`). `null` while the room type is not mapped to a listing; mapping it records the booking."
+          },
+          "confirmationCode": {
+            "type": "string",
+            "description": "`<tiketReservationId>` for the first room, `<tiketReservationId>-2`, `-3`, \u2026 for the others."
+          },
+          "tiketReservationId": {
+            "type": "string",
+            "description": "tiket.com's id of the whole booking."
+          },
+          "previousTiketReservationId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Set when this booking replaced an earlier one. tiket.com sends a date change as a cancellation plus a new booking; Repull applies it as a change to the original reservation."
+          },
+          "roomIndex": {
+            "type": "integer",
+            "description": "1 for the first room of the booking."
+          },
+          "propertyId": {
+            "type": "string",
+            "nullable": true,
+            "description": "tiket.com Hotel ID."
+          },
+          "roomTypeCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "ratePlanCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "ratePlanName": {
+            "type": "string",
+            "nullable": true
+          },
+          "checkIn": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "checkOut": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "adults": {
+            "type": "integer"
+          },
+          "children": {
+            "type": "integer"
+          },
+          "infants": {
+            "type": "integer"
+          },
+          "guestName": {
+            "type": "string",
+            "nullable": true
+          },
+          "guestCountry": {
+            "type": "string",
+            "nullable": true
+          },
+          "totalAmount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "What the guest paid for this room."
+          },
+          "netAmount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "What tiket.com pays the property for this room."
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true,
+            "example": "IDR"
+          },
+          "paymentType": {
+            "type": "string",
+            "nullable": true,
+            "description": "Payment type as tiket.com sent it."
+          },
+          "paymentMethod": {
+            "type": "string",
+            "nullable": true,
+            "description": "How tiket.com pays the property: `Virtual Credit Card` or `Bank Transfer`. Card details are never returned by the API.",
+            "example": "Bank Transfer"
+          },
+          "mealPlanCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "nonRefundable": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "cancellationPolicy": {
+            "type": "string",
+            "nullable": true,
+            "description": "Cancellation policy text as tiket.com sent it."
+          },
+          "specialRequests": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "TiketReservationListResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "pagination"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TiketReservation"
+            }
+          },
+          "pagination": {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "type": "integer"
+              },
+              "offset": {
+                "type": "integer"
+              },
+              "hasMore": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      },
+      "TiketContentResponse": {
+        "type": "object",
+        "description": "Returned by `GET /v1/channels/tiket/content`.",
+        "properties": {
+          "propertyId": {
+            "type": "string",
+            "nullable": true
+          },
+          "partnerHotelCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "chainCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "contentMapped": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "activationStatus": {
+            "type": "string",
+            "nullable": true,
+            "description": "Same as on `GET /v1/channels/tiket/properties`."
+          },
+          "objects": {
+            "type": "array",
+            "description": "One entry per content object Repull sent: the property, each room type, each rate plan.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "property",
+                    "room",
+                    "rateplan"
+                  ],
+                  "description": "What the object is."
+                },
+                "partnerCode": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Repull's code for the object on tiket.com."
+                },
+                "listingId": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "pushedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "nullable": true
+                },
+                "echoToken": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "tiket.com's reference for the push. Quote it to tiket.com support."
+                },
+                "content": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "nullable": true,
+                  "description": "The content that was sent."
+                }
+              }
+            }
+          }
+        }
+      },
+      "TiketMapListingsRequest": {
+        "type": "object",
+        "required": [
+          "property_id",
+          "mappings"
+        ],
+        "properties": {
+          "property_id": {
+            "type": "string",
+            "description": "tiket.com Hotel ID."
+          },
+          "mappings": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "roomTypeCode"
+              ],
+              "properties": {
+                "roomTypeCode": {
+                  "type": "string",
+                  "description": "tiket.com room type id (`rooms[].roomTypeCode` on `GET /v1/channels/tiket/properties/{id}/rooms`)."
+                },
+                "listingId": {
+                  "type": "integer",
+                  "nullable": true,
+                  "description": "Listing to map the room to. `null` unmaps it."
+                },
+                "create": {
+                  "type": "boolean",
+                  "description": "`true` creates a new listing from the room, with tiket.com's calendar. Do not send `listingId` with it."
+                }
+              }
+            }
+          }
+        }
+      },
+      "TiketMapListingsResponse": {
+        "type": "object",
+        "properties": {
+          "propertyId": {
+            "type": "string"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "roomId": {
+                  "type": "string"
+                },
+                "listingId": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "created": {
+                  "type": "boolean"
+                },
+                "error": {
+                  "type": "string",
+                  "nullable": true
+                }
+              }
+            },
+            "description": "One entry per mapping."
+          },
+          "replayedReservations": {
+            "type": "integer",
+            "description": "Bookings tiket.com delivered while the room was unmapped, now recorded on the listing."
+          }
+        }
+      },
+      "TiketSetupRequest": {
+        "type": "object",
+        "required": [
+          "action"
+        ],
+        "description": "Fields depend on `action`. Every action except `create-property`, `request-activation` and `check-activation` names a property with `property_id` or, for a property Repull created that tiket.com has not assigned an id to yet, `partner_hotel_code`.",
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "property_id": {
+            "type": "string",
+            "description": "tiket.com Hotel ID."
+          },
+          "partner_hotel_code": {
+            "type": "string",
+            "description": "Repull's code for a property Repull created."
+          },
+          "listing_id": {
+            "type": "integer",
+            "description": "`create-property`, `add-room`, `add-rate-plan`: the listing whose content is used."
+          },
+          "hotel_id": {
+            "type": "string",
+            "description": "`set-tiket-hotel-id`: the Hotel ID tiket.com assigned. `check-activation`: the Hotel ID to check."
+          },
+          "name": {
+            "type": "string",
+            "description": "`create-property`, `add-room`, `add-rate-plan`: name on tiket.com."
+          },
+          "currency": {
+            "type": "string",
+            "description": "`create-property`: ISO 4217.",
+            "example": "IDR"
+          },
+          "property_type_id": {
+            "type": "integer",
+            "description": "`create-property`: tiket.com property type."
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "address": {
+            "type": "string"
+          },
+          "postal_code": {
+            "type": "string"
+          },
+          "country_code": {
+            "type": "string",
+            "example": "ID"
+          },
+          "state_code": {
+            "type": "string"
+          },
+          "company_name": {
+            "type": "string",
+            "description": "`create-property`: the legal entity that operates the property."
+          },
+          "company_address": {
+            "type": "string"
+          },
+          "star_rating": {
+            "type": "number",
+            "format": "double"
+          },
+          "pricing_model": {
+            "type": "string",
+            "description": "`create-property`: `Room Based` or `Occupancy Based`."
+          },
+          "description": {
+            "type": "string"
+          },
+          "total_rooms": {
+            "type": "integer"
+          },
+          "floors": {
+            "type": "integer"
+          },
+          "when_built": {
+            "type": "integer"
+          },
+          "contacts": {
+            "type": "array",
+            "description": "`create-property`: property contacts.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "profile_type": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "position_id": {
+                  "type": "integer"
+                },
+                "phone": {
+                  "type": "string"
+                },
+                "country_access_code": {
+                  "type": "string"
+                },
+                "email": {
+                  "type": "string",
+                  "format": "email"
+                }
+              }
+            }
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "`add-room`: rooms of this type."
+          },
+          "max_adults": {
+            "type": "integer"
+          },
+          "max_children": {
+            "type": "integer"
+          },
+          "room_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "`add-rate-plan`: rooms the rate plan applies to."
+          },
+          "cancellation_policy": {
+            "type": "string",
+            "description": "`add-rate-plan`."
+          },
+          "breakfast": {
+            "type": "boolean",
+            "description": "`add-rate-plan`: breakfast included."
+          },
+          "properties": {
+            "type": "array",
+            "description": "`request-activation`: the properties to activate.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "hotel_id": {
+                  "type": "string"
+                },
+                "email": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "address": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "rate_plan_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "`set-push-rate-plans`: the `ratePlanId`s that receive prices and restrictions."
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "`set-sync`: send calendar changes to tiket.com automatically."
+          }
+        }
+      },
+      "TiketSetupResponse": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "result": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "What the action did. Depends on `action`."
+          }
+        }
+      },
+      "TiketSyncResponse": {
+        "type": "object",
+        "properties": {
+          "synced": {
+            "type": "integer"
+          },
+          "failed": {
+            "type": "integer"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "propertyId": {
+                  "type": "string"
+                },
+                "listingId": {
+                  "type": "string"
+                },
+                "step": {
+                  "type": "string",
+                  "enum": [
+                    "refresh_products",
+                    "calendar"
+                  ]
+                },
+                "ok": {
+                  "type": "boolean"
+                },
+                "skipped": {
+                  "type": "string",
+                  "description": "`listing_inactive` \u2014 an inactive listing is not sold, so its calendar is not sent."
+                },
+                "result": {
+                  "type": "object",
+                  "nullable": true,
+                  "additionalProperties": true
+                },
+                "error": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "TiketConnectClaimResponse": {
+        "type": "object",
+        "properties": {
+          "connected": {
+            "type": "boolean"
+          },
+          "connectionId": {
+            "type": "string"
+          },
+          "hotelId": {
+            "type": "string"
+          },
+          "rooms": {
+            "type": "integer",
+            "description": "Room types imported."
+          },
+          "ratePlans": {
+            "type": "integer",
+            "description": "Rate plans imported."
+          },
+          "priceModel": {
+            "type": "string",
+            "nullable": true,
+            "description": "`Room Based` (one `price` per night) or `Occupancy Based` (`occupancyPrices` per number of guests). Set per property in the tiket.com extranet.",
+            "example": "Room Based"
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true
+          },
+          "autoMapped": {
+            "type": "integer",
+            "description": "Room types mapped automatically to a listing with the same name."
+          }
+        }
+      },
+      "TiketConnectRoomsResponse": {
+        "type": "object",
+        "description": "Returned by `GET /v1/connect/tiket/rooms`. Same shape as `GET /v1/connect/booking/rooms`.",
+        "required": [
+          "status",
+          "sessionId",
+          "hotelId",
+          "rooms",
+          "listingOptions"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "`importing` \u2014 room types are still being read; `ready` \u2014 awaiting mapping; `completed` \u2014 the session is finished."
+          },
+          "sessionId": {
+            "type": "string"
+          },
+          "hotelId": {
+            "type": "string"
+          },
+          "rooms": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "roomId": {
+                  "type": "string",
+                  "description": "Pass this back in `POST /v1/connect/tiket/map-rooms`."
+                },
+                "roomName": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "maxGuests": {
+                  "type": "integer",
+                  "nullable": true
+                },
+                "numberOfRooms": {
+                  "type": "integer",
+                  "nullable": true
+                },
+                "currentListingId": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "roomBookingId": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "tiket.com room type id."
+                }
+              }
+            }
+          },
+          "listingOptions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BookingConnectListingOption"
+            }
+          },
+          "listingOptionsTotal": {
+            "type": "integer"
+          },
+          "missingCapabilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Always empty for tiket.com."
+          }
+        }
+      },
+      "TiketConnectMapRoomsResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "sessionId": {
+            "type": "string"
+          },
+          "connectionId": {
+            "type": "string",
+            "nullable": true
+          },
+          "mapped": {
+            "type": "integer"
+          },
+          "unmapped": {
+            "type": "integer"
+          },
+          "created": {
+            "type": "integer",
+            "description": "Listings created from rooms (`create: true`)."
+          },
+          "replayedReservations": {
+            "type": "integer",
+            "description": "Bookings tiket.com delivered before the rooms were mapped, now recorded."
+          }
+        }
+      },
+      "ListingPublishTiketResponse": {
+        "type": "object",
+        "properties": {
+          "listingId": {
+            "type": "string"
+          },
+          "channel": {
+            "type": "string"
+          },
+          "result": {
+            "type": "object",
+            "properties": {
+              "pushed": {
+                "type": "boolean",
+                "description": "`true` when every section landed."
+              },
+              "reason": {
+                "type": "string",
+                "description": "Why nothing was sent, when `pushed` is `false` and no section was tried."
+              },
+              "sections": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Sections tiket.com accepted (for example the property, each room type, each rate plan)."
+              },
+              "errors": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Sections that did not land, with tiket.com's reason."
+              }
+            }
+          }
+        }
       }
     },
     "parameters": {
@@ -19711,11 +21089,12 @@
               "enum": [
                 "airbnb",
                 "booking",
-                "vrbo"
+                "vrbo",
+                "tiket"
               ],
               "example": "airbnb"
             },
-            "description": "Filter to properties with an active link on the given OTA/channel (airbnb, booking, vrbo). Omit to include every channel. Each property also returns a `channels` array listing the OTAs it is published on."
+            "description": "Filter to properties with an active link on the given OTA/channel (airbnb, booking, vrbo, tiket). Omit to include every channel. Each property also returns a `channels` array listing the OTAs it is published on."
           },
           {
             "$ref": "#/components/parameters/UpdatedSince"
@@ -44528,6 +45907,1229 @@
           },
           "502": {
             "description": "CiiRUS could not be reached (`network_error`). Nothing was stored.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/channels/tiket/availability": {
+      "get": {
+        "operationId": "get_tiket_availability",
+        "summary": "Read tiket.com rates, availability and restrictions",
+        "description": "What tiket.com holds for a property over a date window, read live from tiket.com: rooms to sell and booked per room type, prices (Room Based, or per number of guests on an Occupancy Based property, and children prices) and restrictions per rate plan. One row per night, room type and rate plan.\n\n`property_id` must be a tiket.com property connected to this workspace (`GET /v1/channels/tiket/properties`).",
+        "tags": [
+          "Tiket"
+        ],
+        "parameters": [
+          {
+            "name": "property_id",
+            "in": "query",
+            "required": true,
+            "description": "tiket.com Hotel ID (shown next to the property name in the tiket.com extranet; `propertyId` on `GET /v1/channels/tiket/properties`).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "description": "First night, YYYY-MM-DD. Default today.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "description": "Last night, YYYY-MM-DD, inclusive. Default `start_date` + `number_of_days` - 1.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "number_of_days",
+            "in": "query",
+            "required": false,
+            "description": "Window length when `end_date` is omitted.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 366,
+              "default": 31
+            }
+          },
+          {
+            "name": "room_type_code",
+            "in": "query",
+            "required": false,
+            "description": "Only this tiket.com room type.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "rate_plan_code",
+            "in": "query",
+            "required": false,
+            "description": "Only this tiket.com rate plan.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "What tiket.com holds",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TiketAvailabilityResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "502": {
+            "description": "tiket.com did not complete the request \u2014 an outage, timeout or error on tiket.com's side (`tiket_error`). Nothing on your request needs changing: retry with exponential backoff. `message` carries what tiket.com said.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "`no_connection` \u2014 tiket.com is temporarily unavailable through Repull. Nothing was sent; retry later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "update_tiket_availability",
+        "summary": "Write tiket.com rates, availability or restrictions",
+        "description": "`type` selects the write:\n\n- `availability` \u2014 rooms to sell per room type (`availableRooms`). `stopSell` with a `ratePlanCode` also closes that rate plan.\n- `rates` \u2014 `price` on a Room Based property or `occupancyPrices` on an Occupancy Based one, per room type and rate plan. `currency` defaults to the property currency.\n- `restrictions` \u2014 `minStay`, `maxStay`, `stopSell`, `closedToArrival`, `closedToDeparture`, `minAdvanceDays`, `maxAdvanceDays`.\n\nDates are inclusive and must fall between today and 500 days ahead. Every update is checked before anything is sent; a problem returns `422 invalid_params` naming each field, and nothing is written.\n\n**Children rates are paused.** tiket.com has asked every channel manager not to send children rates until it fixes an issue on its side, so a write that includes `childPrices` is refused with `422 invalid_params` and nothing is sent. Children rates set in the tiket.com extranet still apply. Send `price` or `occupancyPrices` without `childPrices`.\n\n**Every write is read back.** `applied` is `verified` when tiket.com holds what was sent, `mismatch` when it holds something else (see `mismatches`), or `unverified` with `verify: false`. tiket.com's own warnings come back verbatim in `warnings`. A write tiket.com refuses returns `tiket_rejected` with tiket.com's reason and its reference (`echoToken`) in `value_received`.\n\nTo write by listing instead of by room type, use `PUT /v1/channels/tiket/listings/{id}/pricing`.",
+        "tags": [
+          "Tiket"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TiketAvailabilityUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Written \u2014 read `applied`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TiketAriWriteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "description": "`invalid_params` \u2014 an update failed validation (each field is named; children rates are refused while paused), nothing was sent. Or `tiket_rejected` \u2014 tiket.com refused the write; `value_received` carries tiket.com's issues and `echoToken`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "`tiket_rejected` \u2014 tiket.com failed while processing the write. Retry with backoff.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "`no_connection` \u2014 tiket.com is temporarily unavailable through Repull. Nothing was sent; retry later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/channels/tiket/content": {
+      "get": {
+        "operationId": "get_tiket_content",
+        "summary": "Read the content Repull sent tiket.com",
+        "description": "tiket.com has no API to read content back, so this is the record of what Repull sent for a property \u2014 the property, its room types and rate plans \u2014 with when each was sent and tiket.com's reference for it. Send changes with `POST /v1/listings/{id}/publish/tiket`.\n\nName the property with `property_id`, or with `partner_hotel_code` for a property Repull created that tiket.com has not assigned an id to yet.",
+        "tags": [
+          "Tiket"
+        ],
+        "parameters": [
+          {
+            "name": "property_id",
+            "in": "query",
+            "required": false,
+            "description": "tiket.com Hotel ID (shown next to the property name in the tiket.com extranet; `propertyId` on `GET /v1/channels/tiket/properties`). Required unless `partner_hotel_code` is sent.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "partner_hotel_code",
+            "in": "query",
+            "required": false,
+            "description": "Repull's code for a property Repull created (`partnerHotelCode`).",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TiketContentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/v1/channels/tiket/listings/map": {
+      "post": {
+        "operationId": "map_tiket_listings",
+        "summary": "Map tiket.com room types to listings",
+        "description": "Map each room type of a tiket.com property to a Repull listing \u2014 the API-key equivalent of the mapping step of the hosted Connect flow, and the counterpart of `POST /v1/channels/booking/listings/map`.\n\nEach mapping is `{ roomTypeCode, listingId }` (`listingId: null` unmaps the room) or `{ roomTypeCode, create: true }`, which creates a new listing from the room with tiket.com's calendar.\n\nMapping a room to an existing listing sends that listing's calendar to tiket.com, and records any bookings tiket.com delivered while the room was unmapped (`replayedReservations`).\n\nReturns `403 listing_inactive` when a target listing is inactive; nothing is changed.",
+        "tags": [
+          "Tiket"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TiketMapListingsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Mapped",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TiketMapListingsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "502": {
+            "description": "tiket.com did not complete the request \u2014 an outage, timeout or error on tiket.com's side (`tiket_error`). Nothing on your request needs changing: retry with exponential backoff. `message` carries what tiket.com said.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/channels/tiket/listings/{id}/pricing": {
+      "get": {
+        "operationId": "get_tiket_listing_pricing",
+        "summary": "Read tiket.com rates, availability and restrictions for a listing",
+        "description": "Same as `GET /v1/channels/tiket/availability`, addressed by listing: the listing's tiket.com room type and every active rate plan of that room, read live from tiket.com.\n\nA listing mapped on more than one tiket.com property needs `hotel_id`; without it the call returns `409 ambiguous_tiket_mapping` listing the ids.",
+        "tags": [
+          "Tiket"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Repull listing id.",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "hotel_id",
+            "in": "query",
+            "required": false,
+            "description": "tiket.com Hotel ID \u2014 only needed when the listing is mapped on more than one tiket.com property.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "description": "First night, YYYY-MM-DD. Default today.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "description": "Last night, YYYY-MM-DD, inclusive.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "number_of_days",
+            "in": "query",
+            "required": false,
+            "description": "Window length when `end_date` is omitted.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 366,
+              "default": 31
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "What tiket.com holds",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TiketListingPricingResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "description": "`listing_not_on_tiket` \u2014 the listing is not mapped to a tiket.com room (map it with `POST /v1/channels/tiket/listings/map`). `ambiguous_tiket_mapping` \u2014 it is mapped on several properties; pass `hotel_id`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "tiket.com did not complete the request \u2014 an outage, timeout or error on tiket.com's side (`tiket_error`). Nothing on your request needs changing: retry with exponential backoff. `message` carries what tiket.com said.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "`no_connection` \u2014 tiket.com is temporarily unavailable through Repull. Nothing was sent; retry later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "update_tiket_listing_pricing",
+        "summary": "Write tiket.com rates, availability or restrictions for a listing",
+        "description": "Same contract as `PUT /v1/channels/tiket/availability`, addressed by listing. `roomTypeCode` is always the listing's room; `ratePlanCode` defaults to every rate plan of the room selected for pushes (`pushTarget`), so one update row is sent to each. `type` defaults to `rates`.\n\n**Children rates are paused.** tiket.com has asked every channel manager not to send children rates until it fixes an issue on its side, so a write that includes `childPrices` is refused with `422 invalid_params` and nothing is sent. Children rates set in the tiket.com extranet still apply. Send `price` or `occupancyPrices` without `childPrices`.",
+        "tags": [
+          "Tiket"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Repull listing id.",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TiketListingPricingUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Written \u2014 read `applied`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TiketAriWriteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "description": "`listing_not_on_tiket` or `ambiguous_tiket_mapping` (pass `hotel_id`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`invalid_params` \u2014 an update failed validation, or no rate plan of the room is selected for pushes and no `ratePlanCode` was sent; nothing was sent. Or `tiket_rejected` \u2014 tiket.com refused the write.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "`tiket_rejected` \u2014 tiket.com failed while processing the write. Retry with backoff.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "`no_connection` \u2014 tiket.com is temporarily unavailable through Repull. Nothing was sent; retry later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/channels/tiket/properties": {
+      "get": {
+        "operationId": "list_tiket_properties",
+        "summary": "List tiket.com properties",
+        "description": "Every tiket.com property connected to this workspace, each returned once with its room types, rate plans and the listing each room type is mapped to.\n\nA tiket.com property is a hotel or building; its room types are what guests book, and each room type maps to one Repull listing. A property whose rooms are not mapped yet is still listed, with `mappingStatus: \"unmapped\"`. Properties waiting for tiket.com to activate Repull are listed with their `activationStatus`.",
+        "tags": [
+          "Tiket"
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "description": "`active` (default) hides inactive listings: they are left out of `listings`, and a room mapped to one comes back with `listingId: null` and `listingHidden: true`. `inactive` shows only inactive listings and `all` shows both. `mappingStatus` always counts every mapped room.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "active",
+                "inactive",
+                "all"
+              ],
+              "default": "active"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Properties",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TiketPropertyListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/channels/tiket/properties/{id}": {
+      "get": {
+        "operationId": "get_tiket_property",
+        "summary": "Get a tiket.com property",
+        "description": "One tiket.com property connected to this workspace, by Hotel ID \u2014 same shape as an entry of `GET /v1/channels/tiket/properties`. A property connected to another workspace returns the same `404` as one that does not exist.",
+        "tags": [
+          "Tiket"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "tiket.com Hotel ID.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "description": "`active` (default) hides inactive listings: they are left out of `listings`, and a room mapped to one comes back with `listingId: null` and `listingHidden: true`. `inactive` shows only inactive listings and `all` shows both. `mappingStatus` always counts every mapped room.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "active",
+                "inactive",
+                "all"
+              ],
+              "default": "active"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Property",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TiketProperty"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/v1/channels/tiket/properties/{id}/rooms": {
+      "get": {
+        "operationId": "list_tiket_property_rooms",
+        "summary": "List a tiket.com property's room types",
+        "description": "The room types of a tiket.com property, each with its rate plans and the listing it is mapped to. `roomTypeCode` is what `POST /v1/channels/tiket/listings/map` and the rates writes take.",
+        "tags": [
+          "Tiket"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "tiket.com Hotel ID.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Room types",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TiketPropertyRoomsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/v1/channels/tiket/reservations": {
+      "get": {
+        "operationId": "list_tiket_reservations",
+        "summary": "List tiket.com reservations as tiket.com sent them",
+        "description": "tiket.com's own record of the bookings it delivered, newest first: one row per booked room (`<id>`, `<id>-2`, \u2026) with tiket.com's ids, rate plan, meal plan, cancellation policy, what the guest paid, the net amount tiket.com pays the property, how tiket.com pays (`paymentMethod`: `Virtual Credit Card` or `Bank Transfer`), and the Repull reservation the room became.\n\n**Cards.** Card details are never returned by the API, on this route or on `/v1/reservations`.\n\n**Date changes.** tiket.com sends a date change as a cancellation plus a new booking. Repull applies it as a change to the original reservation, so the Repull reservation keeps its id; the new tiket.com booking carries `previousTiketReservationId`.\n\nThe same bookings, normalized like every other channel's (`source: tiket`), are on `GET /v1/reservations`.",
+        "tags": [
+          "Tiket"
+        ],
+        "parameters": [
+          {
+            "name": "property_id",
+            "in": "query",
+            "required": false,
+            "description": "tiket.com Hotel ID (shown next to the property name in the tiket.com extranet; `propertyId` on `GET /v1/channels/tiket/properties`).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "description": "Only `confirmed` or only `cancelled` bookings.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "confirmed",
+                "cancelled"
+              ]
+            }
+          },
+          {
+            "name": "check_in_from",
+            "in": "query",
+            "required": false,
+            "description": "Check-in on or after, YYYY-MM-DD.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "check_in_to",
+            "in": "query",
+            "required": false,
+            "description": "Check-in on or before, YYYY-MM-DD.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Page size.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "description": "Rows to skip.",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reservations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TiketReservationListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/v1/channels/tiket/setup": {
+      "post": {
+        "operationId": "tiket_setup",
+        "summary": "Set up a tiket.com property",
+        "description": "Onboarding and maintenance actions for tiket.com properties (counterpart of `POST /v1/channels/booking/setup`). `action`:\n\n- `request-activation` \u2014 ask tiket.com to activate Repull as channel manager for one or more existing properties (`properties[]`). The usual path for a group; a single host activates Repull in the tiket.com extranet and connects through Connect instead.\n- `check-activation` \u2014 whether tiket.com has activated Repull for `hotel_id` yet.\n- `create-property` \u2014 create a new property on tiket.com from a listing (`listing_id` plus the property and company details). Then `request-registration` asks tiket.com for its ids and `set-tiket-hotel-id` records the Hotel ID tiket.com replies with.\n- `add-room`, `add-rate-plan` \u2014 add a room type or rate plan to a property Repull created.\n- `request-content-mapping` / `confirm-content-mapping` \u2014 for an existing property, ask tiket.com to link Repull's codes to it so `POST /v1/listings/{id}/publish/tiket` can send content.\n- `refresh` \u2014 re-read room types and rate plans from tiket.com.\n- `set-push-rate-plans` \u2014 choose the rate plans (`rate_plan_ids`) that receive prices and restrictions.\n- `set-sync` \u2014 turn automatic calendar sending on or off (`enabled`).\n- `disconnect` \u2014 stop syncing the property. Always available, even when its listings are inactive.\n\ntiket.com accepts incomplete content and rejects it later, so content is checked against tiket.com's requirements before it is sent; problems come back as `422 invalid_params` with each field in `value_received`.",
+        "tags": [
+          "Tiket"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TiketSetupRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Done",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TiketSetupResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "description": "`invalid_params` \u2014 the content is incomplete for tiket.com; `value_received` lists each field.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "tiket.com did not complete the request \u2014 an outage, timeout or error on tiket.com's side (`tiket_error`). Nothing on your request needs changing: retry with exponential backoff. `message` carries what tiket.com said.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/channels/tiket/sync": {
+      "post": {
+        "operationId": "sync_tiket",
+        "summary": "Send every mapped listing's calendar to tiket.com",
+        "description": "Send the full calendar (today to 500 days ahead: rooms to sell, prices, restrictions) of every mapped listing of one tiket.com property, or of every active property when `property_id` is omitted. `refresh_products: true` re-reads room types and rate plans from tiket.com first. Use it after a bulk edit or to re-baseline a property; day-to-day changes are sent automatically.\n\nInactive listings are not sold, so they are skipped (`skipped: listing_inactive`).",
+        "tags": [
+          "Tiket"
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "property_id": {
+                    "type": "string",
+                    "description": "tiket.com Hotel ID. Omit for every active property."
+                  },
+                  "refresh_products": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Re-read room types and rate plans first."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Per-listing results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TiketSyncResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/v1/connect/tiket/map-rooms": {
+      "post": {
+        "operationId": "map_tiket_connect_rooms",
+        "summary": "Map tiket.com room types to listings in a Connect session",
+        "description": "Called by the hosted Connect page and authorized by the Connect session id, not an API key. Start the session with `POST /v1/connect` (`allowedProviders: [\"tiket\"]`) and send the host to its `url`.\n\nSubmits the host's room mapping for the property claimed in the session and completes the session. Each mapping is `{ roomId, listingId }` (`listingId: null` leaves the room unmapped) or `{ roomId, create: true }`, which creates a listing from the room with tiket.com's calendar. Bookings tiket.com delivered before the rooms were mapped are recorded (`replayedReservations`). Same flow as `POST /v1/connect/booking/map-rooms`.",
+        "tags": [
+          "Connect"
+        ],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "sessionId",
+                  "mappings"
+                ],
+                "properties": {
+                  "sessionId": {
+                    "type": "string"
+                  },
+                  "mappings": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "roomId"
+                      ],
+                      "properties": {
+                        "roomId": {
+                          "type": "integer",
+                          "description": "`rooms[].roomId` from `GET /v1/connect/tiket/rooms`."
+                        },
+                        "listingId": {
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "create": {
+                          "type": "boolean"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Mapped; the session is completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TiketConnectMapRoomsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "description": "`invalid_params` \u2014 a room does not belong to the property claimed in this session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "410": {
+            "description": "`session_expired` \u2014 start a new session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "tiket.com did not complete the request \u2014 an outage, timeout or error on tiket.com's side (`tiket_error`). Nothing on your request needs changing: retry with exponential backoff. `message` carries what tiket.com said.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/connect/tiket/rooms": {
+      "get": {
+        "operationId": "list_tiket_connect_rooms",
+        "summary": "List the room types of the tiket.com property in a Connect session",
+        "description": "Called by the hosted Connect page and authorized by the Connect session id, not an API key. Start the session with `POST /v1/connect` (`allowedProviders: [\"tiket\"]`) and send the host to its `url`.\n\nThe room types of the property claimed in the session, for the mapping screen. Same shape as `GET /v1/connect/booking/rooms`. `425 not_ready` means the claim is still being saved; retry in a moment.",
+        "tags": [
+          "Connect"
+        ],
+        "security": [],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "query",
+            "required": true,
+            "description": "Connect session id.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Room types and listing options",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TiketConnectRoomsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "410": {
+            "description": "`session_expired` \u2014 start a new session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "425": {
+            "description": "`not_ready` \u2014 the claim is not saved yet; retry shortly.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/connect/tiket/verify": {
+      "post": {
+        "operationId": "verify_tiket_claim",
+        "summary": "Claim a tiket.com property in a Connect session",
+        "description": "Called by the hosted Connect page and authorized by the Connect session id, not an API key. Start the session with `POST /v1/connect` (`allowedProviders: [\"tiket\"]`) and send the host to its `url`.\n\nThe host activates Repull as their channel manager in the tiket.com extranet, then enters their tiket.com Hotel ID (a number). Repull checks with tiket.com, then imports the property's room types and rate plans and maps rooms to listings with the same name (`autoMapped`).\n\n`412 awaiting_activation` means tiket.com has not activated Repull for that Hotel ID yet, or the id is wrong. tiket.com does not announce activations, so the hosted page offers to try again and Repull keeps checking in the background. A property already connected to another workspace returns `409 property_already_connected`.",
+        "tags": [
+          "Connect"
+        ],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "sessionId",
+                  "hotelId"
+                ],
+                "properties": {
+                  "sessionId": {
+                    "type": "string"
+                  },
+                  "hotelId": {
+                    "type": "string",
+                    "pattern": "^[0-9]{1,20}$",
+                    "description": "tiket.com Hotel ID."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Optional property name to show until tiket.com's is read."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Claimed; room types and rate plans imported",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TiketConnectClaimResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "description": "`property_already_connected` \u2014 the property is connected to another workspace. `session_terminal` or `invalid_provider` \u2014 the session cannot be used for this claim.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "`session_expired` \u2014 start a new session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "`awaiting_activation` \u2014 tiket.com has not activated Repull for this Hotel ID yet (or the id is wrong). Activate Repull in the tiket.com extranet and try again.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "tiket.com did not complete the request \u2014 an outage, timeout or error on tiket.com's side (`tiket_error`). Nothing on your request needs changing: retry with exponential backoff. `message` carries what tiket.com said.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "`no_connection` \u2014 tiket.com is temporarily unavailable through Repull. Nothing was sent; retry later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/listings/{id}/publish/tiket": {
+      "post": {
+        "operationId": "publish_listing_tiket",
+        "summary": "Publish a listing's content to tiket.com",
+        "description": "Send the listing's content to tiket.com (counterpart of `POST /v1/listings/{id}/publish/booking`): room content (name, occupancy, beds, facilities, photos, description), rate-plan policies and \u2014 for a property Repull created \u2014 the property content. The result lists each section that landed (`sections`) and each that did not, with tiket.com's reason (`errors`).\n\ntiket.com only accepts content once it has linked Repull's codes to the property: true for a property Repull created, and for an existing property after `POST /v1/channels/tiket/setup` `request-content-mapping`. Until then the call returns `409 tiket_content_not_mapped`. Prices and availability are not content: they are sent automatically, or with `POST /v1/channels/tiket/sync`.\n\nA listing mapped on more than one tiket.com property takes `hotelId`.",
+        "tags": [
+          "Listings"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Repull listing id.",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hotelId": {
+                    "type": "string",
+                    "description": "tiket.com Hotel ID \u2014 only needed when the listing is mapped on more than one tiket.com property. Also accepted as `?hotel_id=`."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Publish attempted \u2014 read `result.pushed`, `result.sections` and `result.errors`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListingPublishTiketResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PublishBillingRefused"
+          },
+          "403": {
+            "$ref": "#/components/responses/ListingInactive"
+          },
+          "409": {
+            "description": "`tiket_content_not_mapped` \u2014 tiket.com has not linked Repull's codes to the property yet (`request-content-mapping`). `listing_not_on_tiket` \u2014 the listing is not mapped to a tiket.com room; map it (`POST /v1/channels/tiket/listings/map`) or create a property (`POST /v1/channels/tiket/setup` `create-property`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "`tiket_publish_failed` \u2014 the publish could not be completed. Retry with backoff.",
             "content": {
               "application/json": {
                 "schema": {

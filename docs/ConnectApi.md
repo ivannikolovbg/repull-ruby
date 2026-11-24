@@ -19,7 +19,9 @@ All URIs are relative to *https://api.repull.dev*
 | [**list_connect_booking_rooms**](ConnectApi.md#list_connect_booking_rooms) | **GET** /v1/connect/booking/rooms | List Booking.com rooms imported for a Connect session |
 | [**list_connect_providers**](ConnectApi.md#list_connect_providers) | **GET** /v1/connect/providers | List Connect channels |
 | [**list_connections**](ConnectApi.md#list_connections) | **GET** /v1/connect | List PMS/OTA connections |
+| [**list_tiket_connect_rooms**](ConnectApi.md#list_tiket_connect_rooms) | **GET** /v1/connect/tiket/rooms | List the room types of the tiket.com property in a Connect session |
 | [**map_connect_booking_rooms**](ConnectApi.md#map_connect_booking_rooms) | **POST** /v1/connect/booking/map-rooms | Submit room→listing mappings for a Booking.com Connect session |
+| [**map_tiket_connect_rooms**](ConnectApi.md#map_tiket_connect_rooms) | **POST** /v1/connect/tiket/map-rooms | Map tiket.com room types to listings in a Connect session |
 | [**recheck_booking_extranet_login**](ConnectApi.md#recheck_booking_extranet_login) | **POST** /v1/connect/booking-extranet-login/recheck | Re-check Booking.com direct-login permissions |
 | [**rental_ready_connect_callback**](ConnectApi.md#rental_ready_connect_callback) | **GET** /v1/connect/rentalready/callback | RentalReady OAuth callback |
 | [**resume_connect**](ConnectApi.md#resume_connect) | **GET** /v1/connect/resume | Open a connection&#39;s fix link |
@@ -42,6 +44,7 @@ All URIs are relative to *https://api.repull.dev*
 | [**submit_vrbo_credentials**](ConnectApi.md#submit_vrbo_credentials) | **POST** /v1/connect/vrbo/credentials | Submit Vrbo credentials for a Connect session |
 | [**update_connect_write_policy**](ConnectApi.md#update_connect_write_policy) | **PATCH** /v1/connect/{provider}/write-policy | Change what the app may change in a PMS |
 | [**verify_booking_hotel**](ConnectApi.md#verify_booking_hotel) | **POST** /v1/connect/booking/verify | Verify a Booking.com hotel ID for a Connect session |
+| [**verify_tiket_claim**](ConnectApi.md#verify_tiket_claim) | **POST** /v1/connect/tiket/verify | Claim a tiket.com property in a Connect session |
 | [**vrbo_login**](ConnectApi.md#vrbo_login) | **POST** /v1/connect/vrbo-login/session | Sign in with a Vrbo host account |
 | [**zeevou_connect_callback**](ConnectApi.md#zeevou_connect_callback) | **GET** /v1/connect/zeevou/callback | Zeevou OAuth callback |
 
@@ -1053,6 +1056,70 @@ This endpoint does not need any parameter.
 - **Accept**: application/json
 
 
+## list_tiket_connect_rooms
+
+> <TiketConnectRoomsResponse> list_tiket_connect_rooms(session_id)
+
+List the room types of the tiket.com property in a Connect session
+
+Called by the hosted Connect page and authorized by the Connect session id, not an API key. Start the session with `POST /v1/connect` (`allowedProviders: [\"tiket\"]`) and send the host to its `url`.  The room types of the property claimed in the session, for the mapping screen. Same shape as `GET /v1/connect/booking/rooms`. `425 not_ready` means the claim is still being saved; retry in a moment.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+
+api_instance = Repull::ConnectApi.new
+session_id = 'session_id_example' # String | Connect session id.
+
+begin
+  # List the room types of the tiket.com property in a Connect session
+  result = api_instance.list_tiket_connect_rooms(session_id)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->list_tiket_connect_rooms: #{e}"
+end
+```
+
+#### Using the list_tiket_connect_rooms_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<TiketConnectRoomsResponse>, Integer, Hash)> list_tiket_connect_rooms_with_http_info(session_id)
+
+```ruby
+begin
+  # List the room types of the tiket.com property in a Connect session
+  data, status_code, headers = api_instance.list_tiket_connect_rooms_with_http_info(session_id)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <TiketConnectRoomsResponse>
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->list_tiket_connect_rooms_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **session_id** | **String** | Connect session id. |  |
+
+### Return type
+
+[**TiketConnectRoomsResponse**](TiketConnectRoomsResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
 ## map_connect_booking_rooms
 
 > <MapConnectBookingRoomsResponse> map_connect_booking_rooms(map_connect_booking_rooms_request)
@@ -1106,6 +1173,70 @@ end
 ### Return type
 
 [**MapConnectBookingRoomsResponse**](MapConnectBookingRoomsResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## map_tiket_connect_rooms
+
+> <TiketConnectMapRoomsResponse> map_tiket_connect_rooms(map_tiket_connect_rooms_request)
+
+Map tiket.com room types to listings in a Connect session
+
+Called by the hosted Connect page and authorized by the Connect session id, not an API key. Start the session with `POST /v1/connect` (`allowedProviders: [\"tiket\"]`) and send the host to its `url`.  Submits the host's room mapping for the property claimed in the session and completes the session. Each mapping is `{ roomId, listingId }` (`listingId: null` leaves the room unmapped) or `{ roomId, create: true }`, which creates a listing from the room with tiket.com's calendar. Bookings tiket.com delivered before the rooms were mapped are recorded (`replayedReservations`). Same flow as `POST /v1/connect/booking/map-rooms`.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+
+api_instance = Repull::ConnectApi.new
+map_tiket_connect_rooms_request = Repull::MapTiketConnectRoomsRequest.new({session_id: 'session_id_example', mappings: [Repull::MapTiketConnectRoomsRequestMappingsInner.new({room_id: 37})]}) # MapTiketConnectRoomsRequest | 
+
+begin
+  # Map tiket.com room types to listings in a Connect session
+  result = api_instance.map_tiket_connect_rooms(map_tiket_connect_rooms_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->map_tiket_connect_rooms: #{e}"
+end
+```
+
+#### Using the map_tiket_connect_rooms_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<TiketConnectMapRoomsResponse>, Integer, Hash)> map_tiket_connect_rooms_with_http_info(map_tiket_connect_rooms_request)
+
+```ruby
+begin
+  # Map tiket.com room types to listings in a Connect session
+  data, status_code, headers = api_instance.map_tiket_connect_rooms_with_http_info(map_tiket_connect_rooms_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <TiketConnectMapRoomsResponse>
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->map_tiket_connect_rooms_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **map_tiket_connect_rooms_request** | [**MapTiketConnectRoomsRequest**](MapTiketConnectRoomsRequest.md) |  |  |
+
+### Return type
+
+[**TiketConnectMapRoomsResponse**](TiketConnectMapRoomsResponse.md)
 
 ### Authorization
 
@@ -2603,6 +2734,70 @@ end
 ### Return type
 
 [**BookingVerifyHotelResponse**](BookingVerifyHotelResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+## verify_tiket_claim
+
+> <TiketConnectClaimResponse> verify_tiket_claim(verify_tiket_claim_request)
+
+Claim a tiket.com property in a Connect session
+
+Called by the hosted Connect page and authorized by the Connect session id, not an API key. Start the session with `POST /v1/connect` (`allowedProviders: [\"tiket\"]`) and send the host to its `url`.  The host activates Repull as their channel manager in the tiket.com extranet, then enters their tiket.com Hotel ID (a number). Repull checks with tiket.com, then imports the property's room types and rate plans and maps rooms to listings with the same name (`autoMapped`).  `412 awaiting_activation` means tiket.com has not activated Repull for that Hotel ID yet, or the id is wrong. tiket.com does not announce activations, so the hosted page offers to try again and Repull keeps checking in the background. A property already connected to another workspace returns `409 property_already_connected`.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+
+api_instance = Repull::ConnectApi.new
+verify_tiket_claim_request = Repull::VerifyTiketClaimRequest.new({session_id: 'session_id_example', hotel_id: 'hotel_id_example'}) # VerifyTiketClaimRequest | 
+
+begin
+  # Claim a tiket.com property in a Connect session
+  result = api_instance.verify_tiket_claim(verify_tiket_claim_request)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->verify_tiket_claim: #{e}"
+end
+```
+
+#### Using the verify_tiket_claim_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<TiketConnectClaimResponse>, Integer, Hash)> verify_tiket_claim_with_http_info(verify_tiket_claim_request)
+
+```ruby
+begin
+  # Claim a tiket.com property in a Connect session
+  data, status_code, headers = api_instance.verify_tiket_claim_with_http_info(verify_tiket_claim_request)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <TiketConnectClaimResponse>
+rescue Repull::ApiError => e
+  puts "Error when calling ConnectApi->verify_tiket_claim_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **verify_tiket_claim_request** | [**VerifyTiketClaimRequest**](VerifyTiketClaimRequest.md) |  |  |
+
+### Return type
+
+[**TiketConnectClaimResponse**](TiketConnectClaimResponse.md)
 
 ### Authorization
 

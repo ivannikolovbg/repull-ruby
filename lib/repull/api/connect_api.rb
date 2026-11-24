@@ -996,6 +996,70 @@ module Repull
       return data, status_code, headers
     end
 
+    # List the room types of the tiket.com property in a Connect session
+    # Called by the hosted Connect page and authorized by the Connect session id, not an API key. Start the session with `POST /v1/connect` (`allowedProviders: [\"tiket\"]`) and send the host to its `url`.  The room types of the property claimed in the session, for the mapping screen. Same shape as `GET /v1/connect/booking/rooms`. `425 not_ready` means the claim is still being saved; retry in a moment.
+    # @param session_id [String] Connect session id.
+    # @param [Hash] opts the optional parameters
+    # @return [TiketConnectRoomsResponse]
+    def list_tiket_connect_rooms(session_id, opts = {})
+      data, _status_code, _headers = list_tiket_connect_rooms_with_http_info(session_id, opts)
+      data
+    end
+
+    # List the room types of the tiket.com property in a Connect session
+    # Called by the hosted Connect page and authorized by the Connect session id, not an API key. Start the session with &#x60;POST /v1/connect&#x60; (&#x60;allowedProviders: [\&quot;tiket\&quot;]&#x60;) and send the host to its &#x60;url&#x60;.  The room types of the property claimed in the session, for the mapping screen. Same shape as &#x60;GET /v1/connect/booking/rooms&#x60;. &#x60;425 not_ready&#x60; means the claim is still being saved; retry in a moment.
+    # @param session_id [String] Connect session id.
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(TiketConnectRoomsResponse, Integer, Hash)>] TiketConnectRoomsResponse data, response status code and response headers
+    def list_tiket_connect_rooms_with_http_info(session_id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ConnectApi.list_tiket_connect_rooms ...'
+      end
+      # verify the required parameter 'session_id' is set
+      if @api_client.config.client_side_validation && session_id.nil?
+        fail ArgumentError, "Missing the required parameter 'session_id' when calling ConnectApi.list_tiket_connect_rooms"
+      end
+      # resource path
+      local_var_path = '/v1/connect/tiket/rooms'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+      query_params[:'sessionId'] = session_id
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body]
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'TiketConnectRoomsResponse'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || []
+
+      new_options = opts.merge(
+        :operation => :"ConnectApi.list_tiket_connect_rooms",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:GET, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ConnectApi#list_tiket_connect_rooms\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # Submit room→listing mappings for a Booking.com Connect session
     # Submits the customer's room→listing mapping choices in one transaction. For each mapping, updates `listings_booking_rooms.listing_id` and replaces the corresponding `listing_platform_links` row. Pass `listingId: null` to explicitly unmap a room.  On success the Connect session is marked `completed` and the hosted picker page emits a `repull:connect:completed` postMessage to the embedding window.  No API key required — the `sessionId` in the body is the capability token. Each mapping's `roomId` must belong to the customer's claimed hotel; mismatched IDs are rejected with 403.
     # @param map_connect_booking_rooms_request [MapConnectBookingRoomsRequest] 
@@ -1060,6 +1124,74 @@ module Repull
       data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: ConnectApi#map_connect_booking_rooms\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Map tiket.com room types to listings in a Connect session
+    # Called by the hosted Connect page and authorized by the Connect session id, not an API key. Start the session with `POST /v1/connect` (`allowedProviders: [\"tiket\"]`) and send the host to its `url`.  Submits the host's room mapping for the property claimed in the session and completes the session. Each mapping is `{ roomId, listingId }` (`listingId: null` leaves the room unmapped) or `{ roomId, create: true }`, which creates a listing from the room with tiket.com's calendar. Bookings tiket.com delivered before the rooms were mapped are recorded (`replayedReservations`). Same flow as `POST /v1/connect/booking/map-rooms`.
+    # @param map_tiket_connect_rooms_request [MapTiketConnectRoomsRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [TiketConnectMapRoomsResponse]
+    def map_tiket_connect_rooms(map_tiket_connect_rooms_request, opts = {})
+      data, _status_code, _headers = map_tiket_connect_rooms_with_http_info(map_tiket_connect_rooms_request, opts)
+      data
+    end
+
+    # Map tiket.com room types to listings in a Connect session
+    # Called by the hosted Connect page and authorized by the Connect session id, not an API key. Start the session with &#x60;POST /v1/connect&#x60; (&#x60;allowedProviders: [\&quot;tiket\&quot;]&#x60;) and send the host to its &#x60;url&#x60;.  Submits the host&#39;s room mapping for the property claimed in the session and completes the session. Each mapping is &#x60;{ roomId, listingId }&#x60; (&#x60;listingId: null&#x60; leaves the room unmapped) or &#x60;{ roomId, create: true }&#x60;, which creates a listing from the room with tiket.com&#39;s calendar. Bookings tiket.com delivered before the rooms were mapped are recorded (&#x60;replayedReservations&#x60;). Same flow as &#x60;POST /v1/connect/booking/map-rooms&#x60;.
+    # @param map_tiket_connect_rooms_request [MapTiketConnectRoomsRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(TiketConnectMapRoomsResponse, Integer, Hash)>] TiketConnectMapRoomsResponse data, response status code and response headers
+    def map_tiket_connect_rooms_with_http_info(map_tiket_connect_rooms_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ConnectApi.map_tiket_connect_rooms ...'
+      end
+      # verify the required parameter 'map_tiket_connect_rooms_request' is set
+      if @api_client.config.client_side_validation && map_tiket_connect_rooms_request.nil?
+        fail ArgumentError, "Missing the required parameter 'map_tiket_connect_rooms_request' when calling ConnectApi.map_tiket_connect_rooms"
+      end
+      # resource path
+      local_var_path = '/v1/connect/tiket/map-rooms'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(map_tiket_connect_rooms_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'TiketConnectMapRoomsResponse'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || []
+
+      new_options = opts.merge(
+        :operation => :"ConnectApi.map_tiket_connect_rooms",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ConnectApi#map_tiket_connect_rooms\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end
@@ -2573,6 +2705,74 @@ module Repull
       data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
       if @api_client.config.debugging
         @api_client.config.logger.debug "API called: ConnectApi#verify_booking_hotel\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
+    # Claim a tiket.com property in a Connect session
+    # Called by the hosted Connect page and authorized by the Connect session id, not an API key. Start the session with `POST /v1/connect` (`allowedProviders: [\"tiket\"]`) and send the host to its `url`.  The host activates Repull as their channel manager in the tiket.com extranet, then enters their tiket.com Hotel ID (a number). Repull checks with tiket.com, then imports the property's room types and rate plans and maps rooms to listings with the same name (`autoMapped`).  `412 awaiting_activation` means tiket.com has not activated Repull for that Hotel ID yet, or the id is wrong. tiket.com does not announce activations, so the hosted page offers to try again and Repull keeps checking in the background. A property already connected to another workspace returns `409 property_already_connected`.
+    # @param verify_tiket_claim_request [VerifyTiketClaimRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [TiketConnectClaimResponse]
+    def verify_tiket_claim(verify_tiket_claim_request, opts = {})
+      data, _status_code, _headers = verify_tiket_claim_with_http_info(verify_tiket_claim_request, opts)
+      data
+    end
+
+    # Claim a tiket.com property in a Connect session
+    # Called by the hosted Connect page and authorized by the Connect session id, not an API key. Start the session with &#x60;POST /v1/connect&#x60; (&#x60;allowedProviders: [\&quot;tiket\&quot;]&#x60;) and send the host to its &#x60;url&#x60;.  The host activates Repull as their channel manager in the tiket.com extranet, then enters their tiket.com Hotel ID (a number). Repull checks with tiket.com, then imports the property&#39;s room types and rate plans and maps rooms to listings with the same name (&#x60;autoMapped&#x60;).  &#x60;412 awaiting_activation&#x60; means tiket.com has not activated Repull for that Hotel ID yet, or the id is wrong. tiket.com does not announce activations, so the hosted page offers to try again and Repull keeps checking in the background. A property already connected to another workspace returns &#x60;409 property_already_connected&#x60;.
+    # @param verify_tiket_claim_request [VerifyTiketClaimRequest] 
+    # @param [Hash] opts the optional parameters
+    # @return [Array<(TiketConnectClaimResponse, Integer, Hash)>] TiketConnectClaimResponse data, response status code and response headers
+    def verify_tiket_claim_with_http_info(verify_tiket_claim_request, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ConnectApi.verify_tiket_claim ...'
+      end
+      # verify the required parameter 'verify_tiket_claim_request' is set
+      if @api_client.config.client_side_validation && verify_tiket_claim_request.nil?
+        fail ArgumentError, "Missing the required parameter 'verify_tiket_claim_request' when calling ConnectApi.verify_tiket_claim"
+      end
+      # resource path
+      local_var_path = '/v1/connect/tiket/verify'
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(verify_tiket_claim_request)
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'TiketConnectClaimResponse'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || []
+
+      new_options = opts.merge(
+        :operation => :"ConnectApi.verify_tiket_claim",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ConnectApi#verify_tiket_claim\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
       end
       return data, status_code, headers
     end

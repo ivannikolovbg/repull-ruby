@@ -986,6 +986,76 @@ module Repull
       return data, status_code, headers
     end
 
+    # Publish a listing's content to tiket.com
+    # Send the listing's content to tiket.com (counterpart of `POST /v1/listings/{id}/publish/booking`): room content (name, occupancy, beds, facilities, photos, description), rate-plan policies and — for a property Repull created — the property content. The result lists each section that landed (`sections`) and each that did not, with tiket.com's reason (`errors`).  tiket.com only accepts content once it has linked Repull's codes to the property: true for a property Repull created, and for an existing property after `POST /v1/channels/tiket/setup` `request-content-mapping`. Until then the call returns `409 tiket_content_not_mapped`. Prices and availability are not content: they are sent automatically, or with `POST /v1/channels/tiket/sync`.  A listing mapped on more than one tiket.com property takes `hotelId`.
+    # @param id [Integer] Repull listing id.
+    # @param [Hash] opts the optional parameters
+    # @option opts [PublishListingTiketRequest] :publish_listing_tiket_request 
+    # @return [ListingPublishTiketResponse]
+    def publish_listing_tiket(id, opts = {})
+      data, _status_code, _headers = publish_listing_tiket_with_http_info(id, opts)
+      data
+    end
+
+    # Publish a listing&#39;s content to tiket.com
+    # Send the listing&#39;s content to tiket.com (counterpart of &#x60;POST /v1/listings/{id}/publish/booking&#x60;): room content (name, occupancy, beds, facilities, photos, description), rate-plan policies and — for a property Repull created — the property content. The result lists each section that landed (&#x60;sections&#x60;) and each that did not, with tiket.com&#39;s reason (&#x60;errors&#x60;).  tiket.com only accepts content once it has linked Repull&#39;s codes to the property: true for a property Repull created, and for an existing property after &#x60;POST /v1/channels/tiket/setup&#x60; &#x60;request-content-mapping&#x60;. Until then the call returns &#x60;409 tiket_content_not_mapped&#x60;. Prices and availability are not content: they are sent automatically, or with &#x60;POST /v1/channels/tiket/sync&#x60;.  A listing mapped on more than one tiket.com property takes &#x60;hotelId&#x60;.
+    # @param id [Integer] Repull listing id.
+    # @param [Hash] opts the optional parameters
+    # @option opts [PublishListingTiketRequest] :publish_listing_tiket_request 
+    # @return [Array<(ListingPublishTiketResponse, Integer, Hash)>] ListingPublishTiketResponse data, response status code and response headers
+    def publish_listing_tiket_with_http_info(id, opts = {})
+      if @api_client.config.debugging
+        @api_client.config.logger.debug 'Calling API: ListingsApi.publish_listing_tiket ...'
+      end
+      # verify the required parameter 'id' is set
+      if @api_client.config.client_side_validation && id.nil?
+        fail ArgumentError, "Missing the required parameter 'id' when calling ListingsApi.publish_listing_tiket"
+      end
+      # resource path
+      local_var_path = '/v1/listings/{id}/publish/tiket'.sub('{id}', CGI.escape(id.to_s))
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept(['application/json']) unless header_params['Accept']
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type(['application/json'])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+
+      # form parameters
+      form_params = opts[:form_params] || {}
+
+      # http body (model)
+      post_body = opts[:debug_body] || @api_client.object_to_http_body(opts[:'publish_listing_tiket_request'])
+
+      # return_type
+      return_type = opts[:debug_return_type] || 'ListingPublishTiketResponse'
+
+      # auth_names
+      auth_names = opts[:debug_auth_names] || ['bearerAuth']
+
+      new_options = opts.merge(
+        :operation => :"ListingsApi.publish_listing_tiket",
+        :header_params => header_params,
+        :query_params => query_params,
+        :form_params => form_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:POST, local_var_path, new_options)
+      if @api_client.config.debugging
+        @api_client.config.logger.debug "API called: ListingsApi#publish_listing_tiket\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      end
+      return data, status_code, headers
+    end
+
     # Publish a listing to Airbnb
     # Push a Repull listing's canonical content to Airbnb. Pass `airbnbConnectionId` to update an already-mapped Airbnb listing, or `hostId` to create a brand-new Airbnb listing under that host.  **A publish is not one call to Airbnb.** It is up to eight independent ones — details, description, amenities, rooms, policies, photos, pricing, checkout_tasks — and each can fail on its own. `result.published` is true only when every attempted section landed; `result.sections` lists the ones that did and `result.errors[]` carries Airbnb's own reason, per section, for the ones that did not. **A partial publish is normal and is not rolled back**: what succeeded stays applied. Publish again once you have fixed the failing sections — a re-publish of an unchanged section is harmless.  `result.live` is a different question from `result.published`. `published` is about CONTENT — every attempted section landed. `live` is about whether the listing takes bookings: it is true only when activation was actually performed and succeeded. A create can land all eight sections and still leave the listing inactive, because activation is skipped when instant-booking cannot be confirmed to be off — so `published: true` with `live: false` is a real and common outcome, and `result.warnings` says why. `live` is ABSENT, not `false`, when activation was never part of the operation: publishing to an already-mapped listing updates content and activates nothing. Only treat a listing as not-live when `live` is present and false.  `result.warnings[]` lists steps that failed WITHOUT failing the publish — optional work the push carried on past. They were previously swallowed, so the only sign of one was a listing that was somehow not quite right afterwards. A publish can be `published: true` and still carry warnings; read them before concluding nothing needs doing.  `result.lockedFields` names the fields Airbnb will not let this listing change at all. They are not retryable by anyone: Airbnb answers 200 and applies nothing. `GET /v1/channels/airbnb/listings/{id}` reports the same list up front.  **Which fields this pushes** — title, description sections and house rules (English/primary locale), amenities, rooms and beds, photos, nightly price and fees, cancellation policy and guest controls, check-in/out times, quiet hours, property and room type, checkout tasks. **Not pushed by this endpoint:** non-primary locales (`PUT /v1/channels/airbnb/listings/{id}/descriptions`), guest-safety disclosures (`PUT …/safety-disclosures`), check-in method (`PUT …/details`), permits (`PUT …/permits`), and the calendar (`PUT …/availability`).  `force: true` re-pushes every section, ignoring dirty-field tracking. Without it only the sections changed since the last successful publish are sent.  Send `Idempotency-Key` to make a retry safe: a timeout on a publish otherwise leaves you unable to tell whether it ran.  Returns `403 listing_inactive` when the listing is inactive. An inactive listing keeps syncing, but cannot be read or changed through the API until it is activated.
     # @param id [Integer] 
