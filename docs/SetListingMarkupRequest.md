@@ -5,7 +5,7 @@
 | Name | Type | Description | Notes |
 | ---- | ---- | ----------- | ----- |
 | **channel** | **String** |  |  |
-| **markup_percent** | **Float** | 15 &#x3D; +15%. &#x60;null&#x60; removes the markup. |  |
+| **markup_percent** | **Float** | 15 &#x3D; +15%; -2 &#x3D; 2% below the listing&#39;s price. Above -100 and below 100. &#x60;null&#x60; removes the markup. |  |
 | **hotel_id** | **String** | Booking.com property — required when the listing is on more than one. | [optional] |
 | **account_id** | **String** | Vrbo account (&#x60;vrbo:7001234&#x60;, Vrbo&#39;s own account id) — required when the listing is linked on more than one. The old sign-in ids (&#x60;vrbo:13&#x60;) still resolve until 2027-02-12. | [optional] |
 

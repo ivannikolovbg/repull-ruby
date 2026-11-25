@@ -18,7 +18,7 @@ module Repull
     # Airbnb listing id.
     attr_accessor :airbnb_id
 
-    # Percent added to the listing's price on Airbnb. 35 = +35%. `null` = none.
+    # Percent added to the listing's price on Airbnb. 35 = +35%; negative = below the listing's price. `null` = none.
     attr_accessor :markup_percent
 
     # Attribute mapping from ruby-style variable name to JSON key.

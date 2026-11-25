@@ -17,7 +17,7 @@ module Repull
   class SetListingMarkupRequest < ApiModelBase
     attr_accessor :channel
 
-    # 15 = +15%. `null` removes the markup.
+    # 15 = +15%; -2 = 2% below the listing's price. Above -100 and below 100. `null` removes the markup.
     attr_accessor :markup_percent
 
     # Booking.com property — required when the listing is on more than one.
@@ -135,8 +135,8 @@ module Repull
         invalid_properties.push('invalid value for "markup_percent", must be smaller than 100.')
       end
 
-      if @markup_percent < 0
-        invalid_properties.push('invalid value for "markup_percent", must be greater than or equal to 0.')
+      if @markup_percent <= -100
+        invalid_properties.push('invalid value for "markup_percent", must be greater than -100.')
       end
 
       invalid_properties
@@ -150,7 +150,7 @@ module Repull
       channel_validator = EnumAttributeValidator.new('String', ["airbnb", "booking", "vrbo"])
       return false unless channel_validator.valid?(@channel)
       return false if @markup_percent >= 100
-      return false if @markup_percent < 0
+      return false if @markup_percent <= -100
       true
     end
 
@@ -171,8 +171,8 @@ module Repull
         fail ArgumentError, 'invalid value for "markup_percent", must be smaller than 100.'
       end
 
-      if !markup_percent.nil? && markup_percent < 0
-        fail ArgumentError, 'invalid value for "markup_percent", must be greater than or equal to 0.'
+      if !markup_percent.nil? && markup_percent <= -100
+        fail ArgumentError, 'invalid value for "markup_percent", must be greater than -100.'
       end
 
       @markup_percent = markup_percent
