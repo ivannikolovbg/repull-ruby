@@ -21,6 +21,9 @@ module Repull
 
     attr_accessor :submitted
 
+    # Airbnb: the review as stored after the submission — the same object `GET /v1/reviews/{id}` returns, with `publicReview`, `rating`, `categories` and `submittedAt` set. It can stay `hidden` until the guest reviews too.
+    attr_accessor :review
+
     # `vrbo` for a Vrbo rating.
     attr_accessor :platform
 
@@ -33,6 +36,7 @@ module Repull
         :'id' => :'id',
         :'external_review_id' => :'externalReviewId',
         :'submitted' => :'submitted',
+        :'review' => :'review',
         :'platform' => :'platform',
         :'rating' => :'rating'
       }
@@ -54,6 +58,7 @@ module Repull
         :'id' => :'String',
         :'external_review_id' => :'String',
         :'submitted' => :'Boolean',
+        :'review' => :'Hash<String, Object>',
         :'platform' => :'String',
         :'rating' => :'Hash<String, Object>'
       }
@@ -62,6 +67,7 @@ module Repull
     # List of attributes with nullable: true
     def self.openapi_nullable
       Set.new([
+        :'review',
       ])
     end
 
@@ -91,6 +97,12 @@ module Repull
 
       if attributes.key?(:'submitted')
         self.submitted = attributes[:'submitted']
+      end
+
+      if attributes.key?(:'review')
+        if (value = attributes[:'review']).is_a?(Hash)
+          self.review = value
+        end
       end
 
       if attributes.key?(:'platform')
@@ -127,6 +139,7 @@ module Repull
           id == o.id &&
           external_review_id == o.external_review_id &&
           submitted == o.submitted &&
+          review == o.review &&
           platform == o.platform &&
           rating == o.rating
     end
@@ -140,7 +153,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [id, external_review_id, submitted, platform, rating].hash
+      [id, external_review_id, submitted, review, platform, rating].hash
     end
 
     # Builds the object from hash

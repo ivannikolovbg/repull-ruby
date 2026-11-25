@@ -2666,9 +2666,13 @@ module Repull
     end
 
     # List Airbnb reviews
-    # List reviews left by guests on Airbnb listings in this workspace. Includes both reviews of the host and reviews of the guest (where the host has not yet submitted theirs).  Reviews of inactive listings are left out; they keep syncing and reappear once the listing is activated. Filtering by an inactive listing (`listing_id`) returns `403 listing_inactive`.  **Several Airbnb accounts?** A workspace can connect more than one. By default this returns every connected account's rows; pass `?account_id=<airbnb host id>` to scope to one. Every row carries `accountId` + `accountName` either way, and `dataFreshness.accounts[]` reports each account's freshness separately, so one disconnected host no longer marks the whole response stale.
+    # List reviews left by guests on Airbnb listings in this workspace. Includes both reviews of the host and reviews of the guest (where the host has not yet submitted theirs).  Newest first, with reviews not yet submitted ahead of them. Walk pages with `?cursor=<pagination.nextCursor>` until `pagination.hasMore` is `false`; `pagination.total` is the number of reviews matching the filters. The cursor is opaque — never construct or parse it client-side.  Reviews of inactive listings are left out; they keep syncing and reappear once the listing is activated. Filtering by an inactive listing (`listing_id`) returns `403 listing_inactive`.  **Several Airbnb accounts?** A workspace can connect more than one. By default this returns every connected account's rows; pass `?account_id=<airbnb host id>` to scope to one. Every row carries `accountId` + `accountName` either way, and `dataFreshness.accounts[]` reports each account's freshness separately, so one disconnected host no longer marks the whole response stale.
     # @param [Hash] opts the optional parameters
     # @option opts [String] :account_id Scope the response to ONE connected Airbnb account. The value is the Airbnb host id — the same &#x60;accounts[].externalAccountId&#x60; that &#x60;GET /v1/connect/airbnb&#x60; returns and &#x60;DELETE /v1/connect/airbnb?accountId&#x3D;&#x60; accepts.  A workspace can connect several Airbnb accounts. Omit this and you get every account&#39;s rows (the default, unchanged). Every row carries &#x60;accountId&#x60; + &#x60;accountName&#x60; either way, so you can group without a second call.  An id that is not connected to THIS workspace returns &#x60;404 not_found&#x60; with your own ids in &#x60;valid_values&#x60; — we do not distinguish \&quot;no such host\&quot; from \&quot;someone else&#39;s host\&quot;, because confirming the latter would leak another workspace&#39;s account.  Note this is NOT the &#x60;X-Account-Id&#x60; header, which carries a connection id and cannot tell two Airbnb hosts apart.
+    # @option opts [String] :cursor Opaque cursor returned by the previous response&#39;s &#x60;pagination.nextCursor&#x60;. Omit to fetch the first page.
+    # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.nextCursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
+    # @option opts [Integer] :limit Max items per page — max 200 per page. A larger value returns 200 per page; follow &#x60;pagination.nextCursor&#x60; for the rest. (default to 200)
+    # @option opts [String] :listing_id Filter to one listing: its Airbnb listing id (&#x60;airbnbListingId&#x60; on each review) or its Repull listing id.
     # @return [AirbnbReviewListResponse]
     def list_airbnb_reviews(opts = {})
       data, _status_code, _headers = list_airbnb_reviews_with_http_info(opts)
@@ -2676,20 +2680,40 @@ module Repull
     end
 
     # List Airbnb reviews
-    # List reviews left by guests on Airbnb listings in this workspace. Includes both reviews of the host and reviews of the guest (where the host has not yet submitted theirs).  Reviews of inactive listings are left out; they keep syncing and reappear once the listing is activated. Filtering by an inactive listing (&#x60;listing_id&#x60;) returns &#x60;403 listing_inactive&#x60;.  **Several Airbnb accounts?** A workspace can connect more than one. By default this returns every connected account&#39;s rows; pass &#x60;?account_id&#x3D;&lt;airbnb host id&gt;&#x60; to scope to one. Every row carries &#x60;accountId&#x60; + &#x60;accountName&#x60; either way, and &#x60;dataFreshness.accounts[]&#x60; reports each account&#39;s freshness separately, so one disconnected host no longer marks the whole response stale.
+    # List reviews left by guests on Airbnb listings in this workspace. Includes both reviews of the host and reviews of the guest (where the host has not yet submitted theirs).  Newest first, with reviews not yet submitted ahead of them. Walk pages with &#x60;?cursor&#x3D;&lt;pagination.nextCursor&gt;&#x60; until &#x60;pagination.hasMore&#x60; is &#x60;false&#x60;; &#x60;pagination.total&#x60; is the number of reviews matching the filters. The cursor is opaque — never construct or parse it client-side.  Reviews of inactive listings are left out; they keep syncing and reappear once the listing is activated. Filtering by an inactive listing (&#x60;listing_id&#x60;) returns &#x60;403 listing_inactive&#x60;.  **Several Airbnb accounts?** A workspace can connect more than one. By default this returns every connected account&#39;s rows; pass &#x60;?account_id&#x3D;&lt;airbnb host id&gt;&#x60; to scope to one. Every row carries &#x60;accountId&#x60; + &#x60;accountName&#x60; either way, and &#x60;dataFreshness.accounts[]&#x60; reports each account&#39;s freshness separately, so one disconnected host no longer marks the whole response stale.
     # @param [Hash] opts the optional parameters
     # @option opts [String] :account_id Scope the response to ONE connected Airbnb account. The value is the Airbnb host id — the same &#x60;accounts[].externalAccountId&#x60; that &#x60;GET /v1/connect/airbnb&#x60; returns and &#x60;DELETE /v1/connect/airbnb?accountId&#x3D;&#x60; accepts.  A workspace can connect several Airbnb accounts. Omit this and you get every account&#39;s rows (the default, unchanged). Every row carries &#x60;accountId&#x60; + &#x60;accountName&#x60; either way, so you can group without a second call.  An id that is not connected to THIS workspace returns &#x60;404 not_found&#x60; with your own ids in &#x60;valid_values&#x60; — we do not distinguish \&quot;no such host\&quot; from \&quot;someone else&#39;s host\&quot;, because confirming the latter would leak another workspace&#39;s account.  Note this is NOT the &#x60;X-Account-Id&#x60; header, which carries a connection id and cannot tell two Airbnb hosts apart.
+    # @option opts [String] :cursor Opaque cursor returned by the previous response&#39;s &#x60;pagination.nextCursor&#x60;. Omit to fetch the first page.
+    # @option opts [Integer] :offset First-class alias for cursor-based pagination. Mutually exclusive with &#x60;cursor&#x60; — passing both returns 422. Accepts integers in &#x60;[0, 10000]&#x60;; deeper walks must use &#x60;cursor&#x60; (constant per-page cost). The response always includes &#x60;pagination.nextCursor&#x60; so consumers can switch from offset → cursor mid-walk for deep pagination without re-keying. (default to 0)
+    # @option opts [Integer] :limit Max items per page — max 200 per page. A larger value returns 200 per page; follow &#x60;pagination.nextCursor&#x60; for the rest. (default to 200)
+    # @option opts [String] :listing_id Filter to one listing: its Airbnb listing id (&#x60;airbnbListingId&#x60; on each review) or its Repull listing id.
     # @return [Array<(AirbnbReviewListResponse, Integer, Hash)>] AirbnbReviewListResponse data, response status code and response headers
     def list_airbnb_reviews_with_http_info(opts = {})
       if @api_client.config.debugging
         @api_client.config.logger.debug 'Calling API: AirbnbApi.list_airbnb_reviews ...'
       end
+      if @api_client.config.client_side_validation && !opts[:'offset'].nil? && opts[:'offset'] > 10000
+        fail ArgumentError, 'invalid value for "opts[:"offset"]" when calling AirbnbApi.list_airbnb_reviews, must be smaller than or equal to 10000.'
+      end
+
+      if @api_client.config.client_side_validation && !opts[:'offset'].nil? && opts[:'offset'] < 0
+        fail ArgumentError, 'invalid value for "opts[:"offset"]" when calling AirbnbApi.list_airbnb_reviews, must be greater than or equal to 0.'
+      end
+
+      if @api_client.config.client_side_validation && !opts[:'limit'].nil? && opts[:'limit'] < 1
+        fail ArgumentError, 'invalid value for "opts[:"limit"]" when calling AirbnbApi.list_airbnb_reviews, must be greater than or equal to 1.'
+      end
+
       # resource path
       local_var_path = '/v1/channels/airbnb/reviews'
 
       # query parameters
       query_params = opts[:query_params] || {}
       query_params[:'account_id'] = opts[:'account_id'] if !opts[:'account_id'].nil?
+      query_params[:'cursor'] = opts[:'cursor'] if !opts[:'cursor'].nil?
+      query_params[:'offset'] = opts[:'offset'] if !opts[:'offset'].nil?
+      query_params[:'limit'] = opts[:'limit'] if !opts[:'limit'].nil?
+      query_params[:'listing_id'] = opts[:'listing_id'] if !opts[:'listing_id'].nil?
 
       # header parameters
       header_params = opts[:header_params] || {}
