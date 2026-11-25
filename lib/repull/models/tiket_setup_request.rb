@@ -1,0 +1,469 @@
+=begin
+#Repull API
+
+#The unified API for vacation rental tech. Connect Airbnb, Booking.com, Vrbo and more channels, plus 14 PMS platforms, through one REST API.  ## Designed for AI agents Every error response on this API includes machine-parseable fields so an LLM (Claude in MCP, Cursor, Cline, GPT, etc.) can self-recover without escalating to a human: - `error.code` — stable string identifier (e.g. `invalid_params`, `rate_limit_exceeded`) - `error.message` — human-readable cause - `error.fix` — exact recovery steps (e.g. \"Pass `check_in_after` as ISO 8601: `?check_in_after=2026-01-15`\") - `error.docs_url` — link to the canonical write-up at `https://repull.dev/docs/errors/{code}` - `error.request_id` — id to correlate with server-side logs - `error.field` / `error.value_received` / `error.valid_values` / `error.did_you_mean` — when the error is parameter-specific - `error.retry_after` — seconds to wait before retrying (rate-limit + transient upstream)  `Access-Control-Expose-Headers` lists `x-request-id` and the `X-RateLimit-*` family so browsers can read them on cross-origin responses.  ## Quick Start 1. Get an API key at https://repull.dev/dashboard 2. Connect a PMS: `POST /v1/connect/{provider}` 3. List properties: `GET /v1/properties` 4. Get reservations: `GET /v1/reservations`  ## Authentication All requests require a Bearer token: ``` Authorization: Bearer sk_live_YOUR_API_KEY ```  ## Request Correlation (X-Request-ID) Every response carries an `X-Request-ID` header, e.g. `X-Request-ID: req_01HXY...`. Include this id in support tickets and bug reports — we can trace the full request lifecycle (auth, rate limit, handler, downstream calls, log row) from a single id.  You may set the header on the inbound request to forward your own trace id; we will echo it back instead of generating a new one. Accepted format: `^[\\\\w.-]{1,128}$`.  The id is also embedded in error envelopes as `request_id` so server-side log diffs work even when the response headers are stripped by an intermediate proxy.  ## Rate Limits The public API enforces a per-API-key sliding-window rate limit on top of the per-tier monthly + daily-AI quotas.  **Default policy:** 600 requests per 60 seconds, per API key. Sliding window — there is no fixed-minute boundary you can burst across.  Every response includes:  | Header | Meaning | |---|---| | `X-RateLimit-Limit` | Requests permitted in the current window. | | `X-RateLimit-Remaining` | Requests left in the current window after this call. | | `X-RateLimit-Reset` | Unix epoch (seconds) when the next slot opens. | | `X-RateLimit-Policy` | Machine-readable policy descriptor, e.g. `600;w=60`. | | `Retry-After` | Seconds to wait before retrying. **Only present on 429 responses.** |  **On 429 (rate_limit_exceeded):** the response body matches the standard error envelope with `code: \"rate_limit_exceeded\"`, plus `limit`, `window_seconds`, `retry_after`, and `request_id` fields. SDKs MUST honor `Retry-After` and use exponential backoff with jitter on subsequent retries — never a tight loop.  Recommended backoff: ``` sleep_ms = (Retry-After * 1000) + random(0..250) ```  Monthly + daily-AI tier quotas (`free`, `starter`, `custom`) are enforced separately and also surface as 429s; they include `tier`, `scope`, `limit`, `used` and `resets_at` fields.  **The way past a request quota.** The monthly quota refusal (`429 rate_limit_exceeded` with `scope: \"monthly\"`), `402 credits_exhausted` and `429 daily_limit_exceeded` also carry `upgrade` (the cheapest plan that covers your usage: its exact monthly price for your listings, its request quotas and a `checkout_url` that opens checkout for that price; `plan: \"custom\"` with a `contact_email` when no self-serve plan covers it), `credits` (pay-as-you-go: `usd_per_1000_requests`, `top_up_url`, your `balance_usd`), `resets_at` and `projected_monthly_requests`. The per-minute 429 (`scope: \"per_api_key\"`) carries none of these: wait `Retry-After`.  ## Plan listing limits Each plan includes a number of **active listings**:  | Tier | Active listings | |---|---| | `free` | 3 | | `starter` | no cap: 10 included, then billed per listing | | `custom` | no cap |  Going over the plan never blocks your API calls. Listings beyond the plan are **held back**: they stay connected and keep syncing, but they are not served. A held-back listing answers `403 listing_inactive` with `reason: \"plan_limit\"`, and collection routes leave it out. Every JSON response then carries a `planNotice` and the `X-Repull-Listings-Held-Back` header, so you know there is more to see.  Choose which listings are active with `POST /v1/listings/status`. Upgrading at `https://repull.dev/dashboard/billing` lifts the cap but does not switch held-back listings on: you choose which to activate afterwards, with the same call or from the dashboard, and each one you switch on is billed from then.  Only a call that would itself take you over the plan is refused, with **`402 listings_limit_exceeded`**: activating listings (`PATCH /v1/listings/{id}` with `{ \"active\": true }`, `POST /v1/listings/status`) or creating one (`POST /v1/listings`). Nothing else changes. The envelope carries the tier, the limit, the active count and an upgrade link next to the standard `code` / `message` / `fix` / `docs_url` / `request_id`.  If an account has more active listings than its plan (for example after a downgrade), calls are still served and `planNotice` says so (code \"listings_over_plan\").  ## Failed payments If your plan's renewal payment fails, nothing is blocked: your API calls keep working while Stripe retries the card. Every successful JSON response then carries a `billingNotice` (code `payment_failed`) with the amount, when it failed, the next automatic retry (`nextRetryAt`) and `payUrl`, the invoice to pay. It disappears once the invoice is paid.
+
+The version of the OpenAPI document: 1.0.0
+
+Generated by: https://openapi-generator.tech
+Generator version: 7.22.0
+
+=end
+
+require 'date'
+require 'time'
+
+module Repull
+  # Fields depend on `action`. Every action except `create-property`, `request-activation` and `check-activation` names a property with `property_id` or, for a property Repull created that tiket.com has not assigned an id to yet, `partner_hotel_code`.
+  class TiketSetupRequest < ApiModelBase
+    attr_accessor :action
+
+    # tiket.com Hotel ID.
+    attr_accessor :property_id
+
+    # Repull's code for a property Repull created.
+    attr_accessor :partner_hotel_code
+
+    # `create-property`, `add-room`, `add-rate-plan`: the listing whose content is used.
+    attr_accessor :listing_id
+
+    # `set-tiket-hotel-id`: the Hotel ID tiket.com assigned. `check-activation`: the Hotel ID to check.
+    attr_accessor :hotel_id
+
+    # `create-property`, `add-room`, `add-rate-plan`: name on tiket.com.
+    attr_accessor :name
+
+    # `create-property`: ISO 4217.
+    attr_accessor :currency
+
+    # `create-property`: tiket.com property type.
+    attr_accessor :property_type_id
+
+    attr_accessor :latitude
+
+    attr_accessor :longitude
+
+    attr_accessor :address
+
+    attr_accessor :postal_code
+
+    attr_accessor :country_code
+
+    attr_accessor :state_code
+
+    # `create-property`: the legal entity that operates the property.
+    attr_accessor :company_name
+
+    attr_accessor :company_address
+
+    attr_accessor :star_rating
+
+    # `create-property`: `Room Based` or `Occupancy Based`.
+    attr_accessor :pricing_model
+
+    attr_accessor :description
+
+    attr_accessor :total_rooms
+
+    attr_accessor :floors
+
+    attr_accessor :when_built
+
+    # `create-property`: property contacts.
+    attr_accessor :contacts
+
+    # `add-room`: rooms of this type.
+    attr_accessor :quantity
+
+    attr_accessor :max_adults
+
+    attr_accessor :max_children
+
+    # `add-rate-plan`: rooms the rate plan applies to.
+    attr_accessor :room_ids
+
+    # `add-rate-plan`.
+    attr_accessor :cancellation_policy
+
+    # `add-rate-plan`: breakfast included.
+    attr_accessor :breakfast
+
+    # `request-activation`: the properties to activate.
+    attr_accessor :properties
+
+    # `set-push-rate-plans`: the `ratePlanId`s that receive prices and restrictions.
+    attr_accessor :rate_plan_ids
+
+    # `set-sync`: send calendar changes to tiket.com automatically.
+    attr_accessor :enabled
+
+    # Attribute mapping from ruby-style variable name to JSON key.
+    def self.attribute_map
+      {
+        :'action' => :'action',
+        :'property_id' => :'property_id',
+        :'partner_hotel_code' => :'partner_hotel_code',
+        :'listing_id' => :'listing_id',
+        :'hotel_id' => :'hotel_id',
+        :'name' => :'name',
+        :'currency' => :'currency',
+        :'property_type_id' => :'property_type_id',
+        :'latitude' => :'latitude',
+        :'longitude' => :'longitude',
+        :'address' => :'address',
+        :'postal_code' => :'postal_code',
+        :'country_code' => :'country_code',
+        :'state_code' => :'state_code',
+        :'company_name' => :'company_name',
+        :'company_address' => :'company_address',
+        :'star_rating' => :'star_rating',
+        :'pricing_model' => :'pricing_model',
+        :'description' => :'description',
+        :'total_rooms' => :'total_rooms',
+        :'floors' => :'floors',
+        :'when_built' => :'when_built',
+        :'contacts' => :'contacts',
+        :'quantity' => :'quantity',
+        :'max_adults' => :'max_adults',
+        :'max_children' => :'max_children',
+        :'room_ids' => :'room_ids',
+        :'cancellation_policy' => :'cancellation_policy',
+        :'breakfast' => :'breakfast',
+        :'properties' => :'properties',
+        :'rate_plan_ids' => :'rate_plan_ids',
+        :'enabled' => :'enabled'
+      }
+    end
+
+    # Returns attribute mapping this model knows about
+    def self.acceptable_attribute_map
+      attribute_map
+    end
+
+    # Returns all the JSON keys this model knows about
+    def self.acceptable_attributes
+      acceptable_attribute_map.values
+    end
+
+    # Attribute type mapping.
+    def self.openapi_types
+      {
+        :'action' => :'String',
+        :'property_id' => :'String',
+        :'partner_hotel_code' => :'String',
+        :'listing_id' => :'Integer',
+        :'hotel_id' => :'String',
+        :'name' => :'String',
+        :'currency' => :'String',
+        :'property_type_id' => :'Integer',
+        :'latitude' => :'Float',
+        :'longitude' => :'Float',
+        :'address' => :'String',
+        :'postal_code' => :'String',
+        :'country_code' => :'String',
+        :'state_code' => :'String',
+        :'company_name' => :'String',
+        :'company_address' => :'String',
+        :'star_rating' => :'Float',
+        :'pricing_model' => :'String',
+        :'description' => :'String',
+        :'total_rooms' => :'Integer',
+        :'floors' => :'Integer',
+        :'when_built' => :'Integer',
+        :'contacts' => :'Array<TiketSetupRequestContactsInner>',
+        :'quantity' => :'Integer',
+        :'max_adults' => :'Integer',
+        :'max_children' => :'Integer',
+        :'room_ids' => :'Array<String>',
+        :'cancellation_policy' => :'String',
+        :'breakfast' => :'Boolean',
+        :'properties' => :'Array<TiketSetupRequestPropertiesInner>',
+        :'rate_plan_ids' => :'Array<String>',
+        :'enabled' => :'Boolean'
+      }
+    end
+
+    # List of attributes with nullable: true
+    def self.openapi_nullable
+      Set.new([
+      ])
+    end
+
+    # Initializes the object
+    # @param [Hash] attributes Model attributes in the form of hash
+    def initialize(attributes = {})
+      if (!attributes.is_a?(Hash))
+        fail ArgumentError, "The input argument (attributes) must be a hash in `Repull::TiketSetupRequest` initialize method"
+      end
+
+      # check to see if the attribute exists and convert string to symbol for hash key
+      acceptable_attribute_map = self.class.acceptable_attribute_map
+      attributes = attributes.each_with_object({}) { |(k, v), h|
+        if (!acceptable_attribute_map.key?(k.to_sym))
+          fail ArgumentError, "`#{k}` is not a valid attribute in `Repull::TiketSetupRequest`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
+        end
+        h[k.to_sym] = v
+      }
+
+      if attributes.key?(:'action')
+        self.action = attributes[:'action']
+      else
+        self.action = nil
+      end
+
+      if attributes.key?(:'property_id')
+        self.property_id = attributes[:'property_id']
+      end
+
+      if attributes.key?(:'partner_hotel_code')
+        self.partner_hotel_code = attributes[:'partner_hotel_code']
+      end
+
+      if attributes.key?(:'listing_id')
+        self.listing_id = attributes[:'listing_id']
+      end
+
+      if attributes.key?(:'hotel_id')
+        self.hotel_id = attributes[:'hotel_id']
+      end
+
+      if attributes.key?(:'name')
+        self.name = attributes[:'name']
+      end
+
+      if attributes.key?(:'currency')
+        self.currency = attributes[:'currency']
+      end
+
+      if attributes.key?(:'property_type_id')
+        self.property_type_id = attributes[:'property_type_id']
+      end
+
+      if attributes.key?(:'latitude')
+        self.latitude = attributes[:'latitude']
+      end
+
+      if attributes.key?(:'longitude')
+        self.longitude = attributes[:'longitude']
+      end
+
+      if attributes.key?(:'address')
+        self.address = attributes[:'address']
+      end
+
+      if attributes.key?(:'postal_code')
+        self.postal_code = attributes[:'postal_code']
+      end
+
+      if attributes.key?(:'country_code')
+        self.country_code = attributes[:'country_code']
+      end
+
+      if attributes.key?(:'state_code')
+        self.state_code = attributes[:'state_code']
+      end
+
+      if attributes.key?(:'company_name')
+        self.company_name = attributes[:'company_name']
+      end
+
+      if attributes.key?(:'company_address')
+        self.company_address = attributes[:'company_address']
+      end
+
+      if attributes.key?(:'star_rating')
+        self.star_rating = attributes[:'star_rating']
+      end
+
+      if attributes.key?(:'pricing_model')
+        self.pricing_model = attributes[:'pricing_model']
+      end
+
+      if attributes.key?(:'description')
+        self.description = attributes[:'description']
+      end
+
+      if attributes.key?(:'total_rooms')
+        self.total_rooms = attributes[:'total_rooms']
+      end
+
+      if attributes.key?(:'floors')
+        self.floors = attributes[:'floors']
+      end
+
+      if attributes.key?(:'when_built')
+        self.when_built = attributes[:'when_built']
+      end
+
+      if attributes.key?(:'contacts')
+        if (value = attributes[:'contacts']).is_a?(Array)
+          self.contacts = value
+        end
+      end
+
+      if attributes.key?(:'quantity')
+        self.quantity = attributes[:'quantity']
+      end
+
+      if attributes.key?(:'max_adults')
+        self.max_adults = attributes[:'max_adults']
+      end
+
+      if attributes.key?(:'max_children')
+        self.max_children = attributes[:'max_children']
+      end
+
+      if attributes.key?(:'room_ids')
+        if (value = attributes[:'room_ids']).is_a?(Array)
+          self.room_ids = value
+        end
+      end
+
+      if attributes.key?(:'cancellation_policy')
+        self.cancellation_policy = attributes[:'cancellation_policy']
+      end
+
+      if attributes.key?(:'breakfast')
+        self.breakfast = attributes[:'breakfast']
+      end
+
+      if attributes.key?(:'properties')
+        if (value = attributes[:'properties']).is_a?(Array)
+          self.properties = value
+        end
+      end
+
+      if attributes.key?(:'rate_plan_ids')
+        if (value = attributes[:'rate_plan_ids']).is_a?(Array)
+          self.rate_plan_ids = value
+        end
+      end
+
+      if attributes.key?(:'enabled')
+        self.enabled = attributes[:'enabled']
+      end
+    end
+
+    # Show invalid properties with the reasons. Usually used together with valid?
+    # @return Array for valid properties with the reasons
+    def list_invalid_properties
+      warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
+      invalid_properties = Array.new
+      if @action.nil?
+        invalid_properties.push('invalid value for "action", action cannot be nil.')
+      end
+
+      invalid_properties
+    end
+
+    # Check to see if the all the properties in the model are valid
+    # @return true if the model is valid
+    def valid?
+      warn '[DEPRECATED] the `valid?` method is obsolete'
+      return false if @action.nil?
+      true
+    end
+
+    # Custom attribute writer method with validation
+    # @param [Object] action Value to be assigned
+    def action=(action)
+      if action.nil?
+        fail ArgumentError, 'action cannot be nil'
+      end
+
+      @action = action
+    end
+
+    # Checks equality by comparing each attribute.
+    # @param [Object] Object to be compared
+    def ==(o)
+      return true if self.equal?(o)
+      self.class == o.class &&
+          action == o.action &&
+          property_id == o.property_id &&
+          partner_hotel_code == o.partner_hotel_code &&
+          listing_id == o.listing_id &&
+          hotel_id == o.hotel_id &&
+          name == o.name &&
+          currency == o.currency &&
+          property_type_id == o.property_type_id &&
+          latitude == o.latitude &&
+          longitude == o.longitude &&
+          address == o.address &&
+          postal_code == o.postal_code &&
+          country_code == o.country_code &&
+          state_code == o.state_code &&
+          company_name == o.company_name &&
+          company_address == o.company_address &&
+          star_rating == o.star_rating &&
+          pricing_model == o.pricing_model &&
+          description == o.description &&
+          total_rooms == o.total_rooms &&
+          floors == o.floors &&
+          when_built == o.when_built &&
+          contacts == o.contacts &&
+          quantity == o.quantity &&
+          max_adults == o.max_adults &&
+          max_children == o.max_children &&
+          room_ids == o.room_ids &&
+          cancellation_policy == o.cancellation_policy &&
+          breakfast == o.breakfast &&
+          properties == o.properties &&
+          rate_plan_ids == o.rate_plan_ids &&
+          enabled == o.enabled
+    end
+
+    # @see the `==` method
+    # @param [Object] Object to be compared
+    def eql?(o)
+      self == o
+    end
+
+    # Calculates hash code according to all attributes.
+    # @return [Integer] Hash code
+    def hash
+      [action, property_id, partner_hotel_code, listing_id, hotel_id, name, currency, property_type_id, latitude, longitude, address, postal_code, country_code, state_code, company_name, company_address, star_rating, pricing_model, description, total_rooms, floors, when_built, contacts, quantity, max_adults, max_children, room_ids, cancellation_policy, breakfast, properties, rate_plan_ids, enabled].hash
+    end
+
+    # Builds the object from hash
+    # @param [Hash] attributes Model attributes in the form of hash
+    # @return [Object] Returns the model itself
+    def self.build_from_hash(attributes)
+      return nil unless attributes.is_a?(Hash)
+      attributes = attributes.transform_keys(&:to_sym)
+      transformed_hash = {}
+      openapi_types.each_pair do |key, type|
+        if attributes.key?(attribute_map[key]) && attributes[attribute_map[key]].nil?
+          transformed_hash["#{key}"] = nil
+        elsif type =~ /\AArray<(.*)>/i
+          # check to ensure the input is an array given that the attribute
+          # is documented as an array but the input is not
+          if attributes[attribute_map[key]].is_a?(Array)
+            transformed_hash["#{key}"] = attributes[attribute_map[key]].map { |v| _deserialize($1, v) }
+          end
+        elsif !attributes[attribute_map[key]].nil?
+          transformed_hash["#{key}"] = _deserialize(type, attributes[attribute_map[key]])
+        end
+      end
+      new(transformed_hash)
+    end
+
+    # Returns the object in the form of hash
+    # @return [Hash] Returns the object in the form of hash
+    def to_hash
+      hash = {}
+      self.class.attribute_map.each_pair do |attr, param|
+        value = self.send(attr)
+        if value.nil?
+          is_nullable = self.class.openapi_nullable.include?(attr)
+          next if !is_nullable || (is_nullable && !instance_variable_defined?(:"@#{attr}"))
+        end
+
+        hash[param] = _to_hash(value)
+      end
+      hash
+    end
+
+  end
+
+end

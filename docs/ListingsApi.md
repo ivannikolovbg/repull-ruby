@@ -18,6 +18,7 @@ All URIs are relative to *https://api.repull.dev*
 | [**list_listing_photos**](ListingsApi.md#list_listing_photos) | **GET** /v1/listings/{id}/photos | List a listing&#39;s stored photos |
 | [**list_listing_units**](ListingsApi.md#list_listing_units) | **GET** /v1/listings/{id}/units | List a listing&#39;s units |
 | [**list_listings**](ListingsApi.md#list_listings) | **GET** /v1/listings | List listings |
+| [**publish_listing_tiket**](ListingsApi.md#publish_listing_tiket) | **POST** /v1/listings/{id}/publish/tiket | Publish a listing&#39;s content to tiket.com |
 | [**publish_listing_to_airbnb**](ListingsApi.md#publish_listing_to_airbnb) | **POST** /v1/listings/{id}/publish/airbnb | Publish a listing to Airbnb |
 | [**publish_listing_to_booking**](ListingsApi.md#publish_listing_to_booking) | **POST** /v1/listings/{id}/publish/booking | Publish a listing to Booking.com |
 | [**publish_listing_to_vrbo**](ListingsApi.md#publish_listing_to_vrbo) | **POST** /v1/listings/{id}/publish/vrbo | Create or update a listing on Vrbo |
@@ -1026,6 +1027,79 @@ end
 ### HTTP request headers
 
 - **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+## publish_listing_tiket
+
+> <ListingPublishTiketResponse> publish_listing_tiket(id, opts)
+
+Publish a listing's content to tiket.com
+
+Send the listing's content to tiket.com (counterpart of `POST /v1/listings/{id}/publish/booking`): room content (name, occupancy, beds, facilities, photos, description), rate-plan policies and — for a property Repull created — the property content. The result lists each section that landed (`sections`) and each that did not, with tiket.com's reason (`errors`).  tiket.com only accepts content once it has linked Repull's codes to the property: true for a property Repull created, and for an existing property after `POST /v1/channels/tiket/setup` `request-content-mapping`. Until then the call returns `409 tiket_content_not_mapped`. Prices and availability are not content: they are sent automatically, or with `POST /v1/channels/tiket/sync`.  A listing mapped on more than one tiket.com property takes `hotelId`.
+
+### Examples
+
+```ruby
+require 'time'
+require 'repull'
+# setup authorization
+Repull.configure do |config|
+  # Configure Bearer authorization (API Key): bearerAuth
+  config.access_token = 'YOUR_BEARER_TOKEN'
+end
+
+api_instance = Repull::ListingsApi.new
+id = 56 # Integer | Repull listing id.
+opts = {
+  publish_listing_tiket_request: Repull::PublishListingTiketRequest.new # PublishListingTiketRequest | 
+}
+
+begin
+  # Publish a listing's content to tiket.com
+  result = api_instance.publish_listing_tiket(id, opts)
+  p result
+rescue Repull::ApiError => e
+  puts "Error when calling ListingsApi->publish_listing_tiket: #{e}"
+end
+```
+
+#### Using the publish_listing_tiket_with_http_info variant
+
+This returns an Array which contains the response data, status code and headers.
+
+> <Array(<ListingPublishTiketResponse>, Integer, Hash)> publish_listing_tiket_with_http_info(id, opts)
+
+```ruby
+begin
+  # Publish a listing's content to tiket.com
+  data, status_code, headers = api_instance.publish_listing_tiket_with_http_info(id, opts)
+  p status_code # => 2xx
+  p headers # => { ... }
+  p data # => <ListingPublishTiketResponse>
+rescue Repull::ApiError => e
+  puts "Error when calling ListingsApi->publish_listing_tiket_with_http_info: #{e}"
+end
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| ---- | ---- | ----------- | ----- |
+| **id** | **Integer** | Repull listing id. |  |
+| **publish_listing_tiket_request** | [**PublishListingTiketRequest**](PublishListingTiketRequest.md) |  | [optional] |
+
+### Return type
+
+[**ListingPublishTiketResponse**](ListingPublishTiketResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 
