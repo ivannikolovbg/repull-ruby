@@ -65,7 +65,7 @@ module Repull
     # On a `pending` Airbnb booking request (`pendingReason: host_approval`) that can still be answered: when it lapses (24 hours after the guest asked). Accept or decline before then with `POST /v1/reservations/{id}/accept` / `/decline`. Absent on every other reservation, including bookings Airbnb is holding for the guest's payment or verification — those have no deadline we can report.
     attr_accessor :respond_by
 
-    # Booking source / channel. Lowercase. May be null on legacy rows. Canonical name as of 2026-05; `platform` is kept as an alias.
+    # Booking source / channel. Lowercase. May be null on legacy rows. Booking.com reservations are `booking`. Canonical name as of 2026-05; `platform` is kept as an alias.
     attr_accessor :source
 
     # DEPRECATED alias for `source`. Same value, kept for back-compat.

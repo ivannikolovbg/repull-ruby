@@ -9,7 +9,7 @@
 | **max_guests** | **Integer** |  | [optional] |
 | **number_of_rooms** | **Integer** |  | [optional] |
 | **current_listing_id** | **String** |  | [optional] |
-| **room_booking_id** | **String** | tiket.com room type id. | [optional] |
+| **room_booking_id** | **String** | tiket.com room type code (&#x60;roomTypeCode&#x60; on &#x60;GET /v1/channels/tiket/properties/{id}/rooms&#x60;), exactly as tiket.com sends it. Free-form text such as &#x60;DLX-KING&#x60;, so always a string — never parse it as a number. | [optional] |
 
 ## Example
 

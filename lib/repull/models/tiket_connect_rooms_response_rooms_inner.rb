@@ -26,7 +26,7 @@ module Repull
 
     attr_accessor :current_listing_id
 
-    # tiket.com room type id.
+    # tiket.com room type code (`roomTypeCode` on `GET /v1/channels/tiket/properties/{id}/rooms`), exactly as tiket.com sends it. Free-form text such as `DLX-KING`, so always a string — never parse it as a number.
     attr_accessor :room_booking_id
 
     # Attribute mapping from ruby-style variable name to JSON key.

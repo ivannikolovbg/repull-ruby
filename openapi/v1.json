@@ -866,7 +866,7 @@
           "source": {
             "type": "string",
             "nullable": true,
-            "description": "Booking source / channel. Lowercase. May be null on legacy rows. Canonical name as of 2026-05; `platform` is kept as an alias.",
+            "description": "Booking source / channel. Lowercase. May be null on legacy rows. Booking.com reservations are `booking`. Canonical name as of 2026-05; `platform` is kept as an alias.",
             "example": "airbnb"
           },
           "platform": {
@@ -20197,7 +20197,7 @@
                 "roomBookingId": {
                   "type": "string",
                   "nullable": true,
-                  "description": "tiket.com room type id."
+                  "description": "tiket.com room type code (`roomTypeCode` on `GET /v1/channels/tiket/properties/{id}/rooms`), exactly as tiket.com sends it. Free-form text such as `DLX-KING`, so always a string \u2014 never parse it as a number."
                 }
               }
             }
