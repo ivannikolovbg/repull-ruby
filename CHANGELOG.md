@@ -2,6 +2,10 @@
 
 All notable changes to the `repull` gem are documented here.
 
+## 0.2.63 — 2026-11-26
+
+- Regenerated from the live spec (automated spec refresh).
+
 ## 0.2.62 — 2026-11-24
 
 - New: tiket.com channel — 16 operations: properties and room types, rates / availability / restrictions read and write (by property or by listing, read back after every write), reservations as tiket.com sent them, content, room mapping, full calendar sync and property setup; `POST /v1/listings/{id}/publish/tiket`; and the tiket.com Connect steps (claim a Hotel ID, list rooms, map rooms). New `Repull::TiketApi` (`list_tiket_properties`, `get_tiket_property`, `list_tiket_property_rooms`, `get_tiket_availability`, `update_tiket_availability`, `get_tiket_listing_pricing`, `update_tiket_listing_pricing`, `list_tiket_reservations`, `get_tiket_content`, `map_tiket_listings`, `sync_tiket`, `tiket_setup`); `ListingsApi#publish_listing_tiket`; `ConnectApi#verify_tiket_claim`, `list_tiket_connect_rooms`, `map_tiket_connect_rooms`.
