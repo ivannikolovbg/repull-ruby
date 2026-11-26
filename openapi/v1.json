@@ -40060,7 +40060,7 @@
       "get": {
         "operationId": "get_listing_markups",
         "summary": "Get a listing's channel markups",
-        "description": "The markup each channel adds to this listing's price.\n\nA listing's price on a channel is its own nightly price plus the channel's markup: a $200 night with a 35% Airbnb markup is sent to Airbnb as $270. The calendar keeps the listing's own price (`GET /v1/availability/{propertyId}` returns it); the markup is added only when a price is sent to the channel.\n\n- **Airbnb** \u2014 one markup per listing.\n- **Booking.com** \u2014 one markup per **property**, shared by every listing priced through it (`listingIds` names them).\n- **Vrbo** \u2014 one markup per connected **Vrbo account**, shared by every listing linked on it (`listingIds` names them). Prices reach Vrbo through its calendar queue.\n\nReturns `404 not_found` for a listing that does not exist or is not in this workspace, and `403 listing_inactive` for an inactive one.",
+        "description": "The markup each channel adds to this listing's price.\n\nA listing's price on a channel is its own nightly price plus the channel's markup: a $200 night with a 35% Airbnb markup is sent to Airbnb as $270. The calendar keeps the listing's own price (`GET /v1/availability/{propertyId}` returns it); the markup is added only when a price is sent to the channel.\n\n- **Airbnb** \u2014 one markup per listing.\n- **Vrbo** \u2014 one markup per listing, like Airbnb. Listings on the same Vrbo account each keep their own (one can be -2% and another +5%). Prices reach Vrbo through its calendar queue.\n- **Booking.com** \u2014 one markup per **property**, shared by every listing priced through it (`listingIds` names them).\n\nReturns `404 not_found` for a listing that does not exist or is not in this workspace, and `403 listing_inactive` for an inactive one.",
         "tags": [
           "Listings"
         ],
@@ -40138,7 +40138,7 @@
                           "accountId": {
                             "type": "string",
                             "nullable": true,
-                            "description": "The Vrbo account, as its handle `vrbo:{Vrbo account id}`. `null` until Vrbo's account id is captured for the sign-in."
+                            "description": "The Vrbo account this listing's Vrbo unit is on, as its handle `vrbo:{Vrbo account id}`. `null` until Vrbo's account id is captured for the sign-in."
                           },
                           "vrboListingNumber": {
                             "type": "string",
@@ -40147,15 +40147,15 @@
                           "markupPercent": {
                             "type": "number",
                             "nullable": true,
-                            "description": "Percent added on Vrbo, for every listing linked on this account.",
-                            "example": 20
+                            "description": "Percent added to this listing's price on Vrbo. 5 = +5%; negative = below the listing's price. `null` = none. Other listings on the same Vrbo account have their own.",
+                            "example": 5
                           },
                           "listingIds": {
                             "type": "array",
                             "items": {
                               "type": "string"
                             },
-                            "description": "Listings in this workspace linked on this Vrbo account \u2014 all share this markup."
+                            "description": "The listing this markup applies to \u2014 always just this listing, since a Vrbo markup is per listing."
                           }
                         }
                       }
@@ -40179,7 +40179,7 @@
       "put": {
         "operationId": "set_listing_markup",
         "summary": "Set a listing's markup on a channel",
-        "description": "Set the markup one channel adds to this listing's price. When the value changes, the affected listings' prices are re-sent to that channel straight away (`pricesResent`); nothing else is sent.\n\nA listing's price on a channel is its own nightly price plus the channel's markup: a $200 night with a 35% Airbnb markup is sent to Airbnb as $270. The calendar keeps the listing's own price (`GET /v1/availability/{propertyId}` returns it); the markup is added only when a price is sent to the channel.\n\n- **Airbnb** \u2014 one markup per listing.\n- **Booking.com** \u2014 one markup per **property**, shared by every listing priced through it (`listingIds` names them).\n- **Vrbo** \u2014 one markup per connected **Vrbo account**, shared by every listing linked on it (`listingIds` names them). Prices reach Vrbo through its calendar queue.\n\nReturns `404 not_found` for a listing that does not exist or is not in this workspace, and `403 listing_inactive` for an inactive one.\n\nOn Booking.com the markup belongs to the property, so setting it reprices every listing on that property (`affectedListingIds`). A listing on more than one property must name one with `hotelId`; without it the request is refused with `409 ambiguous_booking_mapping` listing the candidates, rather than repricing a property it guessed.\n\nOn Vrbo the markup belongs to the connected Vrbo account, so setting it reprices every listing linked on that account (`affectedListingIds`). A listing linked on more than one account names one with `accountId`, else `409 ambiguous_vrbo_account`; a listing not linked to Vrbo is `409 listing_not_on_vrbo`.\n\n`markupPercent` is a percentage above -100 and below 100 \u2014 `15` for +15%, `-2` for 2% below the listing's price (a $200 night is sent to the channel as $196). A value is kept to a whole percent, so one that rounds to -100 or less (it would send a price of zero or less) or to 100 or more is refused. A value between -1 and 1 other than 0 is refused as a probable fraction, with the number to send instead.",
+        "description": "Set the markup one channel adds to this listing's price. When the value changes, the affected listings' prices are re-sent to that channel straight away (`pricesResent`); nothing else is sent.\n\nA listing's price on a channel is its own nightly price plus the channel's markup: a $200 night with a 35% Airbnb markup is sent to Airbnb as $270. The calendar keeps the listing's own price (`GET /v1/availability/{propertyId}` returns it); the markup is added only when a price is sent to the channel.\n\n- **Airbnb** \u2014 one markup per listing.\n- **Vrbo** \u2014 one markup per listing, like Airbnb. Listings on the same Vrbo account each keep their own (one can be -2% and another +5%). Prices reach Vrbo through its calendar queue.\n- **Booking.com** \u2014 one markup per **property**, shared by every listing priced through it (`listingIds` names them).\n\nReturns `404 not_found` for a listing that does not exist or is not in this workspace, and `403 listing_inactive` for an inactive one.\n\nOn Booking.com the markup belongs to the property, so setting it reprices every listing on that property (`affectedListingIds`). A listing on more than one property must name one with `hotelId`; without it the request is refused with `409 ambiguous_booking_mapping` listing the candidates, rather than repricing a property it guessed.\n\nOn Airbnb and Vrbo the markup belongs to the listing: setting it reprices this listing only (`affectedListingIds`), and other listings on the same Airbnb or Vrbo account keep their own. A listing not linked to Vrbo is `409 listing_not_on_vrbo`.\n\n`markupPercent` is a percentage above -100 and below 100 \u2014 `15` for +15%, `-2` for 2% below the listing's price (a $200 night is sent to the channel as $196). A value is kept to a whole percent, so one that rounds to -100 or less (it would send a price of zero or less) or to 100 or more is refused. A value between -1 and 1 other than 0 is refused as a probable fraction, with the number to send instead.",
         "tags": [
           "Listings"
         ],
@@ -40228,7 +40228,8 @@
                   },
                   "accountId": {
                     "type": "string",
-                    "description": "Vrbo account (`vrbo:7001234`, Vrbo's own account id) \u2014 required when the listing is linked on more than one. The old sign-in ids (`vrbo:13`) still resolve until 2027-02-12."
+                    "deprecated": true,
+                    "description": "Ignored. The Vrbo markup is per listing, so there is no account to name; accepted so existing calls keep working."
                   }
                 }
               },
@@ -40241,7 +40242,7 @@
         },
         "responses": {
           "200": {
-            "description": "Saved. `{ id, channel, markupPercent, changed, hotelId? | accountId?, affectedListingIds, pricesResent }`."
+            "description": "Saved. `{ id, channel, markupPercent, changed, hotelId? | accountId? + vrboListingNumbers?, affectedListingIds, pricesResent }`. On Vrbo, `accountId` is the Vrbo account this listing's unit is on and `affectedListingIds` is just this listing."
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
@@ -40253,7 +40254,7 @@
             "$ref": "#/components/responses/NotFound"
           },
           "409": {
-            "description": "`ambiguous_booking_mapping` \u2014 the listing is on several Booking.com properties; `valid_values` lists them. `ambiguous_vrbo_account` \u2014 the same for Vrbo accounts. `listing_not_on_vrbo` \u2014 `channel: \"vrbo\"` on a listing with no Vrbo unit linked."
+            "description": "`ambiguous_booking_mapping` \u2014 the listing is on several Booking.com properties; `valid_values` lists them. `listing_not_on_vrbo` \u2014 `channel: \"vrbo\"` on a listing with no Vrbo unit linked."
           },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntity"

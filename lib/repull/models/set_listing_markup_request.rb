@@ -23,7 +23,7 @@ module Repull
     # Booking.com property — required when the listing is on more than one.
     attr_accessor :hotel_id
 
-    # Vrbo account (`vrbo:7001234`, Vrbo's own account id) — required when the listing is linked on more than one. The old sign-in ids (`vrbo:13`) still resolve until 2027-02-12.
+    # Ignored. The Vrbo markup is per listing, so there is no account to name; accepted so existing calls keep working.
     attr_accessor :account_id
 
     class EnumAttributeValidator

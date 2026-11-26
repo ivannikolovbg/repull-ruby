@@ -15,16 +15,16 @@ require 'time'
 
 module Repull
   class GetListingMarkups200ResponseVrboInner < ApiModelBase
-    # The Vrbo account, as its handle `vrbo:{Vrbo account id}`. `null` until Vrbo's account id is captured for the sign-in.
+    # The Vrbo account this listing's Vrbo unit is on, as its handle `vrbo:{Vrbo account id}`. `null` until Vrbo's account id is captured for the sign-in.
     attr_accessor :account_id
 
     # The Vrbo listing number this listing is linked to.
     attr_accessor :vrbo_listing_number
 
-    # Percent added on Vrbo, for every listing linked on this account.
+    # Percent added to this listing's price on Vrbo. 5 = +5%; negative = below the listing's price. `null` = none. Other listings on the same Vrbo account have their own.
     attr_accessor :markup_percent
 
-    # Listings in this workspace linked on this Vrbo account — all share this markup.
+    # The listing this markup applies to — always just this listing, since a Vrbo markup is per listing.
     attr_accessor :listing_ids
 
     # Attribute mapping from ruby-style variable name to JSON key.
