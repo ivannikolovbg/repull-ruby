@@ -19,6 +19,7 @@
 | **reservation_id** | **Integer** |  | [optional] |
 | **listing_id** | **Integer** |  | [optional] |
 | **synced_at** | **Time** |  | [optional] |
+| **booking_payments_api** | [**TransactionBookingPaymentsApi**](TransactionBookingPaymentsApi.md) |  | [optional] |
 
 ## Example
 
@@ -40,7 +41,8 @@ instance = Repull::Transaction.new(
   confirmation_code: 5463377687,
   reservation_id: null,
   listing_id: null,
-  synced_at: null
+  synced_at: null,
+  booking_payments_api: null
 )
 ```
 

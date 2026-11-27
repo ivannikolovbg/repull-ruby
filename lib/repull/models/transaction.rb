@@ -54,6 +54,8 @@ module Repull
 
     attr_accessor :synced_at
 
+    attr_accessor :booking_payments_api
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
@@ -71,7 +73,8 @@ module Repull
         :'confirmation_code' => :'confirmationCode',
         :'reservation_id' => :'reservationId',
         :'listing_id' => :'listingId',
-        :'synced_at' => :'syncedAt'
+        :'synced_at' => :'syncedAt',
+        :'booking_payments_api' => :'bookingPaymentsApi'
       }
     end
 
@@ -102,7 +105,8 @@ module Repull
         :'confirmation_code' => :'String',
         :'reservation_id' => :'Integer',
         :'listing_id' => :'Integer',
-        :'synced_at' => :'Time'
+        :'synced_at' => :'Time',
+        :'booking_payments_api' => :'TransactionBookingPaymentsApi'
       }
     end
 
@@ -120,7 +124,8 @@ module Repull
         :'confirmation_code',
         :'reservation_id',
         :'listing_id',
-        :'synced_at'
+        :'synced_at',
+        :'booking_payments_api'
       ])
     end
 
@@ -209,6 +214,10 @@ module Repull
       if attributes.key?(:'synced_at')
         self.synced_at = attributes[:'synced_at']
       end
+
+      if attributes.key?(:'booking_payments_api')
+        self.booking_payments_api = attributes[:'booking_payments_api']
+      end
     end
 
     # Show invalid properties with the reasons. Usually used together with valid?
@@ -290,7 +299,8 @@ module Repull
           confirmation_code == o.confirmation_code &&
           reservation_id == o.reservation_id &&
           listing_id == o.listing_id &&
-          synced_at == o.synced_at
+          synced_at == o.synced_at &&
+          booking_payments_api == o.booking_payments_api
     end
 
     # @see the `==` method
@@ -302,7 +312,7 @@ module Repull
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [transaction_id, platform, type, is_payout, status, date, currency, amount, gross_amount, fees, payout, confirmation_code, reservation_id, listing_id, synced_at].hash
+      [transaction_id, platform, type, is_payout, status, date, currency, amount, gross_amount, fees, payout, confirmation_code, reservation_id, listing_id, synced_at, booking_payments_api].hash
     end
 
     # Builds the object from hash

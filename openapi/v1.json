@@ -10590,6 +10590,183 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "bookingPaymentsApi": {
+            "type": "object",
+            "nullable": true,
+            "description": "Booking.com only: the booking's payout and price breakdown as Booking.com's Payments API reports it (read when Booking.com notifies a payout change). Null on other channels and for bookings not read yet. Money is in `currency`.",
+            "properties": {
+              "source": {
+                "type": "string",
+                "enum": [
+                  "payments_api"
+                ]
+              },
+              "paymentTags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "`PAYMENTS_BY_BOOKING`, `PAYMENT_AT_PROPERTY` or `SMART_PAYMENT_AT_PROPERTY`.",
+                "example": [
+                  "PAYMENTS_BY_BOOKING"
+                ]
+              },
+              "payoutType": {
+                "type": "string",
+                "nullable": true,
+                "description": "`GROSS`, `NET` or `UNKNOWN`; null when the property collects the payment.",
+                "example": "NET"
+              },
+              "payoutStatus": {
+                "type": "string",
+                "nullable": true,
+                "description": "`PENDING`, `PAID`, `CANCELLED` or `UNKNOWN`.",
+                "example": "PAID"
+              },
+              "currency": {
+                "type": "string",
+                "nullable": true,
+                "example": "EUR"
+              },
+              "grossAmount": {
+                "type": "number",
+                "nullable": true,
+                "description": "What the guest paid Booking.com.",
+                "example": 120
+              },
+              "commission": {
+                "type": "number",
+                "nullable": true,
+                "example": 18
+              },
+              "paymentCharge": {
+                "type": "number",
+                "nullable": true,
+                "description": "Payments service charge.",
+                "example": 2
+              },
+              "vat": {
+                "type": "number",
+                "nullable": true,
+                "example": 10
+              },
+              "vatOnFees": {
+                "type": "number",
+                "nullable": true,
+                "description": "VAT on commission and on the payment charge.",
+                "example": 2
+              },
+              "taxes": {
+                "type": "number",
+                "nullable": true,
+                "description": "City tax, withheld and other taxes.",
+                "example": 6.26
+              },
+              "netAmount": {
+                "type": "number",
+                "nullable": true,
+                "description": "Estimated payout to the property.",
+                "example": 96.74
+              },
+              "amountToCollectAtProperty": {
+                "type": "number",
+                "nullable": true,
+                "description": "Estimated amount the property collects itself (e.g. city tax, or the whole stay when the property collects the payment).",
+                "example": 5
+              },
+              "bankTransfer": {
+                "type": "object",
+                "nullable": true,
+                "properties": {
+                  "reference": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Booking.com bank-transfer reference; matches the payout on your bank statement.",
+                    "example": "ST-D0L8H1W4W9I5"
+                  },
+                  "status": {
+                    "type": "string",
+                    "nullable": true,
+                    "example": "PAID"
+                  },
+                  "date": {
+                    "type": "string",
+                    "nullable": true,
+                    "example": "2026-05-04"
+                  }
+                }
+              },
+              "charges": {
+                "type": "array",
+                "description": "Per-room price lines as Booking.com reports them.",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "description": "Booking.com's label, e.g. `VAT`, `City tax`, `COMMISSION`, `PAYMENT CHARGE`.",
+                      "example": "VAT"
+                    },
+                    "category": {
+                      "type": "string",
+                      "enum": [
+                        "commission",
+                        "payment_charge",
+                        "vat_on_fees",
+                        "vat",
+                        "tax",
+                        "fee",
+                        "other"
+                      ]
+                    },
+                    "amount": {
+                      "type": "number",
+                      "nullable": true,
+                      "example": 10
+                    },
+                    "currency": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "rate": {
+                      "type": "object",
+                      "nullable": true,
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "PERCENTAGE"
+                        },
+                        "value": {
+                          "type": "number",
+                          "nullable": true,
+                          "example": 10
+                        }
+                      }
+                    },
+                    "applicableType": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "e.g. `PER_PERSON`, `PER_NIGHT`."
+                    },
+                    "alreadyCollectedFromGuest": {
+                      "type": "boolean",
+                      "nullable": true
+                    },
+                    "includedInPayout": {
+                      "type": "boolean",
+                      "nullable": true
+                    }
+                  }
+                }
+              },
+              "fetchedAt": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true
+              }
+            }
           }
         }
       },
